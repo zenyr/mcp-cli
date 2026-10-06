@@ -1,7 +1,7 @@
 import { isRecord, isStringArray } from "./values";
 import {
+  NotGeneratedError,
   RESERVED_COMMANDS,
-  UsageError,
   fallbackPath,
   type CommandSpec,
   type Manifest,
@@ -41,7 +41,9 @@ export const decodeManifest = (value: unknown): GeneratedManifest => {
   const { version, service, tools } = value;
   if (version === 1) {
     const name = typeof service === "string" && service ? service : "<service>";
-    throw new UsageError(`Generated code for ${name} is outdated; run mcp-cli generate ${name}`);
+    throw new NotGeneratedError(
+      `Generated code for ${name} is outdated; run mcp-cli generate ${name}`,
+    );
   }
   if (version !== 2) throw invalid("unsupported version");
   if (typeof service !== "string" || !service) throw invalid("service is required");
@@ -49,6 +51,7 @@ export const decodeManifest = (value: unknown): GeneratedManifest => {
   return { version, service, tools: tools.map(decodeTool) };
 };
 
+// Applies to customized paths only; fallback paths carry the raw MCP tool name.
 const validPath = (path: unknown): path is string[] =>
   isStringArray(path) && path.length > 0 && path.every((part) => /^[a-zA-Z0-9_-]+$/.test(part));
 
@@ -73,7 +76,8 @@ export const applyCustomizations = (
         : undefined;
     const fallback = fallbackPath(tool.name);
     const path = customization?.path ?? fallback;
-    if (!validPath(path)) throw new Error(`Invalid command path for ${tool.name}`);
+    if (customization !== undefined && !validPath(customization.path))
+      throw new Error(`Invalid command path for ${tool.name}`);
     if (RESERVED_COMMANDS.includes(path[0] ?? "") && path.join(" ") !== fallback.join(" "))
       throw new Error(`Reserved command path: ${path.join(" ")}`);
     if (paths.some((other) => overlaps(other, path)))

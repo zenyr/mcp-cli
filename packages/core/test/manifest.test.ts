@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import {
+  NotGeneratedError,
   UsageError,
   applyCustomizations,
   decodeManifest,
@@ -42,8 +43,10 @@ test("decodeManifest rejects malformed manifests", () => {
   }
 });
 
-test("decodeManifest asks to regenerate v1 output", () => {
-  expect(() => decodeManifest({ version: 1, service: "demo", commands: [] })).toThrow(UsageError);
+test("decodeManifest asks to regenerate v1 output with a not-generated error", () => {
+  const decode = () => decodeManifest({ version: 1, service: "demo", commands: [] });
+  expect(decode).toThrow(NotGeneratedError);
+  expect(decode).not.toThrow(UsageError);
 });
 
 test("applyCustomizations overlays plugin metadata at run time", () => {
@@ -60,6 +63,18 @@ test("applyCustomizations overlays plugin metadata at run time", () => {
   });
   const unmapped = applyCustomizations(pluginWith(), generated(["toString"]));
   expect(unmapped.commands[0]?.path).toEqual(["call", "toString"]);
+});
+
+test("fallback paths accept MCP tool names with dots and slashes", () => {
+  const resolved = applyCustomizations(pluginWith(), generated(["files.read", "repo/list"]));
+  expect(resolved.commands.map((command) => command.path)).toEqual([
+    ["call", "files.read"],
+    ["call", "repo/list"],
+  ]);
+  for (const path of [["files.read"], ["repo/list"], ["x", "a.b"]])
+    expect(() => applyCustomizations(pluginWith({ a: { path } }), generated(["a"]))).toThrow(
+      "Invalid command path",
+    );
 });
 
 test("applyCustomizations rejects stale, reserved, invalid and conflicting paths", () => {
