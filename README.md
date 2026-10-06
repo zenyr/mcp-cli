@@ -148,6 +148,15 @@ CLI는 플러그인 패키지의 `package.json` 위치로 출력 경로를 찾�
 생성 코드는 호출 함수를 내보내지 않습니다. 도구 호출은 입력 검증과 `beforeCall` 정책을 적용하는 `runService`만 거칩니다.
 도구별 입력 타입(`DemoEchoInput` 등)은 타입 참조용으로 export합니다.
 
+## 전역 명령
+
+루트에서 `bun link`를 한 번 실행하면 `mcp-cli`와 서비스별 명령이 `~/.bun/bin`에 연결됩니다.
+서비스 명령은 `mcp-cli <service>`와 같습니다. 예: `notion fetch get --help`.
+
+플러그인 `package.json`의 `"mcp-cli"` 표식에 `"bin": "<name>"`을 넣으면 서비스 명령이 생깁니다.
+`bun run bins`가 루트 `bin` 필드와 `bin/<name>.ts` shim을 다시 씁니다. `bun run lint`는 둘이 맞는지 검사합니다.
+bin을 추가하거나 지운 뒤에는 `bun link`를 다시 실행하십시오.
+
 ## 플러그인 추가
 
 1. `plugins/<service>`에 workspace 패키지를 만듭니다.
