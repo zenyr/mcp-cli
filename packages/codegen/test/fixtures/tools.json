@@ -1,0 +1,51 @@
+{
+  "tools": [
+    {
+      "name": "demo-echo",
+      "description": "Echo a message",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Message to echo"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "uppercase": {
+            "type": "boolean"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parent": {
+            "type": "object",
+            "properties": {
+              "page_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": ["text"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "demo-fail",
+      "description": "Return an error",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    }
+  ]
+}
