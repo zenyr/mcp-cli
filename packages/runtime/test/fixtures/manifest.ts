@@ -8,6 +8,7 @@ export const commands: Record<string, CommandCustomization> = {
   },
   "demo-fail": { path: ["message", "fail"], summary: "Return a tool error" },
   "demo-fields": { path: ["field", "set"], summary: "Accept nullable and union fields" },
+  "demo-shape": { path: ["shape", "set"], summary: "Accept nullable objects and reserved names" },
 };
 
 export const manifest = {
@@ -51,6 +52,27 @@ export const manifest = {
           label: { type: ["string", "null"] },
           meta: { oneOf: [{ type: "object" }, { type: "null" }] },
           amount: { type: "number" },
+        },
+      },
+    },
+    {
+      name: "demo-shape",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          options: {
+            anyOf: [
+              {
+                type: "object",
+                properties: { verbose: { type: "boolean" }, page_id: { type: "string" } },
+              },
+              { type: "null" },
+            ],
+          },
+          size: { type: ["integer", "null"] },
+          json: { type: "boolean" },
+          input_file: { type: "string" },
         },
       },
     },

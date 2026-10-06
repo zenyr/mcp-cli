@@ -6,6 +6,26 @@ import {
   type CommandSpec,
   type Manifest,
 } from "@mcp-cli/core";
+import { CALL, HELP, METHODS, SKILL, flagForm, isReservedField } from "./reserved";
+import { typeLabel } from "./schema";
+
+const reservedUsage = (service: string): Map<string | undefined, string> =>
+  new Map([
+    [METHODS, " [group] [--json]\n\nList baked-in tool names and command paths."],
+    [HELP, " [command]\n\nShow help for a command."],
+    [SKILL, "\n\nPrint the service workflow."],
+    [
+      CALL,
+      ` <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse ${service} ${METHODS} to discover names.`,
+    ],
+  ]);
+const argumentLine = (key: string, schema: Record<string, unknown>, required: boolean): string => {
+  const reserved = isReservedField(key);
+  const name = reserved ? key : `--${flagForm(key)}`;
+  const notes = [required ? "required" : "optional", ...(reserved ? ["set via --input only"] : [])];
+  const description = schema.description ? ` - ${String(schema.description)}` : "";
+  return `  ${name}  ${typeLabel(schema)} (${notes.join(", ")})${description}`;
+};
 
 export const findCommand = (manifest: Manifest, path: string[]): CommandSpec | undefined => {
   const key = path.join(" ");
@@ -23,12 +43,8 @@ export const help = (manifest: Manifest, path: string[]): string => {
     throw new UsageError(`Unknown command: ${path.join(" ")}`);
   }
   const title = [manifest.service, ...path].join(" ");
-  if (path.join(" ") === "methods")
-    return `Usage: ${title} [group] [--json]\n\nList baked-in tool names and command paths.`;
-  if (path.join(" ") === "help") return `Usage: ${title} [command]\n\nShow help for a command.`;
-  if (path.join(" ") === "skill") return `Usage: ${title}\n\nPrint the service workflow.`;
-  if (path.join(" ") === "call")
-    return `Usage: ${title} <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse ${manifest.service} methods to discover names.`;
+  const usage = path.length === 1 ? reservedUsage(manifest.service).get(path[0]) : undefined;
+  if (usage !== undefined) return `Usage: ${title}${usage}`;
   const lines = [
     `Usage: ${title}${command ? " [options]" : " <command>"}`,
     "",
@@ -44,10 +60,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
       lines.push("", "Arguments:");
       for (const [key, schema] of Object.entries(props)) {
         if (!isRecord(schema)) continue;
-        const type = Array.isArray(schema.enum) ? schema.enum.join("|") : (schema.type ?? "JSON");
-        lines.push(
-          `  --${key.replaceAll("_", "-")}  ${type} (${Array.isArray(required) && required.includes(key) ? "required" : "optional"})${schema.description ? ` - ${schema.description}` : ""}`,
-        );
+        lines.push(argumentLine(key, schema, Array.isArray(required) && required.includes(key)));
       }
     }
     lines.push(

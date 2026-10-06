@@ -11,6 +11,7 @@ import { InputValidationError, validateInput } from "@mcp-cli/schema";
 import { findCommand, help } from "./help";
 import { parseInput } from "./input";
 import { parseArguments } from "./arguments";
+import { HELP, METHODS, SKILL } from "./reserved";
 export { help } from "./help";
 
 const formatResult = (result: ToolResult, json: boolean): string =>
@@ -51,7 +52,7 @@ export const runService = async (
     argv,
     (commandPath) => findCommand(manifest, commandPath)?.inputSchema ?? {},
   );
-  if (path[0] === "help") {
+  if (path[0] === HELP) {
     if (tokens.length) throw new UsageError("Help does not accept input flags");
     dependencies.io.write(help(manifest, path.slice(1)));
     return 0;
@@ -62,7 +63,7 @@ export const runService = async (
     dependencies.io.write(help(manifest, path));
     return 0;
   }
-  if (path[0] === "methods") {
+  if (path[0] === METHODS) {
     if (tokens.length) throw new UsageError("Methods does not accept input flags");
     const commands = manifest.commands.filter((command) =>
       path.slice(1).every((part, i) => command.path[i] === part),
@@ -81,7 +82,7 @@ export const runService = async (
     );
     return 0;
   }
-  if (path.join(" ") === "skill") {
+  if (path.join(" ") === SKILL) {
     if (tokens.length) throw new UsageError("Skill does not accept input flags");
     dependencies.io.write(
       plugin.skill ??
@@ -102,7 +103,8 @@ export const runService = async (
   try {
     const result = await session.callTool(command.name, input);
     const text = formatResult(result, json);
-    if (result.isError) dependencies.io.writeError(text);
+    // With --json the structured result stays on stdout so pipes see it; the exit code marks the error.
+    if (result.isError && !json) dependencies.io.writeError(text);
     else dependencies.io.write(text);
     return result.isError ? 1 : 0;
   } finally {

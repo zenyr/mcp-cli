@@ -58,6 +58,13 @@ export class UsageError extends Error {
 export class NotGeneratedError extends Error {
   override name = "NotGeneratedError";
 }
-export const RESERVED_COMMANDS: readonly string[] = ["help", "methods", "call", "skill"];
-export const RESERVED_FLAGS: readonly string[] = ["json", "help", "input", "input-file"];
-export const fallbackPath = (toolName: string): string[] => ["call", toolName];
+export const COMMANDS = { help: "help", methods: "methods", call: "call", skill: "skill" } as const;
+export const FLAGS = {
+  json: "json",
+  help: "help",
+  input: "input",
+  inputFile: "input-file",
+} as const;
+export const RESERVED_COMMANDS: readonly string[] = Object.values(COMMANDS);
+export const RESERVED_FLAGS: readonly string[] = Object.values(FLAGS);
+export const fallbackPath = (toolName: string): string[] => [COMMANDS.call, toolName];

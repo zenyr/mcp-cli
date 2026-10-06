@@ -134,16 +134,22 @@ test("invalid flags and prototype paths fail before opening", async () => {
   }
   expect(({} as Record<string, unknown>).polluted).toBeUndefined();
 });
-test("tool errors write to the error channel, return nonzero and close the session", async () => {
-  for (const json of [[], ["--json"]]) {
-    const f = fixture(true);
-    expect(await runService(plugin, manifest, ["message", "fail", ...json], f.dependencies)).toBe(
-      1,
-    );
-    expect(f.output).toEqual([]);
-    expect(f.errors.join("")).toContain("hello");
-    expect(f.counts()).toEqual({ opened: 1, closed: 1 });
-  }
+test("tool errors write text to the error channel, return nonzero and close the session", async () => {
+  const f = fixture(true);
+  expect(await runService(plugin, manifest, ["message", "fail"], f.dependencies)).toBe(1);
+  expect(f.output).toEqual([]);
+  expect(f.errors).toEqual(["hello"]);
+  expect(f.counts()).toEqual({ opened: 1, closed: 1 });
+});
+test("tool errors with --json keep the structured result on stdout", async () => {
+  const f = fixture(true);
+  expect(await runService(plugin, manifest, ["message", "fail", "--json"], f.dependencies)).toBe(1);
+  expect(f.errors).toEqual([]);
+  expect(JSON.parse(f.output.join(""))).toEqual({
+    content: [{ type: "text", text: "hello" }],
+    isError: true,
+  });
+  expect(f.counts()).toEqual({ opened: 1, closed: 1 });
 });
 test("call failures still close the session", async () => {
   let closed = false;
@@ -330,4 +336,102 @@ test("plugin customizations apply at run time without regenerating", async () =>
   await expect(runService(stale, manifest, ["--help"], f.dependencies)).rejects.toThrow(
     "missing tool",
   );
+});
+
+test("input file read failures are usage errors and - reads stdin", async () => {
+  const f = fixture();
+  f.dependencies.io.readFile = async () => {
+    throw Object.assign(new Error("open failed"), { code: "ENOENT" });
+  };
+  const error = await runService(
+    plugin,
+    manifest,
+    ["call", "demo-echo", "--input-file", "/nonexistent.json"],
+    f.dependencies,
+  ).catch((caught: unknown) => caught);
+  expect(error).toBeInstanceOf(UsageError);
+  expect(error).toHaveProperty("message", expect.stringContaining("ENOENT"));
+  expect(error).toHaveProperty("cause", expect.any(Error));
+  for (const args of [["--input-file=-"], ["--input-file", "-"]]) {
+    expect(await callWith(["call", "demo-echo", ...args])).toEqual([
+      { name: "demo-echo", input: { text: "stdin" } },
+    ]);
+  }
+});
+
+test("input file failures without a system code propagate unchanged", async () => {
+  const f = fixture();
+  const failure = new Error("Reader crashed");
+  f.dependencies.io.readFile = async () => {
+    throw failure;
+  };
+  const error = await runService(
+    plugin,
+    manifest,
+    ["call", "demo-echo", "--input-file", "in.json"],
+    f.dependencies,
+  ).catch((caught: unknown) => caught);
+  expect(error).toBe(failure);
+});
+
+test("repeated input sources report the repeated flag", async () => {
+  await rejectsWith(
+    ["call", "demo-echo", "--input", "{}", "--input", "{}"],
+    "Repeated flag: --input",
+  );
+  await rejectsWith(
+    ["call", "demo-echo", "--input", "{}", "--input-file", "a.json"],
+    "--input or --input-file",
+  );
+});
+
+test("dotted flags descend into nullable object unions", async () => {
+  expect(await callWith(["shape", "set", "--options.verbose", "--options.page-id", "p"])).toEqual([
+    { name: "demo-shape", input: { options: { verbose: true, page_id: "p" } } },
+  ]);
+  expect(await callWith(["shape", "set", "--options", "null"])).toEqual([
+    { name: "demo-shape", input: { options: null } },
+  ]);
+});
+
+test("reserved-name properties are input-only and globals keep their meaning", async () => {
+  const f = fixture();
+  await runService(
+    plugin,
+    manifest,
+    ["shape", "set", "--input", '{"json":true,"input_file":"x"}', "--json"],
+    f.dependencies,
+  );
+  expect(f.calls).toEqual([{ name: "demo-shape", input: { json: true, input_file: "x" } }]);
+  expect(f.output[0]).toContain('"content"');
+  for (const args of [["--no-json"], ["--json.x", "1"], ["--input.x", "1"]]) {
+    await rejectsWith(["shape", "set", ...args], "via --input");
+  }
+  expect(await callWith(["call", "demo-echo", "--input_file=-"])).toEqual([
+    { name: "demo-echo", input: { text: "stdin" } },
+  ]);
+});
+
+test("help shows effective types and input-only reserved properties", async () => {
+  const f = fixture();
+  await runService(plugin, manifest, ["shape", "set", "--help"], f.dependencies);
+  const text = f.output.join("");
+  expect(text).toContain("--options  object|null (optional)");
+  expect(text).toContain("--size  integer|null (optional)");
+  expect(text).toContain("  json  boolean (optional, set via --input only)");
+  expect(text).toContain("  input_file  string (optional, set via --input only)");
+  expect(text).not.toContain("--input-file  string");
+});
+
+test("reserved command help keeps its usage lines", async () => {
+  const f = fixture();
+  for (const name of ["methods", "help", "skill", "call"]) {
+    await runService(plugin, manifest, ["help", name], f.dependencies);
+  }
+  expect(f.output).toEqual([
+    "Usage: demo methods [group] [--json]\n\nList baked-in tool names and command paths.",
+    "Usage: demo help [command]\n\nShow help for a command.",
+    "Usage: demo skill\n\nPrint the service workflow.",
+    "Usage: demo call <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse demo methods to discover names.",
+  ]);
 });
