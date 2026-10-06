@@ -1,4 +1,4 @@
-import type { CommandSpec, Manifest } from "@mcp-to-cli/core";
+import type { CommandSpec, Manifest } from "@mcp-cli/core";
 import { isRecord } from "./schema";
 
 export const findCommand = (manifest: Manifest, path: string[]): CommandSpec | undefined => {

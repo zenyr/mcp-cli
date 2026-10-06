@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-to-cli/codegen",
+  "name": "@mcp-cli/codegen",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@mcp-to-cli/core": "workspace:*",
+    "@mcp-cli/core": "workspace:*",
     "json-schema-to-typescript": "^15.0.4"
   }
 }

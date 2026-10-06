@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { definePlugin, type ToolSession } from "@mcp-to-cli/core";
+import { definePlugin, type ToolSession } from "@mcp-cli/core";
 import { runService } from "../src";
 import { manifest } from "../../../plugins/demo/src/generated";
 
@@ -218,7 +218,7 @@ test("prototype names in schema do not become inherited flag definitions", async
 });
 
 test("validator ignores inherited required input fields", async () => {
-  const { validateInput } = await import("@mcp-to-cli/schema");
+  const { validateInput } = await import("@mcp-cli/schema");
   const input = Object.create({ text: "inherited" });
   expect(() =>
     validateInput(

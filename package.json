@@ -1,5 +1,5 @@
 {
-  "name": "mcp-to-cli",
+  "name": "mcp-cli",
   "private": true,
   "workspaces": [
     "packages/*",

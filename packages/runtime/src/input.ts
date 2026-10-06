@@ -1,4 +1,4 @@
-import type { JsonSchema } from "@mcp-to-cli/core";
+import type { JsonSchema } from "@mcp-cli/core";
 import { fieldName, isRecord, property } from "./schema";
 
 type InputFiles = { readFile(path: string): Promise<string>; readStdin(): Promise<string> };

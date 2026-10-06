@@ -1,4 +1,4 @@
-# mcp-to-cli
+# mcp-cli
 
 MCP 도구 정의를 정적 코드로 생성하고, 필요한 범위만 발견할 수 있는 CLI로 실행합니다.
 Bun workspaces와 Turborepo를 사용합니다. 서비스는 별도 플러그인 패키지로 추가합니다.
@@ -103,13 +103,13 @@ bun run generate demo --snapshot plugins/demo/src/tools.json --check
 ## 플러그인 추가
 
 1. `plugins/<service>`에 workspace 패키지를 만듭니다.
-2. `@mcp-to-cli/core`의 `definePlugin`으로 기본 export를 만듭니다.
+2. `@mcp-cli/core`의 `definePlugin`으로 기본 export를 만듭니다.
 3. `apps/cli/package.json`에 플러그인 의존성을 추가합니다.
 4. `apps/cli/src/plugins.ts`에 lazy import를 등록합니다.
 5. `bun run generate <service>`로 정적 정의를 생성합니다.
 
 ```typescript
-import { definePlugin } from "@mcp-to-cli/core";
+import { definePlugin } from "@mcp-cli/core";
 
 export default definePlugin({
   name: "issues",

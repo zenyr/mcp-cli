@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const directory = await mkdtemp(join(tmpdir(), "mcp-to-cli-hooks-"));
+const directory = await mkdtemp(join(tmpdir(), "mcp-cli-hooks-"));
 const run = async (script: string, path: string) => {
   const child = Bun.spawn(["bun", script, path], { stdout: "pipe", stderr: "pipe" });
   const [exitCode, stderr] = await Promise.all([child.exited, new Response(child.stderr).text()]);

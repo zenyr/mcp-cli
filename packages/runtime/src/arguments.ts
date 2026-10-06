@@ -1,4 +1,4 @@
-import type { JsonSchema } from "@mcp-to-cli/core";
+import type { JsonSchema } from "@mcp-cli/core";
 import { property } from "./schema";
 
 const globalFlags = new Set(["--json", "--help", "-h"]);

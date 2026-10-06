@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "mcp-to-cli",
+      "name": "mcp-cli",
       "devDependencies": {
         "@types/bun": "^1.3.9",
         "lefthook": "^2.1.14",
@@ -14,69 +14,69 @@
       },
     },
     "apps/cli": {
-      "name": "@mcp-to-cli/cli",
+      "name": "@mcp-cli/cli",
       "version": "0.1.0",
       "bin": {
-        "mcp-to-cli": "./src/main.ts",
+        "mcp-cli": "./src/main.ts",
       },
       "dependencies": {
-        "@mcp-to-cli/codegen": "workspace:*",
-        "@mcp-to-cli/core": "workspace:*",
-        "@mcp-to-cli/mcp": "workspace:*",
-        "@mcp-to-cli/plugin-demo": "workspace:*",
-        "@mcp-to-cli/plugin-notion": "workspace:*",
-        "@mcp-to-cli/runtime": "workspace:*",
+        "@mcp-cli/codegen": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
+        "@mcp-cli/mcp": "workspace:*",
+        "@mcp-cli/plugin-demo": "workspace:*",
+        "@mcp-cli/plugin-notion": "workspace:*",
+        "@mcp-cli/runtime": "workspace:*",
       },
     },
     "packages/codegen": {
-      "name": "@mcp-to-cli/codegen",
+      "name": "@mcp-cli/codegen",
       "version": "0.1.0",
       "dependencies": {
-        "@mcp-to-cli/core": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
         "json-schema-to-typescript": "^15.0.4",
       },
     },
     "packages/core": {
-      "name": "@mcp-to-cli/core",
+      "name": "@mcp-cli/core",
       "version": "0.1.0",
     },
     "packages/mcp": {
-      "name": "@mcp-to-cli/mcp",
+      "name": "@mcp-cli/mcp",
       "version": "0.1.0",
       "dependencies": {
-        "@mcp-to-cli/core": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
         "@modelcontextprotocol/client": "2.2.0",
       },
     },
     "packages/runtime": {
-      "name": "@mcp-to-cli/runtime",
+      "name": "@mcp-cli/runtime",
       "version": "0.1.0",
       "dependencies": {
-        "@mcp-to-cli/core": "workspace:*",
-        "@mcp-to-cli/schema": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
+        "@mcp-cli/schema": "workspace:*",
       },
     },
     "packages/schema": {
-      "name": "@mcp-to-cli/schema",
+      "name": "@mcp-cli/schema",
       "version": "0.1.0",
       "dependencies": {
-        "@mcp-to-cli/core": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
         "ajv": "^8.17.1",
         "ajv-formats": "^3.0.1",
       },
     },
     "plugins/demo": {
-      "name": "@mcp-to-cli/plugin-demo",
+      "name": "@mcp-cli/plugin-demo",
       "version": "0.1.0",
       "dependencies": {
-        "@mcp-to-cli/core": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
       },
     },
     "plugins/notion": {
-      "name": "@mcp-to-cli/plugin-notion",
+      "name": "@mcp-cli/plugin-notion",
       "version": "0.1.0",
       "dependencies": {
-        "@mcp-to-cli/core": "workspace:*",
+        "@mcp-cli/core": "workspace:*",
       },
     },
   },
@@ -85,21 +85,21 @@
 
     "@jsdevtools/ono": ["@jsdevtools/ono@7.1.3", "", {}, "sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg=="],
 
-    "@mcp-to-cli/cli": ["@mcp-to-cli/cli@workspace:apps/cli"],
+    "@mcp-cli/cli": ["@mcp-cli/cli@workspace:apps/cli"],
 
-    "@mcp-to-cli/codegen": ["@mcp-to-cli/codegen@workspace:packages/codegen"],
+    "@mcp-cli/codegen": ["@mcp-cli/codegen@workspace:packages/codegen"],
 
-    "@mcp-to-cli/core": ["@mcp-to-cli/core@workspace:packages/core"],
+    "@mcp-cli/core": ["@mcp-cli/core@workspace:packages/core"],
 
-    "@mcp-to-cli/mcp": ["@mcp-to-cli/mcp@workspace:packages/mcp"],
+    "@mcp-cli/mcp": ["@mcp-cli/mcp@workspace:packages/mcp"],
 
-    "@mcp-to-cli/plugin-demo": ["@mcp-to-cli/plugin-demo@workspace:plugins/demo"],
+    "@mcp-cli/plugin-demo": ["@mcp-cli/plugin-demo@workspace:plugins/demo"],
 
-    "@mcp-to-cli/plugin-notion": ["@mcp-to-cli/plugin-notion@workspace:plugins/notion"],
+    "@mcp-cli/plugin-notion": ["@mcp-cli/plugin-notion@workspace:plugins/notion"],
 
-    "@mcp-to-cli/runtime": ["@mcp-to-cli/runtime@workspace:packages/runtime"],
+    "@mcp-cli/runtime": ["@mcp-cli/runtime@workspace:packages/runtime"],
 
-    "@mcp-to-cli/schema": ["@mcp-to-cli/schema@workspace:packages/schema"],
+    "@mcp-cli/schema": ["@mcp-cli/schema@workspace:packages/schema"],
 
     "@modelcontextprotocol/client": ["@modelcontextprotocol/client@2.2.0", "", { "dependencies": { "@modelcontextprotocol/core": "2.2.0", "cross-spawn": "^7.0.5", "eventsource": "^3.0.2", "eventsource-parser": "^3.0.0", "jose": "^6.1.3", "pkce-challenge": "^5.0.0", "zod": "^4.2.0" } }, "sha512-LxCou/CSYQ6dwEnjhLZY0KnEuc8V4UJ3IEQCl/uR2yHobSQIEdJKUlKLRYRF5i5FqRGHy1eK7une3aAWDHLtig=="],
 

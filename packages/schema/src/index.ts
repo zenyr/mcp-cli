@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
-import type { JsonSchema } from "@mcp-to-cli/core";
+import type { JsonSchema } from "@mcp-cli/core";
 
 const validator = new Ajv({ allErrors: true, strict: false, ownProperties: true });
 addFormats(validator);

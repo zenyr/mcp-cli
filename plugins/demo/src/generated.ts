@@ -1,4 +1,4 @@
-import type { Manifest, ToolCaller } from "@mcp-to-cli/core";
+import type { Manifest, ToolCaller } from "@mcp-cli/core";
 export const manifest = {
   "commands": [
     {

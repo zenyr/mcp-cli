@@ -1,5 +1,5 @@
 import { compile } from "json-schema-to-typescript";
-import type { Manifest, ServicePlugin, ToolDefinition } from "@mcp-to-cli/core";
+import type { Manifest, ServicePlugin, ToolDefinition } from "@mcp-cli/core";
 
 import { canonicalize, isCompilerSchema, isRecord, validateSchema } from "./schema";
 
@@ -89,7 +89,7 @@ export const generateModule = async (manifest: Manifest): Promise<string> => {
     );
   }
   return [
-    'import type { Manifest, ToolCaller } from "@mcp-to-cli/core";',
+    'import type { Manifest, ToolCaller } from "@mcp-cli/core";',
     `export const manifest = ${JSON.stringify(canonicalize(manifest), null, 2)} satisfies Manifest;`,
     ...types,
     "export function createClient(call: ToolCaller) {",

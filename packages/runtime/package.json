@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-to-cli/runtime",
+  "name": "@mcp-cli/runtime",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@mcp-to-cli/core": "workspace:*",
-    "@mcp-to-cli/schema": "workspace:*"
+    "@mcp-cli/core": "workspace:*",
+    "@mcp-cli/schema": "workspace:*"
   }
 }
