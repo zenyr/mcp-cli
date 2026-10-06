@@ -1,7 +1,12 @@
 import { definePlugin } from "@mcp-cli/core";
+import { commands, groups, quickstart, skill } from "./commands";
 export default definePlugin({
   name: "linear",
   summary: "Linear issues, projects and cycles",
+  commands,
+  groups,
+  quickstart,
+  skill,
   auth: { type: "oauth" },
   // An explicit LINEAR_MCP_TOKEN (OAuth token or API key) takes precedence over credentials stored by `mcp-cli login linear`.
   connection: (env) => {
