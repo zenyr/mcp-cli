@@ -7,6 +7,25 @@ type InputFiles = { readFile(path: string): Promise<string>; readStdin(): Promis
 const unsafe = new Set(["__proto__", "prototype", "constructor"]);
 const mixedSources = "Use one input source; do not mix JSON and flags";
 
+// File system failures carry a string code; anything else is not a usage problem.
+const systemCode = (error: unknown): string | undefined =>
+  isRecord(error) && typeof error.code === "string" ? error.code : undefined;
+
+const readSource = async (
+  token: { flag: string; from: "file" | "stdin" | "text"; value: string },
+  files: InputFiles,
+): Promise<string> => {
+  if (token.from === "text") return token.value;
+  if (token.from === "stdin") return files.readStdin();
+  try {
+    return await files.readFile(token.value);
+  } catch (error) {
+    const code = systemCode(error);
+    if (code === undefined) throw error;
+    throw new UsageError(`Cannot read ${token.flag} ${token.value}: ${code}`, { cause: error });
+  }
+};
+
 const setField = (
   input: Record<string, unknown>,
   schema: JsonSchema,
@@ -40,19 +59,19 @@ export const parseInput = async (
   let source: { flag: string; text: string } | undefined;
   for (const token of tokens) {
     if (token.kind === "invalid") throw new UsageError(token.message);
+    if (source !== undefined && token.kind === "source")
+      throw new UsageError(
+        source.flag === token.flag
+          ? `Repeated flag: ${token.flag}; pass one JSON object`
+          : `Use one input source: ${source.flag} or ${token.flag}`,
+      );
     if (source !== undefined) throw new UsageError(mixedSources);
     if (token.kind === "field") {
       setField(input, schema, token);
       continue;
     }
     if (Object.keys(input).length) throw new UsageError(mixedSources);
-    const text =
-      token.from === "file"
-        ? await files.readFile(token.value)
-        : token.from === "stdin"
-          ? await files.readStdin()
-          : token.value;
-    source = { flag: token.flag, text };
+    source = { flag: token.flag, text: await readSource(token, files) };
   }
   if (source === undefined) return input;
   const parsed = parseJson(source.text, source.flag);

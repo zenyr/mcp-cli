@@ -1,4 +1,5 @@
 import { RESERVED_FLAGS, type JsonSchema } from "@mcp-cli/core";
+import { HELP_FLAG, INPUT_FILE_FLAG, JSON_FLAG, flagForm, isReservedField } from "./reserved";
 import { fieldType, property } from "./schema";
 
 export type InputToken =
@@ -12,10 +13,14 @@ export type ParsedArguments = {
   wantsHelp: boolean;
 };
 
-const outputFlags = new Set(["--json", "--help"]);
+const outputFlags = new Set([`--${JSON_FLAG}`, `--${HELP_FLAG}`]);
 const invalid = (message: string): InputToken => ({ kind: "invalid", message });
 const lookup = (schema: JsonSchema, path: string[]): JsonSchema =>
   path.reduce((field, segment) => property(field, segment), schema);
+const inputOnly = (flag: string, path: string[]): InputToken | undefined =>
+  isReservedField(path[0] ?? "")
+    ? invalid(`${flag} names a global flag; set ${path[0]} via --input`)
+    : undefined;
 
 // Scans argv once; the command schema is resolved when the first option ends the command path.
 export const parseArguments = (
@@ -42,10 +47,11 @@ export const parseArguments = (
     const name = arg.slice(2, separator < 0 ? undefined : separator);
     const inline = separator < 0 ? undefined : arg.slice(separator + 1);
     const flag = `--${name}`;
-    const reserved = arg.startsWith("--") && RESERVED_FLAGS.includes(name);
-    if (reserved && (name === "json" || name === "help")) {
+    const global = flagForm(name);
+    const reserved = arg.startsWith("--") && RESERVED_FLAGS.includes(global);
+    if (reserved && (global === JSON_FLAG || global === HELP_FLAG)) {
       if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
-      else if (name === "json") json = true;
+      else if (global === JSON_FLAG) json = true;
       else wantsHelp = true;
       continue;
     }
@@ -65,20 +71,27 @@ export const parseArguments = (
       const value = takeValue();
       if (value === undefined) tokens.push(invalid(`Missing value for ${flag}`));
       else {
-        const from = name === "input-file" ? "file" : value === "-" ? "stdin" : "text";
-        tokens.push({ kind: "source", flag, from, value });
+        const from = value === "-" ? "stdin" : global === INPUT_FILE_FLAG ? "file" : "text";
+        tokens.push({ kind: "source", flag: `--${global}`, from, value });
       }
       continue;
     }
     if (name.startsWith("no-")) {
       const fieldPath = name.slice(3).split(".");
-      if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
+      const blocked = inputOnly(flag, fieldPath);
+      if (blocked) tokens.push(blocked);
+      else if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
       else if (fieldType(lookup(schema, fieldPath)).type !== "boolean")
         tokens.push(invalid(`Negation requires a boolean field: ${flag}`));
       else tokens.push({ kind: "field", flag, path: fieldPath, raw: "false" });
       continue;
     }
     const fieldPath = name.split(".");
+    const blocked = inputOnly(flag, fieldPath);
+    if (blocked) {
+      tokens.push(blocked);
+      continue;
+    }
     const field = fieldType(lookup(schema, fieldPath));
     if (field.type === "boolean" && inline === undefined) {
       const explicit = next === "true" || next === "false" || (field.nullable && next === "null");
