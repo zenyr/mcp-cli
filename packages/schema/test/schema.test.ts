@@ -49,3 +49,31 @@ test("compiled validators are cached per schema object", () => {
   expect(() => validateInput(schema, { a: 1 })).not.toThrow();
   expect(() => validateInput({ ...schema }, { a: 1 })).toThrow(InputValidationError);
 });
+
+test("2020-12 schemas compile and use 2020-12 keywords", () => {
+  const schema = {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    properties: { pair: { type: "array", prefixItems: [{ type: "string" }], items: false } },
+    $defs: { unused: { type: "string" } },
+  };
+  expect(() => validateInput(schema, { pair: ["a"] })).not.toThrow();
+  expect(() => validateInput(schema, { pair: ["a", "b"] })).toThrow(InputValidationError);
+});
+
+test("undeclared schemas use 2020-12 and still accept draft-07 tuple items", () => {
+  const modern = { type: "object", properties: { pair: { prefixItems: [{ type: "string" }] } } };
+  expect(() => validateInput(modern, { pair: [1] })).toThrow(InputValidationError);
+  const legacy = { type: "object", properties: { pair: { items: [{ type: "string" }] } } };
+  expect(() => validateInput(legacy, { pair: [1] })).toThrow(InputValidationError);
+});
+
+test("draft-07 schemas keep draft-07 semantics", () => {
+  const schema = {
+    $schema: "http://json-schema.org/draft-07/schema#",
+    type: "object",
+    properties: { pair: { items: [{ type: "string" }], additionalItems: false } },
+  };
+  expect(() => validateInput(schema, { pair: ["a"] })).not.toThrow();
+  expect(() => validateInput(schema, { pair: ["a", "b"] })).toThrow(InputValidationError);
+});
