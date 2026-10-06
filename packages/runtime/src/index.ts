@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   RepeatedCallError,
   UsageError,
@@ -16,7 +17,7 @@ import { runPrompts } from "./prompts";
 import { HELP, METHODS, PROMPTS, RESOURCES, SKILL } from "./reserved";
 import { runResources } from "./resources";
 import { callKey, guardsRepeats, repeatMessage } from "./repeat";
-import { readLocalFiles, uploadLocalFiles, withDigests } from "./uploads";
+import { preUploadSchema, readLocalFiles, uploadLocalFiles, withDigests } from "./uploads";
 export { help } from "./help";
 
 const formatResult = (result: ToolResult, json: boolean): string =>
@@ -106,34 +107,41 @@ export const runService = async (
     return 0;
   }
   const input = await parseInput(tokens, command.inputSchema, dependencies.io);
-  validateUserInput(command.inputSchema, input);
-  await plugin.beforeCall?.(command, input);
   const files = await readLocalFiles(command, input, dependencies.io.readBytes);
+  validateUserInput(files.size ? preUploadSchema(command) : command.inputSchema, input);
+  await plugin.beforeCall?.(command, input);
   const { uploadFile } = plugin;
   const { putBytes } = dependencies;
   if (files.size && (!uploadFile || !putBytes))
     throw new Error(`${manifest.service} cannot upload local files in this environment`);
   const guard = allowRepeat || !guardsRepeats(command) ? undefined : dependencies.guard;
   const key = callKey(command.name, withDigests(command, input, files));
-  const earlier = await guard?.begin(manifest.service, key, command.name);
+  const attempt = randomUUID();
+  const earlier = await guard?.begin(manifest.service, key, command.name, attempt);
   if (earlier)
     throw new RepeatedCallError(repeatMessage(command.path.join(" "), earlier, Date.now()));
-  const session = await dependencies.open();
+  // Failures before the tool call prove it never ran, so they must not block the retry.
+  const notRun = async (error: unknown): Promise<never> => {
+    await guard?.finish(manifest.service, key, attempt, "error");
+    throw error;
+  };
+  const session = await dependencies.open().catch(notRun);
   try {
     const upload =
       files.size && uploadFile && putBytes
         ? (file: LocalFile) => uploadFile(file, { callTool: session.callTool, putBytes })
         : undefined;
     const payload = upload
-      ? await uploadLocalFiles(command, input, files, upload).catch(async (error: unknown) => {
-          // The tool never ran, so a failed upload must not block the retry.
-          await guard?.finish(manifest.service, key, "error");
-          throw error;
-        })
+      ? await uploadLocalFiles(command, input, files, upload)
+          .then((uploaded) => {
+            validateUserInput(command.inputSchema, uploaded);
+            return uploaded;
+          })
+          .catch(notRun)
       : input;
     const result = await session.callTool(command.name, payload);
     // A thrown call stays pending because the server may still have applied it.
-    await guard?.finish(manifest.service, key, result.isError ? "error" : "ok");
+    await guard?.finish(manifest.service, key, attempt, result.isError ? "error" : "ok");
     const text = formatResult(result, json);
     // With --json the structured result stays on stdout so pipes see it; the exit code marks the error.
     if (result.isError && !json) dependencies.io.writeError(text);

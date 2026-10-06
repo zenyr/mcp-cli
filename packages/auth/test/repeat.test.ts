@@ -20,46 +20,56 @@ test("journal directory follows XDG_STATE_HOME and falls back to HOME", () => {
 
 test("pending and successful calls block an identical call inside the window", async () => {
   const calls = guard();
-  expect(await calls.begin("slack", "k", "send")).toBeUndefined();
-  expect(await calls.begin("slack", "k", "send")).toEqual({
+  expect(await calls.begin("slack", "k", "send", "a1")).toBeUndefined();
+  expect(await calls.begin("slack", "k", "send", "a2")).toEqual({
     tool: "send",
     at: clock,
     status: "pending",
+    attempt: "a1",
   });
-  await calls.finish("slack", "k", "ok");
+  await calls.finish("slack", "k", "a1", "ok");
   clock += 299_999;
-  expect((await calls.begin("slack", "k", "send"))?.status).toBe("ok");
-  expect(await calls.begin("slack", "other", "send")).toBeUndefined();
-  expect(await calls.begin("linear", "k", "send")).toBeUndefined();
+  expect((await calls.begin("slack", "k", "send", "a3"))?.status).toBe("ok");
+  expect(await calls.begin("slack", "other", "send", "a4")).toBeUndefined();
+  expect(await calls.begin("linear", "k", "send", "a5")).toBeUndefined();
   expect((await stat(join(root, "slack.json"))).mode & 0o777).toBe(0o600);
 });
 
 test("tool errors and expired records allow the call again", async () => {
   const calls = guard();
-  await calls.begin("slack", "k", "send");
-  await calls.finish("slack", "k", "error");
-  expect(await calls.begin("slack", "k", "send")).toBeUndefined();
-  await calls.finish("slack", "k", "ok");
+  await calls.begin("slack", "k", "send", "a1");
+  await calls.finish("slack", "k", "a1", "error");
+  expect(await calls.begin("slack", "k", "send", "a2")).toBeUndefined();
+  await calls.finish("slack", "k", "a2", "ok");
   clock += 300_000;
-  expect(await calls.begin("slack", "k", "send")).toBeUndefined();
+  expect(await calls.begin("slack", "k", "send", "a3")).toBeUndefined();
   const journal = JSON.parse(await readFile(join(root, "slack.json"), "utf8"));
-  expect(journal).toEqual({ k: { tool: "send", at: clock, status: "pending" } });
+  expect(journal).toEqual({ k: { tool: "send", at: clock, status: "pending", attempt: "a3" } });
+});
+
+test("a late finish from an expired attempt cannot settle the newer attempt", async () => {
+  const calls = guard();
+  await calls.begin("slack", "k", "send", "old");
+  clock += 300_000;
+  expect(await calls.begin("slack", "k", "send", "new")).toBeUndefined();
+  await calls.finish("slack", "k", "old", "error");
+  expect((await calls.begin("slack", "k", "send", "third"))?.attempt).toBe("new");
 });
 
 test("a malformed journal starts over instead of failing the call", async () => {
   await writeFile(join(root, "slack.json"), "{broken");
-  expect(await guard().begin("slack", "k", "send")).toBeUndefined();
+  expect(await guard().begin("slack", "k", "send", "a1")).toBeUndefined();
   await writeFile(join(root, "slack.json"), JSON.stringify({ k: { tool: 1 }, j: "x" }));
-  expect(await guard().begin("slack", "k", "send")).toBeUndefined();
+  expect(await guard().begin("slack", "k", "send", "a2")).toBeUndefined();
 });
 
 test("concurrent identical calls let exactly one through", async () => {
   const calls = guard();
   const results = await Promise.all(
-    Array.from({ length: 8 }, () =>
-      fileRepeatGuard({ dir: root, windowMs: 300_000 }).begin("slack", "k", "send"),
+    Array.from({ length: 8 }, (_, index) =>
+      fileRepeatGuard({ dir: root, windowMs: 300_000 }).begin("slack", "k", "send", `a${index}`),
     ),
   );
   expect(results.filter((result) => result === undefined)).toHaveLength(1);
-  expect(await calls.begin("slack", "k", "send")).toBeDefined();
+  expect(await calls.begin("slack", "k", "send", "late")).toBeDefined();
 });

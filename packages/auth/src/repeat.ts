@@ -27,6 +27,7 @@ const isCallRecord = (value: unknown): value is CallRecord =>
   isRecord(value) &&
   typeof value.tool === "string" &&
   typeof value.at === "number" &&
+  typeof value.attempt === "string" &&
   (value.status === "pending" || value.status === "ok" || value.status === "error");
 
 // The journal only prevents accidents, so an unreadable file starts over instead of failing the call.
@@ -70,17 +71,17 @@ export const fileRepeatGuard = (options: FileRepeatGuardOptions): RepeatGuard =>
     });
   };
   return {
-    begin: (service, key, tool) =>
+    begin: (service, key, tool, attempt) =>
       update(service, (journal, at) => {
         const earlier = journal[key];
         if (earlier && earlier.status !== "error") return earlier;
-        journal[key] = { tool, at, status: "pending" };
+        journal[key] = { tool, at, status: "pending", attempt };
         return undefined;
       }),
-    finish: async (service, key, status) => {
+    finish: async (service, key, attempt, status) => {
       await update(service, (journal) => {
         const record = journal[key];
-        if (record) journal[key] = { ...record, status };
+        if (record?.attempt === attempt) journal[key] = { ...record, status };
       });
     },
   };

@@ -22,6 +22,8 @@ export type CommandCustomization = {
   rules?: string[];
   /** Input fields (string or string array) whose `@path` values are uploaded through `uploadFile`. */
   uploads?: string[];
+  /** The server may omit this tool, for example when token scopes hide it. */
+  optional?: boolean;
 };
 export type CommandSpec = CommandCustomization & ToolDefinition;
 /** A recommended command line, relative to the service name, shown first in root help. */
@@ -94,12 +96,23 @@ export {
 } from "./auth";
 export type * from "./session";
 export type CallStatus = "pending" | "ok" | "error";
-export type CallRecord = { tool: string; at: number; status: CallStatus };
+export type CallRecord = { tool: string; at: number; status: CallStatus; attempt: string };
 /** Remembers recent non-idempotent calls so an identical retry inside the window can be refused. */
 export type RepeatGuard = {
-  /** Returns the earlier pending or successful record for `key`, or records this call as pending. */
-  begin(service: string, key: string, tool: string): Promise<CallRecord | undefined>;
-  finish(service: string, key: string, status: Exclude<CallStatus, "pending">): Promise<void>;
+  /** Returns the earlier pending or successful record for `key`, or records this attempt as pending. */
+  begin(
+    service: string,
+    key: string,
+    tool: string,
+    attempt: string,
+  ): Promise<CallRecord | undefined>;
+  /** Settles `key` only while it still belongs to `attempt`, so a late call cannot overwrite a newer one. */
+  finish(
+    service: string,
+    key: string,
+    attempt: string,
+    status: Exclude<CallStatus, "pending">,
+  ): Promise<void>;
 };
 /** An identical non-idempotent call already ran inside the repeat window; the CLI exits with status 3. */
 export class RepeatedCallError extends Error {

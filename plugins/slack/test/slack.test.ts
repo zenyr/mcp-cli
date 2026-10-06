@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { applyCustomizations } from "@mcp-cli/core";
 import slack from "../src";
 
 test("Slack sends SLACK_MCP_TOKEN as a bearer API key", async () => {
@@ -8,4 +9,22 @@ test("Slack sends SLACK_MCP_TOKEN as a bearer API key", async () => {
     type: "http",
     url: "http://x/mcp",
   });
+});
+
+test("a token with read scopes only still resolves and prunes write help", () => {
+  const tool = (name: string) => ({ name, inputSchema: { type: "object" } });
+  const manifest = applyCustomizations(slack, {
+    version: 2,
+    service: "slack",
+    tools: [tool("slack_read_channel"), tool("slack_read_thread")],
+  });
+  expect(manifest.commands.map((command) => command.path.join(" "))).toEqual([
+    "channel read",
+    "thread read",
+  ]);
+  expect(Object.keys(manifest.groups).sort()).toEqual(["channel", "thread"]);
+  expect(manifest.quickstart.map((entry) => entry.command.split(" ")[0])).toEqual([
+    "channel",
+    "thread",
+  ]);
 });

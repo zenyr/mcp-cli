@@ -3,6 +3,7 @@ import {
   RepeatedCallError,
   UsageError,
   definePlugin,
+  isRecord,
   type CallRecord,
   type RepeatGuard,
   type ToolSession,
@@ -481,15 +482,15 @@ test("root and group help describe each command and the recommended start", asyn
 const memoryGuard = () => {
   const records = new Map<string, CallRecord>();
   const guard: RepeatGuard = {
-    begin: async (service, key, tool) => {
+    begin: async (service, key, tool, attempt) => {
       const earlier = records.get(`${service}:${key}`);
       if (earlier && earlier.status !== "error") return earlier;
-      records.set(`${service}:${key}`, { tool, at: Date.now(), status: "pending" });
+      records.set(`${service}:${key}`, { tool, at: Date.now(), status: "pending", attempt });
       return undefined;
     },
-    finish: async (service, key, status) => {
+    finish: async (service, key, attempt, status) => {
       const record = records.get(`${service}:${key}`);
-      if (record) records.set(`${service}:${key}`, { ...record, status });
+      if (record?.attempt === attempt) records.set(`${service}:${key}`, { ...record, status });
     },
   };
   return { guard, records };
@@ -663,4 +664,56 @@ test("a failed upload closes the session and leaves the retry allowed", async ()
   expect([...records.values()].map((record) => record.status)).toEqual(["error"]);
   expect(f.calls).toEqual([]);
   expect(f.counts()).toEqual({ opened: 2, closed: 2 });
+});
+
+test("a failed connection proves the tool never ran and leaves the retry allowed", async () => {
+  const f = fixture();
+  const { guard, records } = memoryGuard();
+  let opens = 0;
+  const offline = {
+    ...f.dependencies,
+    guard,
+    open: async (): Promise<ToolSession> => {
+      opens++;
+      throw new Error("login required");
+    },
+  };
+  const args = ["message", "echo", "--text", "hi"];
+  await expect(runService(plugin, manifest, args, offline)).rejects.toThrow("login required");
+  await expect(runService(plugin, manifest, args, offline)).rejects.toThrow("login required");
+  expect(opens).toBe(2);
+  expect([...records.values()].map((record) => record.status)).toEqual(["error"]);
+});
+
+test("upload fields with URL format or pattern accept @paths and check the uploaded URL", async () => {
+  const constrained = (rule: Record<string, string>) => ({
+    ...manifest,
+    tools: manifest.tools.map((tool) =>
+      tool.name === "demo-echo"
+        ? {
+            ...tool,
+            inputSchema: {
+              ...tool.inputSchema,
+              properties: {
+                ...(isRecord(tool.inputSchema.properties) ? tool.inputSchema.properties : {}),
+                text: { type: "string", ...rule },
+              },
+            },
+          }
+        : tool,
+    ),
+  });
+  const f = fixture();
+  const { uploader, putBytes } = uploading();
+  const dependencies = { ...f.dependencies, putBytes };
+  const echo = (rule: Record<string, string>, text: string) =>
+    runService(uploader, constrained(rule), ["message", "echo", "--text", text], dependencies);
+  expect(await echo({ format: "uri" }, "@a.wav")).toBe(0);
+  expect(await echo({ pattern: "^https://files/" }, "@b.wav")).toBe(0);
+  await expect(echo({ format: "uri" }, "not a url")).rejects.toThrow(UsageError);
+  await expect(echo({ pattern: "^https://other/" }, "@a.wav")).rejects.toThrow(UsageError);
+  expect(f.calls).toEqual([
+    { name: "demo-echo", input: { text: "https://files/a.wav" } },
+    { name: "demo-echo", input: { text: "https://files/b.wav" } },
+  ]);
 });
