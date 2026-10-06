@@ -22,7 +22,9 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "prepare": "lefthook install",
-    "bins": "bun scripts/sync-bins.ts"
+    "bins": "bun scripts/sync-bins.ts",
+    "worktree:init": "bun scripts/worktree.ts init",
+    "worktree:clean": "bun scripts/worktree.ts clean"
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",
