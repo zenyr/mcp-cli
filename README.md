@@ -253,11 +253,11 @@ annotation이 없는 도구도 거부 대상입니다. 거부는 서버에 연�
 
 플러그인은 `auth`로 인증 방식을 선언합니다. CLI가 실행 시에 자격 증명을 연결에 넣습니다.
 
-| `auth`                                    | 동작                                                                        |
-| ----------------------------------------- | --------------------------------------------------------------------------- |
-| `{ type: "oauth" }`                       | `mcp-cli login <service>`로 받은 토큰을 요청마다 `Authorization`에 넣습니다 |
-| `{ type: "apiKey", env: "FISH_API_KEY" }` | 환경변수 값을 `Authorization: Bearer <key>`로 보냅니다                      |
-| `{ type: "none" }` 또는 생략              | 자격 증명을 넣지 않습니다                                                   |
+| `auth`                                    | 동작                                                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| `{ type: "oauth" }`                       | `mcp-cli login <service>`로 받은 토큰을 요청마다 `Authorization`에 넣습니다         |
+| `{ type: "apiKey", env: "FISH_API_KEY" }` | 환경변수나 `mcp-cli login`으로 저장한 키를 `Authorization: Bearer <key>`로 보냅니다 |
+| `{ type: "none" }` 또는 생략              | 자격 증명을 넣지 않습니다                                                           |
 
 ```bash
 mcp-cli login notion    # 브라우저 로그인 후 토큰 저장
@@ -274,6 +274,10 @@ mcp-cli logout notion   # 저장한 토큰 삭제
 - `login`은 `state`를 검사합니다. 5분 안에 응답이 없으면 실패합니다.
 - `oauth`의 `clientId`를 지정하면 동적 등록을 건너뜁니다. `scopes`, `clientName`, `redirectPort`도 지정할 수 있습니다.
 - `apiKey`의 `header`를 지정하면 scheme 없이 키만 보냅니다. `scheme`으로 접두어를 지정할 수 있습니다.
+- `apiKey` 서비스의 `mcp-cli login <service>`는 키를 숨김 입력으로 받거나 파이프의 표준 입력에서 읽어 저장합니다.
+  환경변수가 있으면 저장한 키보다 우선합니다. `mcp-cli logout <service>`가 저장한 키를 지웁니다.
+- `apiKey.alternates`는 같은 서비스의 다른 키를 선언합니다. 실행할 때 `--<flag>`로 고르고,
+  로그인과 로그아웃에도 같은 플래그를 붙입니다. 예: Slack의 `--xoxb`(`SLACK_MCP_BOT_TOKEN`).
   stdio 연결에는 같은 이름의 환경변수로 키를 전달합니다.
 - 토큰은 `$XDG_CONFIG_HOME/mcp-cli/credentials/<service>.json`에 저장합니다. `XDG_CONFIG_HOME`이 없으면 `~/.config`를 씁니다.
   디렉터리 권한은 `0700`, 파일 권한은 `0600`입니다. 임시 파일에 쓴 뒤 rename으로 교체합니다.
@@ -295,7 +299,8 @@ MCP SDK의 OAuth 함수는 `packages/mcp`만 사용합니다. 저장소는 `pack
 - stdio와 Streamable HTTP 연결을 제공합니다. 현재 실제 연결 테스트는 stdio에 한정합니다.
 - Notion, Linear, Slack, Fish Audio 플러그인은 실제 서버에서 생성한 정의와 명사-동사 명령 매핑을 포함합니다.
 - Notion·Linear·Fish Audio는 `mcp-cli login <service>`로 저장한 OAuth 토큰으로 생성하고 호출합니다.
-- Slack 서버는 DCR을 지원하지 않습니다. `SLACK_MCP_TOKEN`에 내부 앱의 사용자 토큰(`xoxp`)을 넣으십시오.
+- Slack 서버는 DCR을 지원하지 않습니다. 내부 앱의 사용자 토큰(`xoxp`)을 `mcp-cli login slack`으로 저장하거나
+  `SLACK_MCP_TOKEN`에 넣으십시오. 봇 토큰(`xoxb`)은 `mcp-cli login slack --xoxb`로 저장하고 명령에 `--xoxb`를 붙입니다.
   앱 설정의 Agents & AI Apps(`app-assistant`)에서 MCP 접근을 켜야 합니다.
   Slack은 토큰의 User Token Scope에 맞는 툴만 제공합니다. scope를 바꾸면 다시 생성하십시오.
 - 기존 Notion CLI의 markdown spec 검사, 수정 보호, widget 기능은 아직 이전하지 않았습니다.
@@ -308,7 +313,8 @@ HTTP 연결은 요청마다 `authorize`에서 헤더를 받습니다.
 ```bash
 bun run cli login notion
 bun run generate notion
-SLACK_MCP_TOKEN=xoxp-... bun run generate slack
+bun run cli login slack
+bun run generate slack
 bun run cli notion page get --help
 ```
 

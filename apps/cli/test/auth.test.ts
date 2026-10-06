@@ -15,6 +15,7 @@ import {
 import {
   apiKeyHeaders,
   canOpenBrowser,
+  loginCommand,
   logoutCommand,
   resolveConnection,
   type AuthContext,
@@ -62,6 +63,49 @@ test("api key auth injects headers for HTTP and env for stdio", async () => {
   await expect(resolveConnection(plugin(spec, http), {}, store)).rejects.toThrow(AuthRequiredError);
 });
 
+const slackLike: AuthSpec = {
+  type: "apiKey",
+  env: "SVC_KEY",
+  alternates: [{ flag: "xoxb", env: "SVC_BOT_KEY", summary: "Use the bot token" }],
+};
+const keyContext = (secret: string, messages: string[] = []): AuthContext => ({
+  env: {},
+  store,
+  plugin: async () => plugin(slackLike, http),
+  writeError: (text) => messages.push(text),
+  open: () => undefined,
+  readSecret: async () => secret,
+});
+const bearer = async (env: Record<string, string>, credential?: string) => {
+  const resolved = await resolveConnection(plugin(slackLike, http), env, store, credential);
+  return resolved.type === "http" ? resolved.headers?.Authorization : undefined;
+};
+
+test("login stores API keys per credential and the environment still wins", async () => {
+  const messages: string[] = [];
+  await loginCommand(["svc"], keyContext(" xoxp-user\n", messages));
+  await loginCommand(["svc", "--xoxb"], keyContext("xoxb-bot", messages));
+  expect(await bearer({})).toBe("Bearer xoxp-user");
+  expect(await bearer({}, "xoxb")).toBe("Bearer xoxb-bot");
+  expect(await bearer({ SVC_KEY: "env-user", SVC_BOT_KEY: "env-bot" })).toBe("Bearer env-user");
+  expect(await bearer({ SVC_BOT_KEY: "env-bot" }, "xoxb")).toBe("Bearer env-bot");
+  expect(messages[0]).toContain("Saved SVC_KEY for svc");
+  expect(messages.join("\n")).not.toContain("xoxp-user");
+  await logoutCommand(["svc", "--xoxb"], keyContext(""));
+  expect(await bearer({})).toBe("Bearer xoxp-user");
+  await expect(bearer({}, "xoxb")).rejects.toThrow("mcp-cli login svc --xoxb");
+});
+
+test("credential flags are validated for login, logout and connections", async () => {
+  await expect(loginCommand(["svc"], keyContext("  "))).rejects.toThrow("No key was entered");
+  await expect(loginCommand(["svc", "--bot"], keyContext("k"))).rejects.toThrow("Unknown option");
+  await expect(loginCommand(["svc", "--xoxb", "--xoxb"], keyContext("k"))).resolves.toBeUndefined();
+  await expect(bearer({}, "bot")).rejects.toThrow("no --bot credential");
+  await expect(
+    resolveConnection(plugin({ type: "oauth" }, http), {}, store, "xoxb"),
+  ).rejects.toThrow(UsageError);
+});
+
 test("oauth auth wires stored credentials unless the connection authorizes itself", async () => {
   const resolved = await resolveConnection(plugin({ type: "oauth" }, http), {}, store);
   if (resolved.type !== "http" || !resolved.authorize) throw new Error("expected authorize");
@@ -81,6 +125,7 @@ test("logout removes stored credentials and rejects bad arguments", async () => 
     plugin: async () => plugin({ type: "oauth" }, http),
     writeError: (text) => messages.push(text),
     open: () => undefined,
+    readSecret: async () => "",
   };
   await store.write("svc", { accessToken: "a" });
   await logoutCommand(["svc"], context);

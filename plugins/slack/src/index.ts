@@ -7,7 +7,13 @@ export default definePlugin({
   groups,
   quickstart,
   skill,
-  // Slack's MCP server has no dynamic client registration, so a user token (xoxp) from a registered internal app is required.
-  auth: { type: "apiKey", env: "SLACK_MCP_TOKEN" },
+  // Slack's MCP server has no dynamic client registration, so keys come from a registered internal app.
+  auth: {
+    type: "apiKey",
+    env: "SLACK_MCP_TOKEN",
+    alternates: [
+      { flag: "xoxb", env: "SLACK_MCP_BOT_TOKEN", summary: "Act as the bot token (xoxb)" },
+    ],
+  },
   connection: (env) => ({ type: "http", url: env.SLACK_MCP_URL ?? "https://mcp.slack.com/mcp" }),
 });

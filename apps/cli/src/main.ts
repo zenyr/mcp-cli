@@ -16,6 +16,7 @@ import { listPlugins } from "./list";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
 import { defaultRepeatGuard } from "./repeat";
+import { readSecret } from "./secret";
 import { putBytes } from "./transfer";
 
 export const EXIT = { ok: 0, failure: 1, usage: 2, repeated: 3 } as const;
@@ -44,6 +45,7 @@ export const main = async (argv: string[]): Promise<number> => {
       writeError,
       open: openInBrowser(writeError),
       manual: stdinRedirects,
+      readSecret,
     });
     return EXIT.ok;
   }
@@ -56,7 +58,8 @@ export const main = async (argv: string[]): Promise<number> => {
   const plugin = await loadPlugin(found);
   const manifest = await loadManifest(discovered, found);
   return runService(plugin, manifest, args, {
-    open: async () => connect(await resolveConnection(plugin, process.env, defaultStore())),
+    open: async (credential) =>
+      connect(await resolveConnection(plugin, process.env, defaultStore(), credential)),
     guard: defaultRepeatGuard(process.env),
     putBytes,
     io: {

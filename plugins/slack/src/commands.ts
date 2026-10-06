@@ -62,7 +62,8 @@ export const quickstart: QuickstartEntry[] = [
 
 export const skill = [
   "Discover progressively: slack --help, then <noun> --help, then <noun> <verb> --help.",
-  "Commands act as the token's user; messages are posted under that user's name.",
+  "Commands act as the user token (xoxp) by default; add --xoxb to act as the bot token instead.",
+  "Store keys once with mcp-cli login slack [--xoxb]; SLACK_MCP_TOKEN or SLACK_MCP_BOT_TOKEN override them.",
   "",
   "IDs:",
   "  Channels use IDs such as C0123456789; a user ID (U...) as --channel-id targets that DM.",
