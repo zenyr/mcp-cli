@@ -18,20 +18,23 @@ export const runService = async (
 ): Promise<number> => {
   if (manifest.service !== plugin.name || manifest.version !== 1)
     throw new Error("Plugin and manifest do not match");
-  const initial = parseArguments(argv);
-  const selected = findCommand(manifest, initial.path);
-  const { path, args, json, wantsHelp } = parseArguments(argv, selected?.inputSchema);
+  const { path, tokens, json, wantsHelp } = parseArguments(
+    argv,
+    (commandPath) => findCommand(manifest, commandPath)?.inputSchema ?? {},
+  );
   if (path[0] === "help") {
-    if (args.length) throw new Error("Help does not accept input flags");
+    if (tokens.length) throw new Error("Help does not accept input flags");
     dependencies.io.write(help(manifest, path.slice(1)));
     return 0;
   }
+  if (!path.length && tokens.length && !wantsHelp)
+    throw new Error(`Missing command; run ${manifest.service} --help`);
   if (wantsHelp || !path.length) {
     dependencies.io.write(help(manifest, path));
     return 0;
   }
   if (path[0] === "methods") {
-    if (args.length) throw new Error("Methods does not accept input flags");
+    if (tokens.length) throw new Error("Methods does not accept input flags");
     const commands = manifest.commands.filter((command) =>
       path.slice(1).every((part, i) => command.path[i] === part),
     );
@@ -50,7 +53,7 @@ export const runService = async (
     return 0;
   }
   if (path.join(" ") === "skill") {
-    if (args.length) throw new Error("Skill does not accept input flags");
+    if (tokens.length) throw new Error("Skill does not accept input flags");
     dependencies.io.write(
       plugin.skill ??
         `Start with ${plugin.name} --help, then <group> --help, then <group> <action> --help.\nUse methods --json for the baked-in tool map.\nUse --input for complex schemas.\nHelp and discovery never connect to the server.`,
@@ -59,11 +62,11 @@ export const runService = async (
   }
   const command = findCommand(manifest, path);
   if (!command) {
-    if (args.length) throw new Error(`Unknown command: ${path.join(" ")}`);
+    if (tokens.length) throw new Error(`Unknown command: ${path.join(" ")}`);
     dependencies.io.write(help(manifest, path));
     return 0;
   }
-  const input = await parseInput(args, command.inputSchema, dependencies.io);
+  const input = await parseInput(tokens, command.inputSchema, dependencies.io);
   validateInput(command.inputSchema, input);
   await plugin.beforeCall?.(command, input);
   const session = await dependencies.open();

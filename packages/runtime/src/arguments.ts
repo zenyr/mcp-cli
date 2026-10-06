@@ -1,39 +1,97 @@
-import type { JsonSchema } from "@mcp-cli/core";
-import { property } from "./schema";
+import { RESERVED_FLAGS, type JsonSchema } from "@mcp-cli/core";
+import { fieldType, property } from "./schema";
 
-const globalFlags = new Set(["--json", "--help", "-h"]);
+export type InputToken =
+  | { kind: "source"; flag: string; from: "file" | "stdin" | "text"; value: string }
+  | { kind: "field"; flag: string; path: string[]; raw: string }
+  | { kind: "invalid"; message: string };
+export type ParsedArguments = {
+  path: string[];
+  tokens: InputToken[];
+  json: boolean;
+  wantsHelp: boolean;
+};
 
-export const parseArguments = (argv: string[], schema: JsonSchema = {}) => {
-  const args: string[] = [];
+const outputFlags = new Set(["--json", "--help"]);
+const invalid = (message: string): InputToken => ({ kind: "invalid", message });
+const lookup = (schema: JsonSchema, path: string[]): JsonSchema =>
+  path.reduce((field, segment) => property(field, segment), schema);
+
+// Scans argv once; the command schema is resolved when the first option ends the command path.
+export const parseArguments = (
+  argv: string[],
+  resolve: (path: string[]) => JsonSchema,
+): ParsedArguments => {
   const path: string[] = [];
+  const tokens: InputToken[] = [];
   let json = false;
   let wantsHelp = false;
-  let inOptions = false;
+  let schema: JsonSchema | undefined;
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
     if (arg === undefined) continue;
-    if (globalFlags.has(arg)) {
-      if (arg === "--json") json = true;
-      else wantsHelp = true;
+    if (arg === "-h") {
+      wantsHelp = true;
       continue;
     }
-    if (!inOptions && !arg.startsWith("-")) {
+    if (schema === undefined && !arg.startsWith("-")) {
       path.push(arg);
       continue;
     }
-    inOptions = true;
-    args.push(arg);
-    let field = schema;
-    for (const segment of arg.slice(2).split(".")) field = property(field, segment);
-    const next = argv[index + 1];
-    const consumesValue =
-      arg.startsWith("--") &&
-      !arg.startsWith("--no-") &&
-      (field.type !== "boolean" || next === "true" || next === "false");
-    if (consumesValue && next !== undefined) {
-      args.push(next);
-      index++;
+    const separator = arg.indexOf("=");
+    const name = arg.slice(2, separator < 0 ? undefined : separator);
+    const inline = separator < 0 ? undefined : arg.slice(separator + 1);
+    const flag = `--${name}`;
+    const reserved = arg.startsWith("--") && RESERVED_FLAGS.includes(name);
+    if (reserved && (name === "json" || name === "help")) {
+      if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
+      else if (name === "json") json = true;
+      else wantsHelp = true;
+      continue;
     }
+    schema ??= resolve(path);
+    if (!arg.startsWith("--") || !name) {
+      tokens.push(invalid(`Unexpected argument: ${arg}`));
+      continue;
+    }
+    const next = argv[index + 1];
+    const takeValue = (): string | undefined => {
+      if (inline !== undefined) return inline;
+      if (next === undefined || (next.startsWith("--") && !outputFlags.has(next))) return undefined;
+      index++;
+      return next;
+    };
+    if (reserved) {
+      const value = takeValue();
+      if (value === undefined) tokens.push(invalid(`Missing value for ${flag}`));
+      else {
+        const from = name === "input-file" ? "file" : value === "-" ? "stdin" : "text";
+        tokens.push({ kind: "source", flag, from, value });
+      }
+      continue;
+    }
+    if (name.startsWith("no-")) {
+      const fieldPath = name.slice(3).split(".");
+      if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
+      else if (fieldType(lookup(schema, fieldPath)).type !== "boolean")
+        tokens.push(invalid(`Negation requires a boolean field: ${flag}`));
+      else tokens.push({ kind: "field", flag, path: fieldPath, raw: "false" });
+      continue;
+    }
+    const fieldPath = name.split(".");
+    const field = fieldType(lookup(schema, fieldPath));
+    if (field.type === "boolean" && inline === undefined) {
+      const explicit = next === "true" || next === "false" || (field.nullable && next === "null");
+      if (explicit) index++;
+      tokens.push({ kind: "field", flag, path: fieldPath, raw: explicit ? next : "true" });
+      continue;
+    }
+    const raw = takeValue();
+    tokens.push(
+      raw === undefined
+        ? invalid(`Missing value for ${flag}`)
+        : { kind: "field", flag, path: fieldPath, raw },
+    );
   }
-  return { path, args, json, wantsHelp };
+  return { path, tokens, json, wantsHelp };
 };
