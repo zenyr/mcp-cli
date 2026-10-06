@@ -1,6 +1,11 @@
 {
   "tools": [
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create a one-hour workspace-scoped upload slot for an image, video or audio input. When the user will upload through web_upload_url, ask which format the file is (for example png, jpg, webp, mp4, mov, mp3 or wav) before calling this tool and use that extension in file_name: the link only accepts files of that format. For web_upload_url file_size need not be exact (the page re-signs the slot for the real size); when you PUT to upload_url yourself, file_size must be the exact byte size.",
       "inputSchema": {
         "additionalProperties": false,
@@ -47,6 +52,9 @@
       "name": "create_media_upload"
     },
     {
+      "annotations": {
+        "readOnlyHint": false
+      },
       "description": "Clone a voice from sample audio and get a voice usable with text_to_speech. Provide 1-5 https URLs of clean speech from ONE speaker (for local files call get_upload_url first, keeping the file extension); 10-60 seconds total gives the best results, 270 seconds is the hard maximum. Creation is free. Instead of creating immediately, the response may report quality warnings or require speaker verification — always follow its instructions field. Only clone voices the user owns, has the speaker's consent to use, or is otherwise legally allowed to use; Fish Audio may remove voices that violate these rules.",
       "inputSchema": {
         "additionalProperties": false,
@@ -90,6 +98,9 @@
       "name": "create_voice_clone"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Estimate image edit or upscale cost and validate the request; pass input_object_key for a single image, or inputs for several. This is read-only and creates no task or quote.",
       "inputSchema": {
         "additionalProperties": false,
@@ -151,6 +162,9 @@
       "name": "estimate_image_edit"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Estimate image generation cost and validate the request. This is read-only and creates no task or quote.",
       "inputSchema": {
         "additionalProperties": false,
@@ -185,6 +199,9 @@
       "name": "estimate_image_generation"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Estimate video generation cost (text/image/reference-to-video, lip sync, talking avatar) and validate the request. Pass operation, or inputs with roles and let the capability follow from them. This is read-only and creates no task or quote.",
       "inputSchema": {
         "additionalProperties": false,
@@ -250,6 +267,12 @@
       "name": "estimate_video_generation"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Submit an image generation with the same parameters used for estimation. The API revalidates price before charging credits.",
       "inputSchema": {
         "additionalProperties": false,
@@ -304,6 +327,12 @@
       "name": "generate_image"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Submit an image edit with the same parameters used for estimation. The API revalidates price before charging credits.",
       "inputSchema": {
         "additionalProperties": false,
@@ -384,6 +413,12 @@
       "name": "generate_image_edit"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Submit a video generation with the same parameters used for estimation. The API revalidates price before charging credits.",
       "inputSchema": {
         "additionalProperties": false,
@@ -468,6 +503,9 @@
       "name": "generate_video"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Internal helper for the Fish Audio player UI: returns the base64-encoded bytes of a fish.audio audio URL. Agents should pass audio URLs around directly instead of calling this.",
       "inputSchema": {
         "additionalProperties": false,
@@ -483,6 +521,9 @@
       "name": "get_audio_data"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Get the authenticated user's Fish Audio plan, remaining package credits, and the per-call TTS text budget. Speech generation costs 1 credit per UTF-8 byte of text; transcription costs 500 credits per minute. Top up at https://fish.audio/go-premium/",
       "inputSchema": {
         "additionalProperties": false,
@@ -491,6 +532,10 @@
       "name": "get_credit_balance"
     },
     {
+      "annotations": {
+        "idempotentHint": true,
+        "readOnlyHint": true
+      },
       "description": "Get terminal media results and billing; this may reconcile provider state.",
       "inputSchema": {
         "additionalProperties": false,
@@ -506,6 +551,10 @@
       "name": "get_generation_result"
     },
     {
+      "annotations": {
+        "idempotentHint": true,
+        "readOnlyHint": true
+      },
       "description": "Poll media status and billing; this may reconcile provider state and credits.",
       "inputSchema": {
         "additionalProperties": false,
@@ -521,6 +570,9 @@
       "name": "get_generation_status"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Get one media model's prompt policy and, per capability, its parameter schema, required_roles and accepted inputs (kind, mime_types, max_bytes, max_count, dimension limits).",
       "inputSchema": {
         "additionalProperties": false,
@@ -536,6 +588,9 @@
       "name": "get_media_model"
     },
     {
+      "annotations": {
+        "readOnlyHint": false
+      },
       "description": "Get a temporary upload slot for a local audio file: HTTP PUT the raw file bytes to upload_url (within 1 hour), then pass file_url to speech_to_text. Environments that cannot make HTTP uploads (e.g. claude.ai or ChatGPT web chat) should send the user web_upload_url to upload from their browser instead. Uploaded files are deleted automatically after 7 days.",
       "inputSchema": {
         "additionalProperties": false,
@@ -550,6 +605,9 @@
       "name": "get_upload_url"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Get details of one Fish Audio voice by its id: description, languages, tags, popularity stats, a sample audio URL and a default demo text.",
       "inputSchema": {
         "additionalProperties": false,
@@ -564,6 +622,9 @@
       "name": "get_voice"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "List available Fish image and video models (video includes lip sync and talking avatars). Capabilities are named as in the Fish web app, e.g. t2i (text-to-image), edit (image edit), upscale, t2v (text-to-video), i2v (image-to-video), first_last, reference, reference_video, video_audio (lip sync), avatar_audio (talking avatar). default_credits is the price of one output with default parameters; capabilities billed by input length report credits_per_input_second instead, with input_seconds_rounding: ceil where every started second is billed.",
       "inputSchema": {
         "additionalProperties": false,
@@ -582,6 +643,9 @@
       "name": "list_media_models"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "List the workspaces of the team this connection is authorized for.",
       "inputSchema": {
         "additionalProperties": false,
@@ -591,6 +655,9 @@
       "name": "list_my_workspaces"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Search public voices (TTS models) on Fish Audio, or list your own with self=true (includes private and team-shared voices). Omit query and set language to browse curated/popular voices for that language. Prefer voices with high task_count; the returned voice ids are what text_to_speech takes.",
       "inputSchema": {
         "additionalProperties": false,
@@ -632,6 +699,9 @@
       "name": "search_voices"
     },
     {
+      "annotations": {
+        "readOnlyHint": false
+      },
       "description": "Transcribe speech audio to text. Provide a public https URL to the audio file (max 20MB) — for local files get one from get_upload_url first. model=pro (default) costs 50 package credits per second; model=flash costs 500 credits per minute (~6x cheaper, smaller model).",
       "inputSchema": {
         "additionalProperties": false,
@@ -815,6 +885,9 @@
       "name": "studio_export"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Search block text across the project (case-insensitive substring, or regex=true). Returns matching anchors with snippets and revs — the entry point for fixing something everywhere without reading every chapter.",
       "inputSchema": {
         "additionalProperties": false,
@@ -882,6 +955,9 @@
       "name": "studio_generate"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "The operating manual for Story Studio (multi-speaker audio projects). Call this before your first studio operation. Topics: quickstart (default), editing, tags, billing, errors, workflows.",
       "inputSchema": {
         "additionalProperties": false,
@@ -928,6 +1004,9 @@
       "name": "studio_import_document"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "List the user's Story Studio projects (name, chapter count, importing flag), newest first. First time operating the studio? Call studio_help.",
       "inputSchema": {
         "additionalProperties": false,
@@ -949,6 +1028,9 @@
       "name": "studio_list_projects"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "List a block's generated takes (audio history): audio URL, duration, the exact text/voice each take was generated from, and whether it still matches the block (content_matches_current). Adopting an old take is free — check here before paying for a re-roll.",
       "inputSchema": {
         "additionalProperties": false,
@@ -967,6 +1049,9 @@
       "name": "studio_list_takes"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Project overview: chapter outline (anchors, titles, block/dirty counts, durations), speaker roster, and live import/export job state. This is the polling verb for imports and exports (poll_after_seconds tells you when to check again). First time operating the studio? Call studio_help.",
       "inputSchema": {
         "additionalProperties": false,
@@ -981,6 +1066,9 @@
       "name": "studio_project"
     },
     {
+      "annotations": {
+        "readOnlyHint": true
+      },
       "description": "Read blocks: pass chapter (anchor) for a whole chapter (paginated) or blocks (list of anchors) for specific ones. Returns anchor, rev, voice, text, kind, dirty, duration per block; include_audio adds audio URLs. format=script renders a read-only script view for showing the user.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1132,6 +1220,9 @@
       "name": "studio_write_blocks"
     },
     {
+      "annotations": {
+        "readOnlyHint": false
+      },
       "description": "Send feedback about these Fish Audio tools to the team — friction, bugs, missing capabilities, confusing behavior, or things that worked well. Please send one short note whenever something surprised you or took more steps than it should; every message is read.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1156,6 +1247,9 @@
       "name": "submit_feedback"
     },
     {
+      "annotations": {
+        "readOnlyHint": false
+      },
       "description": "Generate speech audio from text with a Fish Audio voice and return a permanent audio URL. Costs 1 package credit per UTF-8 byte of text (audio tags included; a professional voice cloned by another team costs double). If a call fails or times out, one identical retry within 5 minutes is free.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1179,6 +1273,9 @@
       "name": "text_to_speech"
     },
     {
+      "annotations": {
+        "readOnlyHint": false
+      },
       "description": "Complete speaker verification for a voice clone that returned verification_required: the actual speaker records themselves reading the exact prompt sentence, the recording is uploaded (use get_upload_url), and its URL is passed here. On success the voice is created. Call without recording_url to check the session status and get the current prompt.",
       "inputSchema": {
         "additionalProperties": false,
