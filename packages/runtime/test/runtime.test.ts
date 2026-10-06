@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { UsageError, definePlugin, type ToolSession } from "@mcp-cli/core";
+import { SchemaCompileError } from "@mcp-cli/schema";
 import { runService } from "../src";
 import { commands, manifest } from "./fixtures/manifest";
 
@@ -228,15 +229,24 @@ test("prototype names in schema do not become inherited flag definitions", async
   expect(f.counts().opened).toBe(0);
 });
 
-test("validator ignores inherited required input fields", async () => {
-  const { validateInput } = await import("@mcp-cli/schema");
-  const input = Object.create({ text: "inherited" });
-  expect(() =>
-    validateInput(
-      { type: "object", properties: { text: { type: "string" } }, required: ["text"] },
-      input,
-    ),
-  ).toThrow("Invalid input");
+test("a broken input schema is not reported as a usage error", async () => {
+  const brokenManifest = {
+    ...manifest,
+    tools: [
+      {
+        name: "broken",
+        inputSchema: { type: "object", properties: { text: { type: "no-such-type" } } },
+      },
+    ],
+  };
+  const custom = { ...plugin, commands: { broken: { path: ["broken"] } } };
+  const f = fixture();
+  const error = await runService(custom, brokenManifest, ["broken"], f.dependencies).catch(
+    (caught: unknown) => caught,
+  );
+  expect(error).toBeInstanceOf(SchemaCompileError);
+  expect(error).not.toBeInstanceOf(UsageError);
+  expect(f.counts().opened).toBe(0);
 });
 
 const callWith = async (args: string[]) => {
