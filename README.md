@@ -93,6 +93,31 @@ CLI 사용 오류(`UsageError`)는 종료 코드 `2`, 연결·실행 오류는 `
 알 수 없는 명령, 잘못된 플래그·값, 입력 출처 혼합, 입력 스키마 검증 실패는 사용 오류입니다.
 입력 검증과 플러그인 정책이 통과한 뒤 서버에 연결합니다. 호출 종료 시 연결을 닫습니다.
 
+## 리소스와 프롬프트
+
+```bash
+bun run cli demo resources list
+bun run cli demo resources templates
+bun run cli demo resources read demo://readme
+bun run cli demo prompts list
+bun run cli demo prompts get summarize --text hello --style short
+bun run cli demo prompts get summarize --input '{"text":"hello"}' --json
+```
+
+`resources`와 `prompts`는 실행할 때 서버에서 목록과 내용을 가져옵니다. 생성 코드에는 넣지 않습니다.
+두 명령은 서버에 연결합니다. `--help`와 `help resources`는 연결하지 않습니다.
+목록은 서버의 `nextCursor`를 끝까지 따라가서 모든 페이지를 합칩니다.
+서버가 해당 capability를 알리지 않으면 `MissingResourcesCapabilityError` 또는
+`MissingPromptsCapabilityError`로 실패합니다. 빈 목록으로 대체하지 않습니다. 종료 코드는 `1`입니다.
+
+- `resources read <uri>`: 텍스트는 그대로 출력합니다. 바이너리는 안내 문구를 출력합니다. `--json`으로 base64를 받으십시오.
+- `prompts get <name>`: 먼저 `prompts/list`에서 프롬프트의 `arguments`를 읽습니다.
+  인자는 `--<name> value` 또는 `--input` JSON 객체로 지정합니다. 값은 모두 문자열입니다.
+- 알 수 없는 프롬프트, 알 수 없는 인자, 누락된 필수 인자는 사용 오류(종료 코드 `2`)입니다.
+- `--json`은 `resources`·`prompts` 결과를 구조화된 JSON으로 출력합니다.
+
+플러그인 명령 경로는 `resources`나 `prompts`로 시작할 수 없습니다.
+
 ## 정적 생성
 
 ```bash
@@ -125,11 +150,33 @@ CLI는 플러그인 패키지의 `package.json` 위치로 출력 경로를 찾�
 ## 플러그인 추가
 
 1. `plugins/<service>`에 workspace 패키지를 만듭니다.
-   `exports`에 `.`, `./generated`, `./package.json`을 선언합니다.
-2. `@mcp-cli/core`의 `definePlugin`으로 기본 export를 만듭니다.
-3. `apps/cli/package.json`에 플러그인 의존성을 추가합니다.
-4. `apps/cli/src/plugins.ts`에 패키지 이름과 lazy import를 등록합니다. 키는 플러그인 `name`과 같아야 합니다.
-5. `bun run generate <service>`로 정적 정의를 생성합니다.
+   `exports`의 `.`이 플러그인 모듈을 가리키게 합니다.
+2. `package.json`에 `"mcp-cli": { "plugin": true, "service": "<service>" }`를 선언합니다.
+   `service`를 생략하면 CLI가 플러그인 모듈을 읽어 `name`을 사용합니다.
+3. `@mcp-cli/core`의 `definePlugin`으로 기본 export를 만듭니다. `name`은 `service`와 같아야 합니다.
+4. `bun run generate <service>`로 정적 정의를 생성합니다.
+5. `bun run cli plugins`로 발견 결과와 생성 상태를 확인합니다.
+
+CLI 패키지에 플러그인 의존성을 추가하지 않습니다. CLI는 다음 위치에서 표시가 있는 패키지를 찾습니다.
+
+1. 루트 `package.json`의 `workspaces` 패키지
+2. CLI 위쪽 `node_modules`의 직접 항목과 scope 디렉터리 한 단계
+3. 사용자 설정 파일의 `plugins` 목록
+
+설정 파일 위치는 `$MCP_CLI_CONFIG`, 없으면 `$XDG_CONFIG_HOME/mcp-cli/config.json`입니다.
+기본값은 `~/.config/mcp-cli/config.json`입니다. 항목은 패키지 이름 또는 절대·`~` 경로입니다.
+
+```json
+{ "plugins": ["@acme/mcp-cli-plugin-linear", "~/src/mcp-cli-plugin-slack"] }
+```
+
+설정 파일 오류는 사용법 오류(종료 코드 2)이며 메시지에 파일 경로가 들어갑니다.
+같은 서비스 이름이 두 곳에서 발견되면 두 위치를 모두 보여 주고 실패합니다.
+`help`, `generate`, `plugins`, `login`, `logout`은 서비스 이름으로 쓸 수 없습니다.
+
+생성 파일은 패키지 디렉터리에 쓸 수 있으면 `src/generated.ts`, `src/tools.json`에 둡니다.
+`node_modules` 안의 패키지처럼 쓸 수 없으면 `$XDG_CACHE_HOME/mcp-cli/<service>/`에 둡니다.
+기본값은 `~/.cache/mcp-cli/<service>/`입니다. 실행 시에는 패키지 위치를 먼저 확인하고 다음으로 캐시를 확인합니다.
 
 ```typescript
 import { definePlugin } from "@mcp-cli/core";
@@ -153,22 +200,55 @@ export default definePlugin({
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
 `connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.
 
+## 인증
+
+플러그인은 `auth`로 인증 방식을 선언합니다. CLI가 실행 시에 자격 증명을 연결에 넣습니다.
+
+| `auth`                                    | 동작                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| `{ type: "oauth" }`                       | `mcp-cli login <service>`로 받은 토큰을 요청마다 `Authorization`에 넣습니다 |
+| `{ type: "apiKey", env: "FISH_API_KEY" }` | 환경변수 값을 `Authorization: Bearer <key>`로 보냅니다                      |
+| `{ type: "none" }` 또는 생략              | 자격 증명을 넣지 않습니다                                                   |
+
+```bash
+mcp-cli login notion    # 브라우저 로그인 후 토큰 저장
+mcp-cli logout notion   # 저장한 토큰 삭제
+```
+
+- `login`은 MCP 인증 사양의 순서를 따릅니다.
+  protected resource metadata, authorization server metadata, 동적 클라이언트 등록, PKCE 순서입니다.
+- redirect URI는 `http://127.0.0.1:<임의 포트>/callback`입니다. CLI는 인증 URL을 stderr에 출력하고 브라우저를 엽니다.
+- `login`은 `state`를 검사합니다. 5분 안에 응답이 없으면 실패합니다.
+- `oauth`의 `clientId`를 지정하면 동적 등록을 건너뜁니다. `scopes`, `clientName`, `redirectPort`도 지정할 수 있습니다.
+- `apiKey`의 `header`를 지정하면 scheme 없이 키만 보냅니다. `scheme`으로 접두어를 지정할 수 있습니다.
+  stdio 연결에는 같은 이름의 환경변수로 키를 전달합니다.
+- 토큰은 `$XDG_CONFIG_HOME/mcp-cli/credentials/<service>.json`에 저장합니다. `XDG_CONFIG_HOME`이 없으면 `~/.config`를 씁니다.
+  디렉터리 권한은 `0700`, 파일 권한은 `0600`입니다. 임시 파일에 쓴 뒤 rename으로 교체합니다.
+- 만료 60초 전부터 또는 서버가 401을 반환하면 refresh token으로 갱신합니다.
+  갱신은 `<service>.lock` 파일 잠금 안에서 실행합니다. 여러 프로세스가 동시에 실행해도 갱신 요청은 한 번입니다.
+- 자격 증명이 없거나 refresh token이 거부되면 CLI는 `mcp-cli login <service>` 실행을 안내하고 상태 1로 끝납니다.
+- 다른 서버 URL에서 발급한 토큰은 보내지 않습니다. URL을 바꾸면 다시 로그인하십시오.
+- 연결이 `authorize`를 직접 제공하면 CLI는 저장한 토큰을 쓰지 않습니다.
+  Notion은 `NOTION_MCP_TOKEN`이 있으면 이 값을 우선합니다.
+- `logout`은 로컬 파일만 삭제합니다. 서버의 토큰 폐기(revocation)는 요청하지 않습니다.
+
+MCP SDK의 OAuth 함수는 `packages/mcp`만 사용합니다. 저장소는 `packages/auth`가, 계약 타입은 `packages/core`가 제공합니다.
+
 ## 현재 범위
 
 - 생성·발견·입력 검증·호출·종료까지 `demo`로 통합 검증합니다.
 - stdio와 Streamable HTTP 연결을 제공합니다. 현재 실제 연결 테스트는 stdio에 한정합니다.
 - Notion 플러그인은 `fetch get`, `search run` 매핑과 HTTP 연결 설정의 출발점입니다.
-- Notion 정의는 아직 생성하지 않았습니다. 기존 CLI의 OAuth 저장소, refresh lock, markdown spec 검사,
-  수정 보호, widget 기능도 아직 이전하지 않았습니다.
-- OAuth 로그인과 SSE, MCP resources/prompts의 CLI 생성은 아직 지원하지 않습니다.
+- Notion 정의는 아직 생성하지 않았습니다. 기존 CLI의 markdown spec 검사, 수정 보호, widget 기능도
+  아직 이전하지 않았습니다.
+- SSE, MCP resources/prompts의 CLI 생성은 아직 지원하지 않습니다.
+- OAuth 흐름은 로컬 가짜 인증 서버로만 검증했습니다. 실제 Notion·Linear·Slack 서버로는 검증하지 않았습니다.
 - Linear·Slack 서비스 플러그인은 아직 이전하지 않았습니다.
 
-Notion 서버를 생성하려면 `NOTION_MCP_TOKEN`으로 서버가 받아들이는 Bearer 인증을 제공해야 합니다.
-`NOTION_MCP_URL`로 URL을 바꿀 수 있습니다. 이 프레임워크는 브라우저 로그인을 자동 실행하지 않습니다.
-HTTP 연결은 요청마다 플러그인의 `authorize`에서 헤더를 받습니다.
+Notion 서버를 생성하려면 `NOTION_MCP_TOKEN`으로 Bearer 토큰을 제공하십시오. `generate`는 아직 저장한 OAuth 토큰을 쓰지 않습니다.
+`NOTION_MCP_URL`로 URL을 바꿀 수 있습니다.
+HTTP 연결은 요청마다 `authorize`에서 헤더를 받습니다.
 서버가 401을 반환하면 `authorize({ refresh: true })`를 한 번 호출하고 한 번만 재시도합니다.
-Notion 플러그인은 `NotionTokenSource`(`plugins/notion/src/auth.ts`)로 토큰을 읽습니다.
-OAuth 저장소와 refresh lock은 이 타입의 `refresh`로 연결합니다.
 
 ```bash
 bun run generate notion
