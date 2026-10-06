@@ -65,11 +65,13 @@ export const main = async (argv: string[]): Promise<number> => {
 export const exitCodeFor = (error: unknown): number =>
   error instanceof UsageError ? EXIT.usage : EXIT.failure;
 
-if (import.meta.main) {
+export const run = async (argv: string[]): Promise<void> => {
   try {
-    process.exitCode = await main(process.argv.slice(2));
+    process.exitCode = await main(argv);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = exitCodeFor(error);
   }
-}
+};
+
+if (import.meta.main) await run(process.argv.slice(2));

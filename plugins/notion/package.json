@@ -17,6 +17,7 @@
   },
   "mcp-cli": {
     "plugin": true,
-    "service": "notion"
+    "service": "notion",
+    "bin": "notion"
   }
 }
