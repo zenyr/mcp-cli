@@ -2,7 +2,10 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import ts from "typescript";
 
-const ignored = new Set(["node_modules", ".git", ".turbo", "dist", "coverage", "generated"]);
+// Codegen must emit this marker as the first line of every generated file.
+const GENERATED_MARKER = "// @generated";
+const ignored = new Set(["node_modules", ".git", ".turbo", "dist", "coverage"]);
+const sourcePattern = /\.(?:[cm]?[jt]s|[jt]sx)$/;
 const collect = async (directory: string): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true });
   const groups = await Promise.all(
@@ -10,52 +13,77 @@ const collect = async (directory: string): Promise<string[]> => {
       if (ignored.has(entry.name)) return [];
       const path = join(directory, entry.name);
       if (entry.isDirectory()) return collect(path);
-      return /\.(?:[cm]?[jt]s|[jt]sx)$/.test(path) &&
-        !path.endsWith(".generated.ts") &&
-        entry.name !== "generated.ts"
-        ? [path]
-        : [];
+      return sourcePattern.test(path) ? [path] : [];
     }),
   );
   return groups.flat();
+};
+
+const hasBody = (node: ts.Node): boolean =>
+  (ts.isFunctionDeclaration(node) ||
+    ts.isMethodDeclaration(node) ||
+    ts.isConstructorDeclaration(node) ||
+    ts.isGetAccessorDeclaration(node) ||
+    ts.isSetAccessorDeclaration(node)) &&
+  node.body !== undefined;
+
+const commentSentences = (comment: string): number =>
+  comment
+    .replace(/^\/\/|^\/\*+|\*+\/$/g, "")
+    .replace(/^\s*\*/gm, "")
+    .replace(/\b(?:e\.g|i\.e|etc|vs)\./g, "")
+    .split(/[.!?](?:\s+|$)/)
+    .filter((part) => part.trim()).length;
+
+const commentRanges = (source: ts.SourceFile): ts.CommentRange[] => {
+  const text = source.getFullText();
+  const seen = new Map<number, ts.CommentRange>();
+  const visit = (node: ts.Node): void => {
+    for (const range of [
+      ...(ts.getLeadingCommentRanges(text, node.getFullStart()) ?? []),
+      ...(ts.getTrailingCommentRanges(text, node.getEnd()) ?? []),
+    ])
+      seen.set(range.pos, range);
+    for (const child of node.getChildren(source)) visit(child);
+  };
+  visit(source);
+  return [...seen.values()];
 };
 
 const paths = process.argv.slice(2);
 const files = paths.length ? paths : await collect(".");
 let failures = 0;
 for (const file of files) {
-  if (
-    file.split("/").includes("generated") ||
-    file.endsWith(".generated.ts") ||
-    file.endsWith("/generated.ts")
-  )
-    continue;
-  if (!/\.(?:[cm]?[jt]s|[jt]sx)$/.test(file)) continue;
+  if (!sourcePattern.test(file)) continue;
   const content = await readFile(file, "utf8");
+  const firstLine = content.split("\n", 1)[0] ?? "";
+  if (firstLine === GENERATED_MARKER || firstLine.startsWith(`${GENERATED_MARKER} `)) continue;
   const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
-  const report = (node: ts.Node, message: string) => {
-    const position = source.getLineAndCharacterOfPosition(node.getStart(source));
-    console.error(`${file}:${position.line + 1}:${position.character + 1}: ${message}`);
+  const reportAt = (position: number, message: string) => {
+    const { line, character } = source.getLineAndCharacterOfPosition(position);
+    console.error(`${file}:${line + 1}:${character + 1}: ${message}`);
     failures += 1;
   };
+  const report = (node: ts.Node, message: string) => reportAt(node.getStart(source), message);
   const visit = (node: ts.Node): void => {
-    if (
-      ts.isFunctionDeclaration(node) ||
-      ts.isFunctionExpression(node) ||
-      ts.isMethodDeclaration(node)
-    )
-      report(node, "Use an arrow function.");
+    if (ts.isFunctionExpression(node) || hasBody(node)) report(node, "Use an arrow function.");
     if (ts.isNonNullExpression(node)) report(node, "Non-null assertions are prohibited.");
+    if ((ts.isVariableDeclaration(node) || ts.isPropertyDeclaration(node)) && node.exclamationToken)
+      report(node, "Definite assignment assertions are prohibited.");
     if (node.kind === ts.SyntaxKind.AnyKeyword) report(node, "Explicit any is prohibited.");
-    if (
-      (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) &&
-      node.type.kind === ts.SyntaxKind.UnknownKeyword
-    ) {
-      report(node, "Assertions to unknown are prohibited.");
+    if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
+      if (node.type.kind === ts.SyntaxKind.UnknownKeyword)
+        report(node, "Assertions to unknown are prohibited.");
+      if (node.type.kind === ts.SyntaxKind.NeverKeyword)
+        report(node, "Assertions to never are prohibited.");
     }
     ts.forEachChild(node, visit);
   };
   visit(source);
+  for (const range of commentRanges(source)) {
+    if (commentSentences(content.slice(range.pos, range.end)) > 1)
+      reportAt(range.pos, "Keep comments to one sentence.");
+  }
   const exempt = /(?:\.test\.|\.spec\.|(?:^|\/)tests?\/|(?:^|\/)fixtures?\/)/.test(file);
   if (!exempt && content.split("\n").length > 350)
     console.warn(`${file}: exceeds the 350-line soft cap.`);
