@@ -2,6 +2,7 @@
   "name": "mcp-cli",
   "private": true,
   "bin": {
+    "fish-audio": "bin/fish-audio.ts",
     "mcp-cli": "apps/cli/src/main.ts",
     "notion": "bin/notion.ts"
   },

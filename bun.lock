@@ -81,6 +81,13 @@
         "@mcp-cli/core": "workspace:*",
       },
     },
+    "plugins/fish-audio": {
+      "name": "@mcp-cli/plugin-fish-audio",
+      "version": "0.1.0",
+      "dependencies": {
+        "@mcp-cli/core": "workspace:*",
+      },
+    },
     "plugins/notion": {
       "name": "@mcp-cli/plugin-notion",
       "version": "0.1.0",
@@ -105,6 +112,8 @@
     "@mcp-cli/mcp": ["@mcp-cli/mcp@workspace:packages/mcp"],
 
     "@mcp-cli/plugin-demo": ["@mcp-cli/plugin-demo@workspace:plugins/demo"],
+
+    "@mcp-cli/plugin-fish-audio": ["@mcp-cli/plugin-fish-audio@workspace:plugins/fish-audio"],
 
     "@mcp-cli/plugin-notion": ["@mcp-cli/plugin-notion@workspace:plugins/notion"],
 
