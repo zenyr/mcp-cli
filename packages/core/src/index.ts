@@ -38,15 +38,19 @@ export type ServicePlugin = {
   summary: string;
   commands?: Record<string, CommandCustomization>;
   skill?: string;
-  connection(env: Record<string, string | undefined>): Connection;
+  connection(env: Record<string, string | undefined>): Connection | Promise<Connection>;
   beforeCall?: (command: CommandSpec, input: Record<string, unknown>) => Promise<void>;
 };
 export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
   if (!/^[a-z][a-z0-9-]*$/.test(plugin.name)) throw new Error("Invalid service name");
   return plugin;
 };
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+export { canonicalize, isRecord, isStringArray } from "./values";
+export { decodeManifest } from "./manifest";
+/** Invalid command-line usage; the CLI exits with status 2. */
+export class UsageError extends Error {
+  override name = "UsageError";
+}
 export const RESERVED_COMMANDS: readonly string[] = ["help", "methods", "call", "skill"];
 export const RESERVED_FLAGS: readonly string[] = ["json", "help", "input", "input-file"];
 export const fallbackPath = (toolName: string): string[] => ["call", toolName];
