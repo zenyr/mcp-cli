@@ -13,5 +13,9 @@
   },
   "dependencies": {
     "@mcp-cli/core": "workspace:*"
+  },
+  "mcp-cli": {
+    "plugin": true,
+    "service": "demo"
   }
 }
