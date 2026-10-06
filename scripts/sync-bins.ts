@@ -31,8 +31,12 @@ const pkgFile = join(root, "package.json");
 const pkg: unknown = await Bun.file(pkgFile).json();
 if (!isRecord(pkg)) throw new Error("Invalid root package.json");
 const bins = await serviceBins();
-const desired: Record<string, string> = { "mcp-cli": "apps/cli/src/main.ts" };
-for (const { bin } of bins) desired[bin] = `bin/${bin}.ts`;
+// Sorted like oxfmt sorts package.json so the check and the formatter agree.
+const desired: Record<string, string> = Object.fromEntries(
+  [["mcp-cli", "apps/cli/src/main.ts"], ...bins.map(({ bin }) => [bin, `bin/${bin}.ts`])].sort(
+    ([a = ""], [b = ""]) => a.localeCompare(b),
+  ),
+);
 
 const problems: string[] = [];
 if (JSON.stringify(pkg.bin) !== JSON.stringify(desired)) problems.push("package.json bin");
