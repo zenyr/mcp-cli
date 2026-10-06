@@ -1,15 +1,17 @@
 import { expect, test } from "bun:test";
-import { definePlugin, type ToolSession } from "@mcp-cli/core";
+import { UsageError, definePlugin, type ToolSession } from "@mcp-cli/core";
 import { runService } from "../src";
-import { manifest } from "./fixtures/manifest";
+import { commands, manifest } from "./fixtures/manifest";
 
 const plugin = definePlugin({
   name: "demo",
   summary: "Demo",
+  commands,
   connection: () => ({ type: "stdio", command: "unused" }),
 });
 const fixture = (error = false) => {
   const output: string[] = [];
+  const errors: string[] = [];
   const calls: unknown[] = [];
   let opened = 0;
   let closed = 0;
@@ -32,11 +34,12 @@ const fixture = (error = false) => {
     },
     io: {
       write: (text: string) => output.push(text),
+      writeError: (text: string) => errors.push(text),
       readFile: async () => '{"text":"file"}',
       readStdin: async () => '{"text":"stdin"}',
     },
   };
-  return { output, calls, dependencies, counts: () => ({ opened, closed }) };
+  return { output, errors, calls, dependencies, counts: () => ({ opened, closed }) };
 };
 test("progressive help and discovery never open a connection", async () => {
   const f = fixture();
@@ -93,7 +96,9 @@ test("raw calls use the same validation as mapped commands", async () => {
     ["call", "demo-echo", "--input", '{"text":"ok","count":99}'],
     ["message", "echo", "--text", "ok", "--unknown", "x"],
   ]) {
-    await expect(runService(plugin, manifest, args, f.dependencies)).rejects.toThrow();
+    await expect(runService(plugin, manifest, args, f.dependencies)).rejects.toBeInstanceOf(
+      UsageError,
+    );
   }
   expect(f.counts().opened).toBe(0);
 });
@@ -123,15 +128,21 @@ test("invalid flags and prototype paths fail before opening", async () => {
     const f = fixture();
     await expect(
       runService(plugin, manifest, ["message", "echo", ...args], f.dependencies),
-    ).rejects.toThrow();
+    ).rejects.toBeInstanceOf(UsageError);
     expect(f.counts().opened).toBe(0);
   }
   expect(({} as Record<string, unknown>).polluted).toBeUndefined();
 });
-test("tool errors return nonzero and close the session", async () => {
-  const f = fixture(true);
-  expect(await runService(plugin, manifest, ["message", "fail"], f.dependencies)).toBe(1);
-  expect(f.counts()).toEqual({ opened: 1, closed: 1 });
+test("tool errors write to the error channel, return nonzero and close the session", async () => {
+  for (const json of [[], ["--json"]]) {
+    const f = fixture(true);
+    expect(await runService(plugin, manifest, ["message", "fail", ...json], f.dependencies)).toBe(
+      1,
+    );
+    expect(f.output).toEqual([]);
+    expect(f.errors.join("")).toContain("hello");
+    expect(f.counts()).toEqual({ opened: 1, closed: 1 });
+  }
 });
 test("call failures still close the session", async () => {
   let closed = false;
@@ -198,10 +209,9 @@ test("prototype names in schema do not become inherited flag definitions", async
   const inheritedProperties = Object.create({ toString: { type: "boolean" } });
   const customManifest = {
     ...manifest,
-    commands: [
+    tools: [
       {
         name: "custom",
-        path: ["custom"],
         inputSchema: {
           type: "object",
           properties: inheritedProperties,
@@ -210,10 +220,11 @@ test("prototype names in schema do not become inherited flag definitions", async
       },
     ],
   };
+  const custom = { ...plugin, commands: { custom: { path: ["custom"] } } };
   const f = fixture();
   await expect(
-    runService(plugin, customManifest, ["custom", "--toString"], f.dependencies),
-  ).rejects.toThrow("Missing value");
+    runService(custom, customManifest, ["custom", "--toString"], f.dependencies),
+  ).rejects.toBeInstanceOf(UsageError);
   expect(f.counts().opened).toBe(0);
 });
 
@@ -235,7 +246,11 @@ const callWith = async (args: string[]) => {
 };
 const rejectsWith = async (args: string[], message: string) => {
   const f = fixture();
-  await expect(runService(plugin, manifest, args, f.dependencies)).rejects.toThrow(message);
+  const error = await runService(plugin, manifest, args, f.dependencies).catch(
+    (caught: unknown) => caught,
+  );
+  expect(error).toBeInstanceOf(UsageError);
+  expect(error).toHaveProperty("message", expect.stringContaining(message));
   expect(f.counts().opened).toBe(0);
 };
 
@@ -289,4 +304,20 @@ test("invalid JSON values name the flag", async () => {
 test("arguments without a command path fail", async () => {
   await rejectsWith(["--text", "x"], "Missing command");
   await rejectsWith(["stray-only", "--text", "x"], "Unknown command");
+});
+
+test("help for an unknown command is a usage error", async () => {
+  await rejectsWith(["missing"], "missing");
+  await rejectsWith(["help", "missing"], "missing");
+});
+
+test("plugin customizations apply at run time without regenerating", async () => {
+  const edited = { ...plugin, commands: { ...commands, "demo-echo": { path: ["say"] } } };
+  const f = fixture();
+  expect(await runService(edited, manifest, ["say", "--text", "x"], f.dependencies)).toBe(0);
+  expect(f.calls).toEqual([{ name: "demo-echo", input: { text: "x" } }]);
+  const stale = { ...plugin, commands: { ...commands, removed: { path: ["gone"] } } };
+  await expect(runService(stale, manifest, ["--help"], f.dependencies)).rejects.toThrow(
+    "missing tool",
+  );
 });

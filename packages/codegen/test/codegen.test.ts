@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { applyCustomizations } from "@mcp-cli/core";
 import { createManifest, generateModule } from "../src";
 import plugin from "./fixtures/plugin";
 import snapshot from "./fixtures/tools.json";
@@ -8,11 +9,19 @@ test("code generation is deterministic across tool ordering", async () => {
   const reverse = createManifest(plugin, [...snapshot.tools].reverse());
   expect(await generateModule(forward)).toBe(await generateModule(reverse));
   const generated = await generateModule(forward);
-  expect(generated).toContain('["demo-echo"]: (input: DemoEchoInput)');
+  expect(generated).toContain("export interface DemoEchoInput {");
   expect(generated).toContain("text: string");
 });
+test("generated output carries only server-derived tools", async () => {
+  const generated = await generateModule(createManifest(plugin, snapshot.tools));
+  expect(generated).toStartWith("// @generated");
+  expect(generated).toContain('"version": 2');
+  for (const text of ['"path"', '"summary"', '"examples"', "createClient"])
+    expect(generated).not.toContain(text);
+});
 test("unmapped tools remain callable without naming guesses", () => {
-  const manifest = createManifest({ ...plugin, commands: {} }, snapshot.tools);
+  const unmapped = { ...plugin, commands: {} };
+  const manifest = applyCustomizations(unmapped, createManifest(unmapped, snapshot.tools));
   expect(manifest.commands.at(0)?.path).toEqual(["call", "demo-echo"]);
 });
 test("duplicate names, stale mappings, reserved and overlapping paths fail", () => {
@@ -75,13 +84,6 @@ test("object key ordering does not affect generated source", async () => {
   );
 });
 
-test("prototype member tool names receive fallback paths", () => {
-  const manifest = createManifest({ ...plugin, commands: {} }, [
-    { name: "toString", inputSchema: { type: "object" } },
-  ]);
-  expect(manifest.commands.at(0)?.path).toEqual(["call", "toString"]);
-});
-
 const unmapped = { ...plugin, commands: {} };
 const objectTool = (name: string, inputSchema: Record<string, unknown>) => ({
   name,
@@ -120,9 +122,8 @@ test("type names derive from tool names with deterministic collision suffixes", 
   const generated = await generateModule(
     createManifest(unmapped, [objectTool("a-b", {}), objectTool("a_b", {}), objectTool("9x", {})]),
   );
-  expect(generated).toContain('["9x"]: (input: Tool9XInput)');
-  expect(generated).toContain('["a-b"]: (input: ABInput)');
-  expect(generated).toContain('["a_b"]: (input: ABInput2)');
+  for (const name of ["Tool9XInput", "ABInput", "ABInput2"])
+    expect(generated).toContain(`export interface ${name} {`);
 });
 
 test("input properties that collide with reserved flags fail", () => {

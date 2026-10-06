@@ -1,4 +1,4 @@
-import type { JsonSchema } from "@mcp-cli/core";
+import { UsageError, type JsonSchema } from "@mcp-cli/core";
 import { fieldType } from "./schema";
 
 const decimal = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
@@ -9,7 +9,7 @@ export const parseJson = (raw: string, flag: string): unknown => {
     return JSON.parse(raw);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid JSON for ${flag}: ${reason}`);
+    throw new UsageError(`Invalid JSON for ${flag}: ${reason}`);
   }
 };
 
@@ -17,7 +17,7 @@ const parseNumber = (raw: string, flag: string, whole: boolean): number => {
   const number = Number(raw);
   const valid = (whole ? integer : decimal).test(raw) && Number.isFinite(number);
   if (!valid || (whole && !Number.isSafeInteger(number)))
-    throw new Error(`Expected ${whole ? "integer" : "number"} for ${flag}, received ${raw}`);
+    throw new UsageError(`Expected ${whole ? "integer" : "number"} for ${flag}, received ${raw}`);
   return number;
 };
 
@@ -28,7 +28,7 @@ export const convertValue = (raw: string, schema: JsonSchema, flag: string): unk
   switch (type) {
     case "boolean":
       if (raw !== "true" && raw !== "false")
-        throw new Error(`Expected boolean for ${flag}, received ${raw}`);
+        throw new UsageError(`Expected boolean for ${flag}, received ${raw}`);
       return raw === "true";
     case "integer":
     case "number":

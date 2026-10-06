@@ -1,16 +1,22 @@
-import type { Manifest } from "@mcp-cli/core";
+import type { CommandCustomization, GeneratedManifest } from "@mcp-cli/core";
+
+export const commands: Record<string, CommandCustomization> = {
+  "demo-echo": {
+    path: ["message", "echo"],
+    summary: "Echo a message",
+    examples: ["demo message echo --text hello --count 2"],
+  },
+  "demo-fail": { path: ["message", "fail"], summary: "Return a tool error" },
+  "demo-fields": { path: ["field", "set"], summary: "Accept nullable and union fields" },
+};
 
 export const manifest = {
-  version: 1,
+  version: 2,
   service: "demo",
-  summary: "Local MCP example",
-  commands: [
+  tools: [
     {
       name: "demo-echo",
-      path: ["message", "echo"],
-      summary: "Echo a message",
       description: "Echo a message",
-      examples: ["demo message echo --text hello --count 2"],
       inputSchema: {
         type: "object",
         additionalProperties: false,
@@ -30,15 +36,11 @@ export const manifest = {
     },
     {
       name: "demo-fail",
-      path: ["message", "fail"],
-      summary: "Return a tool error",
       description: "Return an error",
       inputSchema: { type: "object", additionalProperties: false, properties: {} },
     },
     {
       name: "demo-fields",
-      path: ["field", "set"],
-      summary: "Accept nullable and union fields",
       inputSchema: {
         type: "object",
         additionalProperties: false,
@@ -53,4 +55,4 @@ export const manifest = {
       },
     },
   ],
-} satisfies Manifest;
+} satisfies GeneratedManifest;
