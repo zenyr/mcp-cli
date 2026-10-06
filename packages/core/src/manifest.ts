@@ -76,13 +76,33 @@ const validPath = (path: unknown): path is string[] =>
 const overlaps = (left: string[], right: string[]): boolean =>
   left.slice(0, Math.min(left.length, right.length)).every((part, i) => part === right[i]);
 
+const COMPOSITION = ["allOf", "anyOf", "oneOf", "not", "$ref", "if"];
+// Upload fields keep URL rules directly on the field so they can be deferred until after upload.
+const direct = (schema: Record<string, unknown>): boolean =>
+  COMPOSITION.every((keyword) => !Object.hasOwn(schema, keyword));
+
+// Rejects reserved roots and prefixes shared with paths already claimed by other tools.
+const claimPath = (path: string[], fallback: string[], claimed: string[][]): void => {
+  if (RESERVED_COMMANDS.includes(path[0] ?? "") && path.join(" ") !== fallback.join(" "))
+    throw new Error(`Reserved command path: ${path.join(" ")}`);
+  if (claimed.some((other) => overlaps(other, path)))
+    throw new Error(`Conflicting command path: ${path.join(" ")}`);
+  claimed.push(path);
+};
+
 const uploadable = (tool: ToolDefinition, field: string): boolean => {
   const properties = tool.inputSchema.properties;
   const schema =
     isRecord(properties) && Object.hasOwn(properties, field) ? properties[field] : undefined;
   if (!isRecord(schema)) return false;
-  if (schema.type === "string") return true;
-  return schema.type === "array" && isRecord(schema.items) && schema.items.type === "string";
+  if (schema.type === "string") return direct(schema);
+  return (
+    schema.type === "array" &&
+    direct(schema) &&
+    isRecord(schema.items) &&
+    schema.items.type === "string" &&
+    direct(schema.items)
+  );
 };
 
 const containsGroup = (paths: string[][], group: string): boolean => {
@@ -118,11 +138,7 @@ export const applyCustomizations = (
     const path = customization?.path ?? fallback;
     if (customization !== undefined && !validPath(customization.path))
       throw new Error(`Invalid command path for ${tool.name}`);
-    if (RESERVED_COMMANDS.includes(path[0] ?? "") && path.join(" ") !== fallback.join(" "))
-      throw new Error(`Reserved command path: ${path.join(" ")}`);
-    if (paths.some((other) => overlaps(other, path)))
-      throw new Error(`Conflicting command path: ${path.join(" ")}`);
-    paths.push(path);
+    claimPath(path, fallback, paths);
     for (const field of customization?.uploads ?? []) {
       if (!plugin.uploadFile) throw new Error(`${tool.name} declares uploads without uploadFile`);
       if (!uploadable(tool, field)) throw new Error(`Invalid upload field ${tool.name}.${field}`);
@@ -141,6 +157,7 @@ export const applyCustomizations = (
     if (names.has(name)) continue;
     if (!customization.optional) throw new Error(`Plugin refers to missing tool: ${name}`);
     if (!validPath(customization.path)) throw new Error(`Invalid command path for ${name}`);
+    claimPath(customization.path, fallbackPath(name), [...paths, ...absent]);
     absent.push(customization.path);
     absentNames.add(name);
   }

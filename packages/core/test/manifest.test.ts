@@ -194,3 +194,48 @@ test("quickstart call entries must name a known tool", () => {
   expect(withQuickstart("methods").quickstart).toHaveLength(1);
   expect(() => withQuickstart("call missing")).toThrow("missing command: call missing");
 });
+
+test("upload fields with schema composition are rejected at declaration", () => {
+  const field = (schema: Record<string, unknown>): GeneratedManifest => ({
+    version: 2,
+    service: "demo",
+    tools: [{ name: "a", inputSchema: { type: "object", properties: { url: schema } } }],
+  });
+  const declare = (schema: Record<string, unknown>) =>
+    applyCustomizations(
+      {
+        ...pluginWith({ a: { path: ["x", "y"], uploads: ["url"] } }),
+        uploadFile: async () => "https://example.com/f",
+      },
+      field(schema),
+    );
+  expect(declare({ type: "string", format: "uri" }).commands).toHaveLength(1);
+  for (const schema of [
+    { type: "string", allOf: [{ format: "uri" }] },
+    { type: "string", $ref: "#/$defs/url" },
+    { type: "array", items: { type: "string", anyOf: [{ pattern: "^https://" }] } },
+  ])
+    expect(() => declare(schema)).toThrow("Invalid upload field");
+});
+
+test("absent optional mappings still obey reserved and conflicting path rules", () => {
+  for (const path of [["message", "send"], ["message"], ["help"]])
+    expect(() =>
+      applyCustomizations(
+        pluginWith({
+          present: { path: ["message", "send"] },
+          absent: { path, optional: true },
+        }),
+        generated(["present"]),
+      ),
+    ).toThrow(/Conflicting|Reserved/);
+  expect(() =>
+    applyCustomizations(
+      pluginWith({
+        first: { path: ["a", "b"], optional: true },
+        second: { path: ["a", "b"], optional: true },
+      }),
+      generated(["other"]),
+    ),
+  ).toThrow("Conflicting command path");
+});
