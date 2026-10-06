@@ -126,9 +126,26 @@ test("type names derive from tool names with deterministic collision suffixes", 
     expect(generated).toContain(`export interface ${name} {`);
 });
 
-test("input properties that collide with reserved flags fail", () => {
-  for (const key of ["json", "help", "input", "input_file", "input-file"])
-    expect(() =>
-      createManifest(unmapped, [objectTool("x", { properties: { [key]: { type: "string" } } })]),
-    ).toThrow(`Tool x property ${key} collides with reserved flag`);
+test("input properties named like reserved flags still generate", async () => {
+  const properties = Object.fromEntries(
+    ["json", "help", "input", "input_file", "input-file"].map((key) => [key, { type: "string" }]),
+  );
+  const tools = [objectTool("x", { properties }), objectTool("y", {})];
+  const manifest = createManifest(unmapped, tools);
+  expect(manifest.tools.map((tool) => tool.name)).toEqual(["x", "y"]);
+  const generated = await generateModule(manifest);
+  for (const key of ["json", "help", "input", "input_file", '"input-file"'])
+    expect(generated).toContain(`${key}?: string`);
+});
+
+test("tool names with dots and slashes generate under call fallback paths", async () => {
+  const manifest = createManifest(unmapped, [objectTool("files.read", {}), objectTool("a/b", {})]);
+  const resolved = applyCustomizations(unmapped, manifest);
+  expect(resolved.commands.map((command) => command.path)).toEqual([
+    ["call", "a/b"],
+    ["call", "files.read"],
+  ]);
+  const generated = await generateModule(manifest);
+  for (const name of ["FilesReadInput", "ABInput"])
+    expect(generated).toContain(`export interface ${name} {`);
 });
