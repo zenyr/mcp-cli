@@ -68,15 +68,27 @@ bun run cli demo message echo --text hello --parent.page-id abc
 bun run cli demo message echo --input '{"text":"hello","labels":["a","b"]}'
 bun run cli demo message echo --input-file ./input.json
 printf '{"text":"hello"}' | bun run cli demo message echo --input -
+bun run cli demo message echo --text=hello --count=2
 ```
 
 문자열 필드는 숫자처럼 보여도 문자열로 유지합니다. `--page-id`는 스키마의 `page_id`로 대응합니다.
 객체와 배열은 JSON 값을 받습니다. 중복 플래그는 거부합니다. 배열은 JSON 배열로 지정합니다.
-JSON 입력, 파일 입력, 개별 플래그는 혼합할 수 없습니다.
+`--key=value`는 `--key value`와 같습니다. 값이 `--`로 시작하면 `=` 형식을 사용하십시오.
+nullable 필드는 `--x null`로 `null`을 지정합니다. 문자열 필드는 `null`을 문자열로 유지합니다.
+`--input-file -`은 `--input -`처럼 stdin을 읽습니다. 파일을 읽지 못하면 사용 오류를 반환합니다.
+JSON 입력, 파일 입력, 개별 플래그는 혼합할 수 없습니다. `--input`을 반복하면 사용 오류를 반환합니다.
+옵션 종료 표시 `--`는 지원하지 않습니다.
+기본 `call <tool-name>` 경로는 도구 이름을 그대로 씁니다. 그래서 `.`나 `/`가 든 이름도 매핑 없이 동작합니다.
+플러그인이 지정한 `path` 구간은 `[A-Za-z0-9_-]+` 형식이어야 합니다.
+생성 코드가 없거나 오래되었으면 CLI는 상태 1로 끝나고 `mcp-cli generate <service>` 실행을 안내합니다.
+플래그 형식이 전역 플래그(`--json`, `--help`, `--input`, `--input-file`)와 같은 속성은 `--input`으로만 지정합니다.
+help는 이 속성을 `set via --input only`로 표시합니다. `_`는 `-`로 바꿔 비교합니다.
 복잡한 `$ref`·조합 스키마의 입력은 `--input`을 사용하십시오. 전체 입력은 JSON Schema로 검증합니다.
+`$schema`가 없거나 2020-12이면 2020-12 규칙을 사용합니다. draft-07 선언과 draft-07 전용 스키마는 draft-07로 검증합니다.
 
 기본 출력은 MCP의 텍스트 블록입니다. `--json`은 MCP 결과 전체를 보존합니다.
-도구가 `isError`를 반환하면 결과를 stderr에 출력하고 종료 코드 `1`을 반환합니다. stdout은 비어 있습니다.
+도구가 `isError`를 반환하면 텍스트 결과를 stderr에 출력하고 종료 코드 `1`을 반환합니다. stdout은 비어 있습니다.
+`--json`을 지정하면 `isError` 결과도 stdout에 JSON으로 출력합니다. 종료 코드는 `1`입니다.
 CLI 사용 오류(`UsageError`)는 종료 코드 `2`, 연결·실행 오류는 `1`을 반환합니다.
 알 수 없는 명령, 잘못된 플래그·값, 입력 출처 혼합, 입력 스키마 검증 실패는 사용 오류입니다.
 입력 검증과 플러그인 정책이 통과한 뒤 서버에 연결합니다. 호출 종료 시 연결을 닫습니다.
