@@ -75,6 +75,15 @@ const validPath = (path: unknown): path is string[] =>
 const overlaps = (left: string[], right: string[]): boolean =>
   left.slice(0, Math.min(left.length, right.length)).every((part, i) => part === right[i]);
 
+const uploadable = (tool: ToolDefinition, field: string): boolean => {
+  const properties = tool.inputSchema.properties;
+  const schema =
+    isRecord(properties) && Object.hasOwn(properties, field) ? properties[field] : undefined;
+  if (!isRecord(schema)) return false;
+  if (schema.type === "string") return true;
+  return schema.type === "array" && isRecord(schema.items) && schema.items.type === "string";
+};
+
 // Overlays plugin command metadata on generated tools and rejects stale or conflicting mappings.
 export const applyCustomizations = (
   plugin: ServicePlugin,
@@ -100,6 +109,10 @@ export const applyCustomizations = (
     if (paths.some((other) => overlaps(other, path)))
       throw new Error(`Conflicting command path: ${path.join(" ")}`);
     paths.push(path);
+    for (const field of customization?.uploads ?? []) {
+      if (!plugin.uploadFile) throw new Error(`${tool.name} declares uploads without uploadFile`);
+      if (!uploadable(tool, field)) throw new Error(`Invalid upload field ${tool.name}.${field}`);
+    }
     return {
       ...tool,
       ...customization,

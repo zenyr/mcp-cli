@@ -217,6 +217,22 @@ export default definePlugin({
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
 `connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.
 
+## 로컬 파일 업로드
+
+플러그인이 `uploads`로 지정한 URL 필드는 `@경로` 값을 로컬 파일로 해석합니다.
+그 밖의 필드에서는 `@`를 그대로 보냅니다. 파일 내용을 값으로 넣을 때는 `--input -`이나 `--input-file`을 쓰십시오.
+
+```bash
+fish-audio transcription create --audio-url @./meeting.m4a
+fish-audio voice clone --audio-urls '["@./a.wav","@./b.wav"]' --confirm-voice-rights
+```
+
+- CLI는 서버에 연결하기 전에 파일을 모두 읽습니다. 읽지 못하면 사용 오류(종료 코드 2)입니다.
+- 플러그인의 `uploadFile(file, { callTool, putBytes })`가 업로드 위치를 정하고 툴에 넘길 URL을 반환합니다.
+  플러그인은 네트워크를 직접 쓰지 않습니다. HTTP PUT은 CLI의 `putBytes` adapter가 수행합니다.
+- 중복 실행 키는 업로드 URL 대신 파일 내용의 SHA-256으로 계산합니다. 거부된 호출은 업로드하지 않습니다.
+- 업로드가 실패하면 툴을 호출하지 않으므로 같은 호출을 다시 허용합니다.
+
 ## 중복 실행 방지
 
 `readOnlyHint`나 `idempotentHint`가 `true`가 아닌 도구는 같은 입력으로 다시 호출하면 거부합니다.

@@ -2,6 +2,7 @@ import {
   RepeatedCallError,
   UsageError,
   applyCustomizations,
+  type LocalFile,
   type RepeatGuard,
   type GeneratedManifest,
   type ServicePlugin,
@@ -15,6 +16,7 @@ import { runPrompts } from "./prompts";
 import { HELP, METHODS, PROMPTS, RESOURCES, SKILL } from "./reserved";
 import { runResources } from "./resources";
 import { callKey, guardsRepeats, repeatMessage } from "./repeat";
+import { readLocalFiles, uploadLocalFiles, withDigests } from "./uploads";
 export { help } from "./help";
 
 const formatResult = (result: ToolResult, json: boolean): string =>
@@ -32,13 +34,20 @@ export type RuntimeIO = {
   write(text: string): void;
   writeError(text: string): void;
   readFile(path: string): Promise<string>;
+  readBytes(path: string): Promise<Uint8Array>;
   readStdin(): Promise<string>;
+};
+export type RuntimeDependencies = {
+  open(): Promise<ToolSession>;
+  io: RuntimeIO;
+  guard?: RepeatGuard;
+  putBytes?: (url: string, bytes: Uint8Array) => Promise<void>;
 };
 export const runService = async (
   plugin: ServicePlugin,
   generated: GeneratedManifest,
   argv: string[],
-  dependencies: { open(): Promise<ToolSession>; io: RuntimeIO; guard?: RepeatGuard },
+  dependencies: RuntimeDependencies,
 ): Promise<number> => {
   const manifest = applyCustomizations(plugin, generated);
   const { path, tokens, json, wantsHelp, allowRepeat } = parseArguments(
@@ -99,14 +108,30 @@ export const runService = async (
   const input = await parseInput(tokens, command.inputSchema, dependencies.io);
   validateUserInput(command.inputSchema, input);
   await plugin.beforeCall?.(command, input);
+  const files = await readLocalFiles(command, input, dependencies.io.readBytes);
+  const { uploadFile } = plugin;
+  const { putBytes } = dependencies;
+  if (files.size && (!uploadFile || !putBytes))
+    throw new Error(`${manifest.service} cannot upload local files in this environment`);
   const guard = allowRepeat || !guardsRepeats(command) ? undefined : dependencies.guard;
-  const key = callKey(command.name, input);
+  const key = callKey(command.name, withDigests(command, input, files));
   const earlier = await guard?.begin(manifest.service, key, command.name);
   if (earlier)
     throw new RepeatedCallError(repeatMessage(command.path.join(" "), earlier, Date.now()));
   const session = await dependencies.open();
   try {
-    const result = await session.callTool(command.name, input);
+    const upload =
+      files.size && uploadFile && putBytes
+        ? (file: LocalFile) => uploadFile(file, { callTool: session.callTool, putBytes })
+        : undefined;
+    const payload = upload
+      ? await uploadLocalFiles(command, input, files, upload).catch(async (error: unknown) => {
+          // The tool never ran, so a failed upload must not block the retry.
+          await guard?.finish(manifest.service, key, "error");
+          throw error;
+        })
+      : input;
+    const result = await session.callTool(command.name, payload);
     // A thrown call stays pending because the server may still have applied it.
     await guard?.finish(manifest.service, key, result.isError ? "error" : "ok");
     const text = formatResult(result, json);
