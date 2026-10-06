@@ -1,6 +1,5 @@
 import { compile, type JSONSchema } from "json-schema-to-typescript";
 import {
-  RESERVED_FLAGS,
   applyCustomizations,
   canonicalize,
   isRecord,
@@ -41,22 +40,12 @@ export const decodeTools = (value: unknown): ToolDefinition[] => {
   });
 };
 
-const assertFlags = (tool: ToolDefinition): void => {
-  const properties = tool.inputSchema.properties;
-  for (const key of isRecord(properties) ? Object.keys(properties) : []) {
-    const flag = key.replaceAll("_", "-");
-    if (RESERVED_FLAGS.includes(flag))
-      throw new Error(`Tool ${tool.name} property ${key} collides with reserved flag --${flag}`);
-  }
-};
-
 export const byName = (a: ToolDefinition, b: ToolDefinition): number =>
   a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
 // Keeps only server-derived tools; plugin customizations are validated here and applied at run time.
 export const createManifest = (plugin: ServicePlugin, tools: unknown): GeneratedManifest => {
   const decoded = decodeTools(tools).sort(byName);
-  decoded.forEach(assertFlags);
   const manifest: GeneratedManifest = { version: 2, service: plugin.name, tools: decoded };
   applyCustomizations(plugin, manifest);
   return manifest;
