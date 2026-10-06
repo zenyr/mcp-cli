@@ -1,5 +1,12 @@
 import { RESERVED_FLAGS, type JsonSchema } from "@mcp-cli/core";
-import { HELP_FLAG, INPUT_FILE_FLAG, JSON_FLAG, flagForm, isReservedField } from "./reserved";
+import {
+  ALLOW_REPEAT_FLAG,
+  HELP_FLAG,
+  INPUT_FILE_FLAG,
+  JSON_FLAG,
+  flagForm,
+  isReservedField,
+} from "./reserved";
 import { fieldType, property } from "./schema";
 
 export type InputToken =
@@ -11,8 +18,10 @@ export type ParsedArguments = {
   tokens: InputToken[];
   json: boolean;
   wantsHelp: boolean;
+  allowRepeat: boolean;
 };
 
+const switches = new Set<string>([JSON_FLAG, HELP_FLAG, ALLOW_REPEAT_FLAG]);
 const outputFlags = new Set([`--${JSON_FLAG}`, `--${HELP_FLAG}`]);
 const invalid = (message: string): InputToken => ({ kind: "invalid", message });
 const lookup = (schema: JsonSchema, path: string[]): JsonSchema =>
@@ -31,6 +40,7 @@ export const parseArguments = (
   const tokens: InputToken[] = [];
   let json = false;
   let wantsHelp = false;
+  let allowRepeat = false;
   let schema: JsonSchema | undefined;
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
@@ -49,9 +59,10 @@ export const parseArguments = (
     const flag = `--${name}`;
     const global = flagForm(name);
     const reserved = arg.startsWith("--") && RESERVED_FLAGS.includes(global);
-    if (reserved && (global === JSON_FLAG || global === HELP_FLAG)) {
+    if (reserved && switches.has(global)) {
       if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
       else if (global === JSON_FLAG) json = true;
+      else if (global === ALLOW_REPEAT_FLAG) allowRepeat = true;
       else wantsHelp = true;
       continue;
     }
@@ -106,5 +117,5 @@ export const parseArguments = (
         : { kind: "field", flag, path: fieldPath, raw },
     );
   }
-  return { path, tokens, json, wantsHelp };
+  return { path, tokens, json, wantsHelp, allowRepeat };
 };

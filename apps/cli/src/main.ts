@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { UsageError } from "@mcp-cli/core";
+import { RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
 import { runService } from "@mcp-cli/runtime";
 import {
@@ -15,8 +15,9 @@ import { discover, findPlugin, loadPlugin } from "./discovery";
 import { listPlugins } from "./list";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
+import { defaultRepeatGuard } from "./repeat";
 
-export const EXIT = { ok: 0, failure: 1, usage: 2 } as const;
+export const EXIT = { ok: 0, failure: 1, usage: 2, repeated: 3 } as const;
 
 export const main = async (argv: string[]): Promise<number> => {
   const [command, ...args] = argv;
@@ -55,6 +56,7 @@ export const main = async (argv: string[]): Promise<number> => {
   const manifest = await loadManifest(discovered, found);
   return runService(plugin, manifest, args, {
     open: async () => connect(await resolveConnection(plugin, process.env, defaultStore())),
+    guard: defaultRepeatGuard(process.env),
     io: {
       write: (text) => console.log(text),
       writeError: (text) => console.error(text),
@@ -65,7 +67,11 @@ export const main = async (argv: string[]): Promise<number> => {
 };
 
 export const exitCodeFor = (error: unknown): number =>
-  error instanceof UsageError ? EXIT.usage : EXIT.failure;
+  error instanceof UsageError
+    ? EXIT.usage
+    : error instanceof RepeatedCallError
+      ? EXIT.repeated
+      : EXIT.failure;
 
 export const run = async (argv: string[]): Promise<void> => {
   try {

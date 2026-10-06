@@ -16,6 +16,7 @@ import {
   flagForm,
   isReservedField,
 } from "./reserved";
+import { guardsRepeats } from "./repeat";
 import { typeLabel } from "./schema";
 
 const reservedUsage = (service: string): Map<string | undefined, string> =>
@@ -131,6 +132,8 @@ export const help = (manifest: Manifest, path: string[]): string => {
       "  --json                Preserve the MCP result as JSON",
       "  -h, --help            Show command help",
     );
+    if (guardsRepeats(command))
+      lines.push("  --allow-repeat        Run even if the same input ran in the last few minutes");
     if (command.examples?.length)
       lines.push("", "Examples:", ...command.examples.map((example) => `  ${example}`));
   } else {
