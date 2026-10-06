@@ -7,7 +7,7 @@ import {
   type ToolResult,
   type ToolSession,
 } from "@mcp-cli/core";
-import { validateInput } from "@mcp-cli/schema";
+import { InputValidationError, validateInput } from "@mcp-cli/schema";
 import { findCommand, help } from "./help";
 import { parseInput } from "./input";
 import { parseArguments } from "./arguments";
@@ -23,12 +23,14 @@ const formatResult = (result: ToolResult, json: boolean): string =>
             : JSON.stringify(block),
         )
         .join("\n");
-// Schema validation of user input is a usage problem, so the CLI exits with status 2.
+// Only input that fails validation is a usage problem; a broken schema propagates unchanged.
 const validateUserInput = (schema: JsonSchema, input: Record<string, unknown>): void => {
   try {
     validateInput(schema, input);
   } catch (error) {
-    throw new UsageError(error instanceof Error ? error.message : String(error), { cause: error });
+    if (error instanceof InputValidationError)
+      throw new UsageError(error.message, { cause: error });
+    throw error;
   }
 };
 
