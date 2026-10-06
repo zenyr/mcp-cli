@@ -1,6 +1,7 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  NotGeneratedError,
   UsageError,
   decodeManifest,
   isRecord,
@@ -36,7 +37,7 @@ export const generatedFiles = (name: string): { module: string; snapshot: string
 
 export const loadManifest = async (name: string): Promise<GeneratedManifest> => {
   if (!(await Bun.file(generatedFiles(name).module).exists()))
-    throw new Error(`${name} is not generated yet. Run mcp-cli generate ${name} first`);
+    throw new NotGeneratedError(`${name} is not generated yet. Run mcp-cli generate ${name} first`);
   const module: unknown = await import(`${entry(name).specifier}/generated`);
   if (!isRecord(module)) throw new Error(`Invalid generated module: ${name}`);
   return decodeManifest(module.manifest);

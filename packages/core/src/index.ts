@@ -54,6 +54,10 @@ export { applyCustomizations, decodeManifest, type GeneratedManifest } from "./m
 export class UsageError extends Error {
   override name = "UsageError";
 }
+/** Generated code for a service is missing or outdated; the CLI exits with status 1. */
+export class NotGeneratedError extends Error {
+  override name = "NotGeneratedError";
+}
 export const RESERVED_COMMANDS: readonly string[] = ["help", "methods", "call", "skill"];
 export const RESERVED_FLAGS: readonly string[] = ["json", "help", "input", "input-file"];
 export const fallbackPath = (toolName: string): string[] => ["call", toolName];

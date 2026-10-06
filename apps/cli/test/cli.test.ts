@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
 import { fileURLToPath } from "node:url";
+import { NotGeneratedError, UsageError } from "@mcp-cli/core";
+import { EXIT, exitCodeFor } from "../src/main";
 import { generatedFiles, loadManifest, loadPlugin, registry } from "../src/plugins";
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 const run = async (...args: string[]) => {
@@ -45,7 +47,12 @@ test("registry keys match plugin names and resolve package files", async () => {
     expect(generatedFiles(name).module).toEndWith(`plugins/${name}/src/generated.ts`);
   }
   expect((await loadManifest("demo")).service).toBe("demo");
-  await expect(loadManifest("notion")).rejects.toThrow("notion is not generated yet");
+  await expect(loadManifest("notion")).rejects.toThrow(NotGeneratedError);
+});
+test("missing and outdated generated code share the failure exit status", () => {
+  expect(exitCodeFor(new NotGeneratedError("missing"))).toBe(EXIT.failure);
+  expect(exitCodeFor(new UsageError("usage"))).toBe(EXIT.usage);
+  expect(exitCodeFor(new Error("other"))).toBe(EXIT.failure);
 });
 test("generation rejects malformed and repeated options", async () => {
   for (const args of [
