@@ -13,11 +13,15 @@ export type CommandCustomization = {
   rules?: string[];
 };
 export type CommandSpec = CommandCustomization & ToolDefinition;
+/** A recommended command line, relative to the service name, shown first in root help. */
+export type QuickstartEntry = { command: string; summary: string };
 /** Commands resolved from generated tools and the plugin's customizations at run time. */
 export type Manifest = {
   service: string;
   summary: string;
   commands: CommandSpec[];
+  groups: Record<string, string>;
+  quickstart: QuickstartEntry[];
 };
 export type ToolResult = {
   content: Array<Record<string, unknown>>;
@@ -40,6 +44,9 @@ export type ServicePlugin = {
   name: string;
   summary: string;
   commands?: Record<string, CommandCustomization>;
+  /** One-line descriptions keyed by a space-joined command group path such as "media image". */
+  groups?: Record<string, string>;
+  quickstart?: QuickstartEntry[];
   skill?: string;
   auth?: import("./auth").AuthSpec;
   connection(env: Record<string, string | undefined>): Connection | Promise<Connection>;

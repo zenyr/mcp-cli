@@ -50,10 +50,11 @@ bun run check
 
 Notion CLI의 `Usage`, `Commands`, `Arguments`, `Options`, `Examples`, `Safety Rules` 구조를 참고했습니다.
 
-- `demo --help`: 명령 그룹과 발견 명령만 표시합니다.
-- `demo message --help`: 해당 그룹의 하위 명령만 표시합니다.
+- `demo --help`: 추천 명령(`Start here`), 명령 그룹, 발견 명령을 한 줄 설명과 함께 표시합니다.
+- `demo message --help`: 해당 그룹의 하위 명령을 한 줄 설명과 함께 표시합니다.
 - `demo message echo --help`: 해당 도구의 인자·타입·필수 여부·예시를 표시합니다.
 - `demo methods message --json`: 해당 그룹의 도구 이름과 명령 경로만 표시합니다.
+- `demo call --help`: 모든 도구의 MCP 이름과 첫 문장 요약을 표시합니다.
 - `demo call demo-echo --help`: 같은 도구의 help를 원래 MCP 이름으로 찾습니다.
 - `demo skill`: 플러그인의 서비스 사용 지침을 표시합니다.
 
@@ -201,11 +202,17 @@ export default definePlugin({
       examples: ["issues issue search --query bug"],
     },
   },
+  groups: { issue: "Find and inspect issues" },
+  quickstart: [{ command: "issue search --query bug", summary: "Find open bugs" }],
   connection: () => ({ type: "stdio", command: "issue-mcp" }),
 });
 ```
 
 `commands`에서 설명, 예시, 주의사항을 보강할 수 있습니다.
+`summary`를 지정하면 원래 도구 설명은 명령 help의 본문에 표시됩니다.
+`groups`는 공백으로 이은 그룹 경로(`"media image"`)에 한 줄 설명을 붙입니다.
+`quickstart`는 루트 help의 `Start here`에 표시할 추천 명령입니다.
+없는 그룹이나 명령을 가리키는 `groups`, `quickstart` 항목은 실행 시 오류로 처리합니다.
 `beforeCall(command, input)`은 서비스별 실행 전 검사를 넣는 위치입니다.
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
 `connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.

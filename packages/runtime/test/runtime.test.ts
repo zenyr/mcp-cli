@@ -434,6 +434,33 @@ test("reserved command help keeps its usage lines", async () => {
     "Usage: demo methods [group] [--json]\n\nList baked-in tool names and command paths.",
     "Usage: demo help [command]\n\nShow help for a command.",
     "Usage: demo skill\n\nPrint the service workflow.",
-    "Usage: demo call <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse demo methods to discover names.",
+    [
+      "Usage: demo call <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse demo methods to discover names.",
+      "",
+      "Tools:",
+      "  demo-echo    Echo a message",
+      "  demo-fail    Return a tool error",
+      "  demo-fields  Accept nullable and union fields",
+      "  demo-shape   Accept nullable objects and reserved names",
+    ].join("\n"),
   ]);
+});
+
+test("root and group help describe each command and the recommended start", async () => {
+  const f = fixture();
+  const described = definePlugin({
+    ...plugin,
+    groups: { message: "Send and fail messages" },
+    quickstart: [{ command: "message echo --text hi", summary: "Say hi" }],
+  });
+  await runService(described, manifest, ["--help"], f.dependencies);
+  await runService(described, manifest, ["message"], f.dependencies);
+  const [root, group] = f.output;
+  expect(root).toContain("Start here:\n  demo message echo --text hi  Say hi");
+  expect(root).toContain("  message  Send and fail messages\n  shape    1 command");
+  expect(root).toContain("Discovery:\n  methods    List tool names and command paths");
+  expect(root).not.toContain("  call  \n");
+  expect(group).toContain("Usage: demo message <command>\n\nSend and fail messages");
+  expect(group).toContain("  echo  Echo a message\n  fail  Return a tool error");
+  expect(group).not.toContain("Start here:");
 });

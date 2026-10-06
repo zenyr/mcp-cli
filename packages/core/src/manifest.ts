@@ -92,5 +92,26 @@ export const applyCustomizations = (
   });
   for (const name of Object.keys(plugin.commands ?? {}))
     if (!names.has(name)) throw new Error(`Plugin refers to missing tool: ${name}`);
-  return { service: plugin.name, summary: plugin.summary, commands };
+  const groups = plugin.groups ?? {};
+  for (const group of Object.keys(groups)) {
+    const prefix = group.split(" ");
+    if (!paths.some((path) => path.length > prefix.length && overlaps(path, prefix)))
+      throw new Error(`Plugin describes missing command group: ${group}`);
+  }
+  for (const { command } of plugin.quickstart ?? []) {
+    const words = command.split(" ");
+    const end = words.findIndex((word) => word.startsWith("-"));
+    const head = end < 0 ? words : words.slice(0, end);
+    const known =
+      RESERVED_COMMANDS.includes(head[0] ?? "") ||
+      paths.some((path) => path.length >= head.length && overlaps(path, head));
+    if (!head.length || !known) throw new Error(`Quickstart refers to missing command: ${command}`);
+  }
+  return {
+    service: plugin.name,
+    summary: plugin.summary,
+    commands,
+    groups,
+    quickstart: plugin.quickstart ?? [],
+  };
 };
