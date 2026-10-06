@@ -8,6 +8,7 @@ import {
   logoutCommand,
   openInBrowser,
   resolveConnection,
+  stdinRedirects,
 } from "./auth";
 import { generate } from "./generate";
 import { discover, findPlugin, loadPlugin } from "./discovery";
@@ -23,7 +24,7 @@ export const main = async (argv: string[]): Promise<number> => {
   if (!command || ["--help", "-h", "help"].includes(command)) {
     const serviceNames = (await registry()).plugins.map((plugin) => plugin.service);
     console.log(
-      `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n       mcp-cli plugins\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
+      `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n       mcp-cli plugins\n       mcp-cli login <service> [--no-browser]\n       mcp-cli logout <service>\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
     );
     return EXIT.ok;
   }
@@ -40,6 +41,7 @@ export const main = async (argv: string[]): Promise<number> => {
       plugin: async (name) => loadPlugin(findPlugin(await registry(), name)),
       writeError,
       open: openInBrowser(writeError),
+      manual: stdinRedirects,
     });
     return EXIT.ok;
   }

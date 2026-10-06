@@ -228,6 +228,10 @@ mcp-cli logout notion   # 저장한 토큰 삭제
 - `login`은 MCP 인증 사양의 순서를 따릅니다.
   protected resource metadata, authorization server metadata, 동적 클라이언트 등록, PKCE 순서입니다.
 - redirect URI는 `http://127.0.0.1:<임의 포트>/callback`입니다. CLI는 인증 URL을 stderr에 출력하고 브라우저를 엽니다.
+- 브라우저를 열 수 없는 환경에서는 `mcp-cli login <service> --no-browser`를 실행하십시오.
+  CLI는 URL만 출력합니다. 다른 기기에서 URL을 열어 승인하십시오.
+  승인 후 이동한 `127.0.0.1` 주소가 열리지 않아도 됩니다. 그 주소 전체를 터미널에 붙여 넣으면 로그인이 끝납니다.
+- `MCP_CLI_NO_BROWSER=1`, SSH 세션, `DISPLAY`가 없는 Linux에서는 브라우저를 자동으로 열지 않습니다.
 - `login`은 `state`를 검사합니다. 5분 안에 응답이 없으면 실패합니다.
 - `oauth`의 `clientId`를 지정하면 동적 등록을 건너뜁니다. `scopes`, `clientName`, `redirectPort`도 지정할 수 있습니다.
 - `apiKey`의 `header`를 지정하면 scheme 없이 키만 보냅니다. `scheme`으로 접두어를 지정할 수 있습니다.
