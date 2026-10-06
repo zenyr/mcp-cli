@@ -4,12 +4,12 @@ MCP 도구 정의를 정적 코드로 생성하고, 필요한 범위만 발견�
 Bun workspaces와 Turborepo를 사용합니다. 서비스는 별도 플러그인 패키지로 추가합니다.
 
 ```text
-MCP tools/list → tools.json → generated.ts → CLI
-                                  ├─ 명령 경로와 help
-                                  └─ 타입이 있는 호출 함수
+MCP tools/list → tools.json → generated.ts (도구·입력 타입) ─┐
+                                                             ├→ applyCustomizations → CLI
+plugin commands (경로·설명·예시·규칙) ───────────────────────┘
 ```
 
-Help, `methods`, `skill`은 생성된 파일만 읽습니다. 실제 명령 실행 시에만 서버에 연결합니다.
+Help, `methods`, `skill`은 생성된 파일과 플러그인만 읽습니다. 실제 명령 실행 시에만 서버에 연결합니다.
 도구 이름을 추측해서 자연어 명령으로 바꾸지 않습니다. 플러그인이 명령 경로를 지정하고,
 매핑하지 않은 도구는 `call <tool>`로 노출합니다.
 
@@ -34,8 +34,8 @@ bun run check
 
 | 경로               | 역할                                                    |
 | ------------------ | ------------------------------------------------------- |
-| `packages/core`    | 서비스 플러그인, 명령 정의, 연결·호출 계약              |
-| `packages/codegen` | 도구 정의와 플러그인 매핑을 합쳐 정적 코드 생성         |
+| `packages/core`    | 플러그인·manifest·연결·호출 계약, 명령 매핑 적용        |
+| `packages/codegen` | 도구 정의로 정적 코드 생성, 플러그인 매핑 사전 검증     |
 | `packages/runtime` | 명령 탐색, help, 입력 처리, 정책 적용, 결과 출력        |
 | `packages/schema`  | JSON Schema 입력 검증                                   |
 | `packages/mcp`     | 공식 MCP 클라이언트를 이용한 stdio/Streamable HTTP 연결 |
@@ -76,8 +76,9 @@ JSON 입력, 파일 입력, 개별 플래그는 혼합할 수 없습니다.
 복잡한 `$ref`·조합 스키마의 입력은 `--input`을 사용하십시오. 전체 입력은 JSON Schema로 검증합니다.
 
 기본 출력은 MCP의 텍스트 블록입니다. `--json`은 MCP 결과 전체를 보존합니다.
-도구가 `isError`를 반환하면 결과를 출력하고 종료 코드 `1`을 반환합니다.
+도구가 `isError`를 반환하면 결과를 stderr에 출력하고 종료 코드 `1`을 반환합니다. stdout은 비어 있습니다.
 CLI 사용 오류(`UsageError`)는 종료 코드 `2`, 연결·실행 오류는 `1`을 반환합니다.
+알 수 없는 명령, 잘못된 플래그·값, 입력 출처 혼합, 입력 스키마 검증 실패는 사용 오류입니다.
 입력 검증과 플러그인 정책이 통과한 뒤 서버에 연결합니다. 호출 종료 시 연결을 닫습니다.
 
 ## 정적 생성
@@ -95,14 +96,19 @@ bun run generate demo --snapshot plugins/demo/src/tools.json --check
 
 생성 결과는 플러그인의 `src/tools.json`과 `src/generated.ts`입니다.
 CLI는 플러그인 패키지의 `package.json` 위치로 출력 경로를 찾습니다.
+생성 결과에는 서버에서 받은 도구 정의와 입력 타입만 들어갑니다. 생성 manifest의 `version`은 `2`입니다.
 실행 시에는 `@mcp-cli/plugin-<service>/generated` export로 manifest를 읽고 `decodeManifest`로 검증합니다.
+그다음 `applyCustomizations`가 플러그인의 `commands`를 적용합니다.
+플러그인의 경로·설명·예시·규칙을 바꾸면 다시 생성하지 않아도 다음 실행에 반영됩니다.
+`version: 1` 생성 결과는 사용 오류로 거부합니다. `mcp-cli generate <service>`로 다시 생성하십시오.
 도구 이름순으로 정렬하므로 서버가 목록 순서를 바꿔도 같은 `tools.json`과 코드를 생성합니다.
 서버가 도구를 하나도 반환하지 않으면 생성은 실패합니다.
-명령 경로 중복, 상위·하위 명령 충돌, 예약 명령 충돌, 존재하지 않는 도구 매핑은 생성 오류입니다.
+명령 경로 중복, 상위·하위 명령 충돌, 예약 명령 충돌, 존재하지 않는 도구 매핑은 오류입니다.
+`applyCustomizations`가 이 검사를 생성 시와 실행 시에 모두 실행합니다.
 같은 플러그인을 동시에 생성하는 작업은 실행하지 마십시오.
 
-생성된 `createClient(call)`은 도구별 입력 타입을 제공합니다.
-이는 저수준 호출용입니다. CLI 입력 검증과 `beforeCall` 정책은 `runService`에서 적용합니다.
+생성 코드는 호출 함수를 내보내지 않습니다. 도구 호출은 입력 검증과 `beforeCall` 정책을 적용하는 `runService`만 거칩니다.
+도구별 입력 타입(`DemoEchoInput` 등)은 타입 참조용으로 export합니다.
 
 ## 플러그인 추가
 
@@ -147,6 +153,10 @@ export default definePlugin({
 
 Notion 서버를 생성하려면 `NOTION_MCP_TOKEN`으로 서버가 받아들이는 Bearer 인증을 제공해야 합니다.
 `NOTION_MCP_URL`로 URL을 바꿀 수 있습니다. 이 프레임워크는 브라우저 로그인을 자동 실행하지 않습니다.
+HTTP 연결은 요청마다 플러그인의 `authorize`에서 헤더를 받습니다.
+서버가 401을 반환하면 `authorize({ refresh: true })`를 한 번 호출하고 한 번만 재시도합니다.
+Notion 플러그인은 `NotionTokenSource`(`plugins/notion/src/auth.ts`)로 토큰을 읽습니다.
+OAuth 저장소와 refresh lock은 이 타입의 `refresh`로 연결합니다.
 
 ```bash
 bun run generate notion

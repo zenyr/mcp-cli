@@ -27,8 +27,12 @@ test("CLI help, execution and error exit status", async () => {
   expect(help.stdout).toContain("Arguments:");
   const call = await run("demo", "message", "echo", "--text", "hello", "--uppercase");
   expect(call).toEqual({ stdout: "HELLO\n", stderr: "", code: 0 });
-  expect((await run("demo", "message", "fail")).code).toBe(1);
-  expect((await run("demo", "missing")).code).toBe(1);
+  const failure = await run("demo", "message", "fail");
+  expect(failure.code).toBe(1);
+  expect(failure.stdout).toBe("");
+  expect(failure.stderr).not.toBe("");
+  expect((await run("demo", "missing")).code).toBe(2);
+  expect((await run("demo", "message", "echo", "--count", "x")).code).toBe(2);
 });
 test("unknown and prototype service names are usage errors", async () => {
   expect((await run("unknown-service")).code).toBe(2);

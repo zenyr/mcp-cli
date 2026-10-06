@@ -13,8 +13,8 @@ export type CommandCustomization = {
   rules?: string[];
 };
 export type CommandSpec = CommandCustomization & ToolDefinition;
+/** Commands resolved from generated tools and the plugin's customizations at run time. */
 export type Manifest = {
-  version: 1;
   service: string;
   summary: string;
   commands: CommandSpec[];
@@ -49,7 +49,7 @@ export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
   return plugin;
 };
 export { canonicalize, isRecord, isStringArray } from "./values";
-export { decodeManifest } from "./manifest";
+export { applyCustomizations, decodeManifest, type GeneratedManifest } from "./manifest";
 /** Invalid command-line usage; the CLI exits with status 2. */
 export class UsageError extends Error {
   override name = "UsageError";

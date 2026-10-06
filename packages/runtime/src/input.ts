@@ -1,4 +1,4 @@
-import { isRecord, type JsonSchema } from "@mcp-cli/core";
+import { UsageError, isRecord, type JsonSchema } from "@mcp-cli/core";
 import type { InputToken } from "./arguments";
 import { fieldName, property } from "./schema";
 import { convertValue, parseJson } from "./values";
@@ -15,16 +15,16 @@ const setField = (
   let cursor = input;
   for (const [index, segment] of token.path.entries()) {
     const key = fieldName(schema, segment);
-    if (!key || unsafe.has(key)) throw new Error(`Invalid field: ${segment}`);
+    if (!key || unsafe.has(key)) throw new UsageError(`Invalid field: ${segment}`);
     const nextSchema = property(schema, segment);
     if (index === token.path.length - 1) {
       if (Object.hasOwn(cursor, key))
-        throw new Error(`Repeated field: ${token.path.join(".")}; use a JSON array`);
+        throw new UsageError(`Repeated field: ${token.path.join(".")}; use a JSON array`);
       cursor[key] = convertValue(token.raw, nextSchema, token.flag);
     } else {
       if (!Object.hasOwn(cursor, key)) cursor[key] = {};
       const nested = cursor[key];
-      if (!isRecord(nested)) throw new Error(`Conflicting field: ${key}`);
+      if (!isRecord(nested)) throw new UsageError(`Conflicting field: ${key}`);
       cursor = nested;
       schema = nextSchema;
     }
@@ -39,13 +39,13 @@ export const parseInput = async (
   const input: Record<string, unknown> = {};
   let source: { flag: string; text: string } | undefined;
   for (const token of tokens) {
-    if (token.kind === "invalid") throw new Error(token.message);
-    if (source !== undefined) throw new Error(mixedSources);
+    if (token.kind === "invalid") throw new UsageError(token.message);
+    if (source !== undefined) throw new UsageError(mixedSources);
     if (token.kind === "field") {
       setField(input, schema, token);
       continue;
     }
-    if (Object.keys(input).length) throw new Error(mixedSources);
+    if (Object.keys(input).length) throw new UsageError(mixedSources);
     const text =
       token.from === "file"
         ? await files.readFile(token.value)
@@ -56,6 +56,6 @@ export const parseInput = async (
   }
   if (source === undefined) return input;
   const parsed = parseJson(source.text, source.flag);
-  if (!isRecord(parsed)) throw new Error("Input must be a JSON object");
+  if (!isRecord(parsed)) throw new UsageError("Input must be a JSON object");
   return parsed;
 };

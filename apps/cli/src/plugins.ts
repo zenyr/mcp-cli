@@ -4,7 +4,7 @@ import {
   UsageError,
   decodeManifest,
   isRecord,
-  type Manifest,
+  type GeneratedManifest,
   type ServicePlugin,
 } from "@mcp-cli/core";
 
@@ -34,7 +34,7 @@ export const generatedFiles = (name: string): { module: string; snapshot: string
   return { module: join(root, "src", "generated.ts"), snapshot: join(root, "src", "tools.json") };
 };
 
-export const loadManifest = async (name: string): Promise<Manifest> => {
+export const loadManifest = async (name: string): Promise<GeneratedManifest> => {
   if (!(await Bun.file(generatedFiles(name).module).exists()))
     throw new Error(`${name} is not generated yet. Run mcp-cli generate ${name} first`);
   const module: unknown = await import(`${entry(name).specifier}/generated`);

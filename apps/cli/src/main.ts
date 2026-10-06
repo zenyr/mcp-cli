@@ -25,6 +25,7 @@ export const main = async (argv: string[]): Promise<number> => {
     open: async () => connect(await plugin.connection(process.env)),
     io: {
       write: (text) => console.log(text),
+      writeError: (text) => console.error(text),
       readFile: (path) => Bun.file(path).text(),
       readStdin: () => Bun.stdin.text(),
     },

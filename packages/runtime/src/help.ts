@@ -1,5 +1,6 @@
 import {
   RESERVED_COMMANDS,
+  UsageError,
   fallbackPath,
   isRecord,
   type CommandSpec,
@@ -19,7 +20,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
     path.every((part, index) => command.path[index] === part),
   );
   if (path.length && !command && !scoped.length && !RESERVED_COMMANDS.includes(path.join(" "))) {
-    throw new Error(`Unknown command: ${path.join(" ")}`);
+    throw new UsageError(`Unknown command: ${path.join(" ")}`);
   }
   const title = [manifest.service, ...path].join(" ");
   if (path.join(" ") === "methods")
