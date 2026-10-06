@@ -19,6 +19,8 @@ export type ParsedArguments = {
   json: boolean;
   wantsHelp: boolean;
   allowRepeat: boolean;
+  /** The plugin credential switch given for this run, such as `xoxb`. */
+  credential?: string;
 };
 
 const switches = new Set<string>([JSON_FLAG, HELP_FLAG, ALLOW_REPEAT_FLAG]);
@@ -35,12 +37,14 @@ const inputOnly = (flag: string, path: string[]): InputToken | undefined =>
 export const parseArguments = (
   argv: string[],
   resolve: (path: string[]) => JsonSchema,
+  credentials: readonly string[] = [],
 ): ParsedArguments => {
   const path: string[] = [];
   const tokens: InputToken[] = [];
   let json = false;
   let wantsHelp = false;
   let allowRepeat = false;
+  let credential: string | undefined;
   let schema: JsonSchema | undefined;
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
@@ -59,6 +63,13 @@ export const parseArguments = (
     const flag = `--${name}`;
     const global = flagForm(name);
     const reserved = arg.startsWith("--") && RESERVED_FLAGS.includes(global);
+    if (arg.startsWith("--") && credentials.includes(name)) {
+      if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
+      else if (credential !== undefined && credential !== name)
+        tokens.push(invalid(`Use only one credential flag: --${credential} or ${flag}`));
+      else credential = name;
+      continue;
+    }
     if (reserved && switches.has(global)) {
       if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
       else if (global === JSON_FLAG) json = true;
@@ -117,5 +128,5 @@ export const parseArguments = (
         : { kind: "field", flag, path: fieldPath, raw },
     );
   }
-  return { path, tokens, json, wantsHelp, allowRepeat };
+  return { path, tokens, json, wantsHelp, allowRepeat, ...(credential && { credential }) };
 };

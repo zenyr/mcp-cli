@@ -9,8 +9,17 @@ export type AuthSpec =
       /** Fixed loopback port for servers that require an exact pre-registered redirect URI. */
       redirectPort?: number;
     }
-  | { type: "apiKey"; env: string; header?: string; scheme?: string }
+  | {
+      type: "apiKey";
+      env: string;
+      header?: string;
+      scheme?: string;
+      /** Other keys for the same service, chosen per run with `--<flag>`. */
+      alternates?: ApiKeyAlternate[];
+    }
   | { type: "none" };
+/** A second credential such as a bot token; `summary` appears in help next to `--<flag>`. */
+export type ApiKeyAlternate = { flag: string; env: string; summary: string };
 export type OAuthSpec = Extract<AuthSpec, { type: "oauth" }>;
 export type ApiKeySpec = Extract<AuthSpec, { type: "apiKey" }>;
 
@@ -40,3 +49,10 @@ export class AuthRequiredError extends Error {
 
 export const loginRequired = (service: string, reason: string): AuthRequiredError =>
   new AuthRequiredError(`${reason}. Run mcp-cli login ${service}`);
+
+/** Credential store entry for a service, or for one of its alternate keys. */
+export const credentialName = (service: string, credential?: string): string =>
+  credential ? `${service}--${credential}` : service;
+
+export const credentialSwitches = (auth: AuthSpec | undefined): ApiKeyAlternate[] =>
+  auth?.type === "apiKey" ? (auth.alternates ?? []) : [];

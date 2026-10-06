@@ -74,6 +74,7 @@ test("applyCustomizations overlays plugin metadata at run time", () => {
     ],
     groups: {},
     quickstart: [],
+    credentials: [],
   });
   const unmapped = applyCustomizations(pluginWith(), generated(["toString"]));
   expect(unmapped.commands[0]?.path).toEqual(["call", "toString"]);
@@ -238,4 +239,24 @@ test("absent optional mappings still obey reserved and conflicting path rules", 
       generated(["other"]),
     ),
   ).toThrow("Conflicting command path");
+});
+
+test("credential switches must be valid, unreserved and unique flags", () => {
+  const withAlternates = (flags: string[]) =>
+    definePlugin({
+      name: "demo",
+      summary: "Demo",
+      auth: {
+        type: "apiKey",
+        env: "KEY",
+        alternates: flags.map((flag) => ({ flag, env: `KEY_${flag}`, summary: "Alt" })),
+      },
+      connection: () => ({ type: "stdio", command: "unused" }),
+    });
+  const plugin = withAlternates(["xoxb"]);
+  expect(applyCustomizations(plugin, generated(["a"])).credentials).toEqual([
+    { flag: "xoxb", env: "KEY_xoxb", summary: "Alt" },
+  ]);
+  for (const flags of [["json"], ["allow-repeat"], ["Bad"], ["no-bot"], ["x", "x"]])
+    expect(() => withAlternates(flags)).toThrow(/credential flag/);
 });
