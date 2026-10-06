@@ -82,6 +82,18 @@ export {
   type Tokens,
 } from "./auth";
 export type * from "./session";
+export type CallStatus = "pending" | "ok" | "error";
+export type CallRecord = { tool: string; at: number; status: CallStatus };
+/** Remembers recent non-idempotent calls so an identical retry inside the window can be refused. */
+export type RepeatGuard = {
+  /** Returns the earlier pending or successful record for `key`, or records this call as pending. */
+  begin(service: string, key: string, tool: string): Promise<CallRecord | undefined>;
+  finish(service: string, key: string, status: Exclude<CallStatus, "pending">): Promise<void>;
+};
+/** An identical non-idempotent call already ran inside the repeat window; the CLI exits with status 3. */
+export class RepeatedCallError extends Error {
+  override name = "RepeatedCallError";
+}
 /** Invalid command-line usage; the CLI exits with status 2. */
 export class UsageError extends Error {
   override name = "UsageError";
@@ -103,6 +115,7 @@ export const FLAGS = {
   help: "help",
   input: "input",
   inputFile: "input-file",
+  allowRepeat: "allow-repeat",
 } as const;
 export const RESERVED_COMMANDS: readonly string[] = Object.values(COMMANDS);
 export const RESERVED_FLAGS: readonly string[] = Object.values(FLAGS);
