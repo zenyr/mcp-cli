@@ -1,13 +1,12 @@
 import { definePlugin } from "@mcp-cli/core";
+import { commands, groups, quickstart, skill } from "./commands";
 export default definePlugin({
   name: "notion",
-  summary: "Notion MCP tools with progressive command help",
-  commands: {
-    "notion-fetch": { path: ["fetch", "get"], examples: ["notion fetch get --id self"] },
-    "notion-search": { path: ["search", "run"], examples: ["notion search run --query roadmap"] },
-  },
-  skill:
-    "Use fetch before edits. Read notion://docs/enhanced-markdown-spec before content mutations.\nThis plugin supplies command mapping only; it does not migrate the existing Notion mutation guards.",
+  summary: "Notion pages, databases, comments and agents",
+  commands,
+  groups,
+  quickstart,
+  skill,
   auth: { type: "oauth" },
   // An explicit NOTION_MCP_TOKEN takes precedence over credentials stored by `mcp-cli login notion`.
   connection: (env) => {
