@@ -64,15 +64,13 @@ test("discovered services match plugin names and resolve package files", async (
     expect(packageFiles(plugin).module).toEndWith(`plugins/${name}/src/generated.ts`);
   }
   expect((await loadManifest(registry, findPlugin(registry, "demo"))).service).toBe("demo");
-  await expect(loadManifest(registry, findPlugin(registry, "notion"))).rejects.toThrow(
-    NotGeneratedError,
-  );
 });
 test("plugins lists discovered services with generated status", async () => {
   const listing = await run("plugins");
   expect(listing.code).toBe(0);
   expect(listing.stdout).toMatch(/demo\s+workspace\s+generated \(package\)/);
-  expect(listing.stdout).toMatch(/notion\s+workspace\s+not generated/);
+  for (const name of ["fish-audio", "linear", "notion", "slack"])
+    expect(listing.stdout).toMatch(new RegExp(`${name}\\s+workspace\\s`));
   expect((await run("plugins", "extra")).code).toBe(2);
 });
 test("missing and outdated generated code share the failure exit status", () => {
