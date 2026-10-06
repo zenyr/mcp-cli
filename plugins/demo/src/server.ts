@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline";
-import { echoInput, isRecord, isRequest } from "./protocol";
+import { isRecord } from "@mcp-cli/core";
+import { echoInput, isRequest } from "./protocol";
 const tools = [
   {
     name: "demo-echo",

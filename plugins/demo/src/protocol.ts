@@ -1,5 +1,4 @@
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
+import { isRecord } from "@mcp-cli/core";
 export type Request = { id: string | number; method: string; params?: unknown };
 export const isRequest = (value: unknown): value is Request =>
   isRecord(value) &&
