@@ -3,7 +3,13 @@ import { applyCustomizations } from "@mcp-cli/core";
 import slack from "../src";
 
 test("Slack sends SLACK_MCP_TOKEN as a bearer API key", async () => {
-  expect(slack.auth).toEqual({ type: "apiKey", env: "SLACK_MCP_TOKEN" });
+  expect(slack.auth).toEqual({
+    type: "apiKey",
+    env: "SLACK_MCP_TOKEN",
+    alternates: [
+      { flag: "xoxb", env: "SLACK_MCP_BOT_TOKEN", summary: "Act as the bot token (xoxb)" },
+    ],
+  });
   expect(await slack.connection({})).toEqual({ type: "http", url: "https://mcp.slack.com/mcp" });
   expect(await slack.connection({ SLACK_MCP_URL: "http://x/mcp" })).toEqual({
     type: "http",

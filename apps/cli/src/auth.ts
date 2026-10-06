@@ -2,6 +2,8 @@ import { fileTokenStore } from "@mcp-cli/auth";
 import {
   AuthRequiredError,
   UsageError,
+  credentialName,
+  credentialSwitches,
   type ApiKeySpec,
   type Connection,
   type ServicePlugin,
@@ -20,13 +22,34 @@ export type AuthContext = {
   open: (url: string, browser: boolean) => void | Promise<void>;
   /** Reads hand-copied redirect URLs, for logins finished in a browser on another machine. */
   manual?: (submit: (input: string) => void) => () => void;
+  /** Reads an API key without echoing it. */
+  readSecret: (prompt: string) => Promise<string>;
 };
 
 export const defaultStore = (env: Env = process.env): TokenStore => fileTokenStore({ env });
 
-const apiKey = (spec: ApiKeySpec, env: Env, service: string): string => {
-  const key = env[spec.env];
-  if (!key) throw new AuthRequiredError(`Set ${spec.env} to use ${service}`);
+type KeyChoice = { env: string; credential?: string };
+// Picks the base key or the alternate named by a credential switch such as `xoxb`.
+const keyChoice = (spec: ApiKeySpec, service: string, credential?: string): KeyChoice => {
+  if (!credential) return { env: spec.env };
+  const alternate = spec.alternates?.find((item) => item.flag === credential);
+  if (!alternate) throw new UsageError(`${service} has no --${credential} credential`);
+  return { env: alternate.env, credential };
+};
+
+// An explicit environment variable wins over the key stored by `mcp-cli login`.
+const apiKey = async (
+  spec: ApiKeySpec,
+  env: Env,
+  store: TokenStore,
+  service: string,
+  credential?: string,
+): Promise<string> => {
+  const choice = keyChoice(spec, service, credential);
+  const stored = await store.read(credentialName(service, choice.credential));
+  const key = env[choice.env] || stored?.accessToken;
+  const login = `mcp-cli login ${service}${credential ? ` --${credential}` : ""}`;
+  if (!key) throw new AuthRequiredError(`Set ${choice.env} or run ${login} to use ${service}`);
   return key;
 };
 
@@ -41,22 +64,31 @@ export const resolveConnection = async (
   plugin: ServicePlugin,
   env: Env,
   store: TokenStore,
+  credential?: string,
 ): Promise<Connection> => {
   const connection = await plugin.connection(env);
   const auth = plugin.auth;
+  if (credential && auth?.type !== "apiKey")
+    throw new UsageError(`${plugin.name} has no --${credential} credential`);
   if (!auth || auth.type === "none") return connection;
   if (connection.type === "stdio") {
     if (auth.type !== "apiKey") return connection;
     return {
       ...connection,
-      env: { ...connection.env, [auth.env]: apiKey(auth, env, plugin.name) },
+      env: {
+        ...connection.env,
+        [auth.env]: await apiKey(auth, env, store, plugin.name, credential),
+      },
     };
   }
   if (connection.authorize) return connection;
   if (auth.type === "apiKey")
     return {
       ...connection,
-      headers: { ...connection.headers, ...apiKeyHeaders(auth, apiKey(auth, env, plugin.name)) },
+      headers: {
+        ...connection.headers,
+        ...apiKeyHeaders(auth, await apiKey(auth, env, store, plugin.name, credential)),
+      },
     };
   return {
     ...connection,
@@ -64,11 +96,27 @@ export const resolveConnection = async (
   };
 };
 
-const serviceArgument = (command: string, args: string[]): string => {
-  const [name, ...rest] = args;
-  if (!name || name.startsWith("-") || rest.length)
-    throw new UsageError(`Usage: mcp-cli ${command} <service>`);
-  return name;
+type ServiceArguments = { service: string; flags: string[] };
+const serviceArguments = (command: string, args: string[]): ServiceArguments => {
+  const flags = args.filter((arg) => arg.startsWith("--")).map((arg) => arg.slice(2));
+  const [name, ...rest] = args.filter((arg) => !arg.startsWith("--"));
+  if (!name || rest.length) throw new UsageError(`Usage: mcp-cli ${command} <service>`);
+  return { service: name, flags };
+};
+
+// Returns the credential switch among the flags and rejects every flag the command does not know.
+const credentialFlag = (
+  plugin: ServicePlugin,
+  flags: string[],
+  allowed: string[],
+): string | undefined => {
+  const switches = credentialSwitches(plugin.auth).map((alternate) => alternate.flag);
+  for (const flag of flags)
+    if (!allowed.includes(flag) && !switches.includes(flag))
+      throw new UsageError(`Unknown option --${flag} for ${plugin.name}`);
+  const chosen = [...new Set(flags.filter((flag) => switches.includes(flag)))];
+  if (chosen.length > 1) throw new UsageError("Use only one credential flag");
+  return chosen[0];
 };
 
 /** Headless sessions skip the browser launch and rely on the printed URL plus a pasted redirect. */
@@ -78,15 +126,28 @@ export const canOpenBrowser = (env: Env, platform: NodeJS.Platform = process.pla
   return true;
 };
 
+const saveApiKey = async (
+  plugin: ServicePlugin,
+  spec: ApiKeySpec,
+  credential: string | undefined,
+  context: AuthContext,
+): Promise<void> => {
+  const choice = keyChoice(spec, plugin.name, credential);
+  const key = (await context.readSecret(`Paste the ${choice.env} value (input hidden): `)).trim();
+  if (!key) throw new UsageError("No key was entered");
+  const name = credentialName(plugin.name, choice.credential);
+  await context.store.withLock(name, () => context.store.write(name, { accessToken: key }));
+  context.writeError(`Saved ${choice.env} for ${plugin.name}; a set ${choice.env} still wins`);
+};
+
 export const loginCommand = async (args: string[], context: AuthContext): Promise<void> => {
-  const noBrowser = args.includes("--no-browser");
-  const rest = args.filter((arg) => arg !== "--no-browser");
-  const browser = !noBrowser && canOpenBrowser(context.env);
-  const plugin = await context.plugin(serviceArgument("login [--no-browser]", rest));
+  const parsed = serviceArguments("login [--no-browser]", args);
+  const plugin = await context.plugin(parsed.service);
+  const credential = credentialFlag(plugin, parsed.flags, ["no-browser"]);
+  const browser = !parsed.flags.includes("no-browser") && canOpenBrowser(context.env);
   const auth = plugin.auth;
-  if (auth?.type === "apiKey")
-    throw new UsageError(`${plugin.name} uses an API key. Set ${auth.env} instead of logging in`);
-  if (auth?.type !== "oauth") throw new UsageError(`${plugin.name} does not use OAuth login`);
+  if (auth?.type === "apiKey") return saveApiKey(plugin, auth, credential, context);
+  if (auth?.type !== "oauth") throw new UsageError(`${plugin.name} does not use login`);
   const connection = await plugin.connection(context.env);
   if (connection.type !== "http")
     throw new UsageError(`${plugin.name} does not use an HTTP connection`);
@@ -104,11 +165,13 @@ export const loginCommand = async (args: string[], context: AuthContext): Promis
 };
 
 export const logoutCommand = async (args: string[], context: AuthContext): Promise<void> => {
-  const plugin = await context.plugin(serviceArgument("logout", args));
+  const parsed = serviceArguments("logout", args);
+  const plugin = await context.plugin(parsed.service);
+  const name = credentialName(plugin.name, credentialFlag(plugin, parsed.flags, []));
   const { store } = context;
-  const removed = await store.withLock(plugin.name, async () => {
-    const existing = await store.read(plugin.name).catch(() => true);
-    await store.delete(plugin.name);
+  const removed = await store.withLock(name, async () => {
+    const existing = await store.read(name).catch(() => true);
+    await store.delete(name);
     return existing !== undefined;
   });
   context.writeError(
