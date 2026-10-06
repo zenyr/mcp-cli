@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { UsageError, definePlugin, type ToolSession } from "@mcp-cli/core";
 import { SchemaCompileError } from "@mcp-cli/schema";
 import { runService } from "../src";
-import { commands, manifest } from "./fixtures/manifest";
+import { catalogStub, commands, manifest } from "./fixtures/manifest";
 
 const plugin = definePlugin({
   name: "demo",
@@ -17,6 +17,7 @@ const fixture = (error = false) => {
   let opened = 0;
   let closed = 0;
   const session: ToolSession = {
+    ...catalogStub,
     listTools: async () => {
       throw new Error("Runtime must not discover tools");
     },
@@ -155,6 +156,7 @@ test("call failures still close the session", async () => {
   let closed = false;
   const f = fixture();
   f.dependencies.open = async () => ({
+    ...catalogStub,
     listTools: async () => [],
     callTool: async () => {
       throw new Error("Call failed");

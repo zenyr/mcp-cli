@@ -1,4 +1,5 @@
 import { UsageError, isRecord, type JsonSchema } from "@mcp-cli/core";
+import { InputValidationError, validateInput } from "@mcp-cli/schema";
 import type { InputToken } from "./arguments";
 import { fieldName, property } from "./schema";
 import { convertValue, parseJson } from "./values";
@@ -77,4 +78,15 @@ export const parseInput = async (
   const parsed = parseJson(source.text, source.flag);
   if (!isRecord(parsed)) throw new UsageError("Input must be a JSON object");
   return parsed;
+};
+
+// Only input that fails validation is a usage problem; a broken schema propagates unchanged.
+export const validateUserInput = (schema: JsonSchema, input: Record<string, unknown>): void => {
+  try {
+    validateInput(schema, input);
+  } catch (error) {
+    if (error instanceof InputValidationError)
+      throw new UsageError(error.message, { cause: error });
+    throw error;
+  }
 };

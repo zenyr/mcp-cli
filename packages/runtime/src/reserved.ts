@@ -1,6 +1,13 @@
 import { COMMANDS, FLAGS, RESERVED_FLAGS } from "@mcp-cli/core";
 
-export const { help: HELP, methods: METHODS, call: CALL, skill: SKILL } = COMMANDS;
+export const {
+  help: HELP,
+  methods: METHODS,
+  call: CALL,
+  skill: SKILL,
+  resources: RESOURCES,
+  prompts: PROMPTS,
+} = COMMANDS;
 export const {
   json: JSON_FLAG,
   help: HELP_FLAG,

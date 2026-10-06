@@ -2,16 +2,16 @@ import {
   UsageError,
   applyCustomizations,
   type GeneratedManifest,
-  type JsonSchema,
   type ServicePlugin,
   type ToolResult,
   type ToolSession,
 } from "@mcp-cli/core";
-import { InputValidationError, validateInput } from "@mcp-cli/schema";
 import { findCommand, help } from "./help";
-import { parseInput } from "./input";
+import { parseInput, validateUserInput } from "./input";
 import { parseArguments } from "./arguments";
-import { HELP, METHODS, SKILL } from "./reserved";
+import { runPrompts } from "./prompts";
+import { HELP, METHODS, PROMPTS, RESOURCES, SKILL } from "./reserved";
+import { runResources } from "./resources";
 export { help } from "./help";
 
 const formatResult = (result: ToolResult, json: boolean): string =>
@@ -24,16 +24,6 @@ const formatResult = (result: ToolResult, json: boolean): string =>
             : JSON.stringify(block),
         )
         .join("\n");
-// Only input that fails validation is a usage problem; a broken schema propagates unchanged.
-const validateUserInput = (schema: JsonSchema, input: Record<string, unknown>): void => {
-  try {
-    validateInput(schema, input);
-  } catch (error) {
-    if (error instanceof InputValidationError)
-      throw new UsageError(error.message, { cause: error });
-    throw error;
-  }
-};
 
 export type RuntimeIO = {
   write(text: string): void;
@@ -86,10 +76,17 @@ export const runService = async (
     if (tokens.length) throw new UsageError("Skill does not accept input flags");
     dependencies.io.write(
       plugin.skill ??
-        `Start with ${plugin.name} --help, then <group> --help, then <group> <action> --help.\nUse methods --json for the baked-in tool map.\nUse --input for complex schemas.\nHelp and discovery never connect to the server.`,
+        `Start with ${plugin.name} --help, then <group> --help, then <group> <action> --help.\nUse methods --json for the baked-in tool map.\nUse --input for complex schemas.\nHelp and discovery never connect to the server.\nresources and prompts commands fetch from the server at run time.`,
     );
     return 0;
   }
+  const catalog = { path: path.slice(1), tokens, json, service: manifest.service };
+  if ((path[0] === RESOURCES || path[0] === PROMPTS) && path.length === 1 && !tokens.length) {
+    dependencies.io.write(help(manifest, path));
+    return 0;
+  }
+  if (path[0] === RESOURCES) return runResources(catalog, dependencies);
+  if (path[0] === PROMPTS) return runPrompts(catalog, dependencies);
   const command = findCommand(manifest, path);
   if (!command) {
     if (tokens.length) throw new UsageError(`Unknown command: ${path.join(" ")}`);

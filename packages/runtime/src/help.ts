@@ -6,7 +6,16 @@ import {
   type CommandSpec,
   type Manifest,
 } from "@mcp-cli/core";
-import { CALL, HELP, METHODS, SKILL, flagForm, isReservedField } from "./reserved";
+import {
+  CALL,
+  HELP,
+  METHODS,
+  PROMPTS,
+  RESOURCES,
+  SKILL,
+  flagForm,
+  isReservedField,
+} from "./reserved";
 import { typeLabel } from "./schema";
 
 const reservedUsage = (service: string): Map<string | undefined, string> =>
@@ -17,6 +26,14 @@ const reservedUsage = (service: string): Map<string | undefined, string> =>
     [
       CALL,
       ` <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse ${service} ${METHODS} to discover names.`,
+    ],
+    [
+      RESOURCES,
+      ` <command> [--json]\n\nList and read MCP resources; these commands connect to the server.\n\nCommands:\n  list        List resources\n  templates   List resource URI templates\n  read <uri>  Print the contents of one resource\n\nExamples:\n  ${service} ${RESOURCES} list\n  ${service} ${RESOURCES} read <uri> --json`,
+    ],
+    [
+      PROMPTS,
+      ` <command> [--json]\n\nList and render MCP prompts; these commands connect to the server.\n\nCommands:\n  list                              List prompts and their arguments\n  get <name> [--<argument> value]   Render a prompt with string arguments\n\nPass arguments as flags or one JSON object with --input.\nUnknown and missing required arguments are usage errors.\n\nExamples:\n  ${service} ${PROMPTS} list\n  ${service} ${PROMPTS} get <name> --<argument> value`,
     ],
   ]);
 const argumentLine = (key: string, schema: Record<string, unknown>, required: boolean): string => {
@@ -36,15 +53,17 @@ export const findCommand = (manifest: Manifest, path: string[]): CommandSpec | u
 };
 export const help = (manifest: Manifest, path: string[]): string => {
   const command = findCommand(manifest, path);
+  const title = [manifest.service, ...path].join(" ");
+  // Resource and prompt subcommands share their group usage.
+  const group = path[0] === RESOURCES || path[0] === PROMPTS || path.length === 1;
+  const usage = group && !command ? reservedUsage(manifest.service).get(path[0]) : undefined;
+  if (usage !== undefined) return `Usage: ${[manifest.service, path[0]].join(" ")}${usage}`;
   const scoped = manifest.commands.filter((command) =>
     path.every((part, index) => command.path[index] === part),
   );
   if (path.length && !command && !scoped.length && !RESERVED_COMMANDS.includes(path.join(" "))) {
     throw new UsageError(`Unknown command: ${path.join(" ")}`);
   }
-  const title = [manifest.service, ...path].join(" ");
-  const usage = path.length === 1 ? reservedUsage(manifest.service).get(path[0]) : undefined;
-  if (usage !== undefined) return `Usage: ${title}${usage}`;
   const lines = [
     `Usage: ${title}${command ? " [options]" : " <command>"}`,
     "",
