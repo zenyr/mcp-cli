@@ -1,4 +1,5 @@
 import { definePlugin } from "@mcp-cli/core";
+import { bearerAuthorize, envTokenSource } from "./auth";
 export default definePlugin({
   name: "notion",
   summary: "Notion MCP tools with progressive command help",
@@ -8,12 +9,9 @@ export default definePlugin({
   },
   skill:
     "Use fetch before edits. Read notion://docs/enhanced-markdown-spec before content mutations.\nThis plugin supplies command mapping only; it does not migrate the existing Notion credential store or mutation guards.",
-  connection: (env) => {
-    const token = env.NOTION_MCP_TOKEN;
-    return {
-      type: "http",
-      url: env.NOTION_MCP_URL ?? "https://mcp.notion.com/mcp",
-      ...(token && { headers: { Authorization: `Bearer ${token}` } }),
-    };
-  },
+  connection: (env) => ({
+    type: "http",
+    url: env.NOTION_MCP_URL ?? "https://mcp.notion.com/mcp",
+    authorize: bearerAuthorize(envTokenSource(env)),
+  }),
 });
