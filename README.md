@@ -271,6 +271,22 @@ bun run generate notion
 bun run cli notion fetch get --help
 ```
 
+## 워크트리
+
+새 워크트리에서는 아래 두 명령으로 개발 환경을 준비합니다. T3 Code 워크트리 생성 스크립트에 등록하면 자동으로 실행됩니다.
+
+```bash
+bun i
+bun scripts/worktree.ts init
+```
+
+- `init`은 bun 버전과 `node_modules`를 확인하고, git hook이 없으면 설치합니다.
+  전역 `mcp-cli` 링크가 이 워크트리를 가리키면 경고합니다.
+- `clean`은 `node_modules`, `.turbo`, `dist`처럼 git이 무시하는 산출물만 지웁니다.
+  전역 링크가 이 워크트리를 가리키면 `bun unlink`도 실행합니다.
+- `clean`은 메인 체크아웃에서는 `--force` 없이 실행되지 않습니다. `--dry-run`은 지울 대상만 출력합니다.
+- 워크트리에서는 `bun link`를 실행하지 마십시오. 전역 명령이 워크트리를 가리키게 됩니다.
+
 ## 커밋 품질 검사
 
 `bun install`의 `prepare`에서 Lefthook을 설치합니다.
