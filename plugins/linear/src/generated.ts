@@ -4,6 +4,12 @@ export const manifest = {
   "service": "linear",
   "tools": [
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Deprecated fallback for tiny files only. Accepts base64 file content, verifies SHA-256 checksum, and uploads it through the MCP worker.\nPrefer `prepare_attachment_upload` plus direct PUT plus `create_attachment_from_upload`.\n\nCRITICAL: Do not print base64Content and then copy it into this tool call.\nOpaque base64 copied through model-visible text is easy to corrupt.\n\nGenerate base64Content mechanically from the source bytes and pass it through a programmatic argument construction path whenever available. Before calling this tool, verify the values are consistent:\n\nUnix-like shells:\nfile=\"/path/to/file\"\nbase64Content=$(base64 < \"$file\" | tr -d '\\n\\r')\nsha256=$(shasum -a 256 \"$file\" | awk '{print $1}')\ndecodedSha256=$(printf '%s' \"$base64Content\" | base64 -d | shasum -a 256 | awk '{print $1}')\nsize=$(wc -c < \"$file\" | tr -d ' ') # optional; stat can also get file byte size\ndecodedSize=$(printf '%s' \"$base64Content\" | base64 -d | wc -c | tr -d ' ')\n\nPowerShell:\n$file = 'C:\\path\\to\\file'\n$bytes = [IO.File]::ReadAllBytes($file)\n$base64Content = [Convert]::ToBase64String($bytes)\n$sha256 = (Get-FileHash -Algorithm SHA256 -Path $file).Hash.ToLower()\n$size = $bytes.Length # optional\n$decoded = [Convert]::FromBase64String($base64Content)\n$decodedStream = [IO.MemoryStream]::new($decoded)\n$decodedSha256 = (Get-FileHash -Algorithm SHA256 -InputStream $decodedStream).Hash.ToLower()\n$decodedSize = $decoded.Length\n\ndecodedSha256 must equal sha256. If you pass size, decodedSize must equal size.\nPass `sha256`. Passing `size` is optional, but recommended for clearer mismatch errors.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -57,6 +63,12 @@ export const manifest = {
       "name": "create_attachment"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Link an already-uploaded Linear assetUrl to an existing issue as an attachment.\n\nUse this only after:\n1. prepare_attachment_upload returned an assetUrl and uploadRequest.\n2. The client successfully PUT raw file bytes to uploadRequest.url.\n\nThis tool does not upload file content. It only creates the Linear attachment row.\nIf the direct upload failed or the signed URL expired, rerun prepare_attachment_upload and upload again.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -89,6 +101,12 @@ export const manifest = {
       "name": "create_attachment_from_upload"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create a new Linear initiative label. Deprecated: use `save_initiative_label`, which can also update labels.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -124,6 +142,12 @@ export const manifest = {
       "name": "create_initiative_label"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create a new Linear issue label. Deprecated: use `save_issue_label`, which can also update labels.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -163,6 +187,12 @@ export const manifest = {
       "name": "create_issue_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Delete an attachment by ID",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -181,6 +211,12 @@ export const manifest = {
       "name": "delete_attachment"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Delete a Linear comment. Inline description comments (those with non-null `quotedText`) anchor a mark in the editor, so their root cannot be deleted — delete the replies individually or resolve the thread instead.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -199,6 +235,12 @@ export const manifest = {
       "name": "delete_comment"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Delete a customer in Linear",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -217,6 +259,12 @@ export const manifest = {
       "name": "delete_customer"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Archive a customer need (request) in Linear",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -235,6 +283,12 @@ export const manifest = {
       "name": "delete_customer_need"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Delete a comment or persisted draft from a Linear diff",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -256,6 +310,12 @@ export const manifest = {
       "name": "delete_diff_comment"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Delete (archive) a project or initiative status update.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -283,6 +343,12 @@ export const manifest = {
       "name": "delete_status_update"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Extract and fetch images from markdown content. Use this to view screenshots, diagrams, or other images embedded in Linear issues, comments, or documents. Pass the markdown content (e.g., issue description) and receive the images as viewable data.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -301,6 +367,12 @@ export const manifest = {
       "name": "extract_images"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve a Linear Agent skill by ID, including its full markdown instructions.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -319,6 +391,12 @@ export const manifest = {
       "name": "get_agent_skill"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve an issue attachment by ID. Use format=url to get its title and download URL without fetching the file content. Linear upload URLs are signed for five minutes; call again to refresh. External URLs are returned unchanged. Files embedded in comments have no issue attachment ID; use the URLs in list_comments attachments instead. Download and process documents with your own file tools.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -345,6 +423,12 @@ export const manifest = {
       "name": "get_attachment"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Exact lookup for a Linear diff. Use with review URLs, GitHub PR URLs, Linear full identifiers, UUIDs, or slugs.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -364,6 +448,12 @@ export const manifest = {
       "name": "get_diff"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Exact lookup for diff threads and the authenticated user's drafts. Use with review URLs, GitHub PR URLs, Linear full identifiers, UUIDs, or slugs.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -400,6 +490,12 @@ export const manifest = {
       "name": "get_diff_threads"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve a Linear document by ID or slug",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -418,6 +514,12 @@ export const manifest = {
       "name": "get_document"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve detailed information about a specific initiative in Linear",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -446,6 +548,12 @@ export const manifest = {
       "name": "get_initiative"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve detailed information about an issue by ID, including attachments, git branch name, and active Triage Intelligence suggestions when the issue is in triage. A nonempty fields selection overrides the include options; request optional fields directly in fields.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -533,6 +641,12 @@ export const manifest = {
       "name": "get_issue"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve detailed information about an issue status in Linear by name or ID",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -561,6 +675,12 @@ export const manifest = {
       "name": "get_issue_status"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve details of a specific milestone by ID or name",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -584,6 +704,12 @@ export const manifest = {
       "name": "get_milestone"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Get a page of notifications from the authenticated user's Linear inbox.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -610,6 +736,12 @@ export const manifest = {
       "name": "get_notifications"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve details of a specific project in Linear",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -659,6 +791,12 @@ export const manifest = {
       "name": "get_project"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve details of a release by ID or slug.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -682,6 +820,12 @@ export const manifest = {
       "name": "get_release"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve release notes by ID or slug, including markdown content.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -705,6 +849,12 @@ export const manifest = {
       "name": "get_release_note"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List or get project/initiative status updates. Pass `id` to get a specific update, or filter to list.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -775,6 +925,12 @@ export const manifest = {
       "name": "get_status_updates"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve details of a specific Linear team",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -793,6 +949,12 @@ export const manifest = {
       "name": "get_team"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve a Linear template by ID or name: the content it pre-fills, the ids it applies, its sub-issues, and its form fields. Pass the template to save_issue or save_project to apply it. References come back as ids, so read a name with the matching tool when you need one. A form template collects its answers through a form, so applying one here creates an issue with the form unanswered.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -811,6 +973,12 @@ export const manifest = {
       "name": "get_template"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve who is responsible for a team's triage: the person on triage now, what happens when an issue enters triage, and the upcoming shifts of the team's triage rotation. Pass `user` to get only that person's shifts, for example to find when their next triage duty starts, even when it is weeks away.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -840,6 +1008,12 @@ export const manifest = {
       "name": "get_triage_responsibility"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve details of a specific Linear user",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -858,6 +1032,12 @@ export const manifest = {
       "name": "get_user"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve the connected Linear workspace",
       "inputSchema": {
         "properties": {},
@@ -866,6 +1046,12 @@ export const manifest = {
       "name": "get_workspace"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List Linear Agent skills available to the authenticated user.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -896,6 +1082,12 @@ export const manifest = {
       "name": "list_agent_skills"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List comments on a Linear issue, project, initiative, document, project milestone, or project/initiative status update. Provide exactly one of `issueId`, `projectId`, `initiativeId`, `documentId`, `milestoneId`, or `statusUpdateId`. For issues, projects, and initiatives this returns both top-level discussion threads and inline description comments. Inline (anchored) comments carry a non-null `quotedText` set to the snippet of description text they reference. Returned comments include `author` and nullable `onBehalfOf`; when set, `onBehalfOf` identifies the user the agent author acted for. Files uploaded in comment bodies are returned in `attachments` with titles and download URLs, not issue attachment IDs. Signed upload URLs expire after five minutes; call list_comments again to refresh them. Download documents using these URLs and process them with your own file tools.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -958,6 +1150,12 @@ export const manifest = {
       "name": "list_comments"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Find saved issue, project, and initiative views accessible to the user, including personal, workspace, and team views. Excludes archived views and views scoped to a project or initiative. Returns view metadata, not the records matching its filters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1009,6 +1207,12 @@ export const manifest = {
       "name": "list_custom_views"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List customer needs (customer requests) for an issue, project, or initiative. Provide exactly one of `issue`, `project`, or `initiative`. Project results include requests linked to the project's issues; initiative results include requests on projects in the initiative or any of its sub-initiatives, and on their issues. Returns requests on closed work too; each need includes its issue's workflow state and its project's status so callers can filter. Paginated; pass `cursor` from the previous page to fetch the next.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1051,6 +1255,12 @@ export const manifest = {
       "name": "list_customer_needs"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List customers in the user's Linear workspace",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1115,6 +1325,12 @@ export const manifest = {
       "name": "list_customers"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve cycles for a specific Linear team",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1142,6 +1358,12 @@ export const manifest = {
       "name": "list_cycles"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List Linear diff pull requests visible to the authenticated user",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1207,6 +1429,12 @@ export const manifest = {
       "name": "list_diffs"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List documents in the user's Linear workspace",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1292,6 +1520,12 @@ export const manifest = {
       "name": "list_documents"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List available initiative labels in the Linear workspace. A retired label carries `retiredAt` and cannot be applied to new initiatives.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1336,6 +1570,12 @@ export const manifest = {
       "name": "list_initiative_labels"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List initiatives in the user's Linear workspace",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1446,6 +1686,12 @@ export const manifest = {
       "name": "list_initiatives"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List available issue labels in a Linear workspace or team. A retired label carries `retiredAt` and cannot be applied to new issues.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1494,6 +1740,12 @@ export const manifest = {
       "name": "list_issue_labels"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List available issue statuses in a Linear team",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1512,6 +1764,12 @@ export const manifest = {
       "name": "list_issue_statuses"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List issues in the user's Linear workspace, including active Triage Intelligence suggestions for issues in triage. For issues assigned to me, use \"me\" as the assignee. For issues created by me, use \"me\" as the creator. Use \"null\" for no assignee.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1663,6 +1921,12 @@ export const manifest = {
       "name": "list_issues"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List all milestones in a Linear project",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1681,6 +1945,12 @@ export const manifest = {
       "name": "list_milestones"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List available project labels in a Linear workspace or team. Returns workspace labels by default; pass `team` to also include that team's labels. A team-scoped label carries a `team` field; different teams can hold same-named labels, so check it before acting on an ID. A retired label carries `retiredAt` and cannot be applied to new projects.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1729,6 +1999,12 @@ export const manifest = {
       "name": "list_project_labels"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List projects in the user's Linear workspace",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1846,6 +2122,12 @@ export const manifest = {
       "name": "list_projects"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List release notes in the workspace, optionally filtered by pipeline or covered release.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1911,6 +2193,12 @@ export const manifest = {
       "name": "list_release_notes"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List release pipelines in the workspace.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1984,6 +2272,12 @@ export const manifest = {
       "name": "list_release_pipelines"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List releases in the workspace, with optional filtering by pipeline, stage, version, and text.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2062,6 +2356,12 @@ export const manifest = {
       "name": "list_releases"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List teams in the user's Linear workspace",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2109,6 +2409,12 @@ export const manifest = {
       "name": "list_teams"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List the Linear issue, project, and document templates available to the authenticated user. Use this to find the template a team expects, then call get_template for its content.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2133,6 +2439,12 @@ export const manifest = {
       "name": "list_templates"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieve users in the Linear workspace",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2171,6 +2483,12 @@ export const manifest = {
       "name": "list_users"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Mark a Linear inbox notification as read or unread, or snooze or unsnooze it.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2206,6 +2524,12 @@ export const manifest = {
       "name": "mark_notification"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Merge a Linear diff or add it to the repository's merge queue",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2234,6 +2558,12 @@ export const manifest = {
       "name": "merge_diff"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Prepare a direct Linear file upload for an existing issue.\n\nWorkflow:\n1. Call this tool with issue, filename, contentType, and size.\n2. Upload raw bytes with PUT to uploadRequest.url outside MCP.\n3. All headers in uploadRequest.headers are part of the signed request, so send them verbatim.\n4. After PUT succeeds, call create_attachment_from_upload with assetUrl to link it to the issue.\n\nDo not base64-encode or transform the file. Use curl --data-binary @path or fetch(url, { method: 'PUT', body: blob }).\nOmitting or modifying any signed header, including casing, will return HTTP 403.\nThe signed URL must be used within 60 seconds or it will expire.\n\nUpload sequencing:\nPrepare, PUT, and finalize one file before calling this tool for another file.\nDo not batch multiple prepare_attachment_upload calls before starting the PUTs because earlier signed URLs can expire while later files are prepared.\n\nExample:\ncurl -X PUT --data-binary @file.png \\\n  -H \"content-type: image/png\" \\\n  -H \"x-goog-content-length-range: N,N\" \\\n  -H \"cache-control: public, max-age=31536000\" \\\n  -H 'Content-Disposition: attachment; filename=\"file.png\"' \\\n  \"<uploadRequest.url>\"",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2277,6 +2607,12 @@ export const manifest = {
       "name": "prepare_attachment_upload"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Resolve or reopen a top-level comment thread on a Linear diff",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2301,6 +2637,12 @@ export const manifest = {
       "name": "resolve_diff_thread"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Restore a retired Linear initiative label, making it available for use on initiatives again. Restoring a label group also restores every child label, including any that were retired separately.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2319,6 +2661,12 @@ export const manifest = {
       "name": "restore_initiative_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Restore a retired Linear issue label, making it available for use on issues again. Restoring a label group also restores every child label, including any that were retired separately.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2337,6 +2685,12 @@ export const manifest = {
       "name": "restore_issue_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Restore a retired Linear project label, making it available for use on projects again. Restoring a label group also restores every child label, including any that were retired separately.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2355,6 +2709,12 @@ export const manifest = {
       "name": "restore_project_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Retire a Linear initiative label so it cannot be applied to new initiatives. The label stays visible on initiatives that already have it. Retiring a label group also retires its child labels. Undo with `restore_initiative_label`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2373,6 +2733,12 @@ export const manifest = {
       "name": "retire_initiative_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Retire a Linear issue label so it cannot be applied to new issues. The label stays visible on issues that already have it. Retiring a label group also retires its child labels. Undo with `restore_issue_label`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2391,6 +2757,12 @@ export const manifest = {
       "name": "retire_issue_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Retire a Linear project label so it cannot be applied to new projects. The label stays visible on projects that already have it. Retiring a label group also retires its child labels. Undo with `restore_project_label`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2409,6 +2781,12 @@ export const manifest = {
       "name": "retire_project_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a comment on a Linear issue, project, initiative, document, project milestone, or project/initiative status update. If `id` is provided, updates the existing comment; otherwise creates a new one. To start a new thread, pass `body` and exactly one of `issueId`, `projectId`, `initiativeId`, `documentId`, `milestoneId`, or `statusUpdateId` — comments on issues/projects/initiatives become top-level discussion threads; comments on documents/milestones become description comments. A status update holds a single thread, so a comment on an update that already has one is added to it as a reply. To reply to an existing thread, pass `parentId` and `body`; the reply inherits the parent's thread type, so no entity reference is needed. Parent reference fields are ignored when `id` or `parentId` is provided (`statusUpdateType` is rejected instead).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2467,6 +2845,12 @@ export const manifest = {
       "name": "save_comment"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear customer. If `id` is provided, updates the existing customer; otherwise creates a new one. When creating, `name` is required.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2520,6 +2904,12 @@ export const manifest = {
       "name": "save_customer"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a customer need (request) in Linear. If `id` is provided, updates the existing need; otherwise creates a new one. When creating, `body` is required.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2560,6 +2950,12 @@ export const manifest = {
       "name": "save_customer_need"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Create, reply to, or edit a comment or persisted draft on a Linear diff. Set draft to true to save without submitting. Provide draftId to edit or submit a persisted draft, and commentId only to edit a submitted comment. Submitting an inline draft reuses its saved anchor; submitting a reply draft requires parentId again.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2613,6 +3009,12 @@ export const manifest = {
       "name": "save_diff_comment"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear document. If `id` is provided, edits the existing document; otherwise creates a new one. When creating, `title` is required and exactly one parent (`project`, `issue`, `initiative`, `cycle`, or `team`) must be specified. On update, passing a parent reparents the document. To change parts of the content without resending all of it, pass `patch` instead of `content`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2814,6 +3216,12 @@ export const manifest = {
       "name": "save_document"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear initiative. If `id` is provided, updates the existing initiative; otherwise creates a new one. When creating, `name` is required. To change parts of the description without resending all of it, pass `patch` instead of `description`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3041,6 +3449,12 @@ export const manifest = {
       "name": "save_initiative"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear initiative label. If `id` is provided, updates the existing label; otherwise creates a new one. When creating, `name` is required.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3082,6 +3496,12 @@ export const manifest = {
       "name": "save_initiative_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear issue. If `id` is provided, updates the existing issue; otherwise creates a new one. When creating, `team` is required, and `title` is required unless `template` is set. Note: use `assignee` (not `assigneeId`) to set the assignee — it accepts a user ID, name, email, or \"me\".",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3464,6 +3884,12 @@ export const manifest = {
       "name": "save_issue"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear issue label. If `id` is provided, updates the existing label; otherwise creates a new one. When creating, `name` is required.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3517,6 +3943,12 @@ export const manifest = {
       "name": "save_issue_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a milestone in a Linear project. If `id` is provided, updates the existing milestone; otherwise creates a new one. When creating, `name` is required.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3554,6 +3986,12 @@ export const manifest = {
       "name": "save_milestone"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear project. If `id` is provided, updates the existing project; otherwise creates a new one. When creating, `name` and at least one team (via `addTeams` or `setTeams`) are required. Pass `template` to create the project from a project template. To change parts of the description without resending all of it, pass `patch` instead of `description`. `state` resolves against the project statuses of the lead team, so pass `leadTeam` when creating a multi-team project whose teams use different statuses.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3862,6 +4300,12 @@ export const manifest = {
       "name": "save_project"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a Linear project label. If `id` is provided, updates the existing label; otherwise creates a new one. When creating, `name` is required.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3907,6 +4351,12 @@ export const manifest = {
       "name": "save_project_label"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a release. If `id` is provided, updates the existing release; otherwise creates a new one. When creating, `name` and `pipeline` are required. Release status is modeled as the release pipeline stage.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3978,6 +4428,12 @@ export const manifest = {
       "name": "save_release"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update release notes. If `id` is provided, updates the existing release notes; otherwise creates a new one. When creating, `pipeline` and either `releases` or a release range are required. To change parts of the content without resending all of it, pass `patch` instead of `content`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4170,6 +4626,12 @@ export const manifest = {
       "name": "save_release_note"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create or update a project/initiative status update. Omit `id` to create, provide `id` to update.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4221,6 +4683,12 @@ export const manifest = {
       "name": "save_status_update"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Search Linear's documentation to learn about features and usage",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4244,6 +4712,12 @@ export const manifest = {
       "name": "search_documentation"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Share an issue with a workspace user who cannot otherwise access it. Use this tool only when the user explicitly asks to share the issue.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4267,6 +4741,12 @@ export const manifest = {
       "name": "share_issue"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Approve a Linear diff, request changes, or submit a review comment",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4301,6 +4781,12 @@ export const manifest = {
       "name": "submit_diff_review"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Remove a workspace user's shared access to an issue. Use this tool only when the user explicitly asks to stop sharing the issue.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4324,6 +4810,12 @@ export const manifest = {
       "name": "unshare_issue"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Update a Linear diff's title, description, reviewer requests, issue links, or status. Provide at least one update. Combined updates can partially succeed; inspect the result before retrying. Use merge_diff to merge and submit_diff_review to approve or request changes.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

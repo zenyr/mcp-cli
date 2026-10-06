@@ -4,6 +4,12 @@ export const manifest = {
   "service": "notion",
   "tools": [
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
       "description": "Use this tool for every content search when access discovery reports current_tool_access.ai_search.status=\"available\". This includes exact keywords, page titles, project names, and natural-language questions. Choose by the connection's access, not by query wording. If access is not already known, call get_tool_access first. If access discovery reports that AI search is not available, use search instead.\n\nSearch Notion and connected workspace sources available to you, such as Slack, Mail, and Calendar. Keywords are valid; a question is not required. Preserve distinctive names and identifiers. Prefer one topic per call, ideally under 50 words.\n\nStart with {\"query\":\"...\"} and omit optional parameters unless needed. For user lookup, set query_type=\"user\" and provide a name or email. Omit content filters and sort for user lookup. Do not send content_search_mode. Exact filters, non-relevance sorting, and filter-only browsing are supported by this tool and return Notion-only workspace results with supported constraints applied. Omit these options to search Notion and connected sources together. Filter and sort access is separate from AI access: check current_tool_access.ai_search.restricted_parameters. Unavailable options are dropped with a notice. If AI access is unavailable, this tool falls back to keyword search in Notion only and reports that connected sources were not searched. User name or email lookup uses this tool with query_type=\"user\".\n\n<example description=\"AI search available: find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"AI search available: find an exact identifier\">\n{\"query\":\"ACME-123\"}\n</example>\n<example description=\"AI search available: answer a question\">\n{\"query\":\"Why did we delay the launch?\"}\n</example>\n<example description=\"AI search available: browse Notion pages created in a date range\">\n{\"query\":\"\",\"filters\":{\"created_date_range\":{\"start_date\":\"2026-07-01\",\"end_date\":\"2026-08-01\"}}}\n</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -146,6 +152,12 @@ export const manifest = {
       "name": "notion-ai-search"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "When to call: Only when a Notion fetch result instructs you to. Finish all Notion tool calls needed for the current request, then call at most once with no arguments. Never call it per fetch or failure, without that instruction, or retry it.\n\nResult handling: If no next step is returned or rendering fails, do not retry or mention it. Otherwise, finish the user's task before the follow-up.\n\nFollow-up: Add one brief sentence grounded in the user's Notion work this session, followed by the returned destination as a compact, labeled Markdown link. You may present it as an optional Business next step for that type of work, but only claim a benefit when the tool result explicitly provides it. Do not introduce other capabilities or estimate performance or time savings. Give this follow-up once. Never mention limits, eligibility, or frequency logic. Do not give a sales pitch, tell the user to upgrade, criticize their workflow, use a bare URL, or create a link preview.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -191,6 +203,12 @@ export const manifest = {
       }
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Mark an existing Notion page as a skill without changing its content. The page must be in the current workspace, and the authenticated user must have permission to edit it. Use this tool only when the user wants the page's current contents designated as a skill.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -211,6 +229,12 @@ export const manifest = {
       "name": "notion-convert-page-to-skill"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Create an attachment and upload it to Notion.\n\nProvide exactly one source:\n- content for small UTF-8 text artifacts such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG files.\n- source_url for a direct, publicly reachable HTTPS file URL.\n- source_file_id for a file this exact integration already uploaded. When create_file_upload is available, use it for local files so the upload has the same owner.\n\n\nFor content and source_url, filename must use a supported extension and content_type must agree with it. Omit content_type to infer it. source_file_id takes neither because the stored upload carries both. For larger files, redirects, or authenticated downloads, upload through the Notion File Upload API with this integration's token and pass source_file_id.\n\nThe response includes a markdown_source value. To place the uploaded file on a page, pass that source to create-pages or update-page. To attach it to a comment, include suggested_markdown on a separate line in create-comment markdown. Unattached uploads remain temporary and are deleted once they expire: content and source_url open a fresh one-hour window, while source_file_id keeps the window that opened when the file was first uploaded, so place that source promptly and upload the file again if it has already expired. \"HTML\", \"HTML block\", \"HTML artifact\", and \"HTML embed\" all mean an HTML file placed with <embed src=\"file-upload://...\"> so Notion renders the sandboxed preview. Never place HTML in a code block or file block. Use <file src=\"file-upload://...\"> for other files.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -250,6 +274,12 @@ export const manifest = {
       "name": "notion-create-attachment"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Add a comment to a page or specific content.\n\nProvide `page_id` to identify the page, then choose ONE targeting mode:\n- `page_id` alone: Add a top-level comment to the page\n- `page_id` + `selection_with_ellipsis`: Start a new discussion on the matching block\n- `discussion_id`: Reply to an existing discussion thread (page_id is still required)\n\n\nProvide exactly one content format:\n- `markdown`: Preferred. Inline Notion-flavored Markdown for comment text. For exact syntax, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using `$`Equation`$`, and user/page/database/date mention tags such as `<mention-date start=\"YYYY-MM-DD\"/>`. To attach a file created by `create-file-upload` or `create-attachment`, include its returned `suggested_markdown` on a separate line; up to three file attachments are supported. Do not use UI shortcuts like `@today`, `@name`, `[[page]]`, or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real `url` where required by the spec. Other block-level Markdown such as headings, lists, tables, blockquotes, and fenced code blocks is stored as plain comment text rather than rendered as blocks.\n- `rich_text`: Array of rich text objects.\n\n\nFor content targeting, use `selection_with_ellipsis` with ~10 chars from start and end: \"# Section Ti...tle content\"",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -692,6 +722,12 @@ export const manifest = {
       "name": "notion-create-comment"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Creates a new Notion database using SQL DDL syntax, or a canonical typed database for tasks, projects, or skills.\n\nProvide exactly one of:\n- schema: a CREATE TABLE statement. If no title property is provided, \"Name\" is auto-added.\n- database_type: one of tasks, projects, or skills. The database is created with the canonical required properties and typed metadata used by Notion.\n\n\nFor schema, use CREATE TABLE with double-quoted column names and single-quoted type options. If no title property is provided, \"Name\" is auto-added.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, STATUS, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nReturns Markdown with schema, SQLite definition, and data source ID in <data-source> tag for use with update_data_source and query_data_sources tools.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -745,6 +781,12 @@ export const manifest = {
       "name": "notion-create-database"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
       "description": "Create a short-lived URL for uploading one local file directly to Notion.\n\nAfter calling this tool, send exactly one multipart/form-data POST request to `upload_url`. Put the file in the `file` form field and include every header returned in `upload_headers`. Files are limited to 20 MiB for this single-part upload flow, and workspace file-size limits still apply.\n\nThe upload response includes `markdown_source` and `suggested_markdown`, which can be passed directly to create-pages or update-page, or included on a separate line in create-comment markdown to attach the file. The URL is short-lived, can upload only the FileUpload created by this call, and runs as this same integration.\n\n<examples>\n1. Prepare an image upload: {\"filename\":\"diagram.png\"}\n2. Prepare a PDF upload with an explicit MIME type: {\"filename\":\"report.pdf\",\"content_type\":\"application/pdf\"}\n</examples>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -770,6 +812,12 @@ export const manifest = {
       "name": "notion-create-file-upload"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Creates an empty Notion Folder. Set parent.page_id for a top-level Folder owned by a page, or parent.folder_id to create a nested Folder inside another Folder. A page-owned Folder is not inserted into the page's content. A nested Folder is appended to its parent Folder's content. The Folder inherits access from its parent.\n\nThis tool creates only the empty Folder. It is non-idempotent and creates a new Folder on every successful call.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -820,6 +868,12 @@ export const manifest = {
       "name": "notion-create-folder"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Creates one or more Notion pages with the specified properties and content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT guess or hallucinate Markdown syntax. Do not put the page title at the top of content; set it in properties. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nUse a named destination as parent. Otherwise use \"creation_mode\": \"draft\" for a durable private page. Do not combine draft mode with parent, or move or share it without direction.\n\nFor a database destination, ALWAYS fetch first. Use its collection:// URL as data_source_id, exact property names, and title property. Never put a database ID in page_id. Outside a database, the only allowed property is the required \"title\".\n\nFor reusable instructions, set \"is_skill\": true. Before creating a skill, read the MCP resource `notion://docs/skills` through your MCP client's resource-reading interface. If your client does not support reading MCP resources, call the Notion \"fetch\" tool with this URI instead. Do NOT pass this URI to any other URL-fetching tool. Do not mark ordinary pages or drafts as skills.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -972,6 +1026,12 @@ export const manifest = {
       "name": "notion-create-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create a new view on a Notion database.\n\nUse fetch first to get database_id, parent_page_id, and the collection:// data_source_id. The caller needs edit access to the database or parent page and access to the data source.\n\nProvide exactly one placement: database_id adds a view tab to that database; parent_page_id appends an inline linked database view to that page. Always provide data_source_id.\n\nSupported types: table, board, list, calendar, timeline, gallery, form, chart, map, and dashboard.\n\nThe optional configure field uses the view DSL for filters, sorts, grouping, and display. Read notion://docs/view-dsl-spec through the MCP resource interface, or pass that URI to the Notion fetch tool. Do not guess the syntax.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1024,6 +1084,12 @@ export const manifest = {
       "name": "notion-create-view"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Download the contents of a small UTF-8 text attachment created by the Notion MCP `create-attachment` tool.\n\nPass the `file_upload_id` returned by `create-attachment`. The attachment must belong to the requesting integration, have completed uploading, and use a supported text format such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG.\n\nThe response contains the complete text in `content` so you can save it locally, edit it, and call `create-attachment` again to upload a new version. Downloads are limited to 200 KiB. This tool does not fetch arbitrary URLs or return binary files. For larger or binary attachments, use the signed file URL returned when reading the containing Notion page.\n\n<examples>\n1. Download a text attachment: {\"file_upload_id\":\"12345678-90ab-cdef-1234-567890abcdef\"}\n</examples>\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1042,6 +1108,12 @@ export const manifest = {
       "name": "notion-download-attachment"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Download a spec-compliant Notion Skill as a complete tar.gz archive containing SKILL.md and its supporting files and nested folders. Pass the skill page ID. Returns a temporary signed url. Download and extract the archive to read or use the skill.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1060,6 +1132,12 @@ export const manifest = {
       "name": "notion-download-skill"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Duplicate a Notion page. The page must be within the current workspace, and you must have permission to access it. The duplication completes asynchronously, so do not rely on the new page identified by the returned ID or URL to be populated immediately. Let the user know that the duplication is in progress and that they can check back later using the 'fetch' tool or by clicking the returned URL and viewing it in the Notion app.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1078,6 +1156,12 @@ export const manifest = {
       "name": "notion-duplicate-page"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieves details about a Notion entity (page, database, data source, or saved database view) by URL or ID.\n\nProvide a URL or ID in `id`. Make multiple calls for multiple entities.\n\nFor pages, use path, verification, edit time, and truncation metadata to assess the source. Treat recency as context, not proof. Report material uncertainty when sources conflict.\n\nPages use enhanced Markdown format. For the complete specification, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool.\n\nPass a `notion://docs/*` URI as `id` to read that MCP documentation resource.\n\nDatabases return data sources in `<data-source url=\"collection://...\">` tags. Fetch the collection:// URL for its schema and use it with update_data_source or query_data_sources. Multi-source databases return more than one data source.\n\nSaved views return filters, sorts, and display settings. To query their rows, use query_data_sources with `mode: \"view\"`.\n\nIn results, a null cover or icon means none. An omitted cover or icon means unavailable or not applicable, not that none exists. File URLs expire; re-fetch to refresh them. Keep a page Markdown icon attribute for edit round trips. Uploaded media blocks may use stable `notion-file-block://` sources in Markdown. Look up each source in the response's `references` map for its current signed download URL, and preserve the stable source when editing or copying Markdown. Before relying on page content, check `truncated`, `unknown_block_count`, and `unknown_block_ids` for omitted subtrees.\n\nSet `include_discussions` to true for discussion counts, markers, previews, and `discussion://` URLs that correlate with get_comments.\n\nUse get_tool_access to check tool availability, parameter restrictions, and upgrade links for this connection.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1104,6 +1188,12 @@ export const manifest = {
       "name": "notion-fetch"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieves the current status of an async task that was started by another tool (for example, \"create_pages\" called with \"allow_async\": true).\n\nThe status is one of \"queued\", \"running\", \"retrying\", \"succeeded\", or \"failed\". When the task has succeeded, the operation's result is included; when it has failed, an error is included instead.\n\nPoll this tool with the \"task_id\" from the original tool's \"async_task\" response. Wait briefly between polls — the original response includes a suggested backoff.\n\n<examples>\n1. Check a task's status: {\"task_id\": \"task_abc123\"}\n</examples>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1123,6 +1213,12 @@ export const manifest = {
       "name": "notion-get-async-task"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Get comments and discussions from a Notion page.\n\nReturns discussions with full comment content in XML format. By default, returns page-level discussions only. On supported Business connections, pending suggested edits use `kind=\"suggested_edit\"` and their `discussion://` URL can be passed to `get_suggested_edit`. Resolved suggestions stay retired. Check `suggested_edits_status` to distinguish an empty result from unavailable suggestion discovery.\n\nTip: Use the `fetch` tool with `include_discussions: true` first to see where discussions are anchored in the page content, then use this tool to retrieve full discussion threads. The `discussion://` URLs in the fetch output match the discussion IDs returned here.\n\nParameters:\n- `include_all_blocks`: Include discussions on child blocks (default: false)\n- `include_resolved`: Include resolved discussions (default: false)\n- `discussion_id`: Fetch a specific discussion by ID or URL\n\n\n<example>{\"page_id\": \"page-uuid\"}</example>\n<example>{\"page_id\": \"page-uuid\", \"include_all_blocks\": true}</example>\n<example>{\"page_id\": \"page-uuid\", \"discussion_id\": \"discussion://pageId/blockId/discussionId\"}</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1153,6 +1249,12 @@ export const manifest = {
       "name": "notion-get-comments"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Get the latest turn's status for a Custom Agent session without waiting.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1172,6 +1274,12 @@ export const manifest = {
       "name": "notion-get-session-status"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieves a list of teams (teamspaces) in the current workspace. Shows which teams exist, user membership status, IDs, names, and roles.\n\nTeams are returned split by membership status and limited to a maximum of 10 results.\n\n<examples>\n1. List all teams (up to the limit of each type): {}\n\n2. Search for teams by name: {\"query\": \"engineering\"}\n\n3. Find a specific team: {\"query\": \"Product Design\"}\n</examples>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1189,6 +1297,12 @@ export const manifest = {
       "name": "notion-get-teams"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Get current tool availability, parameter restrictions, and available upgrade links for this Notion connection. Call with {} to get the full access map before using a conditionally available tool, unless current access is already in context. Reuse this map across tools. When current_tool_access.ai_search.status is \"available\", use ai_search for every content search; otherwise use search. Tool availability and restricted_parameters are independent: omit restricted options even when the tool is available. Optionally pass tool_names, for example [\"search\", \"ai_search\"], to narrow the result. Unknown names and tools not exposed to this connection are omitted. When ai_search is available, legacy search is also omitted from this map; user lookup uses ai_search with query_type=\"user\". This tool does not grant access or change the workspace.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1210,6 +1324,12 @@ export const manifest = {
       "name": "notion-get-tool-access"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieves a list of users in the current workspace. Shows workspace members and guests with their IDs, names, emails (if available), and types (person or bot).\n\nSupports cursor-based pagination to iterate through all users in the workspace.\n\n<examples>\n1. List all users (first page): {}\n\n2. Search for users by name or email: {\"query\": \"john\"}\n\n3. Get next page of results: {\"start_cursor\": \"abc123\"}\n\n4. Set custom page size: {\"page_size\": 20}\n\n5. Fetch a specific user by ID: {\"user_id\": \"00000000-0000-4000-8000-000000000000\"}\n\n6. Fetch the current user: {\"user_id\": \"self\"}\n</examples>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1244,6 +1364,12 @@ export const manifest = {
       "name": "notion-get-users"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List the current user's favorite pages and databases in sidebar order. Use this when the user refers to a favorite or pinned workspace item. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1263,6 +1389,12 @@ export const manifest = {
       "name": "notion-list-favorite-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List the current user's top-level pages and databases in their Private sidebar section. Use this to browse private workspace structure. For content searches, including keywords and titles, use ai_search when get_tool_access reports it is available; otherwise use search. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1282,6 +1414,12 @@ export const manifest = {
       "name": "notion-list-private-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List pages and databases the current user recently viewed, ranked by recency and visit frequency. Use this to recover likely navigation context when the user refers to something they were recently working on. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1301,6 +1439,12 @@ export const manifest = {
       "name": "notion-list-recent-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List short summaries of saved events in a Custom Agent session.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1339,6 +1483,12 @@ export const manifest = {
       "name": "notion-list-session-events"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List pages and databases in the current user's Shared sidebar section. Use this to browse content shared directly with the user. For content searches, including keywords and titles, use ai_search when get_tool_access reports it is available; otherwise use search. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1358,6 +1508,12 @@ export const manifest = {
       "name": "notion-list-shared-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Move one or more Notion pages or databases to a new parent.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1463,6 +1619,12 @@ export const manifest = {
       "name": "notion-move-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Query Notion data sources using faithful structured rows, SQL, or a saved view.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.\n\nUse fetch first to read the schema and collection:// URL for every data source you query.\n\nChoose the mode by the data needed; omitting mode uses sql:\n- rows preserves rich-text mentions, links, formatting, dates, and equations. Use it before repairing or rewriting rich-text properties.\n- sql runs read-only SQLite. Use only table and column names shown in each fetched `<sqlite-table>` definition. The system columns include `url` and `createdTime`; use other metadata names only when the table lists them. Do not assume generic names such as `Name` or `Title`, or names such as `page_id`, `rowid`, or `lastEditedTime`. Date properties use the listed expanded columns `date:<Property Name>:start`, `date:<Property Name>:end`, and `date:<Property Name>:is_datetime`; the base date property is not a SQL column. If SQLite reports a missing column, fetch the data source again and rewrite the query using its current `<sqlite-table>` names. Do not guess another name. Bind untrusted values with `?` placeholders and `params`, and include every needed filter. View filters are not applied automatically. SQL text is lossy: mentions and formatting may be omitted, and links may lose their destination. Never treat that output as proof that a property is corrupt.\n- view runs one saved view's filters and sorts. Omit is_archived or set it false for active rows; true selects archived rows. When has_more is true, pass next_cursor as start_cursor with the same is_archived value.\n\n\nView mode has no tool-specific plan quota. SQL is unlimited on Business and Enterprise with Notion AI. Other plans have a shared workspace limit for single-data-source SQL and cannot query multiple data sources at once.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6438,6 +6600,12 @@ export const manifest = {
       "name": "notion-query-data-sources"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Query the current user's meeting notes data source.\n\nUse search first to resolve people IDs for attendee filters. By default, results already include meetings where the current user is an attendee or creator; do not add a current-user filter.\n\nTreat words such as summaries, notes, todos, action items, and deliverables as requested meeting output, not title terms. Example: \"What are my meeting todos?\" needs no title filter for \"todos\". Add a title filter only when the user clearly names a meeting, such as \"standup\", \"sprint planning\", or \"1:1 with Alice\". Generic date phrases like \"recent meetings\", \"latest meetings\", \"meetings this week\", or \"yesterday's meetings\" should be interpreted as date range filters — never as title filters. Unless the user asks about a meeting whose title contains another person's name, treat that person as an attendee or creator. Use their name as a title fallback only after attendee filtering returns no results.\n\nTitle keyword matching is case-insensitive; capitalization does not matter. Matching is lexical, so simplify a filter to one term when it returns no results. The filter parameter contains the complete property, date, Boolean-combination, and example reference.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7511,6 +7679,12 @@ export const manifest = {
       "name": "notion-query-meeting-notes"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Query data across multiple Notion data sources using read-only SQLite SQL.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.\n\nUse this tool for JOINs, UNIONs, comparisons, and aggregations that need two or more data sources. Queries across multiple data sources require a Business or Enterprise plan with Notion AI. Use query_data_sources instead when you need one data source or a saved database view.\n\nPrerequisites:\n1. Use the \"fetch\" tool first to get each data source's schema and collection:// URL.\n2. Data source URLs are found in <data-source url=\"...\"> tags in fetch results.\n\n\nSQL:\n- Use each collection:// URL as a quoted SQLite table name in the query.\n- Bind untrusted values with ? placeholders and params; do not interpolate them into SQL.\n- Include every needed filter in WHERE. Saved-view filters and sorts are not automatically applied.\n- Checkbox values: use \"__YES__\" for checked and \"__NO__\" for unchecked.\n\n\nReturns matching rows, the queried data source IDs, and whether results were truncated.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7567,6 +7741,12 @@ export const manifest = {
       "name": "notion-query-multiple-data-sources"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List agent sessions available to the integration. Filter, sort, or search by title. A bounded page can be empty while has_more is true; follow next_cursor until has_more is false.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8837,6 +9017,12 @@ export const manifest = {
       "name": "notion-query-sessions"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Read the full visible content of one saved Custom Agent session event.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8863,6 +9049,12 @@ export const manifest = {
       "name": "notion-read-session-event"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Restore Notion pages or databases from Trash to where they were before they were deleted. Use this when the user asks to undo a deletion or to restore something from Trash. Database rows are pages. Restoring something that is already out of Trash succeeds and changes nothing. To restore a page whose parent is in Trash, restore the parent.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8886,6 +9078,12 @@ export const manifest = {
       "name": "notion-restore-pages"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
       "description": "Before the first content search for this connection, call get_tool_access with {} unless its current access result is already in context. Choose the content-search tool by current_tool_access.ai_search.status, not by query wording:\n- If the status is \"available\", use ai_search for every keyword, page-title, project-name, or natural-language content search.\n- If access discovery reports that AI search is not available to this connection, use search with short, specific keywords. Missing access information is not a denial; call get_tool_access first.\n\n\nStart with a non-empty query and omit optional parameters unless needed. Do not add filters or sorting just to fill in defaults. Business or Enterprise is required for filters.edited_by_user_ids, filters.last_edited_date_range, filters.title_only=true, filters.content_status, more than one distinct teamspace across teamspace_id and filters.teamspace_ids, and sort other than relevance. Check current_tool_access.search.restricted_parameters; unavailable options are dropped with a notice and results may be broader. Keep filters nested inside \"filters\". Use page_size, not limit. When AI search is available, use ai_search for structured content searches too.\n\nFor user lookup, use ai_search with query_type=\"user\" when AI search is available; otherwise use search with query_type=\"user\". A document about a person is a content search, not a user lookup.\n\n<example description=\"AI search unavailable: find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"Find a user on any plan\">\n{\"query\":\"alex@example.com\",\"query_type\":\"user\"}\n</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9028,6 +9226,12 @@ export const manifest = {
       "name": "notion-search"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Search agents by name or description, or browse the current user's favorite agents and the workspace's newest agents. Queries return one page. Without a query, follow nextCursor until it is omitted, even when a bounded workspace page is empty. Use this instead of list_agents when personal favorites or relevance-ranked search are needed.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9062,6 +9266,12 @@ export const manifest = {
       "name": "notion-search-agents"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Search past agent sessions by topic in a periodically refreshed index and return matching session URLs and excerpts. Recently created or updated sessions may not appear; use query_sessions for recent sessions.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9084,6 +9294,12 @@ export const manifest = {
       "name": "notion-search-sessions"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Send a follow-up message to a Custom Agent session you can access.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9109,6 +9325,12 @@ export const manifest = {
       "name": "notion-send-message-to-session"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Use this exactly once at the end of a turn when query_multiple_data_sources requires the full version of Notion MCP. Call with no arguments. Do not call this once per failed query, and do not call it again if it has already been called in this turn. Use the card data to give the user the relevant next-step message and destination link in the final response. Use a compact, labeled Markdown link rather than a bare URL, and do not request or create a separate link preview.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9154,6 +9376,12 @@ export const manifest = {
       }
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Start a session with a published Custom Agent. Use get_session_status or wait_session to check its progress.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9179,6 +9407,12 @@ export const manifest = {
       "name": "notion-spawn-session"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Stop a running Custom Agent session you can access.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9198,6 +9432,12 @@ export const manifest = {
       "name": "notion-stop-session"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Update a Notion data source's schema, title, attributes, or page layout. Schema changes use SQL DDL statements. Returns Markdown showing updated structure and schema.\n\nAccepts a data source ID (collection ID from fetch response's <data-source> tag) or a single-source database ID. Multi-source databases require the specific data source ID.\n\nThe statements param accepts semicolon-separated DDL statements:\n- ADD COLUMN \"Name\" <type> - add a new property\n- DROP COLUMN \"Name\" - remove a property\n- RENAME COLUMN \"Old\" TO \"New\" - rename a property\n- ALTER COLUMN \"Name\" SET <type> - change type/options\n\n\nThe page_layout param replaces the layout every page in the data source uses (pinned properties, sidebar, property sections, and a content tab next to views). Fetch the data source first to get the current layout, then edit it. See notion://docs/database-page-layouts for the format.\n\nNotes: Cannot delete/create title properties. Max one unique_id property. Cannot update synced databases. Use \"fetch\" first to see current schema and get the data source ID from <data-source url=\"collection://...\"> tags.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9548,6 +9788,12 @@ export const manifest = {
       "name": "notion-update-data-source"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Update an existing Notion Folder with an explicit Folder operation.\n\n- Use add_files with file upload IDs returned by the upload tools.\n- Fetch the Folder first, then use remove_files with the exact file URLs from that fetch result.\n- Use add_subfolder to create and insert a new nested Folder.\n\n\nUse exactly one command shape; do not mix their arguments:\n- {\"command\":\"add_files\",\"file_upload_ids\":[\"...\"]}\n- {\"command\":\"remove_files\",\"file_urls\":[\"...\"]}\n- {\"command\":\"add_subfolder\",\"title\":\"...\"}\n\n\nThe Folder ID may be provided with or without dashes.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9598,6 +9844,12 @@ export const manifest = {
       "name": "notion-update-folder"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Update a Notion page's properties or content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT guess or hallucinate Markdown syntax. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nBefore changing content, fetch unless already loaded. Match nearby headings, block types, nesting, list or table patterns, and prose style.\n\nMake the smallest edit. Use \"update_content\" for targeted search-and-replace and \"insert_content\" only to prepend or append. Avoid full-page \"replace_content\" when a targeted command is sufficient. Preserve unrelated wording, structure, order, and native references. Do not broadly rewrite unless asked.\n\nFor \"update_content\", use the smallest exact old_str that uniquely identifies the target. If the edit would remove material content the user did not identify, ask for confirmation first. After a multi-part or structural edit, fetch the page again and verify the requested content and nesting. Skip this extra read for a simple exact edit.\n\nFor \"replace_content\", preserve child pages and databases with their exact fetched tags. If validation reports that child content would be deleted, show the list and ask for confirmation. Never retry with \"allow_deleting_content\": true without confirmation.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9802,6 +10054,12 @@ export const manifest = {
       "name": "notion-update-page"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Update a view's name, filters, sorts, or display configuration.\n\nUse \"fetch\" to get view IDs from database responses. Only include fields\nyou want to change. The \"configure\" param uses the same DSL as create_view.\nUse CLEAR to remove settings:\n- CLEAR FILTER — remove all filters\n- CLEAR QUICK FILTER — remove all quick filters, or name properties to remove only theirs (CLEAR QUICK FILTER \"Status\")\n- CLEAR SORT — remove all sorts\n- CLEAR GROUP BY — remove grouping\n\n\nSee notion://docs/view-dsl-spec resource for full syntax (readable via your MCP client's resource-reading interface, or by passing the URI to the Notion \"fetch\" tool).\n\n<example description=\"Rename\">{\"view_id\": \"abc123\", \"name\": \"Sprint Board\"}</example>\n<example description=\"Update filter\">{\"view_id\": \"abc123\", \"configure\": \"FILTER \"Status\" = \"Done\"\"}</example>\n<example description=\"Add quick filters without criteria\">{\"view_id\": \"abc123\", \"configure\": \"QUICK FILTER \"Status\", \"Assignee\"\"}</example>\n<example description=\"Clear filter, add sort\">{\"view_id\": \"abc123\", \"configure\": \"CLEAR FILTER; SORT BY \"Created\" DESC\"}</example>\n<example description=\"Update grouping\">{\"view_id\": \"abc123\", \"configure\": \"GROUP BY \"Priority\"; SHOW \"Name\", \"Status\"\"}</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9828,6 +10086,12 @@ export const manifest = {
       "name": "notion-update-view"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Import a spec-compliant Agent Skills directory into a page in a Skills database. First call action=prepare with page_id and the exact tar.gz content_length and checksum_crc32. PUT the raw archive bytes to upload_url with all upload_headers, then call action=complete with the same page_id and upload_token. The archive must contain SKILL.md with name/description YAML frontmatter, either at the root or in a single matching skill-name directory. Completion replaces the page title, Description, body, and Files; it preserves the page and uses the page-update diff engine rather than recreating all content blocks. SKILL.md becomes page content. Its sibling folders and files are added directly to Files, preserving nested directories without a skill-name wrapper. Previous folders are not deleted. For a new skill, create a page in a Skills database first. Maximum 20 MiB compressed, 25 MiB expanded, 1000 entries, 20 path levels, and 200 UTF-8 bytes per filename. Paths must be unique ignoring case. Only name and description are imported from frontmatter; optional fields are ignored. Links and special files are rejected. Upload URLs and tokens expire after ten minutes. Uploading never executes skill instructions or scripts.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9873,6 +10137,12 @@ export const manifest = {
       "name": "notion-upload-skill"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Wait for the latest turn in a Custom Agent session to stop running.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
