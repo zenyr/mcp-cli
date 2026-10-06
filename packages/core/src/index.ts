@@ -45,3 +45,8 @@ export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
   if (!/^[a-z][a-z0-9-]*$/.test(plugin.name)) throw new Error("Invalid service name");
   return plugin;
 };
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+export const RESERVED_COMMANDS: readonly string[] = ["help", "methods", "call", "skill"];
+export const RESERVED_FLAGS: readonly string[] = ["json", "help", "input", "input-file"];
+export const fallbackPath = (toolName: string): string[] => ["call", toolName];
