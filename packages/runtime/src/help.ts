@@ -1,27 +1,30 @@
-import type { CommandSpec, Manifest } from "@mcp-cli/core";
-import { isRecord } from "./schema";
+import {
+  RESERVED_COMMANDS,
+  fallbackPath,
+  isRecord,
+  type CommandSpec,
+  type Manifest,
+} from "@mcp-cli/core";
 
 export const findCommand = (manifest: Manifest, path: string[]): CommandSpec | undefined => {
-  if (path[0] === "call" && path.length === 2)
-    return manifest.commands.find((command) => command.name === path[1]);
-  return manifest.commands.find((command) => command.path.join(" ") === path.join(" "));
+  const key = path.join(" ");
+  return (
+    manifest.commands.find((command) => fallbackPath(command.name).join(" ") === key) ??
+    manifest.commands.find((command) => command.path.join(" ") === key)
+  );
 };
 export const help = (manifest: Manifest, path: string[]): string => {
   const command = findCommand(manifest, path);
   const scoped = manifest.commands.filter((command) =>
     path.every((part, index) => command.path[index] === part),
   );
-  if (
-    path.length &&
-    !command &&
-    !scoped.length &&
-    !["call", "methods", "skill"].includes(path.join(" "))
-  ) {
+  if (path.length && !command && !scoped.length && !RESERVED_COMMANDS.includes(path.join(" "))) {
     throw new Error(`Unknown command: ${path.join(" ")}`);
   }
   const title = [manifest.service, ...path].join(" ");
   if (path.join(" ") === "methods")
     return `Usage: ${title} [group] [--json]\n\nList baked-in tool names and command paths.`;
+  if (path.join(" ") === "help") return `Usage: ${title} [command]\n\nShow help for a command.`;
   if (path.join(" ") === "skill") return `Usage: ${title}\n\nPrint the service workflow.`;
   if (path.join(" ") === "call")
     return `Usage: ${title} <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse ${manifest.service} methods to discover names.`;
@@ -65,7 +68,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
           .filter((part): part is string => Boolean(part)),
       ),
     ];
-    if (!path.length) children.push("methods", "call", "skill", "help");
+    if (!path.length) children.push(...RESERVED_COMMANDS);
     lines.push(
       "",
       "Commands:",

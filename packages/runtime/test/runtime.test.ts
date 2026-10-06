@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { definePlugin, type ToolSession } from "@mcp-cli/core";
 import { runService } from "../src";
-import { manifest } from "../../../plugins/demo/src/generated";
+import { manifest } from "./fixtures/manifest";
 
 const plugin = definePlugin({
   name: "demo",
@@ -226,4 +226,67 @@ test("validator ignores inherited required input fields", async () => {
       input,
     ),
   ).toThrow("Invalid input");
+});
+
+const callWith = async (args: string[]) => {
+  const f = fixture();
+  await runService(plugin, manifest, args, f.dependencies);
+  return f.calls;
+};
+const rejectsWith = async (args: string[], message: string) => {
+  const f = fixture();
+  await expect(runService(plugin, manifest, args, f.dependencies)).rejects.toThrow(message);
+  expect(f.counts().opened).toBe(0);
+};
+
+test("nullable and union fields convert flags to their non-null type", async () => {
+  const set = ["field", "set"];
+  for (const [args, input] of [
+    [["--size", "3"], { size: 3 }],
+    [["--size", "null"], { size: null }],
+    [["--ratio", "1.5"], { ratio: 1.5 }],
+    [["--ratio", "null"], { ratio: null }],
+    [["--enabled"], { enabled: true }],
+    [["--enabled", "false"], { enabled: false }],
+    [["--enabled", "null"], { enabled: null }],
+    [["--no-enabled"], { enabled: false }],
+    [["--label", "null"], { label: "null" }],
+    [["--meta", '{"a":1}'], { meta: { a: 1 } }],
+    [["--meta", "null"], { meta: null }],
+  ] as const) {
+    expect(await callWith([...set, ...args])).toEqual([{ name: "demo-fields", input }]);
+  }
+});
+
+test("--key=value sets fields and input sources", async () => {
+  expect(
+    await callWith(["message", "echo", "--text=a=b", "--count=2", "--uppercase=false"]),
+  ).toEqual([{ name: "demo-echo", input: { text: "a=b", count: 2, uppercase: false } }]);
+  expect(await callWith(["call", "demo-echo", '--input={"text":"x"}'])).toEqual([
+    { name: "demo-echo", input: { text: "x" } },
+  ]);
+  await rejectsWith(["message", "echo", "--no-uppercase=true"], "--no-uppercase");
+  await rejectsWith(["message", "echo", "--text", "x", "--json=1"], "--json");
+});
+
+test("numbers accept decimal text only and name the flag", async () => {
+  for (const raw of ["0x10", "1e400", "", " 3", "Infinity"]) {
+    await rejectsWith(["field", "set", "--amount", raw], "--amount");
+  }
+  for (const raw of ["1.5", "1.0", "0b1"]) {
+    await rejectsWith(["message", "echo", "--text", "x", "--count", raw], "--count");
+  }
+  expect(await callWith(["field", "set", "--amount", "-2.5e1"])).toEqual([
+    { name: "demo-fields", input: { amount: -25 } },
+  ]);
+});
+
+test("invalid JSON values name the flag", async () => {
+  await rejectsWith(["message", "echo", "--text", "x", "--labels", "[x"], "--labels");
+  await rejectsWith(["call", "demo-echo", "--input", "{x"], "--input");
+});
+
+test("arguments without a command path fail", async () => {
+  await rejectsWith(["--text", "x"], "Missing command");
+  await rejectsWith(["stray-only", "--text", "x"], "Unknown command");
 });
