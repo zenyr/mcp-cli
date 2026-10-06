@@ -1,12 +1,27 @@
 import { expect, test } from "bun:test";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NotGeneratedError, UsageError } from "@mcp-cli/core";
 import { EXIT, exitCodeFor } from "../src/main";
-import { generatedFiles, loadManifest, loadPlugin, registry } from "../src/plugins";
+import { discover, findPlugin, loadPlugin } from "../src/discovery";
+import { defaultContext } from "../src/paths";
+import { loadManifest, packageFiles } from "../src/plugins";
 const root = fileURLToPath(new URL("../../../", import.meta.url));
+// Points config and cache lookups away from the real home directory.
+const sandbox = mkdtempSync(join(tmpdir(), "mcp-cli-test-"));
+const isolatedEnv = {
+  ...process.env,
+  HOME: "/nonexistent-home",
+  XDG_CONFIG_HOME: join(sandbox, "config"),
+  XDG_CACHE_HOME: join(sandbox, "cache"),
+  MCP_CLI_CONFIG: "",
+};
 const run = async (...args: string[]) => {
   const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
     cwd: root,
+    env: isolatedEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -41,13 +56,24 @@ test("unknown and prototype service names are usage errors", async () => {
   expect((await run("constructor")).code).toBe(2);
   expect((await run("__proto__")).code).toBe(2);
 });
-test("registry keys match plugin names and resolve package files", async () => {
-  for (const name of Object.keys(registry)) {
-    expect((await loadPlugin(name)).name).toBe(name);
-    expect(generatedFiles(name).module).toEndWith(`plugins/${name}/src/generated.ts`);
+test("discovered services match plugin names and resolve package files", async () => {
+  const registry = await discover(await defaultContext({ HOME: "/nonexistent-home" }));
+  for (const name of ["demo", "notion"]) {
+    const plugin = findPlugin(registry, name);
+    expect((await loadPlugin(plugin)).name).toBe(name);
+    expect(packageFiles(plugin).module).toEndWith(`plugins/${name}/src/generated.ts`);
   }
-  expect((await loadManifest("demo")).service).toBe("demo");
-  await expect(loadManifest("notion")).rejects.toThrow(NotGeneratedError);
+  expect((await loadManifest(registry, findPlugin(registry, "demo"))).service).toBe("demo");
+  await expect(loadManifest(registry, findPlugin(registry, "notion"))).rejects.toThrow(
+    NotGeneratedError,
+  );
+});
+test("plugins lists discovered services with generated status", async () => {
+  const listing = await run("plugins");
+  expect(listing.code).toBe(0);
+  expect(listing.stdout).toMatch(/demo\s+workspace\s+generated \(package\)/);
+  expect(listing.stdout).toMatch(/notion\s+workspace\s+not generated/);
+  expect((await run("plugins", "extra")).code).toBe(2);
 });
 test("missing and outdated generated code share the failure exit status", () => {
   expect(exitCodeFor(new NotGeneratedError("missing"))).toBe(EXIT.failure);
