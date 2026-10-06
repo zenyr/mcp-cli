@@ -26,6 +26,25 @@ const tools = [
   },
 ];
 
+// Resources and prompts span two pages so clients must follow nextCursor.
+const resourcePages = [
+  [{ uri: "fixture://text", name: "text", mimeType: "text/plain", description: "Plain text" }],
+  [{ uri: "fixture://blob", name: "blob", mimeType: "application/octet-stream", size: 3 }],
+];
+const promptPages = [
+  [{ name: "greet", description: "Greet someone", arguments: [{ name: "who", required: true }] }],
+  [{ name: "plain" }],
+];
+const page = (pages: unknown[][], cursor: unknown) => {
+  const index = cursor === "2" ? 1 : 0;
+  return { items: pages[index] ?? [], ...(index === 0 && { nextCursor: "2" }) };
+};
+const readResource = (uri: unknown) => {
+  if (uri === "fixture://text") return [{ uri, mimeType: "text/plain", text: "hello resource" }];
+  if (uri === "fixture://blob") return [{ uri, blob: btoa("abc") }];
+  return undefined;
+};
+
 const slow = async (id: Message["id"], params: Record<string, unknown>) => {
   const ms = numberArg(params.arguments, "ms");
   const every = numberArg(params.arguments, "progressEveryMs");
@@ -51,11 +70,34 @@ const handle = (message: Message) => {
       id,
       result: {
         protocolVersion: "2025-11-25",
-        capabilities: mode === "no-tools" ? {} : { tools: {} },
+        capabilities: mode === "no-tools" ? {} : { tools: {}, resources: {}, prompts: {} },
         serverInfo: { name: "fixture", version: "1.0.0" },
       },
     });
   if (method === "tools/list") return send({ id, result: { tools } });
+  if (method === "resources/list") {
+    const { items, ...rest } = page(resourcePages, params.cursor);
+    return send({ id, result: { resources: items, ...rest } });
+  }
+  if (method === "resources/templates/list")
+    return send({
+      id,
+      result: { resourceTemplates: [{ uriTemplate: "fixture://item/{id}", name: "item" }] },
+    });
+  if (method === "resources/read") {
+    const contents = readResource(params.uri);
+    if (contents) return send({ id, result: { contents } });
+    return send({ id, error: { code: -32002, message: "Resource not found" } });
+  }
+  if (method === "prompts/list") {
+    const { items, ...rest } = page(promptPages, params.cursor);
+    return send({ id, result: { prompts: items, ...rest } });
+  }
+  if (method === "prompts/get") {
+    const args = isRecord(params.arguments) ? params.arguments : {};
+    const text = `Hello, ${String(args.who ?? "nobody")}`;
+    return send({ id, result: { messages: [{ role: "user", content: { type: "text", text } }] } });
+  }
   if (method === "tools/call" && params.name === "slow") return void slow(id, params);
   if (method === "tools/call") {
     const args = params.arguments;
