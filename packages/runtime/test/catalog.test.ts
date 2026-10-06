@@ -56,6 +56,7 @@ const fixture = () => {
       writeError: () => undefined,
       readFile: async () => '{"who":"file"}',
       readStdin: async () => '{"who":"stdin"}',
+      readBytes: async () => new Uint8Array(),
     },
   };
   const run = (...args: string[]) => runService(plugin, manifest, args, dependencies);

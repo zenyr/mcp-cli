@@ -16,6 +16,7 @@ import { listPlugins } from "./list";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
 import { defaultRepeatGuard } from "./repeat";
+import { putBytes } from "./transfer";
 
 export const EXIT = { ok: 0, failure: 1, usage: 2, repeated: 3 } as const;
 
@@ -57,11 +58,13 @@ export const main = async (argv: string[]): Promise<number> => {
   return runService(plugin, manifest, args, {
     open: async () => connect(await resolveConnection(plugin, process.env, defaultStore())),
     guard: defaultRepeatGuard(process.env),
+    putBytes,
     io: {
       write: (text) => console.log(text),
       writeError: (text) => console.error(text),
       readFile: (path) => Bun.file(path).text(),
       readStdin: () => Bun.stdin.text(),
+      readBytes: (path) => Bun.file(path).bytes(),
     },
   });
 };

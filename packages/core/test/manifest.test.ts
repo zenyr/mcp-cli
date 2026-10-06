@@ -131,3 +131,30 @@ test("applyCustomizations validates group descriptions and quickstart commands",
   for (const command of ["media video", "media image create extra", "--json", ""])
     expect(() => withMetadata({}, [command])).toThrow("missing command");
 });
+
+test("upload fields need an uploader and a string or string-array schema", () => {
+  const tool = {
+    name: "a",
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: { type: "string" },
+        urls: { type: "array", items: { type: "string" } },
+        count: { type: "integer" },
+      },
+    },
+  };
+  const manifest: GeneratedManifest = { version: 2, service: "demo", tools: [tool] };
+  const withUploads = (uploads: string[], uploader = true) =>
+    applyCustomizations(
+      {
+        ...pluginWith({ a: { path: ["x", "y"], uploads } }),
+        ...(uploader && { uploadFile: async () => "https://example.com/f" }),
+      },
+      manifest,
+    );
+  expect(withUploads(["url", "urls"]).commands[0]?.uploads).toEqual(["url", "urls"]);
+  expect(() => withUploads(["url"], false)).toThrow("without uploadFile");
+  for (const field of ["count", "missing", "toString"])
+    expect(() => withUploads([field])).toThrow("Invalid upload field");
+});

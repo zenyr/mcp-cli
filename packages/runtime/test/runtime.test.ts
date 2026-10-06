@@ -17,6 +17,7 @@ const plugin = definePlugin({
   commands,
   connection: () => ({ type: "stdio", command: "unused" }),
 });
+const files: Record<string, number[]> = { "a.wav": [1, 2], "b.wav": [3], "copy.wav": [1, 2] };
 const fixture = (error = false) => {
   const output: string[] = [];
   const errors: string[] = [];
@@ -46,6 +47,11 @@ const fixture = (error = false) => {
       writeError: (text: string) => errors.push(text),
       readFile: async () => '{"text":"file"}',
       readStdin: async () => '{"text":"stdin"}',
+      readBytes: async (path: string) => {
+        const bytes = files[path];
+        if (!bytes) throw new Error(`ENOENT ${path}`);
+        return new Uint8Array(bytes);
+      },
     },
   };
   return { output, errors, calls, dependencies, counts: () => ({ opened, closed }) };
@@ -561,4 +567,100 @@ test("--allow-repeat is a switch that never becomes tool input", async () => {
   await expect(
     runService(plugin, manifest, ["message", "echo", "--allow-repeat=yes"], f.dependencies),
   ).rejects.toThrow("does not take a value");
+});
+
+const uploading = (fail = false) => {
+  const uploads: Array<{ name: string; bytes: number[] }> = [];
+  const puts: string[] = [];
+  const uploader = definePlugin({
+    ...plugin,
+    commands: {
+      ...commands,
+      "demo-echo": { path: ["message", "echo"], uploads: ["text", "labels"] },
+    },
+    uploadFile: async (file, context) => {
+      if (fail) throw new Error("slot refused");
+      uploads.push({ name: file.name, bytes: [...file.bytes] });
+      await context.putBytes(`put:${file.name}`, file.bytes);
+      return `https://files/${file.name}`;
+    },
+  });
+  const putBytes = async (url: string) => {
+    puts.push(url);
+  };
+  return { uploader, uploads, puts, putBytes };
+};
+
+test("@paths in upload fields are uploaded and replaced by URLs before the call", async () => {
+  const f = fixture();
+  const { uploader, uploads, puts, putBytes } = uploading();
+  const args = ["message", "echo", "--text", "@a.wav", "--labels", '["@b.wav","plain","@a.wav"]'];
+  expect(await runService(uploader, manifest, args, { ...f.dependencies, putBytes })).toBe(0);
+  expect(uploads).toEqual([
+    { name: "a.wav", bytes: [1, 2] },
+    { name: "b.wav", bytes: [3] },
+  ]);
+  expect(puts).toEqual(["put:a.wav", "put:b.wav"]);
+  expect(f.calls).toEqual([
+    {
+      name: "demo-echo",
+      input: {
+        text: "https://files/a.wav",
+        labels: ["https://files/b.wav", "plain", "https://files/a.wav"],
+      },
+    },
+  ]);
+});
+
+test("@ stays literal outside upload fields and https URLs pass through", async () => {
+  const f = fixture();
+  await runService(plugin, manifest, ["message", "echo", "--text", "@here hi"], f.dependencies);
+  const { uploader, uploads, putBytes } = uploading();
+  const url = ["message", "echo", "--text", "https://example.com/a.wav"];
+  await runService(uploader, manifest, url, { ...f.dependencies, putBytes });
+  expect(uploads).toEqual([]);
+  expect(f.calls).toEqual([
+    { name: "demo-echo", input: { text: "@here hi" } },
+    { name: "demo-echo", input: { text: "https://example.com/a.wav" } },
+  ]);
+});
+
+test("unreadable files and missing transfer ports fail before connecting", async () => {
+  const f = fixture();
+  const { uploader, putBytes } = uploading();
+  const run = (text: string, withPut = true) =>
+    runService(uploader, manifest, ["message", "echo", "--text", text], {
+      ...f.dependencies,
+      ...(withPut && { putBytes }),
+    });
+  await expect(run("@missing.wav")).rejects.toThrow("Cannot read file for --text: missing.wav");
+  await expect(run("@")).rejects.toThrow(UsageError);
+  await expect(run("@a.wav", false)).rejects.toThrow("cannot upload local files");
+  expect(f.counts()).toEqual({ opened: 0, closed: 0 });
+});
+
+test("repeat keys follow file contents and refuse before uploading again", async () => {
+  const f = fixture();
+  const { guard } = memoryGuard();
+  const { uploader, uploads, putBytes } = uploading();
+  const dependencies = { ...f.dependencies, guard, putBytes };
+  const echo = (text: string) =>
+    runService(uploader, manifest, ["message", "echo", "--text", text], dependencies);
+  expect(await echo("@a.wav")).toBe(0);
+  await expect(echo("@copy.wav")).rejects.toThrow(RepeatedCallError);
+  expect(await echo("@b.wav")).toBe(0);
+  expect(uploads.map((upload) => upload.name)).toEqual(["a.wav", "b.wav"]);
+});
+
+test("a failed upload closes the session and leaves the retry allowed", async () => {
+  const f = fixture();
+  const { guard, records } = memoryGuard();
+  const { uploader, putBytes } = uploading(true);
+  const args = ["message", "echo", "--text", "@a.wav"];
+  const dependencies = { ...f.dependencies, guard, putBytes };
+  await expect(runService(uploader, manifest, args, dependencies)).rejects.toThrow("slot refused");
+  await expect(runService(uploader, manifest, args, dependencies)).rejects.toThrow("slot refused");
+  expect([...records.values()].map((record) => record.status)).toEqual(["error"]);
+  expect(f.calls).toEqual([]);
+  expect(f.counts()).toEqual({ opened: 2, closed: 2 });
 });

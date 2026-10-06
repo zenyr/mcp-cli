@@ -20,6 +20,8 @@ export type CommandCustomization = {
   details?: string;
   examples?: string[];
   rules?: string[];
+  /** Input fields (string or string array) whose `@path` values are uploaded through `uploadFile`. */
+  uploads?: string[];
 };
 export type CommandSpec = CommandCustomization & ToolDefinition;
 /** A recommended command line, relative to the service name, shown first in root help. */
@@ -60,6 +62,15 @@ export type ServicePlugin = {
   auth?: import("./auth").AuthSpec;
   connection(env: Record<string, string | undefined>): Connection | Promise<Connection>;
   beforeCall?: (command: CommandSpec, input: Record<string, unknown>) => Promise<void>;
+  /** Uploads one local file through the given ports and returns the URL the tool should receive. */
+  uploadFile?: (file: LocalFile, context: UploadContext) => Promise<string>;
+};
+/** A local file named as `@path` in an upload field. */
+export type LocalFile = { path: string; name: string; bytes: Uint8Array };
+/** Ports an upload policy may use: tool calls on the open session and a raw byte transfer. */
+export type UploadContext = {
+  callTool: ToolCaller;
+  putBytes(url: string, bytes: Uint8Array): Promise<void>;
 };
 export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
   if (!/^[a-z][a-z0-9-]*$/.test(plugin.name)) throw new Error("Invalid service name");

@@ -64,10 +64,19 @@ const childSummary = (manifest: Manifest, path: string[]): string => {
   return manifest.groups[key] ?? `${count} command${count === 1 ? "" : "s"}`;
 };
 
-const argumentLine = (key: string, schema: Record<string, unknown>, required: boolean): string => {
+const argumentLine = (
+  key: string,
+  schema: Record<string, unknown>,
+  required: boolean,
+  upload: boolean,
+): string => {
   const reserved = isReservedField(key);
   const name = reserved ? key : `--${flagForm(key)}`;
-  const notes = [required ? "required" : "optional", ...(reserved ? ["set via --input only"] : [])];
+  const notes = [
+    required ? "required" : "optional",
+    ...(reserved ? ["set via --input only"] : []),
+    ...(upload ? ["@path uploads a local file"] : []),
+  ];
   const description = schema.description ? ` - ${String(schema.description)}` : "";
   return `  ${name}  ${typeLabel(schema)} (${notes.join(", ")})${description}`;
 };
@@ -120,7 +129,10 @@ export const help = (manifest: Manifest, path: string[]): string => {
       lines.push("", "Arguments:");
       for (const [key, schema] of Object.entries(props)) {
         if (!isRecord(schema)) continue;
-        lines.push(argumentLine(key, schema, Array.isArray(required) && required.includes(key)));
+        const upload = command.uploads?.includes(key) ?? false;
+        lines.push(
+          argumentLine(key, schema, Array.isArray(required) && required.includes(key), upload),
+        );
       }
     }
     lines.push(
