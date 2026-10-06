@@ -217,6 +217,17 @@ export default definePlugin({
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
 `connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.
 
+## 중복 실행 방지
+
+`readOnlyHint`나 `idempotentHint`가 `true`가 아닌 도구는 같은 입력으로 다시 호출하면 거부합니다.
+annotation이 없는 도구도 거부 대상입니다. 거부는 서버에 연결하기 전에 일어나고 종료 코드는 `3`입니다.
+
+- 판정 키는 서비스, 도구 이름, 정규화한 입력의 SHA-256입니다.
+- 이전 호출이 성공했거나 결과를 모르는 상태(타임아웃, 강제 종료)면 거부합니다. 서버가 오류를 반환했으면 허용합니다.
+- 기본 기간은 5분입니다. `MCP_CLI_REPEAT_WINDOW`(초)로 바꾸고 `0`이면 끕니다.
+- `--allow-repeat`는 한 번만 검사를 건너뜁니다.
+- 기록은 `$XDG_STATE_HOME/mcp-cli/calls/<service>.json`(기본 `~/.local/state/...`)에 둡니다.
+
 ## 인증
 
 플러그인은 `auth`로 인증 방식을 선언합니다. CLI가 실행 시에 자격 증명을 연결에 넣습니다.

@@ -1,6 +1,8 @@
 import {
+  RepeatedCallError,
   UsageError,
   applyCustomizations,
+  type RepeatGuard,
   type GeneratedManifest,
   type ServicePlugin,
   type ToolResult,
@@ -12,6 +14,7 @@ import { parseArguments } from "./arguments";
 import { runPrompts } from "./prompts";
 import { HELP, METHODS, PROMPTS, RESOURCES, SKILL } from "./reserved";
 import { runResources } from "./resources";
+import { callKey, guardsRepeats, repeatMessage } from "./repeat";
 export { help } from "./help";
 
 const formatResult = (result: ToolResult, json: boolean): string =>
@@ -35,10 +38,10 @@ export const runService = async (
   plugin: ServicePlugin,
   generated: GeneratedManifest,
   argv: string[],
-  dependencies: { open(): Promise<ToolSession>; io: RuntimeIO },
+  dependencies: { open(): Promise<ToolSession>; io: RuntimeIO; guard?: RepeatGuard },
 ): Promise<number> => {
   const manifest = applyCustomizations(plugin, generated);
-  const { path, tokens, json, wantsHelp } = parseArguments(
+  const { path, tokens, json, wantsHelp, allowRepeat } = parseArguments(
     argv,
     (commandPath) => findCommand(manifest, commandPath)?.inputSchema ?? {},
   );
@@ -96,9 +99,16 @@ export const runService = async (
   const input = await parseInput(tokens, command.inputSchema, dependencies.io);
   validateUserInput(command.inputSchema, input);
   await plugin.beforeCall?.(command, input);
+  const guard = allowRepeat || !guardsRepeats(command) ? undefined : dependencies.guard;
+  const key = callKey(command.name, input);
+  const earlier = await guard?.begin(manifest.service, key, command.name);
+  if (earlier)
+    throw new RepeatedCallError(repeatMessage(command.path.join(" "), earlier, Date.now()));
   const session = await dependencies.open();
   try {
     const result = await session.callTool(command.name, input);
+    // A thrown call stays pending because the server may still have applied it.
+    await guard?.finish(manifest.service, key, result.isError ? "error" : "ok");
     const text = formatResult(result, json);
     // With --json the structured result stays on stdout so pipes see it; the exit code marks the error.
     if (result.isError && !json) dependencies.io.writeError(text);

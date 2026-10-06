@@ -1,5 +1,12 @@
 import { expect, test } from "bun:test";
-import { UsageError, definePlugin, type ToolSession } from "@mcp-cli/core";
+import {
+  RepeatedCallError,
+  UsageError,
+  definePlugin,
+  type CallRecord,
+  type RepeatGuard,
+  type ToolSession,
+} from "@mcp-cli/core";
 import { SchemaCompileError } from "@mcp-cli/schema";
 import { runService } from "../src";
 import { catalogStub, commands, manifest } from "./fixtures/manifest";
@@ -463,4 +470,95 @@ test("root and group help describe each command and the recommended start", asyn
   expect(group).toContain("Usage: demo message <command>\n\nSend and fail messages");
   expect(group).toContain("  echo  Echo a message\n  fail  Return a tool error");
   expect(group).not.toContain("Start here:");
+});
+
+const memoryGuard = () => {
+  const records = new Map<string, CallRecord>();
+  const guard: RepeatGuard = {
+    begin: async (service, key, tool) => {
+      const earlier = records.get(`${service}:${key}`);
+      if (earlier && earlier.status !== "error") return earlier;
+      records.set(`${service}:${key}`, { tool, at: Date.now(), status: "pending" });
+      return undefined;
+    },
+    finish: async (service, key, status) => {
+      const record = records.get(`${service}:${key}`);
+      if (record) records.set(`${service}:${key}`, { ...record, status });
+    },
+  };
+  return { guard, records };
+};
+
+test("an identical non-idempotent call is refused before connecting", async () => {
+  const f = fixture();
+  const { guard } = memoryGuard();
+  const dependencies = { ...f.dependencies, guard };
+  const args = ["message", "echo", "--text", "hi"];
+  expect(await runService(plugin, manifest, args, dependencies)).toBe(0);
+  const repeat = runService(plugin, manifest, args, dependencies);
+  await expect(repeat).rejects.toThrow(RepeatedCallError);
+  await expect(runService(plugin, manifest, args, dependencies)).rejects.toThrow(
+    "Refusing to repeat message echo: the same input already succeeded",
+  );
+  expect(await runService(plugin, manifest, [...args, "--allow-repeat"], dependencies)).toBe(0);
+  expect(
+    await runService(plugin, manifest, ["message", "echo", "--text", "bye"], dependencies),
+  ).toBe(0);
+  expect(f.calls).toHaveLength(3);
+  expect(f.counts()).toEqual({ opened: 3, closed: 3 });
+});
+
+test("tool errors allow a retry and read-only or idempotent tools are never guarded", async () => {
+  const failing = fixture(true);
+  const { guard, records } = memoryGuard();
+  const args = ["message", "fail"];
+  for (let i = 0; i < 2; i++)
+    expect(await runService(plugin, manifest, args, { ...failing.dependencies, guard })).toBe(1);
+  expect([...records.values()].map((record) => record.status)).toEqual(["error"]);
+  const annotated = {
+    ...manifest,
+    tools: manifest.tools.map((tool) =>
+      tool.name === "demo-echo" ? { ...tool, annotations: { readOnlyHint: true } } : tool,
+    ),
+  };
+  const f = fixture();
+  for (let i = 0; i < 2; i++)
+    expect(
+      await runService(plugin, annotated, ["message", "echo", "--text", "hi"], {
+        ...f.dependencies,
+        guard,
+      }),
+    ).toBe(0);
+  expect(records.size).toBe(1);
+});
+
+test("a call that throws stays pending and blocks the retry", async () => {
+  const f = fixture();
+  const { guard, records } = memoryGuard();
+  const broken = {
+    ...f.dependencies,
+    guard,
+    open: async (): Promise<ToolSession> => {
+      const session = await f.dependencies.open();
+      return { ...session, callTool: async () => Promise.reject(new Error("timeout")) };
+    },
+  };
+  const args = ["message", "echo", "--text", "hi"];
+  await expect(runService(plugin, manifest, args, broken)).rejects.toThrow("timeout");
+  expect([...records.values()][0]?.status).toBe("pending");
+  await expect(runService(plugin, manifest, args, broken)).rejects.toThrow("outcome is unknown");
+});
+
+test("--allow-repeat is a switch that never becomes tool input", async () => {
+  const f = fixture();
+  await runService(
+    plugin,
+    manifest,
+    ["message", "echo", "--text", "x", "--allow-repeat"],
+    f.dependencies,
+  );
+  expect(f.calls).toEqual([{ name: "demo-echo", input: { text: "x" } }]);
+  await expect(
+    runService(plugin, manifest, ["message", "echo", "--allow-repeat=yes"], f.dependencies),
+  ).rejects.toThrow("does not take a value");
 });

@@ -13,6 +13,7 @@ export const {
   help: HELP_FLAG,
   input: INPUT_FLAG,
   inputFile: INPUT_FILE_FLAG,
+  allowRepeat: ALLOW_REPEAT_FLAG,
 } = FLAGS;
 
 export const flagForm = (key: string): string => key.replaceAll("_", "-");

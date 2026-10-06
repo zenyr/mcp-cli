@@ -3,7 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NotGeneratedError, UsageError } from "@mcp-cli/core";
+import { NotGeneratedError, RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { EXIT, exitCodeFor } from "../src/main";
 import { discover, findPlugin, loadPlugin } from "../src/discovery";
 import { defaultContext } from "../src/paths";
@@ -16,12 +16,13 @@ const isolatedEnv = {
   HOME: "/nonexistent-home",
   XDG_CONFIG_HOME: join(sandbox, "config"),
   XDG_CACHE_HOME: join(sandbox, "cache"),
+  XDG_STATE_HOME: join(sandbox, "state"),
   MCP_CLI_CONFIG: "",
 };
-const run = async (...args: string[]) => {
+const runWith = async (env: Record<string, string>, ...args: string[]) => {
   const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
     cwd: root,
-    env: isolatedEnv,
+    env: { ...isolatedEnv, ...env },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -32,6 +33,7 @@ const run = async (...args: string[]) => {
   ]);
   return { stdout, stderr, code };
 };
+const run = (...args: string[]) => runWith({}, ...args);
 test("CLI generates from MCP and checks the frozen snapshot", async () => {
   expect((await run("generate", "demo", "--check")).code).toBe(0);
   expect(
@@ -76,6 +78,7 @@ test("plugins lists discovered services with generated status", async () => {
 test("missing and outdated generated code share the failure exit status", () => {
   expect(exitCodeFor(new NotGeneratedError("missing"))).toBe(EXIT.failure);
   expect(exitCodeFor(new UsageError("usage"))).toBe(EXIT.usage);
+  expect(exitCodeFor(new RepeatedCallError("repeat"))).toBe(EXIT.repeated);
   expect(exitCodeFor(new Error("other"))).toBe(EXIT.failure);
 });
 test("generation rejects malformed and repeated options", async () => {
@@ -86,4 +89,16 @@ test("generation rejects malformed and repeated options", async () => {
   ]) {
     expect((await run("generate", ...args)).code).toBe(2);
   }
+});
+
+test("a repeated identical call exits 3 until --allow-repeat or a zero window", async () => {
+  const args = ["demo", "message", "echo", "--text", "repeat-check"];
+  expect((await run(...args)).code).toBe(0);
+  const repeated = await run(...args);
+  expect(repeated.code).toBe(EXIT.repeated);
+  expect(repeated.stdout).toBe("");
+  expect(repeated.stderr).toContain("--allow-repeat");
+  expect((await run(...args, "--allow-repeat")).code).toBe(0);
+  expect((await runWith({ MCP_CLI_REPEAT_WINDOW: "0" }, ...args)).code).toBe(0);
+  expect((await runWith({ MCP_CLI_REPEAT_WINDOW: "-1" }, ...args)).code).toBe(EXIT.usage);
 });
