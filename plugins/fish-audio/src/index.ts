@@ -1,7 +1,12 @@
 import { definePlugin } from "@mcp-cli/core";
+import { commands, groups, quickstart, skill } from "./commands";
 export default definePlugin({
   name: "fish-audio",
   summary: "Fish Audio text-to-speech, transcription and voice tools",
+  commands,
+  groups,
+  quickstart,
+  skill,
   auth: { type: "oauth", scopes: ["mcp"], clientName: "mcp-cli", redirectPort: 18923 },
   // An explicit FISH_ACCESS_TOKEN takes precedence over credentials stored by `mcp-cli login fish-audio`.
   connection: (env) => {
