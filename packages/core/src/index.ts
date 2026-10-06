@@ -30,9 +30,12 @@ export type ToolSession = {
   callTool: ToolCaller;
   close(): Promise<void>;
 };
+/** `refresh` is true once after the server rejects a request with 401. */
+export type AuthorizeRequest = { refresh: boolean };
+export type Authorize = (request: AuthorizeRequest) => Promise<Record<string, string>>;
 export type Connection =
   | { type: "stdio"; command: string; args?: string[]; env?: Record<string, string> }
-  | { type: "http"; url: string; headers?: Record<string, string> };
+  | { type: "http"; url: string; headers?: Record<string, string>; authorize?: Authorize };
 export type ServicePlugin = {
   name: string;
   summary: string;
