@@ -1,9 +1,11 @@
 #!/usr/bin/env bun
-import type { Manifest } from "@mcp-cli/core";
+import { UsageError } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
 import { runService } from "@mcp-cli/runtime";
 import { generate } from "./generate";
-import { generatedPath, loadPlugin, serviceNames } from "./plugins";
+import { loadManifest, loadPlugin, serviceNames } from "./plugins";
+
+export const EXIT = { ok: 0, failure: 1, usage: 2 } as const;
 
 export const main = async (argv: string[]): Promise<number> => {
   const [command, ...args] = argv;
@@ -11,19 +13,16 @@ export const main = async (argv: string[]): Promise<number> => {
     console.log(
       `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
     );
-    return 0;
+    return EXIT.ok;
   }
   if (command === "generate") {
     await generate(args);
-    return 0;
+    return EXIT.ok;
   }
   const plugin = await loadPlugin(command);
-  const path = generatedPath(plugin.name);
-  if (!(await Bun.file(path).exists()))
-    throw new Error(`Run mcp-cli generate ${plugin.name} first`);
-  const { manifest } = (await import(path)) as { manifest: Manifest };
+  const manifest = await loadManifest(plugin.name);
   return runService(plugin, manifest, args, {
-    open: () => connect(plugin.connection(process.env)),
+    open: async () => connect(await plugin.connection(process.env)),
     io: {
       write: (text) => console.log(text),
       readFile: (path) => Bun.file(path).text(),
@@ -31,11 +30,15 @@ export const main = async (argv: string[]): Promise<number> => {
     },
   });
 };
+
+export const exitCodeFor = (error: unknown): number =>
+  error instanceof UsageError ? EXIT.usage : EXIT.failure;
+
 if (import.meta.main) {
   try {
     process.exitCode = await main(process.argv.slice(2));
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
+    process.exitCode = exitCodeFor(error);
   }
 }

@@ -77,6 +77,7 @@ JSON 입력, 파일 입력, 개별 플래그는 혼합할 수 없습니다.
 
 기본 출력은 MCP의 텍스트 블록입니다. `--json`은 MCP 결과 전체를 보존합니다.
 도구가 `isError`를 반환하면 결과를 출력하고 종료 코드 `1`을 반환합니다.
+CLI 사용 오류(`UsageError`)는 종료 코드 `2`, 연결·실행 오류는 `1`을 반환합니다.
 입력 검증과 플러그인 정책이 통과한 뒤 서버에 연결합니다. 호출 종료 시 연결을 닫습니다.
 
 ## 정적 생성
@@ -93,7 +94,10 @@ bun run generate demo --snapshot plugins/demo/src/tools.json --check
 ```
 
 생성 결과는 플러그인의 `src/tools.json`과 `src/generated.ts`입니다.
-도구 이름순으로 정렬하므로 서버가 목록 순서를 바꿔도 같은 코드를 생성합니다.
+CLI는 플러그인 패키지의 `package.json` 위치로 출력 경로를 찾습니다.
+실행 시에는 `@mcp-cli/plugin-<service>/generated` export로 manifest를 읽고 `decodeManifest`로 검증합니다.
+도구 이름순으로 정렬하므로 서버가 목록 순서를 바꿔도 같은 `tools.json`과 코드를 생성합니다.
+서버가 도구를 하나도 반환하지 않으면 생성은 실패합니다.
 명령 경로 중복, 상위·하위 명령 충돌, 예약 명령 충돌, 존재하지 않는 도구 매핑은 생성 오류입니다.
 같은 플러그인을 동시에 생성하는 작업은 실행하지 마십시오.
 
@@ -103,9 +107,10 @@ bun run generate demo --snapshot plugins/demo/src/tools.json --check
 ## 플러그인 추가
 
 1. `plugins/<service>`에 workspace 패키지를 만듭니다.
+   `exports`에 `.`, `./generated`, `./package.json`을 선언합니다.
 2. `@mcp-cli/core`의 `definePlugin`으로 기본 export를 만듭니다.
 3. `apps/cli/package.json`에 플러그인 의존성을 추가합니다.
-4. `apps/cli/src/plugins.ts`에 lazy import를 등록합니다.
+4. `apps/cli/src/plugins.ts`에 패키지 이름과 lazy import를 등록합니다. 키는 플러그인 `name`과 같아야 합니다.
 5. `bun run generate <service>`로 정적 정의를 생성합니다.
 
 ```typescript
@@ -128,7 +133,7 @@ export default definePlugin({
 `commands`에서 설명, 예시, 주의사항을 보강할 수 있습니다.
 `beforeCall(command, input)`은 서비스별 실행 전 검사를 넣는 위치입니다.
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
-`connection(env)`은 실행 시에 환경변수를 읽습니다. 인증 정보는 생성 결과에 넣지 않습니다.
+`connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.
 
 ## 현재 범위
 

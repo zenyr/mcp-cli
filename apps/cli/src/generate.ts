@@ -2,14 +2,15 @@ import { mkdir, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { createManifest, decodeTools, generateModule } from "@mcp-cli/codegen";
+import { UsageError, canonicalize, isRecord, type ToolDefinition } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
-import { generatedPath, loadPlugin } from "./plugins";
+import { generatedFiles, loadPlugin } from "./plugins";
 
+const usage = "Usage: mcp-cli generate <service> [--snapshot <path>] [--check]";
 type GenerateOptions = { name: string; snapshot?: string; check: boolean };
 const options = (args: string[]): GenerateOptions => {
   const [name, ...rest] = args;
-  if (!name || name.startsWith("-"))
-    throw new Error("Usage: mcp-cli generate <service> [--snapshot <path>] [--check]");
+  if (!name || name.startsWith("-")) throw new UsageError(usage);
   let snapshot: string | undefined;
   let check = false;
   for (let i = 0; i < rest.length; i++) {
@@ -17,55 +18,58 @@ const options = (args: string[]): GenerateOptions => {
     if (flag === "--check" && !check) check = true;
     else if (flag === "--snapshot" && snapshot === undefined) {
       const path = rest[++i];
-      if (!path || path.startsWith("--")) throw new Error("Missing snapshot path");
+      if (!path || path.startsWith("--")) throw new UsageError("Missing snapshot path");
       snapshot = path;
-    } else throw new Error(`Unknown or repeated generation option: ${flag}`);
+    } else throw new UsageError(`Unknown or repeated generation option: ${flag}`);
   }
   return { name, snapshot, check };
 };
 const snapshotTools = (snapshot: unknown): unknown => {
-  if (snapshot === null || typeof snapshot !== "object" || !("tools" in snapshot)) {
+  if (!isRecord(snapshot) || !("tools" in snapshot))
     throw new Error("Snapshot must contain a tools array");
-  }
   return snapshot.tools;
 };
+const byName = (a: ToolDefinition, b: ToolDefinition): number =>
+  a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+// Sorted, key-canonical text keeps the snapshot stable when the server reorders tools.
+const snapshotText = (tools: ToolDefinition[]): string =>
+  JSON.stringify(canonicalize({ tools: [...tools].sort(byName) }), null, 2) + "\n";
+
 export const generate = async (args: string[]): Promise<void> => {
   const config = options(args);
   const plugin = await loadPlugin(config.name);
   const tools = config.snapshot
     ? decodeTools(snapshotTools(await Bun.file(config.snapshot).json()))
     : await (async () => {
-        const session = await connect(plugin.connection(process.env));
+        const session = await connect(await plugin.connection(process.env));
         try {
           return await session.listTools();
         } finally {
           await session.close();
         }
       })();
-  const manifest = createManifest(plugin, tools);
-  const output = generatedPath(config.name);
-  const code = await generateModule(manifest);
-  const snapshotPath = output.replace(/generated\.ts$/, "tools.json");
-  const snapshotText = JSON.stringify({ tools }, null, 2) + "\n";
+  if (!tools.length) throw new Error(`${config.name} returned no tools; nothing to generate`);
+  const output = generatedFiles(config.name);
   const files = [
-    [snapshotPath, snapshotText],
-    [output, code],
+    [output.snapshot, snapshotText(tools)],
+    [output.module, await generateModule(createManifest(plugin, tools))],
   ] as const;
   if (config.check) {
     for (const [path, text] of files) {
-      if (!(await Bun.file(path).exists()))
-        throw new Error(`Generated files are stale: ${config.name}`);
-      const actual = await Bun.file(path).text();
-      const matches =
-        path === snapshotPath
+      const file = Bun.file(path);
+      const actual = (await file.exists()) ? await file.text() : undefined;
+      // The snapshot compares as data so formatter changes to tools.json do not count as drift.
+      const current =
+        actual !== undefined &&
+        (path === output.snapshot
           ? isDeepStrictEqual(JSON.parse(actual), JSON.parse(text))
-          : actual === text;
-      if (!matches) throw new Error(`Generated files are stale: ${config.name}`);
+          : actual === text);
+      if (!current) throw new Error(`Generated files are stale: ${config.name}`);
     }
     console.log(`Generated files are current: ${config.name}`);
     return;
   }
-  await mkdir(dirname(output), { recursive: true });
+  await mkdir(dirname(output.module), { recursive: true });
   for (const [path, text] of files) {
     const temporary = `${path}.${process.pid}.tmp`;
     try {
@@ -75,5 +79,5 @@ export const generate = async (args: string[]): Promise<void> => {
       await unlink(temporary).catch(() => undefined);
     }
   }
-  console.log(`Generated ${output}`);
+  console.log(`Generated ${output.module}`);
 };
