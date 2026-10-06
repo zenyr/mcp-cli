@@ -1,0 +1,42 @@
+/** How a service authenticates; plugins declare it and the CLI wires credentials at run time. */
+export type AuthSpec =
+  | {
+      type: "oauth";
+      scopes?: string[];
+      clientName?: string;
+      /** Pre-registered client; dynamic client registration runs when omitted. */
+      clientId?: string;
+      /** Fixed loopback port for servers that require an exact pre-registered redirect URI. */
+      redirectPort?: number;
+    }
+  | { type: "apiKey"; env: string; header?: string; scheme?: string }
+  | { type: "none" };
+export type OAuthSpec = Extract<AuthSpec, { type: "oauth" }>;
+export type ApiKeySpec = Extract<AuthSpec, { type: "apiKey" }>;
+
+/** Stored credentials; `client` is opaque data the connection implementation needs to refresh. */
+export type Tokens = {
+  accessToken: string;
+  tokenType?: string;
+  refreshToken?: string;
+  /** Epoch milliseconds. */
+  expiresAt?: number;
+  scope?: string;
+  client?: Record<string, unknown>;
+};
+
+/** Per-service credential storage with a cross-process lock around read-modify-write sequences. */
+export type TokenStore = {
+  read(service: string): Promise<Tokens | undefined>;
+  write(service: string, tokens: Tokens): Promise<void>;
+  delete(service: string): Promise<void>;
+  withLock<T>(service: string, fn: () => Promise<T>): Promise<T>;
+};
+
+/** Credentials are missing, expired without refresh, or rejected; the CLI exits with status 1. */
+export class AuthRequiredError extends Error {
+  override name = "AuthRequiredError";
+}
+
+export const loginRequired = (service: string, reason: string): AuthRequiredError =>
+  new AuthRequiredError(`${reason}. Run mcp-cli login ${service}`);
