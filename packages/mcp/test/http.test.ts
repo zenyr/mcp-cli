@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import type { AuthorizeRequest, Connection, ToolSession } from "@mcp-cli/core";
 import { connect } from "../src";
+import { authorizedFetch } from "../src/authorize";
 import { startHttpFixture } from "./fixtures/http";
 
 const withSession = async (
@@ -97,6 +98,40 @@ test("a second 401 after refresh surfaces an error without looping", async () =>
     await expect(connect(connection, { timeoutMs: 2000 })).rejects.toThrow();
     expect(calls.map((call) => call.refresh)).toEqual([false, true]);
     expect(fixture.seen).toHaveLength(2);
+  } finally {
+    await fixture.stop();
+  }
+});
+
+test("concurrent 401s share one refresh", async () => {
+  const fixture = startHttpFixture(["authorization"], (headers) => {
+    return headers.get("authorization") === "Bearer fresh";
+  });
+  let token = "stale";
+  let refreshes = 0;
+  const rejected = Promise.withResolvers<void>();
+  try {
+    const request = authorizedFetch(async ({ refresh }) => {
+      if (refresh) {
+        refreshes += 1;
+        // Holds the refresh open until both stale requests have been rejected.
+        await rejected.promise;
+        token = "fresh";
+      }
+      return { Authorization: `Bearer ${token}` };
+    });
+    const send = () => request(fixture.url, { method: "POST", body: "{}" });
+    const responses = Promise.all([send(), send()]);
+    while (fixture.seen.length < 2) await Bun.sleep(1);
+    rejected.resolve();
+    expect((await responses).map((response) => response.status)).toEqual([202, 202]);
+    expect(refreshes).toBe(1);
+    expect(fixture.seen.map((entry) => entry.authorization)).toEqual([
+      "Bearer stale",
+      "Bearer stale",
+      "Bearer fresh",
+      "Bearer fresh",
+    ]);
   } finally {
     await fixture.stop();
   }
