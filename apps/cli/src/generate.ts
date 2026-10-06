@@ -3,7 +3,9 @@ import { dirname } from "node:path";
 import { buildArtifacts, decodeSnapshot, isCurrent } from "@mcp-cli/codegen";
 import { UsageError } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
-import { generatedFiles, loadPlugin } from "./plugins";
+import { defaultStore, resolveConnection } from "./auth";
+import { findPlugin, loadPlugin, type Registry } from "./discovery";
+import { outputFiles } from "./plugins";
 
 const usage = "Usage: mcp-cli generate <service> [--snapshot <path>] [--check]";
 type GenerateOptions = { name: string; snapshot?: string; check: boolean };
@@ -28,13 +30,14 @@ const readExisting = async (path: string): Promise<string | undefined> => {
   return (await file.exists()) ? await file.text() : undefined;
 };
 
-export const generate = async (args: string[]): Promise<void> => {
+export const generate = async (args: string[], registry: Registry): Promise<void> => {
   const config = options(args);
-  const plugin = await loadPlugin(config.name);
+  const discovered = findPlugin(registry, config.name);
+  const plugin = await loadPlugin(discovered);
   const tools = config.snapshot
     ? decodeSnapshot(await Bun.file(config.snapshot).json())
     : await (async () => {
-        const session = await connect(await plugin.connection(process.env));
+        const session = await connect(await resolveConnection(plugin, process.env, defaultStore()));
         try {
           return await session.listTools();
         } finally {
@@ -42,7 +45,7 @@ export const generate = async (args: string[]): Promise<void> => {
         }
       })();
   const built = await buildArtifacts(plugin, tools);
-  const output = generatedFiles(config.name);
+  const output = await outputFiles(registry, discovered);
   if (config.check) {
     const existing = {
       snapshot: await readExisting(output.snapshot),
