@@ -1,4 +1,15 @@
-import type { CommandCustomization, GeneratedManifest } from "@mcp-cli/core";
+import type { CatalogSession, CommandCustomization, GeneratedManifest } from "@mcp-cli/core";
+
+const unexpected = async (): Promise<never> => {
+  throw new Error("Tool commands must not use resources or prompts");
+};
+export const catalogStub: CatalogSession = {
+  listResources: unexpected,
+  listResourceTemplates: unexpected,
+  readResource: unexpected,
+  listPrompts: unexpected,
+  getPrompt: unexpected,
+};
 
 export const commands: Record<string, CommandCustomization> = {
   "demo-echo": {
