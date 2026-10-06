@@ -32,15 +32,16 @@ bun run check
 
 ## 패키지
 
-| 경로               | 역할                                                    |
-| ------------------ | ------------------------------------------------------- |
-| `packages/core`    | 플러그인·manifest·연결·호출 계약, 명령 매핑 적용        |
-| `packages/codegen` | 도구 정의로 정적 코드 생성, 플러그인 매핑 사전 검증     |
-| `packages/runtime` | 명령 탐색, help, 입력 처리, 정책 적용, 결과 출력        |
-| `packages/schema`  | JSON Schema 입력 검증                                   |
-| `packages/mcp`     | 공식 MCP 클라이언트를 이용한 stdio/Streamable HTTP 연결 |
-| `plugins/*`        | 서비스별 연결 설정, 명령 경로, 설명, 실행 전 정책       |
-| `apps/cli`         | 플러그인 등록과 생성·실행 명령                          |
+| 경로               | 역할                                                           |
+| ------------------ | -------------------------------------------------------------- |
+| `packages/core`    | 플러그인·manifest·연결·호출 계약, 명령 매핑 적용               |
+| `packages/codegen` | 도구 정의로 정적 코드 생성, 플러그인 매핑 사전 검증            |
+| `packages/runtime` | 명령 탐색, help, 입력 처리, 정책 적용, 결과 출력               |
+| `packages/schema`  | JSON Schema 입력 검증                                          |
+| `packages/mcp`     | 공식 MCP 클라이언트를 이용한 stdio/Streamable HTTP 연결, OAuth |
+| `packages/auth`    | 파일 기반 토큰 저장소와 프로세스 간 lock                       |
+| `plugins/*`        | 서비스별 연결 설정, 명령 경로, 설명, 실행 전 정책              |
+| `apps/cli`         | 플러그인 탐색, 생성·실행·로그인 명령                           |
 
 공통 실행기는 MCP SDK를 직접 가져오지 않습니다. 연결 구현은 SDK의 도구 정의와 결과를
 공통 타입으로 변환합니다. 실행 테스트는 같은 호출 계약에 가짜 연결을 넣을 수 있습니다.
