@@ -137,6 +137,36 @@ test("expired tokens refresh once under the lock across concurrent authorizers",
   expect(fake.tokenRequests.at(-1)?.get("resource")).toBe(fake.resource);
 });
 
+test("separate processes refresh a rotating token without double use", async () => {
+  await signIn();
+  fake.refreshDelayMs = 150;
+  const spawnChild = (refresh: boolean) =>
+    Bun.spawn(
+      [
+        "bun",
+        join(import.meta.dir, "fixtures", "refresh-child.ts"),
+        root,
+        fake.resource,
+        String(refresh),
+      ],
+      { stdout: "pipe", stderr: "inherit" },
+    );
+  const run = async (flags: boolean[]) => {
+    const children = flags.map(spawnChild);
+    const outputs = await Promise.all(children.map((child) => new Response(child.stdout).text()));
+    expect(await Promise.all(children.map((child) => child.exited))).toEqual(flags.map(() => 0));
+    return outputs.map((text) => JSON.parse(text).Authorization);
+  };
+  expect(new Set(await run([false, false, false, false, false, false]))).toEqual(
+    new Set(["Bearer access-2"]),
+  );
+  expect(fake.refreshCount()).toBe(1);
+  // Concurrent forced refreshes after a 401 also collapse into one rotation.
+  expect(new Set(await run([true, true, true]))).toEqual(new Set(["Bearer access-3"]));
+  expect(fake.refreshCount()).toBe(2);
+  expect(await store.read("svc")).toMatchObject({ accessToken: fake.current().access });
+});
+
 test("a forced refresh rotates tokens and a stale concurrent refresh reuses them", async () => {
   await signIn();
   const authorize = authorizeFor();
