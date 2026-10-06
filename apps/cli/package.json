@@ -1,9 +1,9 @@
 {
-  "name": "@mcp-to-cli/cli",
+  "name": "@mcp-cli/cli",
   "version": "0.1.0",
   "private": true,
   "bin": {
-    "mcp-to-cli": "./src/main.ts"
+    "mcp-cli": "./src/main.ts"
   },
   "type": "module",
   "exports": "./src/main.ts",
@@ -12,11 +12,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@mcp-to-cli/codegen": "workspace:*",
-    "@mcp-to-cli/core": "workspace:*",
-    "@mcp-to-cli/mcp": "workspace:*",
-    "@mcp-to-cli/plugin-demo": "workspace:*",
-    "@mcp-to-cli/plugin-notion": "workspace:*",
-    "@mcp-to-cli/runtime": "workspace:*"
+    "@mcp-cli/codegen": "workspace:*",
+    "@mcp-cli/core": "workspace:*",
+    "@mcp-cli/mcp": "workspace:*",
+    "@mcp-cli/plugin-demo": "workspace:*",
+    "@mcp-cli/plugin-notion": "workspace:*",
+    "@mcp-cli/runtime": "workspace:*"
   }
 }

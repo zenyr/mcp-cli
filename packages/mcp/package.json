@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-to-cli/mcp",
+  "name": "@mcp-cli/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@mcp-to-cli/core": "workspace:*",
+    "@mcp-cli/core": "workspace:*",
     "@modelcontextprotocol/client": "2.2.0"
   }
 }

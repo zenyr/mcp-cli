@@ -1,6 +1,6 @@
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
-import type { Connection, ToolSession } from "@mcp-to-cli/core";
+import type { Connection, ToolSession } from "@mcp-cli/core";
 
 export type ConnectOptions = { timeoutMs?: number };
 
@@ -12,7 +12,7 @@ export const connect = async (
   if (!Number.isFinite(timeout) || timeout <= 0)
     throw new Error("Timeout must be a positive number");
   const client = new Client(
-    { name: "mcp-to-cli", version: "0.1.0" },
+    { name: "mcp-cli", version: "0.1.0" },
     { versionNegotiation: { mode: "auto" } },
   );
   const transport =

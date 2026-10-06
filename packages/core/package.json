@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-to-cli/core",
+  "name": "@mcp-cli/core",
   "version": "0.1.0",
   "private": true,
   "type": "module",

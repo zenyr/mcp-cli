@@ -20,7 +20,7 @@ test("real stdio MCP discovery and execution", async () => {
 });
 
 test("connection timeout closes a silent stdio process", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "mcp-to-cli-timeout-"));
+  const directory = await mkdtemp(join(tmpdir(), "mcp-cli-timeout-"));
   const pidFile = join(directory, "pid");
   try {
     const script = `await Bun.write(${JSON.stringify(pidFile)}, String(process.pid)); setInterval(() => {}, 1000);`;

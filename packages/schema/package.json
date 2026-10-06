@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-to-cli/schema",
+  "name": "@mcp-cli/schema",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@mcp-to-cli/core": "workspace:*",
+    "@mcp-cli/core": "workspace:*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1"
   }

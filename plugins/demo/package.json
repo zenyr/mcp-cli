@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-to-cli/plugin-demo",
+  "name": "@mcp-cli/plugin-demo",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,6 +8,6 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@mcp-to-cli/core": "workspace:*"
+    "@mcp-cli/core": "workspace:*"
   }
 }

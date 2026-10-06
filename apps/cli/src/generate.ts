@@ -1,15 +1,15 @@
 import { mkdir, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 import { isDeepStrictEqual } from "node:util";
-import { createManifest, decodeTools, generateModule } from "@mcp-to-cli/codegen";
-import { connect } from "@mcp-to-cli/mcp";
+import { createManifest, decodeTools, generateModule } from "@mcp-cli/codegen";
+import { connect } from "@mcp-cli/mcp";
 import { generatedPath, loadPlugin } from "./plugins";
 
 type GenerateOptions = { name: string; snapshot?: string; check: boolean };
 const options = (args: string[]): GenerateOptions => {
   const [name, ...rest] = args;
   if (!name || name.startsWith("-"))
-    throw new Error("Usage: mcp-to-cli generate <service> [--snapshot <path>] [--check]");
+    throw new Error("Usage: mcp-cli generate <service> [--snapshot <path>] [--check]");
   let snapshot: string | undefined;
   let check = false;
   for (let i = 0; i < rest.length; i++) {

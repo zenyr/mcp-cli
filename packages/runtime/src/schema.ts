@@ -1,4 +1,4 @@
-import type { JsonSchema } from "@mcp-to-cli/core";
+import type { JsonSchema } from "@mcp-cli/core";
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);

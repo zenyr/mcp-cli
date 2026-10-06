@@ -1,4 +1,4 @@
-import { definePlugin } from "@mcp-to-cli/core";
+import { definePlugin } from "@mcp-cli/core";
 export default definePlugin({
   name: "demo",
   summary: "Local MCP example",

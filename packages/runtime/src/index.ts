@@ -1,5 +1,5 @@
-import type { Manifest, ServicePlugin, ToolSession } from "@mcp-to-cli/core";
-import { validateInput } from "@mcp-to-cli/schema";
+import type { Manifest, ServicePlugin, ToolSession } from "@mcp-cli/core";
+import { validateInput } from "@mcp-cli/schema";
 import { findCommand, help } from "./help";
 import { parseInput } from "./input";
 import { parseArguments } from "./arguments";
