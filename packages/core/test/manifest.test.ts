@@ -3,6 +3,7 @@ import {
   NotGeneratedError,
   UsageError,
   applyCustomizations,
+  decodeAnnotations,
   decodeManifest,
   definePlugin,
   type CommandCustomization,
@@ -27,6 +28,17 @@ const pluginWith = (commands: Record<string, CommandCustomization> = {}) =>
 test("decodeManifest accepts generated tools and keeps optional fields", () => {
   const decoded = decodeManifest({ ...manifest, tools: [{ ...tool, outputSchema: {} }] });
   expect(decoded.tools[0]).toEqual({ ...tool, outputSchema: {} });
+});
+
+test("annotations keep known MCP hints and drop unknown or mistyped fields", () => {
+  const annotations = { readOnlyHint: true, idempotentHint: false, title: "Echo" };
+  const decoded = decodeManifest({
+    ...manifest,
+    tools: [{ ...tool, annotations: { ...annotations, destructiveHint: "yes", extra: 1 } }],
+  });
+  expect(decoded.tools[0]?.annotations).toEqual(annotations);
+  for (const value of [undefined, null, [], {}, { readOnlyHint: "true" }])
+    expect(decodeAnnotations(value)).toBeUndefined();
 });
 
 test("decodeManifest rejects malformed manifests", () => {

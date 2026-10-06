@@ -6,6 +6,7 @@ import {
   type CommandSpec,
   type Manifest,
   type ServicePlugin,
+  type ToolAnnotations,
   type ToolDefinition,
 } from "./index";
 
@@ -18,10 +19,25 @@ export type GeneratedManifest = {
 
 const invalid = (reason: string): Error => new Error(`Invalid manifest: ${reason}`);
 
+const HINTS = ["readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"] as const;
+
+// Keeps the known MCP hints and drops unknown or mistyped fields instead of failing.
+export const decodeAnnotations = (value: unknown): ToolAnnotations | undefined => {
+  if (!isRecord(value)) return undefined;
+  const annotations: ToolAnnotations = {};
+  if (typeof value.title === "string") annotations.title = value.title;
+  for (const hint of HINTS) {
+    const flag = value[hint];
+    if (typeof flag === "boolean") annotations[hint] = flag;
+  }
+  return Object.keys(annotations).length ? annotations : undefined;
+};
+
 const decodeTool = (value: unknown, index: number): ToolDefinition => {
   const label = `tools[${index}]`;
   if (!isRecord(value)) throw invalid(`${label} must be an object`);
   const { name, description, inputSchema, outputSchema } = value;
+  const annotations = decodeAnnotations(value.annotations);
   if (typeof name !== "string" || !name) throw invalid(`${label}.name is required`);
   if (description !== undefined && typeof description !== "string")
     throw invalid(`${label}.description must be a string`);
@@ -33,6 +49,7 @@ const decodeTool = (value: unknown, index: number): ToolDefinition => {
     inputSchema,
     ...(description !== undefined && { description }),
     ...(outputSchema !== undefined && { outputSchema }),
+    ...(annotations && { annotations }),
   };
 };
 
