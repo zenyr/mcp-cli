@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
-const root = new URL("../../../", import.meta.url).pathname;
+import { fileURLToPath } from "node:url";
+import { generatedFiles, loadManifest, loadPlugin, registry } from "../src/plugins";
+const root = fileURLToPath(new URL("../../../", import.meta.url));
 const run = async (...args: string[]) => {
   const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
     cwd: root,
@@ -28,9 +30,18 @@ test("CLI help, execution and error exit status", async () => {
   expect((await run("demo", "message", "fail")).code).toBe(1);
   expect((await run("demo", "missing")).code).toBe(1);
 });
-test("prototype service names are rejected", async () => {
-  expect((await run("constructor")).code).toBe(1);
-  expect((await run("__proto__")).code).toBe(1);
+test("unknown and prototype service names are usage errors", async () => {
+  expect((await run("unknown-service")).code).toBe(2);
+  expect((await run("constructor")).code).toBe(2);
+  expect((await run("__proto__")).code).toBe(2);
+});
+test("registry keys match plugin names and resolve package files", async () => {
+  for (const name of Object.keys(registry)) {
+    expect((await loadPlugin(name)).name).toBe(name);
+    expect(generatedFiles(name).module).toEndWith(`plugins/${name}/src/generated.ts`);
+  }
+  expect((await loadManifest("demo")).service).toBe("demo");
+  await expect(loadManifest("notion")).rejects.toThrow("notion is not generated yet");
 });
 test("generation rejects malformed and repeated options", async () => {
   for (const args of [
@@ -38,6 +49,6 @@ test("generation rejects malformed and repeated options", async () => {
     ["demo", "--check", "--check"],
     ["demo", "--snapshot", "x", "--snapshot", "y"],
   ]) {
-    expect((await run("generate", ...args)).code).toBe(1);
+    expect((await run("generate", ...args)).code).toBe(2);
   }
 });
