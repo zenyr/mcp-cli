@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { definePlugin } from "@mcp-cli/core";
 export default definePlugin({
   name: "demo",
@@ -13,6 +14,6 @@ export default definePlugin({
   connection: () => ({
     type: "stdio",
     command: "bun",
-    args: [new URL("./server.ts", import.meta.url).pathname],
+    args: [fileURLToPath(new URL("./server.ts", import.meta.url))],
   }),
 });
