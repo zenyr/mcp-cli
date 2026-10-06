@@ -25,7 +25,7 @@ export type ToolResult = {
   isError?: boolean;
 };
 export type ToolCaller = (name: string, input: Record<string, unknown>) => Promise<ToolResult>;
-export type ToolSession = {
+export type ToolSession = import("./session").CatalogSession & {
   listTools(): Promise<ToolDefinition[]>;
   callTool: ToolCaller;
   close(): Promise<void>;
@@ -41,6 +41,7 @@ export type ServicePlugin = {
   summary: string;
   commands?: Record<string, CommandCustomization>;
   skill?: string;
+  auth?: import("./auth").AuthSpec;
   connection(env: Record<string, string | undefined>): Connection | Promise<Connection>;
   beforeCall?: (command: CommandSpec, input: Record<string, unknown>) => Promise<void>;
 };
@@ -50,6 +51,16 @@ export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
 };
 export { canonicalize, isRecord, isStringArray } from "./values";
 export { applyCustomizations, decodeManifest, type GeneratedManifest } from "./manifest";
+export {
+  AuthRequiredError,
+  loginRequired,
+  type ApiKeySpec,
+  type AuthSpec,
+  type OAuthSpec,
+  type TokenStore,
+  type Tokens,
+} from "./auth";
+export type * from "./session";
 /** Invalid command-line usage; the CLI exits with status 2. */
 export class UsageError extends Error {
   override name = "UsageError";
@@ -58,7 +69,14 @@ export class UsageError extends Error {
 export class NotGeneratedError extends Error {
   override name = "NotGeneratedError";
 }
-export const COMMANDS = { help: "help", methods: "methods", call: "call", skill: "skill" } as const;
+export const COMMANDS = {
+  help: "help",
+  methods: "methods",
+  call: "call",
+  skill: "skill",
+  resources: "resources",
+  prompts: "prompts",
+} as const;
 export const FLAGS = {
   json: "json",
   help: "help",
