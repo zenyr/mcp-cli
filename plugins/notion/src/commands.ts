@@ -1,0 +1,118 @@
+import type { CommandCustomization, QuickstartEntry } from "@mcp-cli/core";
+
+const at = (path: string, summary: string, examples?: string[]): CommandCustomization => ({
+  path: path.split(" "),
+  summary,
+  ...(examples && { examples }),
+});
+
+// The two next-steps tools answer instructions inside tool results, so they stay under `call`.
+export const commands: Record<string, CommandCustomization> = {
+  "notion-get-tool-access": at(
+    "access check",
+    "Show tool availability and limits; run once before the first search",
+    ["notion access check"],
+  ),
+  "notion-search": at("search workspace", "Keyword search for pages, databases and users", [
+    "notion search workspace --query roadmap --query-type internal",
+    "notion search workspace --query jane@example.com --query-type user",
+  ]),
+  "notion-ai-search": at(
+    "search ai",
+    "AI search across Notion and connected sources when access check reports it available",
+  ),
+  "notion-fetch": at("page get", "Fetch a page, database, data source or view by URL or ID", [
+    "notion page get --id https://www.notion.so/<page>",
+  ]),
+  "notion-create-pages": at("page create", "Create one or more pages under one parent"),
+  "notion-update-page": at("page update", "Update page properties or content with one --command", [
+    'notion page update --page-id <id> --command insert_content --content "## Notes"',
+  ]),
+  "notion-duplicate-page": at("page duplicate", "Duplicate a page"),
+  "notion-move-pages": at("page move", "Move pages or databases to a new parent"),
+  "notion-restore-pages": at("page restore", "Restore pages or databases from Trash"),
+  "notion-list-recent-pages": at("page list-recent", "List recently viewed pages and databases"),
+  "notion-list-favorite-pages": at("page list-favorites", "List favorite pages in sidebar order"),
+  "notion-list-private-pages": at("page list-private", "List top-level Private sidebar pages"),
+  "notion-list-shared-pages": at("page list-shared", "List Shared sidebar pages"),
+  "notion-get-comments": at("comment list", "List comments and discussions on a page"),
+  "notion-create-comment": at("comment create", "Comment on a page or a specific block"),
+  "notion-create-database": at(
+    "database create",
+    "Create a database from SQL DDL or a typed preset",
+  ),
+  "notion-query-data-sources": at("data-source query", "Query a data source by rows, SQL or view"),
+  "notion-query-multiple-data-sources": at(
+    "data-source query-multiple",
+    "Run read-only SQLite SQL across several data sources",
+  ),
+  "notion-update-data-source": at("data-source update", "Change a data source's schema or layout"),
+  "notion-create-view": at("view create", "Create a database view"),
+  "notion-update-view": at("view update", "Change a view's name, filters, sorts or display"),
+  "notion-query-meeting-notes": at("meeting-notes query", "Query your meeting notes"),
+  "notion-create-folder": at("folder create", "Create an empty folder"),
+  "notion-update-folder": at("folder update", "Update a folder"),
+  "notion-create-attachment": at("attachment create", "Upload an attachment to Notion"),
+  "notion-download-attachment": at("attachment download", "Download a small UTF-8 text attachment"),
+  "notion-create-file-upload": at("upload create", "Get a short-lived URL to upload a local file"),
+  "notion-get-users": at("user list", "List workspace members and guests"),
+  "notion-get-teams": at("team list", "List teamspaces and your membership"),
+  "notion-get-async-task": at("task get", "Check an async task started by another command"),
+  "notion-convert-page-to-skill": at("agent-skill convert", "Mark an existing page as a skill"),
+  "notion-download-skill": at("agent-skill download", "Download a skill as a tar.gz archive"),
+  "notion-upload-skill": at(
+    "agent-skill upload",
+    "Import a skill directory into a Skills database",
+  ),
+  "notion-search-agents": at("agent search", "Search Custom Agents"),
+  "notion-spawn-session": at("session spawn", "Start a session with a published Custom Agent"),
+  "notion-send-message-to-session": at("session send", "Send a follow-up message to a session"),
+  "notion-get-session-status": at("session status", "Get a session's latest turn status"),
+  "notion-wait-session": at("session wait", "Wait until a session's latest turn stops"),
+  "notion-stop-session": at("session stop", "Stop a running session"),
+  "notion-query-sessions": at("session list", "List agent sessions with filters and sorting"),
+  "notion-search-sessions": at("session search", "Search past sessions by topic"),
+  "notion-list-session-events": at("session list-events", "List event summaries in a session"),
+  "notion-read-session-event": at("session read-event", "Read one session event in full"),
+};
+
+export const groups: Record<string, string> = {
+  access: "Tool availability and plan limits",
+  search: "Find pages, databases and users",
+  page: "Fetch, create, edit and organize pages",
+  comment: "Page comments and discussions",
+  database: "Create databases",
+  "data-source": "Query and change database data sources",
+  view: "Database views",
+  "meeting-notes": "Meeting notes",
+  folder: "Folders",
+  attachment: "Attachments",
+  upload: "File uploads",
+  user: "Workspace members",
+  team: "Teamspaces",
+  task: "Async task status",
+  "agent-skill": "Notion pages used as agent skills",
+  agent: "Custom Agents",
+  session: "Custom Agent sessions",
+};
+
+export const quickstart: QuickstartEntry[] = [
+  { command: "access check", summary: "Run once before the first search" },
+  { command: "search workspace --query <keywords>", summary: "Find a page or database" },
+  { command: "page get --id <url-or-id>", summary: "Read a page before editing it" },
+  { command: "page list-recent", summary: "Pick up recently viewed pages" },
+];
+
+export const skill = [
+  "Discover progressively: notion --help, then <noun> --help, then <noun> <verb> --help.",
+  "",
+  "Workflows:",
+  "  Find: access check once -> search workspace (or search ai when available) -> page get.",
+  "  Edit: page get first, then page update with one --command; read notion://docs/enhanced-markdown-spec before content changes.",
+  "  Databases: page get on the database -> data-source query; view create/update for saved views.",
+  "  Async: page create and page update may return a task; follow it with task get.",
+  "",
+  "Rules:",
+  "  Confirm with the user before replace_content, page move, or deleting content.",
+  "  Use --input or --input-file for pages, properties and other nested arguments.",
+].join("\n");

@@ -152,7 +152,7 @@ CLI는 플러그인 패키지의 `package.json` 위치로 출력 경로를 찾�
 ## 전역 명령
 
 루트에서 `bun link`를 한 번 실행하면 `mcp-cli`와 서비스별 명령이 `~/.bun/bin`에 연결됩니다.
-서비스 명령은 `mcp-cli <service>`와 같습니다. 예: `notion fetch get --help`.
+서비스 명령은 `mcp-cli <service>`와 같습니다. 예: `notion page get --help`.
 
 플러그인 `package.json`의 `"mcp-cli"` 표식에 `"bin": "<name>"`을 넣으면 서비스 명령이 생깁니다.
 `bun run bins`가 루트 `bin` 필드와 `bin/<name>.ts` shim을 다시 씁니다. `bun run lint`는 둘이 맞는지 검사합니다.
@@ -261,21 +261,23 @@ MCP SDK의 OAuth 함수는 `packages/mcp`만 사용합니다. 저장소는 `pack
 
 - 생성·발견·입력 검증·호출·종료까지 `demo`로 통합 검증합니다.
 - stdio와 Streamable HTTP 연결을 제공합니다. 현재 실제 연결 테스트는 stdio에 한정합니다.
-- Notion 플러그인은 `fetch get`, `search run` 매핑과 HTTP 연결 설정의 출발점입니다.
-- Notion 정의는 아직 생성하지 않았습니다. 기존 CLI의 markdown spec 검사, 수정 보호, widget 기능도
-  아직 이전하지 않았습니다.
+- Notion, Linear, Slack, Fish Audio 플러그인은 실제 서버에서 생성한 정의와 명사-동사 명령 매핑을 포함합니다.
+- Notion·Linear·Fish Audio는 `mcp-cli login <service>`로 저장한 OAuth 토큰으로 생성하고 호출합니다.
+- Slack 서버는 DCR을 지원하지 않습니다. `SLACK_MCP_TOKEN`에 내부 앱의 사용자 토큰(`xoxp`)을 넣으십시오.
+  앱 설정의 Agents & AI Apps(`app-assistant`)에서 MCP 접근을 켜야 합니다.
+  Slack은 토큰의 User Token Scope에 맞는 툴만 제공합니다. scope를 바꾸면 다시 생성하십시오.
+- 기존 Notion CLI의 markdown spec 검사, 수정 보호, widget 기능은 아직 이전하지 않았습니다.
 - SSE, MCP resources/prompts의 CLI 생성은 아직 지원하지 않습니다.
-- OAuth 흐름은 로컬 가짜 인증 서버로만 검증했습니다. 실제 Notion·Linear·Slack 서버로는 검증하지 않았습니다.
-- Linear·Slack 서비스 플러그인은 아직 이전하지 않았습니다.
 
-Notion 서버를 생성하려면 `NOTION_MCP_TOKEN`으로 Bearer 토큰을 제공하십시오. `generate`는 아직 저장한 OAuth 토큰을 쓰지 않습니다.
-`NOTION_MCP_URL`로 URL을 바꿀 수 있습니다.
+`NOTION_MCP_TOKEN`, `LINEAR_MCP_TOKEN`은 저장한 토큰보다 우선합니다. `*_MCP_URL`로 URL을 바꿀 수 있습니다.
 HTTP 연결은 요청마다 `authorize`에서 헤더를 받습니다.
 서버가 401을 반환하면 `authorize({ refresh: true })`를 한 번 호출하고 한 번만 재시도합니다.
 
 ```bash
+bun run cli login notion
 bun run generate notion
-bun run cli notion fetch get --help
+SLACK_MCP_TOKEN=xoxp-... bun run generate slack
+bun run cli notion page get --help
 ```
 
 ## 워크트리
