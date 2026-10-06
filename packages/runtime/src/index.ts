@@ -39,7 +39,8 @@ export type RuntimeIO = {
   readStdin(): Promise<string>;
 };
 export type RuntimeDependencies = {
-  open(): Promise<ToolSession>;
+  /** `credential` names the plugin credential switch given for this run, if any. */
+  open(credential?: string): Promise<ToolSession>;
   io: RuntimeIO;
   guard?: RepeatGuard;
   putBytes?: (url: string, bytes: Uint8Array) => Promise<void>;
@@ -48,13 +49,17 @@ export const runService = async (
   plugin: ServicePlugin,
   generated: GeneratedManifest,
   argv: string[],
-  dependencies: RuntimeDependencies,
+  ports: RuntimeDependencies,
 ): Promise<number> => {
   const manifest = applyCustomizations(plugin, generated);
-  const { path, tokens, json, wantsHelp, allowRepeat } = parseArguments(
+  const parsed = parseArguments(
     argv,
     (commandPath) => findCommand(manifest, commandPath)?.inputSchema ?? {},
+    manifest.credentials.map((alternate) => alternate.flag),
   );
+  const { path, tokens, json, wantsHelp, allowRepeat, credential } = parsed;
+  // Every later connection, including resources and prompts, uses the chosen credential.
+  const dependencies = { ...ports, open: () => ports.open(credential) };
   if (path[0] === HELP) {
     if (tokens.length) throw new UsageError("Help does not accept input flags");
     dependencies.io.write(help(manifest, path.slice(1)));
@@ -115,7 +120,7 @@ export const runService = async (
   if (files.size && (!uploadFile || !putBytes))
     throw new Error(`${manifest.service} cannot upload local files in this environment`);
   const guard = allowRepeat || !guardsRepeats(command) ? undefined : dependencies.guard;
-  const key = callKey(command.name, withDigests(command, input, files));
+  const key = callKey(command.name, withDigests(command, input, files), credential);
   const attempt = randomUUID();
   const earlier = await guard?.begin(manifest.service, key, command.name, attempt);
   if (earlier)

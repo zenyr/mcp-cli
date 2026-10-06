@@ -1,3 +1,4 @@
+import { credentialSwitches } from "./auth";
 import { isRecord, isStringArray } from "./values";
 import {
   COMMANDS,
@@ -187,5 +188,6 @@ export const applyCustomizations = (
     commands,
     groups,
     quickstart,
+    credentials: credentialSwitches(plugin.auth),
   };
 };

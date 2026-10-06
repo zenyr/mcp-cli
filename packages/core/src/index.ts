@@ -35,6 +35,8 @@ export type Manifest = {
   commands: CommandSpec[];
   groups: Record<string, string>;
   quickstart: QuickstartEntry[];
+  /** Credential switches such as `--xoxb` that pick an alternate key for one run. */
+  credentials: import("./auth").ApiKeyAlternate[];
 };
 export type ToolResult = {
   content: Array<Record<string, unknown>>;
@@ -74,8 +76,14 @@ export type UploadContext = {
   callTool: ToolCaller;
   putBytes(url: string, bytes: Uint8Array): Promise<void>;
 };
+const flagName = /^[a-z][a-z0-9-]*$/;
 export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
-  if (!/^[a-z][a-z0-9-]*$/.test(plugin.name)) throw new Error("Invalid service name");
+  if (!flagName.test(plugin.name)) throw new Error("Invalid service name");
+  const flags = credentialSwitches(plugin.auth).map((alternate) => alternate.flag);
+  for (const flag of flags)
+    if (!flagName.test(flag) || RESERVED_FLAGS.includes(flag) || flag.startsWith("no-"))
+      throw new Error(`Invalid credential flag: --${flag}`);
+  if (new Set(flags).size !== flags.length) throw new Error("Duplicate credential flag");
   return plugin;
 };
 export { canonicalize, isRecord, isStringArray } from "./values";
@@ -85,9 +93,13 @@ export {
   decodeManifest,
   type GeneratedManifest,
 } from "./manifest";
+import { credentialSwitches } from "./auth";
 export {
   AuthRequiredError,
+  credentialName,
+  credentialSwitches,
   loginRequired,
+  type ApiKeyAlternate,
   type ApiKeySpec,
   type AuthSpec,
   type OAuthSpec,

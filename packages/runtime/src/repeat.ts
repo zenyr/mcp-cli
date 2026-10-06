@@ -5,9 +5,16 @@ import { canonicalize, type CallRecord, type CommandSpec } from "@mcp-cli/core";
 export const guardsRepeats = (command: CommandSpec): boolean =>
   command.annotations?.readOnlyHint !== true && command.annotations?.idempotentHint !== true;
 
-export const callKey = (tool: string, input: Record<string, unknown>): string =>
+// The credential is part of the key because posting as a user and as a bot are different actions.
+export const callKey = (
+  tool: string,
+  input: Record<string, unknown>,
+  credential?: string,
+): string =>
   createHash("sha256")
-    .update(JSON.stringify(canonicalize({ tool, input })))
+    .update(
+      JSON.stringify(canonicalize(credential ? { tool, input, credential } : { tool, input })),
+    )
     .digest("hex");
 
 export const repeatMessage = (command: string, earlier: CallRecord, now: number): string => {

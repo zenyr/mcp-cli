@@ -146,6 +146,8 @@ export const help = (manifest: Manifest, path: string[]): string => {
     );
     if (guardsRepeats(command))
       lines.push("  --allow-repeat        Run even if the same input ran in the last few minutes");
+    for (const alternate of manifest.credentials)
+      lines.push(`  --${alternate.flag}`.padEnd(24) + alternate.summary);
     if (command.examples?.length)
       lines.push("", "Examples:", ...command.examples.map((example) => `  ${example}`));
   } else {
@@ -172,6 +174,13 @@ export const help = (manifest: Manifest, path: string[]): string => {
       lines.push("", "Commands:", ...table(rows));
     }
     if (!path.length) lines.push("", "Discovery:", ...table(DISCOVERY));
+    if (!path.length && manifest.credentials.length) {
+      const rows = manifest.credentials.map((alternate): [string, string] => [
+        `--${alternate.flag}`,
+        `${alternate.summary}; overridden by ${alternate.env}`,
+      ]);
+      lines.push("", "Credentials:", ...table(rows));
+    }
     lines.push("", `Next: ${title} <command> --help`);
   }
   return lines.join("\n");

@@ -717,3 +717,57 @@ test("upload fields with URL format or pattern accept @paths and check the uploa
     { name: "demo-echo", input: { text: "https://files/b.wav" } },
   ]);
 });
+
+const twoKeys = definePlugin({
+  ...plugin,
+  auth: {
+    type: "apiKey",
+    env: "KEY",
+    alternates: [{ flag: "xoxb", env: "BOT_KEY", summary: "Use the bot token" }],
+  },
+});
+
+test("a credential switch reaches open anywhere in argv and never becomes input", async () => {
+  const f = fixture();
+  const seen: Array<string | undefined> = [];
+  const dependencies = {
+    ...f.dependencies,
+    open: async (credential?: string) => {
+      seen.push(credential);
+      return f.dependencies.open();
+    },
+  };
+  await runService(twoKeys, manifest, ["--xoxb", "message", "echo", "--text", "a"], dependencies);
+  await runService(twoKeys, manifest, ["message", "echo", "--text", "b", "--xoxb"], dependencies);
+  await runService(twoKeys, manifest, ["message", "echo", "--text", "c"], dependencies);
+  expect(seen).toEqual(["xoxb", "xoxb", undefined]);
+  expect(f.calls).toHaveLength(3);
+  expect(JSON.stringify(f.calls)).not.toContain("xoxb");
+  await expect(
+    runService(plugin, manifest, ["message", "echo", "--text", "d", "--xoxb"], dependencies),
+  ).rejects.toThrow(UsageError);
+  await expect(
+    runService(twoKeys, manifest, ["message", "echo", "--xoxb=yes"], dependencies),
+  ).rejects.toThrow("does not take a value");
+});
+
+test("the same input as user and as bot are different calls for the repeat guard", async () => {
+  const f = fixture();
+  const { guard } = memoryGuard();
+  const dependencies = { ...f.dependencies, guard };
+  const args = ["message", "echo", "--text", "hi"];
+  expect(await runService(twoKeys, manifest, args, dependencies)).toBe(0);
+  expect(await runService(twoKeys, manifest, [...args, "--xoxb"], dependencies)).toBe(0);
+  await expect(runService(twoKeys, manifest, [...args, "--xoxb"], dependencies)).rejects.toThrow(
+    RepeatedCallError,
+  );
+});
+
+test("help lists credential switches at the root and on every command", async () => {
+  const f = fixture();
+  await runService(twoKeys, manifest, ["--help"], f.dependencies);
+  await runService(twoKeys, manifest, ["message", "echo", "--help"], f.dependencies);
+  const [root, leaf] = f.output;
+  expect(root).toContain("Credentials:\n  --xoxb  Use the bot token; overridden by BOT_KEY");
+  expect(leaf).toContain("  --xoxb                Use the bot token");
+});
