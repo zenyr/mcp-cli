@@ -106,7 +106,8 @@ test("CLI logout deletes the credentials file under XDG_CONFIG_HOME", async () =
   await store.write("notion", { accessToken: "a" });
   const result = await cli({ XDG_CONFIG_HOME: root }, "logout", "notion");
   expect(result).toEqual({ stderr: "Logged out of notion\n", code: 0 });
-  expect(await readdir(join(root, "mcp-cli", "credentials"))).toEqual([]);
+  // The empty flock file stays so concurrent holders never lock different inodes.
+  expect(await readdir(join(root, "mcp-cli", "credentials"))).toEqual(["notion.lock"]);
   expect((await cli({ XDG_CONFIG_HOME: root }, "login", "demo")).code).toBe(2);
   expect((await cli({ XDG_CONFIG_HOME: root }, "logout")).code).toBe(2);
 });
