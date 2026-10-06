@@ -1,11 +1,12 @@
-import { randomUUID } from "node:crypto";
-import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { isRecord, type TokenStore, type Tokens } from "@mcp-cli/core";
+import { checked, ensurePrivateDir, writeAtomic } from "./files";
 import { DEFAULT_LOCK_OPTIONS, hasCode, withFileLock, type LockOptions } from "./lock";
 
 export { LockTimeoutError, type LockOptions } from "./lock";
+export { fileRepeatGuard, repeatGuardDir, type FileRepeatGuardOptions } from "./repeat";
 
 type Env = Record<string, string | undefined>;
 export type FileTokenStoreOptions = {
@@ -59,21 +60,12 @@ const parseJson = (text: string, source: string): unknown => {
   }
 };
 
-const servicePattern = /^[a-z][a-z0-9-]*$/;
-const checked = (service: string): string => {
-  if (!servicePattern.test(service)) throw new Error(`Invalid service name: ${service}`);
-  return service;
-};
-
 /** File-backed store: one 0600 JSON file per service in a 0700 directory, replaced atomically. */
 export const fileTokenStore = (options: FileTokenStoreOptions = {}): TokenStore => {
   const dir = options.dir ?? credentialsDir(options.env, options.home);
   const lock = { ...DEFAULT_LOCK_OPTIONS, ...options.lock };
   const file = (service: string) => join(dir, `${checked(service)}.json`);
-  const ensureDir = async () => {
-    await mkdir(dir, { recursive: true, mode: 0o700 });
-    await chmod(dir, 0o700);
-  };
+  const ensureDir = () => ensurePrivateDir(dir);
   return {
     read: async (service) => {
       const path = file(service);
@@ -87,17 +79,7 @@ export const fileTokenStore = (options: FileTokenStoreOptions = {}): TokenStore 
     write: async (service, tokens) => {
       const path = file(service);
       await ensureDir();
-      const temporary = `${path}.${randomUUID()}.tmp`;
-      try {
-        await writeFile(temporary, `${JSON.stringify(tokens, null, 2)}\n`, {
-          mode: 0o600,
-          flag: "wx",
-        });
-        await rename(temporary, path);
-      } catch (error) {
-        await rm(temporary, { force: true });
-        throw error;
-      }
+      await writeAtomic(path, `${JSON.stringify(tokens, null, 2)}\n`);
     },
     delete: async (service) => {
       await rm(file(service), { force: true });
