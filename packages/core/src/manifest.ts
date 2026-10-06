@@ -1,5 +1,6 @@
 import { isRecord, isStringArray } from "./values";
 import {
+  COMMANDS,
   NotGeneratedError,
   RESERVED_COMMANDS,
   fallbackPath,
@@ -84,6 +85,19 @@ const uploadable = (tool: ToolDefinition, field: string): boolean => {
   return schema.type === "array" && isRecord(schema.items) && schema.items.type === "string";
 };
 
+const containsGroup = (paths: string[][], group: string): boolean => {
+  const prefix = group.split(" ");
+  return paths.some((path) => path.length > prefix.length && overlaps(path, prefix));
+};
+const reaches = (paths: string[][], head: string[]): boolean =>
+  head.length > 0 && paths.some((path) => path.length >= head.length && overlaps(path, head));
+// A quickstart command's path is every word before its first flag.
+const commandHead = (command: string): string[] => {
+  const words = command.split(" ").filter(Boolean);
+  const end = words.findIndex((word) => word.startsWith("-"));
+  return end < 0 ? words : words.slice(0, end);
+};
+
 // Overlays plugin command metadata on generated tools and rejects stale or conflicting mappings.
 export const applyCustomizations = (
   plugin: ServicePlugin,
@@ -120,28 +134,41 @@ export const applyCustomizations = (
       summary: customization?.summary ?? tool.description?.split(/\n/)[0] ?? tool.name,
     };
   });
-  for (const name of Object.keys(plugin.commands ?? {}))
-    if (!names.has(name)) throw new Error(`Plugin refers to missing tool: ${name}`);
-  const groups = plugin.groups ?? {};
-  for (const group of Object.keys(groups)) {
-    const prefix = group.split(" ");
-    if (!paths.some((path) => path.length > prefix.length && overlaps(path, prefix)))
+  // Optional mappings may be absent when the server filters tools, e.g. by token scope.
+  const absent: string[][] = [];
+  const absentNames = new Set<string>();
+  for (const [name, customization] of Object.entries(plugin.commands ?? {})) {
+    if (names.has(name)) continue;
+    if (!customization.optional) throw new Error(`Plugin refers to missing tool: ${name}`);
+    if (!validPath(customization.path)) throw new Error(`Invalid command path for ${name}`);
+    absent.push(customization.path);
+    absentNames.add(name);
+  }
+  const declared = [...paths, ...absent];
+  const groups: Record<string, string> = {};
+  for (const [group, summary] of Object.entries(plugin.groups ?? {})) {
+    if (!containsGroup(declared, group))
       throw new Error(`Plugin describes missing command group: ${group}`);
+    if (containsGroup(paths, group)) groups[group] = summary;
   }
-  for (const { command } of plugin.quickstart ?? []) {
-    const words = command.split(" ");
-    const end = words.findIndex((word) => word.startsWith("-"));
-    const head = end < 0 ? words : words.slice(0, end);
-    const known =
-      RESERVED_COMMANDS.includes(head[0] ?? "") ||
-      paths.some((path) => path.length >= head.length && overlaps(path, head));
-    if (!head.length || !known) throw new Error(`Quickstart refers to missing command: ${command}`);
-  }
+  const quickstart = (plugin.quickstart ?? []).filter(({ command }) => {
+    const head = commandHead(command);
+    const [first = "", tool] = head;
+    if (first === COMMANDS.call && tool !== undefined) {
+      if (!names.has(tool) && !absentNames.has(tool))
+        throw new Error(`Quickstart refers to missing command: ${command}`);
+      return names.has(tool);
+    }
+    if (RESERVED_COMMANDS.includes(first)) return true;
+    if (!reaches(declared, head))
+      throw new Error(`Quickstart refers to missing command: ${command}`);
+    return reaches(paths, head);
+  });
   return {
     service: plugin.name,
     summary: plugin.summary,
     commands,
     groups,
-    quickstart: plugin.quickstart ?? [],
+    quickstart,
   };
 };

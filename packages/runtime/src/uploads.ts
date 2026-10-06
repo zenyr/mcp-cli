@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
 import { basename } from "node:path";
-import { UsageError, type CommandSpec, type LocalFile } from "@mcp-cli/core";
+import {
+  UsageError,
+  isRecord,
+  type CommandSpec,
+  type JsonSchema,
+  type LocalFile,
+} from "@mcp-cli/core";
 
 const PREFIX = "@";
 export type LocalFiles = Map<string, LocalFile & { digest: string }>;
@@ -66,4 +72,19 @@ export const uploadLocalFiles = async (
   const urls = new Map<string, string>();
   for (const [reference, file] of files) urls.set(reference, await upload(file));
   return mapUploads(command, input, (reference) => urls.get(reference) ?? reference);
+};
+
+const withoutUrlRules = (schema: unknown): unknown => {
+  if (!isRecord(schema)) return schema;
+  const { format: _format, pattern: _pattern, ...rest } = schema;
+  return isRecord(rest.items) ? { ...rest, items: withoutUrlRules(rest.items) } : rest;
+};
+
+// `@path` cannot satisfy URL format or pattern rules until upload, so pre-checks skip only those.
+export const preUploadSchema = (command: CommandSpec): JsonSchema => {
+  const properties = command.inputSchema.properties;
+  if (!command.uploads?.length || !isRecord(properties)) return command.inputSchema;
+  const relaxed = { ...properties };
+  for (const field of command.uploads) relaxed[field] = withoutUrlRules(relaxed[field]);
+  return { ...command.inputSchema, properties: relaxed };
 };

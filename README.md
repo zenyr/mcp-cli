@@ -213,6 +213,8 @@ export default definePlugin({
 `groups`는 공백으로 이은 그룹 경로(`"media image"`)에 한 줄 설명을 붙입니다.
 `quickstart`는 루트 help의 `Start here`에 표시할 추천 명령입니다.
 없는 그룹이나 명령을 가리키는 `groups`, `quickstart` 항목은 실행 시 오류로 처리합니다.
+서버가 권한에 따라 도구를 숨기면 해당 매핑에 `optional: true`를 지정하십시오.
+그 도구가 없으면 매핑을 건너뛰고, 관련 `groups`와 `quickstart` 항목도 help에서 뺍니다.
 `beforeCall(command, input)`은 서비스별 실행 전 검사를 넣는 위치입니다.
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
 `connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.
@@ -228,10 +230,12 @@ fish-audio voice clone --audio-urls '["@./a.wav","@./b.wav"]' --confirm-voice-ri
 ```
 
 - CLI는 서버에 연결하기 전에 파일을 모두 읽습니다. 읽지 못하면 사용 오류(종료 코드 2)입니다.
+- 업로드 필드의 `format`과 `pattern` 제약은 업로드 후 실제 URL로 검사합니다.
 - 플러그인의 `uploadFile(file, { callTool, putBytes })`가 업로드 위치를 정하고 툴에 넘길 URL을 반환합니다.
   플러그인은 네트워크를 직접 쓰지 않습니다. HTTP PUT은 CLI의 `putBytes` adapter가 수행합니다.
 - 중복 실행 키는 업로드 URL 대신 파일 내용의 SHA-256으로 계산합니다. 거부된 호출은 업로드하지 않습니다.
-- 업로드가 실패하면 툴을 호출하지 않으므로 같은 호출을 다시 허용합니다.
+- 연결이나 업로드가 실패하면 툴을 호출하지 않았으므로 같은 호출을 다시 허용합니다.
+- PUT 오류 메시지에는 서명된 업로드 URL을 넣지 않습니다.
 
 ## 중복 실행 방지
 

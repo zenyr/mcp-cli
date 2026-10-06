@@ -158,3 +158,39 @@ test("upload fields need an uploader and a string or string-array schema", () =>
   for (const field of ["count", "missing", "toString"])
     expect(() => withUploads([field])).toThrow("Invalid upload field");
 });
+
+test("optional mappings tolerate tools the server omits and prune their help metadata", () => {
+  const plugin = {
+    ...pluginWith({
+      read: { path: ["channel", "read"] },
+      send: { path: ["message", "send"], optional: true },
+    }),
+    groups: { channel: "Read", message: "Send" },
+    quickstart: [
+      { command: "channel read --id x", summary: "Read" },
+      { command: "message send --text hi", summary: "Send" },
+      { command: "call send", summary: "Raw send" },
+    ],
+  };
+  const resolved = applyCustomizations(plugin, generated(["read"]));
+  expect(resolved.groups).toEqual({ channel: "Read" });
+  expect(resolved.quickstart.map((entry) => entry.command)).toEqual(["channel read --id x"]);
+  expect(applyCustomizations(plugin, generated(["read", "send"])).quickstart).toHaveLength(3);
+  expect(() =>
+    applyCustomizations(pluginWith({ send: { path: ["message", "send"] } }), generated(["read"])),
+  ).toThrow("missing tool: send");
+  expect(() =>
+    applyCustomizations({ ...plugin, groups: { video: "x" } }, generated(["read"])),
+  ).toThrow("missing command group");
+});
+
+test("quickstart call entries must name a known tool", () => {
+  const withQuickstart = (command: string) =>
+    applyCustomizations(
+      { ...pluginWith(), quickstart: [{ command, summary: "Try" }] },
+      generated(["echo"]),
+    );
+  expect(withQuickstart("call echo --text hi").quickstart).toHaveLength(1);
+  expect(withQuickstart("methods").quickstart).toHaveLength(1);
+  expect(() => withQuickstart("call missing")).toThrow("missing command: call missing");
+});

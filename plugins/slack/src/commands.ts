@@ -1,7 +1,14 @@
 import type { CommandCustomization, QuickstartEntry } from "@mcp-cli/core";
 
-// Slack exposes only the tools its token scopes allow, so regenerate after changing User Token Scopes.
-export const commands: Record<string, CommandCustomization> = {
+// Slack lists only the tools its token scopes allow, so every mapping is optional.
+const optional = (
+  mappings: Record<string, CommandCustomization>,
+): Record<string, CommandCustomization> =>
+  Object.fromEntries(
+    Object.entries(mappings).map(([name, mapping]) => [name, { ...mapping, optional: true }]),
+  );
+
+export const commands = optional({
   slack_read_channel: {
     path: ["channel", "read"],
     summary: "Read channel or DM history, newest first",
@@ -37,7 +44,7 @@ export const commands: Record<string, CommandCustomization> = {
   },
   slack_get_reactions: { path: ["reaction", "list"], summary: "List reactions on a message" },
   slack_read_file: { path: ["file", "read"], summary: "Read a file's content by file ID" },
-};
+});
 
 export const groups: Record<string, string> = {
   channel: "Channel and DM history",
