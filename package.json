@@ -5,7 +5,8 @@
     "fish-audio": "bin/fish-audio.ts",
     "linear": "bin/linear.ts",
     "mcp-cli": "apps/cli/src/main.ts",
-    "notion": "bin/notion.ts"
+    "notion": "bin/notion.ts",
+    "slack": "bin/slack.ts"
   },
   "workspaces": [
     "packages/*",
