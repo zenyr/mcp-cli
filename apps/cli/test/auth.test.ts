@@ -12,7 +12,13 @@ import {
   type Connection,
   type TokenStore,
 } from "@mcp-cli/core";
-import { apiKeyHeaders, logoutCommand, resolveConnection, type AuthContext } from "../src/auth";
+import {
+  apiKeyHeaders,
+  canOpenBrowser,
+  logoutCommand,
+  resolveConnection,
+  type AuthContext,
+} from "../src/auth";
 
 let root = "";
 let store: TokenStore;
@@ -103,4 +109,12 @@ test("CLI logout deletes the credentials file under XDG_CONFIG_HOME", async () =
   expect(await readdir(join(root, "mcp-cli", "credentials"))).toEqual([]);
   expect((await cli({ XDG_CONFIG_HOME: root }, "login", "demo")).code).toBe(2);
   expect((await cli({ XDG_CONFIG_HOME: root }, "logout")).code).toBe(2);
+});
+
+test("browser launch is skipped for SSH, missing displays and MCP_CLI_NO_BROWSER", () => {
+  expect(canOpenBrowser({}, "darwin")).toBe(true);
+  expect(canOpenBrowser({ MCP_CLI_NO_BROWSER: "1" }, "darwin")).toBe(false);
+  expect(canOpenBrowser({ SSH_CONNECTION: "1 2 3 4" }, "darwin")).toBe(false);
+  expect(canOpenBrowser({}, "linux")).toBe(false);
+  expect(canOpenBrowser({ DISPLAY: ":0" }, "linux")).toBe(true);
 });

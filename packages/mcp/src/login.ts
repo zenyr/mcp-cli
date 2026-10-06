@@ -14,7 +14,11 @@ import type { OAuthSpec, TokenStore, Tokens } from "@mcp-cli/core";
 import { startLoopback, LoginError } from "./loopback";
 import { clientRecord, toTokens } from "./oauth-client";
 
-export type LoginUi = { open: (url: string) => void | Promise<void> };
+export type LoginUi = {
+  open: (url: string) => void | Promise<void>;
+  /** Feeds hand-copied redirect URLs into the login; returns a cleanup called when it ends. */
+  manual?: (submit: (input: string) => void) => () => void;
+};
 export type LoginOptions = {
   service: string;
   url: string;
@@ -74,7 +78,8 @@ export const login = async (options: LoginOptions): Promise<Tokens> => {
       resource,
     });
     await ui.open(authorizationUrl.href);
-    const { code, iss } = await loopback.response;
+    const stopManual = ui.manual?.(loopback.submit);
+    const { code, iss } = await loopback.response.finally(() => stopManual?.());
     const issued = await exchangeAuthorization(server, {
       metadata,
       clientInformation: client,

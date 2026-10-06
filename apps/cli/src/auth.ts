@@ -7,6 +7,7 @@ import {
   type ServicePlugin,
   type TokenStore,
 } from "@mcp-cli/core";
+import { createInterface } from "node:readline";
 import { login, oauthAuthorize } from "@mcp-cli/mcp";
 
 type Env = Record<string, string | undefined>;
@@ -15,8 +16,10 @@ export type AuthContext = {
   store: TokenStore;
   plugin: (name: string) => Promise<ServicePlugin>;
   writeError: (text: string) => void;
-  /** Shows the authorization URL; the CLI prints it and tries to open a browser. */
-  open: (url: string) => void | Promise<void>;
+  /** Shows the authorization URL; `browser` says whether a local browser may be launched. */
+  open: (url: string, browser: boolean) => void | Promise<void>;
+  /** Reads hand-copied redirect URLs, for logins finished in a browser on another machine. */
+  manual?: (submit: (input: string) => void) => () => void;
 };
 
 export const defaultStore = (env: Env = process.env): TokenStore => fileTokenStore({ env });
@@ -68,8 +71,18 @@ const serviceArgument = (command: string, args: string[]): string => {
   return name;
 };
 
+/** Headless sessions skip the browser launch and rely on the printed URL plus a pasted redirect. */
+export const canOpenBrowser = (env: Env, platform: NodeJS.Platform = process.platform): boolean => {
+  if (env.MCP_CLI_NO_BROWSER === "1" || env.SSH_CONNECTION || env.SSH_TTY) return false;
+  if (platform === "linux") return Boolean(env.DISPLAY || env.WAYLAND_DISPLAY);
+  return true;
+};
+
 export const loginCommand = async (args: string[], context: AuthContext): Promise<void> => {
-  const plugin = await context.plugin(serviceArgument("login", args));
+  const noBrowser = args.includes("--no-browser");
+  const rest = args.filter((arg) => arg !== "--no-browser");
+  const browser = !noBrowser && canOpenBrowser(context.env);
+  const plugin = await context.plugin(serviceArgument("login [--no-browser]", rest));
   const auth = plugin.auth;
   if (auth?.type === "apiKey")
     throw new UsageError(`${plugin.name} uses an API key. Set ${auth.env} instead of logging in`);
@@ -82,7 +95,10 @@ export const loginCommand = async (args: string[], context: AuthContext): Promis
     url: connection.url,
     spec: auth,
     store: context.store,
-    ui: { open: context.open },
+    ui: {
+      open: (url) => context.open(url, browser),
+      ...(context.manual && { manual: context.manual }),
+    },
   });
   context.writeError(`Logged in to ${plugin.name}`);
 };
@@ -106,13 +122,26 @@ const openers: Partial<Record<NodeJS.Platform, string[]>> = {
   win32: ["cmd", "/c", "start", ""],
 };
 
-export const openInBrowser = (writeError: (text: string) => void) => (url: string) => {
-  writeError(`Open this URL to log in:\n${url}`);
-  const opener = openers[process.platform];
-  if (!opener || !process.stderr.isTTY) return;
-  try {
-    Bun.spawn([...opener, url], { stdio: ["ignore", "ignore", "ignore"] });
-  } catch {
-    // Printing the URL is enough when no browser opener is available.
-  }
+export const openInBrowser =
+  (writeError: (text: string) => void) => (url: string, browser: boolean) => {
+    writeError(
+      `Open this URL in any browser to log in:\n${url}\n\nAfter approval the browser goes to http://127.0.0.1:.../callback.\nIf that page does not load (for example on another device), copy its full address and paste it here.`,
+    );
+    const opener = openers[process.platform];
+    if (!browser || !opener || !process.stderr.isTTY) return;
+    try {
+      Bun.spawn([...opener, url], { stdio: ["ignore", "ignore", "ignore"] });
+    } catch {
+      // Printing the URL is enough when no browser opener is available.
+    }
+  };
+
+/** Feeds each stdin line to the login as a pasted redirect URL until the login ends. */
+export const stdinRedirects = (submit: (input: string) => void): (() => void) => {
+  const lines = createInterface({ input: process.stdin, terminal: false });
+  lines.on("line", submit);
+  return () => {
+    lines.close();
+    process.stdin.pause();
+  };
 };

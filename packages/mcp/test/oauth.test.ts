@@ -57,6 +57,37 @@ test("login discovers, registers, runs PKCE on a loopback redirect and stores to
   expect(tokens.client).toMatchObject({ serverUrl: fake.resource, clientId: "client-1" });
 });
 
+test("login accepts a pasted redirect URL when the browser runs elsewhere", async () => {
+  let authorizeUrl = "";
+  const tokens = await signIn({
+    ui: {
+      open: (url) => void (authorizeUrl = url),
+      manual: (submit) => {
+        void fetch(authorizeUrl, { redirect: "manual" }).then((response) =>
+          submit(`  ${response.headers.get("location") ?? ""}  `),
+        );
+        return () => undefined;
+      },
+    },
+  });
+  expect(tokens.accessToken).toBe("access-1");
+});
+
+test("a pasted redirect with the wrong state fails the login", async () => {
+  await expect(
+    signIn({
+      ui: {
+        open: () => undefined,
+        manual: (submit) => {
+          submit("http://127.0.0.1:1/callback?code=x&state=forged");
+          return () => undefined;
+        },
+      },
+    }),
+  ).rejects.toBeInstanceOf(LoginError);
+  expect(await store.read("svc")).toBeUndefined();
+});
+
 test("login uses a pre-registered client id and plugin scopes without registration", async () => {
   await signIn({ spec: { type: "oauth", clientId: "fixed", scopes: ["read"] } });
   expect(fake.registrations).toHaveLength(0);

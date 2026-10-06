@@ -15,6 +15,8 @@ export type Loopback = {
   redirectUrl: string;
   /** Resolves with the first callback; rejects on denial, state mismatch or timeout. */
   response: Promise<AuthorizationResponse>;
+  /** Accepts a redirect URL copied by hand, for logins finished in a browser on another machine. */
+  submit: (input: string) => void;
   stop: () => void;
 };
 
@@ -31,6 +33,25 @@ export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopb
     if (outcome instanceof LoginError) settle.reject(outcome);
     else settle.resolve(outcome);
   };
+  const accept = (params: URLSearchParams): boolean => {
+    if (params.get("state") !== state) {
+      finish(new LoginError("Authorization response state does not match"));
+      return false;
+    }
+    const error = params.get("error");
+    const code = params.get("code");
+    if (error || !code) {
+      const detail = params.get("error_description");
+      finish(
+        new LoginError(
+          `Authorization failed: ${error ?? "missing code"}${detail ? ` (${detail})` : ""}`,
+        ),
+      );
+      return false;
+    }
+    finish({ code, iss: params.get("iss") ?? undefined });
+    return true;
+  };
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port,
@@ -38,24 +59,9 @@ export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopb
       const url = new URL(request.url);
       if (url.pathname !== "/callback") return page("Not found", 404);
       if (done) return page("This login has already finished.", 409);
-      const params = url.searchParams;
-      if (params.get("state") !== state) {
-        finish(new LoginError("Authorization response state does not match"));
-        return page("Login failed: state mismatch.", 400);
-      }
-      const error = params.get("error");
-      const code = params.get("code");
-      if (error || !code) {
-        const detail = params.get("error_description");
-        finish(
-          new LoginError(
-            `Authorization failed: ${error ?? "missing code"}${detail ? ` (${detail})` : ""}`,
-          ),
-        );
-        return page("Login failed. Return to the terminal.", 400);
-      }
-      finish({ code, iss: params.get("iss") ?? undefined });
-      return page("Login complete. You can close this window.", 200);
+      return accept(url.searchParams)
+        ? page("Login complete. You can close this window.", 200)
+        : page("Login failed. Return to the terminal.", 400);
     },
   });
   const timer = setTimeout(
@@ -65,6 +71,12 @@ export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopb
   return {
     redirectUrl: `http://127.0.0.1:${server.port}/callback`,
     response,
+    submit: (input) => {
+      const text = input.trim();
+      if (!text || done) return;
+      const query = text.includes("?") ? text.slice(text.indexOf("?") + 1) : text;
+      accept(new URLSearchParams(query.split("#")[0]));
+    },
     stop: () => {
       clearTimeout(timer);
       finish(new LoginError("Login was cancelled"));
