@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
+import { isRecord } from "@mcp-cli/core";
 
 // Usage: bun server.ts [tools|no-tools] [pid-file]
 const mode = process.argv[2] ?? "tools";
@@ -7,8 +8,6 @@ const pidFile = process.argv[3];
 if (pidFile) writeFileSync(pidFile, String(process.pid));
 
 type Message = { id?: number | string; method?: string; params?: Record<string, unknown> };
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 const send = (message: Record<string, unknown>) =>
   process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", ...message })}\n`);
 const numberArg = (args: unknown, key: string): number => {

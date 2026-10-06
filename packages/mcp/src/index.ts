@@ -1,6 +1,7 @@
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import type { Connection, ToolSession } from "@mcp-cli/core";
+import { authorizedFetch } from "./authorize";
 
 export type ConnectOptions = {
   timeoutMs?: number;
@@ -45,6 +46,7 @@ const openTransport = (config: Connection) => {
     };
   const transport = new StreamableHTTPClientTransport(new URL(config.url), {
     requestInit: { headers: config.headers },
+    ...(config.authorize && { fetch: authorizedFetch(config.authorize) }),
   });
   return { transport, terminate: () => transport.terminateSession() };
 };
