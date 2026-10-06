@@ -12,9 +12,11 @@ export const commands: Record<string, CommandCustomization> = {
   },
   speech_to_text: {
     path: ["transcription", "create"],
-    summary: "Transcribe audio from a public https URL",
+    summary: "Transcribe audio from an https URL or a local @file",
+    uploads: ["audio_url"],
     examples: [
-      "fish-audio transcription create --audio-url https://example.com/a.mp3 --model flash",
+      "fish-audio transcription create --audio-url @./meeting.m4a --model flash",
+      "fish-audio transcription create --audio-url https://example.com/a.mp3",
     ],
   },
   search_voices: {
@@ -33,11 +35,16 @@ export const commands: Record<string, CommandCustomization> = {
   },
   create_voice_clone: {
     path: ["voice", "clone"],
-    summary: "Clone a voice from 1-5 sample audio URLs of one speaker (free)",
+    summary: "Clone a voice from 1-5 samples of one speaker, as URLs or local @files (free)",
+    uploads: ["audio_urls"],
+    examples: [
+      'fish-audio voice clone --audio-urls \'["@./a.wav","@./b.wav"]\' --confirm-voice-rights',
+    ],
   },
   verify_voice_clone: {
     path: ["voice", "verify"],
     summary: "Finish speaker verification for a clone that requires it",
+    uploads: ["recording_url"],
   },
   get_upload_url: {
     path: ["upload", "audio"],
@@ -207,8 +214,8 @@ export const skill = [
   "",
   "Workflows:",
   "  Speech: voice search -> speech create --voice-id <id>. Omit --voice-id to use a default voice for --language.",
-  "  Transcription: upload audio for local files, PUT the bytes, then transcription create --audio-url <file_url>.",
-  "  Voice clone: upload audio for each sample -> voice clone; follow its instructions field, which may ask for voice verify.",
+  "  Transcription: transcription create --audio-url @./file.mp3 uploads a local file; https URLs pass through.",
+  "  Voice clone: voice clone --audio-urls '[\"@./a.wav\"]'; follow its instructions field, which may ask for voice verify --recording-url @./r.wav.",
   "  Media: account workspaces -> media model list/get -> media <kind> estimate -> media <kind> create -> media job status/result.",
   "  Studio: studio manual first. Run studio block generate --dry-run and studio project export without --confirmed-credits to get quotes.",
   "",
@@ -216,5 +223,6 @@ export const skill = [
   "  Show the user a quote before any paid call: speech create, transcription create, media * create, studio block generate, studio project export.",
   "  Check account balance when a paid call may exceed the budget.",
   "",
+  "@path uploads a local file only in --audio-url, --audio-urls and --recording-url.",
   "Use --input or --input-file for nested or array arguments. Use call <tool> for exact MCP names.",
 ].join("\n");
