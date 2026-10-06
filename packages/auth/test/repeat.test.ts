@@ -73,3 +73,21 @@ test("concurrent identical calls let exactly one through", async () => {
   expect(results.filter((result) => result === undefined)).toHaveLength(1);
   expect(await calls.begin("slack", "k", "send", "late")).toBeDefined();
 });
+
+test("records written before attempt ids still block until they expire", async () => {
+  const legacy = (status: "pending" | "ok" | "error", at = clock) => ({ tool: "send", at, status });
+  await writeFile(
+    join(root, "slack.json"),
+    JSON.stringify({
+      ok: legacy("ok"),
+      pending: legacy("pending"),
+      error: legacy("error"),
+      expired: legacy("ok", clock - 300_000),
+    }),
+  );
+  const calls = guard();
+  expect(await calls.begin("slack", "ok", "send", "a1")).toEqual({ ...legacy("ok"), attempt: "" });
+  expect((await calls.begin("slack", "pending", "send", "a2"))?.status).toBe("pending");
+  expect(await calls.begin("slack", "error", "send", "a3")).toBeUndefined();
+  expect(await calls.begin("slack", "expired", "send", "a4")).toBeUndefined();
+});

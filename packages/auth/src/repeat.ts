@@ -23,12 +23,15 @@ export const repeatGuardDir = (env: Env = process.env, home = env.HOME || homedi
   return join(base, "mcp-cli", "calls");
 };
 
-const isCallRecord = (value: unknown): value is CallRecord =>
-  isRecord(value) &&
-  typeof value.tool === "string" &&
-  typeof value.at === "number" &&
-  typeof value.attempt === "string" &&
-  (value.status === "pending" || value.status === "ok" || value.status === "error");
+// Records written before attempts existed keep blocking until they expire, owned by no live attempt.
+const decodeRecord = (value: unknown): CallRecord | undefined => {
+  if (!isRecord(value) || typeof value.tool !== "string" || typeof value.at !== "number")
+    return undefined;
+  const { status } = value;
+  if (status !== "pending" && status !== "ok" && status !== "error") return undefined;
+  const attempt = typeof value.attempt === "string" ? value.attempt : "";
+  return { tool: value.tool, at: value.at, status, attempt };
+};
 
 // The journal only prevents accidents, so an unreadable file starts over instead of failing the call.
 const readJournal = async (path: string): Promise<Journal> => {
@@ -44,8 +47,10 @@ const readJournal = async (path: string): Promise<Journal> => {
   }
   if (!isRecord(value)) return {};
   const journal: Journal = {};
-  for (const [key, record] of Object.entries(value))
-    if (isCallRecord(record)) journal[key] = record;
+  for (const [key, item] of Object.entries(value)) {
+    const record = decodeRecord(item);
+    if (record) journal[key] = record;
+  }
   return journal;
 };
 

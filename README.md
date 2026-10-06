@@ -231,6 +231,7 @@ fish-audio voice clone --audio-urls '["@./a.wav","@./b.wav"]' --confirm-voice-ri
 
 - CLI는 서버에 연결하기 전에 파일을 모두 읽습니다. 읽지 못하면 사용 오류(종료 코드 2)입니다.
 - 업로드 필드의 `format`과 `pattern` 제약은 업로드 후 실제 URL로 검사합니다.
+  업로드 필드는 이 제약을 필드에 직접 둬야 합니다. `allOf`, `anyOf`, `oneOf`, `not`, `$ref`, `if`가 있으면 선언을 거부합니다.
 - 플러그인의 `uploadFile(file, { callTool, putBytes })`가 업로드 위치를 정하고 툴에 넘길 URL을 반환합니다.
   플러그인은 네트워크를 직접 쓰지 않습니다. HTTP PUT은 CLI의 `putBytes` adapter가 수행합니다.
 - 중복 실행 키는 업로드 URL 대신 파일 내용의 SHA-256으로 계산합니다. 거부된 호출은 업로드하지 않습니다.
