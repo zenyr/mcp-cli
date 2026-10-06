@@ -60,6 +60,8 @@ test("applyCustomizations overlays plugin metadata at run time", () => {
     commands: [
       { ...tool, path: ["message", "echo"], summary: "Echo text", examples: ["demo message echo"] },
     ],
+    groups: {},
+    quickstart: [],
   });
   const unmapped = applyCustomizations(pluginWith(), generated(["toString"]));
   expect(unmapped.commands[0]?.path).toEqual(["call", "toString"]);
@@ -92,4 +94,28 @@ test("applyCustomizations rejects stale, reserved, invalid and conflicting paths
   expect(() =>
     applyCustomizations(pluginWith(), { ...generated(["a"]), service: "other" }),
   ).toThrow("does not match");
+});
+
+test("applyCustomizations validates group descriptions and quickstart commands", () => {
+  const commands = { a: { path: ["media", "image", "create"] } };
+  const withMetadata = (groups: Record<string, string>, quickstart: string[]) =>
+    applyCustomizations(
+      {
+        ...pluginWith(commands),
+        groups,
+        quickstart: quickstart.map((command) => ({ command, summary: "Try it" })),
+      },
+      generated(["a"]),
+    );
+  const resolved = withMetadata({ media: "Media", "media image": "Images" }, [
+    "media image create --prompt cat",
+    "media",
+    "methods --json",
+  ]);
+  expect(resolved.groups).toEqual({ media: "Media", "media image": "Images" });
+  expect(resolved.quickstart).toHaveLength(3);
+  for (const group of ["video", "media image create", "image"])
+    expect(() => withMetadata({ [group]: "x" }, [])).toThrow("missing command group");
+  for (const command of ["media video", "media image create extra", "--json", ""])
+    expect(() => withMetadata({}, [command])).toThrow("missing command");
 });
