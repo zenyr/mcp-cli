@@ -1,14 +1,14 @@
 import { expect, test } from "bun:test";
 import { createManifest, generateModule } from "../src";
-import plugin from "../../../plugins/demo/src";
-import snapshot from "../../../plugins/demo/src/tools.json";
+import plugin from "./fixtures/plugin";
+import snapshot from "./fixtures/tools.json";
 
 test("code generation is deterministic across tool ordering", async () => {
   const forward = createManifest(plugin, snapshot.tools);
   const reverse = createManifest(plugin, [...snapshot.tools].reverse());
   expect(await generateModule(forward)).toBe(await generateModule(reverse));
   const generated = await generateModule(forward);
-  expect(generated).toContain('["demo-echo"]: (input: Tool0Input)');
+  expect(generated).toContain('["demo-echo"]: (input: DemoEchoInput)');
   expect(generated).toContain("text: string");
 });
 test("unmapped tools remain callable without naming guesses", () => {
@@ -80,4 +80,54 @@ test("prototype member tool names receive fallback paths", () => {
     { name: "toString", inputSchema: { type: "object" } },
   ]);
   expect(manifest.commands.at(0)?.path).toEqual(["call", "toString"]);
+});
+
+const unmapped = { ...plugin, commands: {} };
+const objectTool = (name: string, inputSchema: Record<string, unknown>) => ({
+  name,
+  inputSchema: { type: "object", ...inputSchema },
+});
+
+test("TypeScript extension keywords are rejected before compilation", () => {
+  const payload = "string }\nconsole.log('x');\nexport interface Z {";
+  for (const schema of [
+    { properties: { text: { tsType: payload } } },
+    { properties: { text: { type: "string", enum: ["a"], tsEnumNames: [payload] } } },
+    { tsType: payload },
+  ])
+    expect(() => createManifest(unmapped, [objectTool("x", schema)])).toThrow(
+      /Unsupported schema extension ts/,
+    );
+});
+
+test("schema titles and ids never name generated types", async () => {
+  const item = { type: "object", title: "Manifest", properties: { id: { type: "string" } } };
+  const schema = {
+    title: "Manifest",
+    $id: "ToolCaller",
+    $defs: { Item: item },
+    properties: { item: { $ref: "#/$defs/Item" }, nested: item },
+  };
+  const generated = await generateModule(
+    createManifest(unmapped, [objectTool("first", schema), objectTool("second", schema)]),
+  );
+  expect(generated).not.toMatch(/interface (Manifest|ToolCaller)\b/);
+  for (const name of ["FirstInput", "FirstInputItem", "SecondInput", "SecondInputItem"])
+    expect(generated).toContain(`export interface ${name} {`);
+});
+
+test("type names derive from tool names with deterministic collision suffixes", async () => {
+  const generated = await generateModule(
+    createManifest(unmapped, [objectTool("a-b", {}), objectTool("a_b", {}), objectTool("9x", {})]),
+  );
+  expect(generated).toContain('["9x"]: (input: Tool9XInput)');
+  expect(generated).toContain('["a-b"]: (input: ABInput)');
+  expect(generated).toContain('["a_b"]: (input: ABInput2)');
+});
+
+test("input properties that collide with reserved flags fail", () => {
+  for (const key of ["json", "help", "input", "input_file", "input-file"])
+    expect(() =>
+      createManifest(unmapped, [objectTool("x", { properties: { [key]: { type: "string" } } })]),
+    ).toThrow(`Tool x property ${key} collides with reserved flag`);
 });

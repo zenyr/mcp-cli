@@ -1,7 +1,5 @@
+import { isRecord } from "@mcp-cli/core";
 import type { JSONSchema } from "json-schema-to-typescript";
-
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const types = new Set(["null", "boolean", "object", "array", "number", "integer", "string", "any"]);
 const maps = new Set(["properties", "patternProperties", "definitions", "$defs"]);
@@ -16,16 +14,7 @@ const singles = new Set([
   "else",
 ]);
 const arrays = new Set(["allOf", "anyOf", "oneOf", "prefixItems"]);
-const strings = new Set([
-  "title",
-  "description",
-  "$id",
-  "$schema",
-  "$ref",
-  "format",
-  "pattern",
-  "tsType",
-]);
+const strings = new Set(["title", "description", "$id", "$schema", "$ref", "format", "pattern"]);
 const booleans = new Set(["uniqueItems", "readOnly", "writeOnly", "deprecated"]);
 const numbers = new Set([
   "minimum",
@@ -46,6 +35,7 @@ export const validateSchema = (value: unknown, seen = new Set<object>()): void =
   if (!isRecord(value) || seen.has(value)) throw new Error("Invalid or cyclic JSON schema");
   seen.add(value);
   for (const [key, entry] of Object.entries(value)) {
+    if (/^ts[A-Z]/.test(key)) throw new Error(`Unsupported schema extension ${key}`);
     if (key === "type") {
       const entries = Array.isArray(entry) ? entry : [entry];
       if (!entries.length || entries.some((type) => typeof type !== "string" || !types.has(type)))
@@ -58,7 +48,7 @@ export const validateSchema = (value: unknown, seen = new Set<object>()): void =
     } else if (arrays.has(key) || key === "items") {
       if (key !== "items" && !Array.isArray(entry)) throw new Error(`Invalid schema ${key}`);
       for (const child of Array.isArray(entry) ? entry : [entry]) validateSchema(child, seen);
-    } else if (key === "required" || key === "tsEnumNames") {
+    } else if (key === "required") {
       if (!Array.isArray(entry) || entry.some((item) => typeof item !== "string"))
         throw new Error(`Invalid schema ${key}`);
     } else if (strings.has(key)) {
@@ -95,6 +85,31 @@ export const isCompilerSchema = (value: unknown): value is JSONSchema => {
   if (!isRecord(value)) return false;
   validateSchema(value);
   return true;
+};
+
+const literals = new Set(["type", "required", "enum", "const", "dependentRequired"]);
+const kept = (key: string): boolean =>
+  key !== "title" &&
+  key !== "$id" &&
+  [literals, strings, booleans, numbers].some((keys) => keys.has(key));
+
+// Keeps only allowlisted keywords and drops names so the compiler never sees schema-chosen identifiers.
+export const compilerSchema = (value: unknown): unknown => {
+  if (!isRecord(value)) return value;
+  const schema: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (maps.has(key) || key === "dependencies" || key === "dependentSchemas") {
+      schema[key] = isRecord(entry)
+        ? Object.fromEntries(
+            Object.entries(entry).map(([name, child]) => [name, compilerSchema(child)]),
+          )
+        : entry;
+    } else if (singles.has(key)) schema[key] = compilerSchema(entry);
+    else if (arrays.has(key) || key === "items")
+      schema[key] = Array.isArray(entry) ? entry.map(compilerSchema) : compilerSchema(entry);
+    else if (kept(key)) schema[key] = entry;
+  }
+  return schema;
 };
 
 export const canonicalize = (value: unknown): unknown => {
