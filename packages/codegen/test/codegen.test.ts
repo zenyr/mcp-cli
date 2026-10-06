@@ -149,3 +149,12 @@ test("tool names with dots and slashes generate under call fallback paths", asyn
   for (const name of ["FilesReadInput", "ABInput"])
     expect(generated).toContain(`export interface ${name} {`);
 });
+
+test("generated manifests keep tool annotations for runtime policy", async () => {
+  const tools = [
+    { ...snapshot.tools[0], annotations: { readOnlyHint: false, idempotentHint: true } },
+  ];
+  const manifest = createManifest({ ...plugin, commands: {} }, tools);
+  expect(manifest.tools[0]?.annotations).toEqual({ readOnlyHint: false, idempotentHint: true });
+  expect(await generateModule(manifest)).toContain('"idempotentHint": true');
+});

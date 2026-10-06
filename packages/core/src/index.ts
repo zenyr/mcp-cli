@@ -1,9 +1,18 @@
 export type JsonSchema = Record<string, unknown>;
+/** MCP behavior hints; servers may omit them, and they are advisory rather than guarantees. */
+export type ToolAnnotations = {
+  title?: string;
+  readOnlyHint?: boolean;
+  destructiveHint?: boolean;
+  idempotentHint?: boolean;
+  openWorldHint?: boolean;
+};
 export type ToolDefinition = {
   name: string;
   description?: string;
   inputSchema: JsonSchema;
   outputSchema?: JsonSchema;
+  annotations?: ToolAnnotations;
 };
 export type CommandCustomization = {
   path: string[];
@@ -57,7 +66,12 @@ export const definePlugin = (plugin: ServicePlugin): ServicePlugin => {
   return plugin;
 };
 export { canonicalize, isRecord, isStringArray } from "./values";
-export { applyCustomizations, decodeManifest, type GeneratedManifest } from "./manifest";
+export {
+  applyCustomizations,
+  decodeAnnotations,
+  decodeManifest,
+  type GeneratedManifest,
+} from "./manifest";
 export {
   AuthRequiredError,
   loginRequired,

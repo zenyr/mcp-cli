@@ -2,6 +2,7 @@ import { compile, type JSONSchema } from "json-schema-to-typescript";
 import {
   applyCustomizations,
   canonicalize,
+  decodeAnnotations,
   isRecord,
   type GeneratedManifest,
   type ServicePlugin,
@@ -31,11 +32,13 @@ export const decodeTools = (value: unknown): ToolDefinition[] => {
         throw new Error("Invalid tool output schema");
       validateSchema(tool.outputSchema);
     }
+    const annotations = decodeAnnotations(tool.annotations);
     return {
       name: tool.name,
       inputSchema: tool.inputSchema,
       ...(typeof tool.description === "string" && { description: tool.description }),
       ...(isRecord(tool.outputSchema) && { outputSchema: tool.outputSchema }),
+      ...(annotations && { annotations }),
     };
   });
 };

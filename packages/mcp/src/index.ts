@@ -181,6 +181,7 @@ export const connect = async (
         description: tool.description,
         inputSchema: tool.inputSchema,
         ...(tool.outputSchema && { outputSchema: tool.outputSchema }),
+        ...(tool.annotations && { annotations: tool.annotations }),
       }));
     },
     callTool: async (name, input) => {
