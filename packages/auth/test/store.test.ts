@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { mkdtemp, readdir, rm, stat, utimes, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CredentialsFormatError, credentialsDir, fileTokenStore, LockTimeoutError } from "../src";
+import { takeStale, withLockFile } from "../src/lock";
 
 let root = "";
 let dir = "";
@@ -66,7 +67,7 @@ test("withLock serializes two concurrent holders", async () => {
     });
   expect(await Promise.all([hold("a"), hold("b")])).toEqual(["a", "b"]);
   expect(events[1]).toBe(`${events[0]?.split(":")[0]}:end`);
-  expect(await readdir(dir)).toEqual([]);
+  expect(await readdir(dir)).toEqual(["notion.lock"]);
 });
 
 test("withLock releases the lock when the holder throws", async () => {
@@ -105,4 +106,64 @@ test("waiting for a live holder is bounded", async () => {
   await expect(store.withLock("notion", async () => undefined)).rejects.toThrow(LockTimeoutError);
   release();
   await holding;
+});
+
+const child = (mode: string) =>
+  Bun.spawn(["bun", join(import.meta.dir, "fixtures", "lock-child.ts"), dir, mode], {
+    stdout: "pipe",
+    stderr: "inherit",
+  });
+
+test("separate processes never overlap inside withLock", async () => {
+  const children = Array.from({ length: 8 }, () => child("increment"));
+  expect(await Promise.all(children.map((process) => process.exited))).toEqual(
+    Array.from({ length: 8 }, () => 0),
+  );
+  expect(await readFile(join(dir, "counter"), "utf8")).toBe("8");
+});
+
+test("the kernel releases the lock of a killed holder without waiting for staleness", async () => {
+  const holder = child("hold");
+  const reader = holder.stdout.getReader();
+  await reader.read();
+  const store = fileTokenStore({ dir, lock: { staleMs: 60000, timeoutMs: 100 } });
+  await expect(store.withLock("svc", async () => undefined)).rejects.toThrow(LockTimeoutError);
+  holder.kill("SIGKILL");
+  await holder.exited;
+  const started = Date.now();
+  const relaxed = fileTokenStore({ dir, lock: { staleMs: 60000, timeoutMs: 2000 } });
+  expect(await relaxed.withLock("svc", async () => "acquired")).toBe("acquired");
+  expect(Date.now() - started).toBeLessThan(1000);
+});
+
+test("the lock-file fallback keeps one holder when waiters race to clear a stale lock", async () => {
+  const options = { staleMs: 200, timeoutMs: 5000, pollMs: 1 };
+  await mkdir(dir, { recursive: true });
+  for (let round = 0; round < 20; round++) {
+    const path = join(dir, `race-${round}.lock`);
+    await writeFile(path, "999999 dead");
+    const old = new Date(Date.now() - 5000);
+    await utimes(path, old, old);
+    let inside = 0;
+    let overlap = false;
+    const hold = () =>
+      withLockFile(path, options, async () => {
+        inside++;
+        if (inside > 1) overlap = true;
+        await Bun.sleep(2);
+        inside--;
+      });
+    await Promise.all(Array.from({ length: 6 }, hold));
+    expect(overlap).toBe(false);
+  }
+});
+
+test("clearing a stale lock restores a fresh lock that replaced it after it was observed", async () => {
+  await mkdir(dir, { recursive: true });
+  const path = join(dir, "svc.lock");
+  await writeFile(path, "fresh holder");
+  await takeStale(path, "dead holder");
+  expect(await readFile(path, "utf8")).toBe("fresh holder");
+  await takeStale(path, "fresh holder");
+  expect(await readdir(dir)).toEqual([]);
 });

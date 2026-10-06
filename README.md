@@ -239,7 +239,9 @@ mcp-cli logout notion   # 저장한 토큰 삭제
 - 토큰은 `$XDG_CONFIG_HOME/mcp-cli/credentials/<service>.json`에 저장합니다. `XDG_CONFIG_HOME`이 없으면 `~/.config`를 씁니다.
   디렉터리 권한은 `0700`, 파일 권한은 `0600`입니다. 임시 파일에 쓴 뒤 rename으로 교체합니다.
 - 만료 60초 전부터 또는 서버가 401을 반환하면 refresh token으로 갱신합니다.
-  갱신은 `<service>.lock` 파일 잠금 안에서 실행합니다. 여러 프로세스가 동시에 실행해도 갱신 요청은 한 번입니다.
+  갱신은 `<service>.lock`에 건 커널 `flock` 안에서 실행합니다. 여러 프로세스가 동시에 실행해도 갱신 요청은 한 번입니다.
+  잠금을 잡은 프로세스가 비정상 종료하면 커널이 잠금을 바로 해제합니다. lock 파일은 지우지 않고 남겨 둡니다.
+  `flock`이 없는 플랫폼은 heartbeat lock 파일을 씁니다. 15초 동안 갱신되지 않은 lock을 회수합니다.
 - 자격 증명이 없거나 refresh token이 거부되면 CLI는 `mcp-cli login <service>` 실행을 안내하고 상태 1로 끝납니다.
 - 다른 서버 URL에서 발급한 토큰은 보내지 않습니다. URL을 바꾸면 다시 로그인하십시오.
 - 연결이 `authorize`를 직접 제공하면 CLI는 저장한 토큰을 쓰지 않습니다.
