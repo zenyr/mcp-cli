@@ -1,7 +1,12 @@
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
-import type { Connection, ToolSession } from "@mcp-cli/core";
+import type { CatalogSession, Connection, ResourceContent, ToolSession } from "@mcp-cli/core";
 import { authorizedFetch } from "./authorize";
+import { authFailure } from "./oauth";
+
+export { login, type LoginOptions, type LoginUi } from "./login";
+export { LoginError } from "./loopback";
+export { oauthAuthorize, type OAuthAuthorizeOptions } from "./oauth";
 
 export type ConnectOptions = {
   timeoutMs?: number;
@@ -10,8 +15,21 @@ export type ConnectOptions = {
   terminateTimeoutMs?: number;
 };
 
-export class MissingToolsCapabilityError extends Error {
+/** The server did not advertise the capability an operation needs. */
+export abstract class MissingCapabilityError extends Error {
+  abstract readonly capability: "tools" | "resources" | "prompts";
+}
+export class MissingToolsCapabilityError extends MissingCapabilityError {
   override name = "MissingToolsCapabilityError";
+  readonly capability = "tools";
+}
+export class MissingResourcesCapabilityError extends MissingCapabilityError {
+  override name = "MissingResourcesCapabilityError";
+  readonly capability = "resources";
+}
+export class MissingPromptsCapabilityError extends MissingCapabilityError {
+  override name = "MissingPromptsCapabilityError";
+  readonly capability = "prompts";
 }
 
 const positive = (name: string, value: number | undefined, fallback: number): number => {
@@ -31,6 +49,77 @@ const bounded = async (task: Promise<void>, ms: number): Promise<void> => {
   } finally {
     clearTimeout(timer);
   }
+};
+
+type ContentItem = { uri: string; mimeType?: string; text?: string; blob?: string };
+const resourceContent = ({ uri, mimeType, text, blob }: ContentItem): ResourceContent => {
+  const meta = { uri, ...(mimeType !== undefined && { mimeType }) };
+  if (typeof text === "string") return { ...meta, text };
+  return { ...meta, blob: blob ?? "" };
+};
+
+// The SDK walks every nextCursor page when list calls omit a cursor.
+const catalog = (client: Client, timeout: number, callTimeout: number): CatalogSession => {
+  const ensure = (capability: "resources" | "prompts"): void => {
+    const advertised = client.getServerCapabilities()?.[capability];
+    if (advertised) return;
+    const message = `Server does not advertise the ${capability} capability`;
+    throw capability === "resources"
+      ? new MissingResourcesCapabilityError(message)
+      : new MissingPromptsCapabilityError(message);
+  };
+  return {
+    listResources: async () => {
+      ensure("resources");
+      const { resources } = await client.listResources(undefined, { timeout });
+      return resources.map(({ uri, name, title, description, mimeType, size }) => ({
+        uri,
+        name,
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(mimeType !== undefined && { mimeType }),
+        ...(size !== undefined && { size }),
+      }));
+    },
+    listResourceTemplates: async () => {
+      ensure("resources");
+      const { resourceTemplates } = await client.listResourceTemplates(undefined, { timeout });
+      return resourceTemplates.map(({ uriTemplate, name, title, description, mimeType }) => ({
+        uriTemplate,
+        name,
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(mimeType !== undefined && { mimeType }),
+      }));
+    },
+    readResource: async (uri) => {
+      ensure("resources");
+      const { contents } = await client.readResource({ uri }, { timeout: callTimeout });
+      return contents.map(resourceContent);
+    },
+    listPrompts: async () => {
+      ensure("prompts");
+      const { prompts } = await client.listPrompts(undefined, { timeout });
+      return prompts.map(({ name, title, description, arguments: args = [] }) => ({
+        name,
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        arguments: args.map((arg) => ({
+          name: arg.name,
+          ...(arg.description !== undefined && { description: arg.description }),
+          ...(arg.required !== undefined && { required: arg.required }),
+        })),
+      }));
+    },
+    getPrompt: async (name, args) => {
+      ensure("prompts");
+      const result = await client.getPrompt({ name, arguments: args }, { timeout: callTimeout });
+      return {
+        ...(result.description !== undefined && { description: result.description }),
+        messages: result.messages.map(({ role, content }) => ({ role, content: { ...content } })),
+      };
+    },
+  };
 };
 
 const openTransport = (config: Connection) => {
@@ -72,7 +161,7 @@ export const connect = async (
   } catch (error) {
     await client.close().catch(() => undefined);
     await transport.close().catch(() => undefined);
-    throw error;
+    throw authFailure(error) ?? error;
   }
   // A no-op progress handler makes the SDK send a progress token so progress can reset the timeout.
   const callOptions = {
@@ -82,6 +171,7 @@ export const connect = async (
     ...(maxTotalTimeout !== undefined && { maxTotalTimeout }),
   };
   return {
+    ...catalog(client, timeout, callTimeout),
     listTools: async () => {
       if (!client.getServerCapabilities()?.tools)
         throw new MissingToolsCapabilityError("Server does not advertise the tools capability");
