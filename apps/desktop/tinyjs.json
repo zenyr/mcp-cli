@@ -13,5 +13,5 @@
   },
   "activation": "accessory",
   "minTinyjsVersion": "0.40.0",
-  "icon": "assets/app-icon.png"
+  "icon": "assets/mcp-cli.png"
 }
