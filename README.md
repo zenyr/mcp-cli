@@ -229,6 +229,12 @@ export default definePlugin({
 매핑 명령과 `call` 명령 모두 같은 검사를 거칩니다.
 `connection(env)`은 실행 시에 환경변수를 읽습니다. `Promise`를 반환해도 됩니다. 인증 정보는 생성 결과에 넣지 않습니다.
 
+## Fish Audio 음성 제작
+
+`tts`·`stt` 편의 alias와 `script`·`roundtrip` 워크플로를 제공합니다.
+긴 원고 분할, 예산 예약, 캐시 재개, 오디오 변환과 텍스트 비교는 [사용 안내](plugins/fish-audio/README.md)를 따르십시오.
+기존 `speech create`, `transcription create`, `call`은 기존 MCP 인터페이스를 유지합니다.
+
 ## 로컬 파일 업로드
 
 플러그인이 `uploads`로 지정한 URL 필드는 `@경로` 값을 로컬 파일로 해석합니다.
