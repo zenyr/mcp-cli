@@ -149,6 +149,7 @@ test("generation changes for semantic settings but remains stable for timeout", 
   expect(generationFor({ ...settings, maxOutputTokens: 4096 })).toBe(original);
   for (const change of [
     { model: "other" },
+    { thinking: "disabled" as const },
     { baseUrl: "http://other/v1" },
     { nodeBytes: 513 },
     { contextBytes: 1025 },

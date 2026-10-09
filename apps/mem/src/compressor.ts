@@ -67,6 +67,7 @@ const httpCompressor =
       model: settings.model,
       stream: false,
       max_tokens: settings.maxOutputTokens,
+      ...(settings.thinking ? { thinking: { type: settings.thinking } } : {}),
       messages: [
         { role: "system", content: SUMMARY_PROMPT },
         { role: "user", content: JSON.stringify(input) },

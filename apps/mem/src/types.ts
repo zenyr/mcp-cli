@@ -43,6 +43,7 @@ export type Settings = {
   inputBytes: number;
   timeoutMs: number;
   maxOutputTokens: number;
+  thinking?: "enabled" | "disabled";
 };
 export type ScopeStatus = Scope & {
   messages: number;

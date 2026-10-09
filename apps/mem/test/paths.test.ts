@@ -109,11 +109,13 @@ test("settings defaults and environment overrides", async () => {
       MEM_MODEL: "env-model",
       MEM_BASE_URL: "https://example.invalid/v1",
       MEM_NODE_BYTES: "2048",
+      MEM_THINKING: "disabled",
     }),
   ).toMatchObject({
     model: "env-model",
     baseUrl: "https://example.invalid/v1",
     nodeBytes: 2048,
+    thinking: "disabled",
   });
 });
 
