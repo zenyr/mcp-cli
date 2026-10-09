@@ -1,13 +1,25 @@
 import type { Options } from "./options";
-import type { Scope, Store } from "./types";
+import type { Pin, Scope, Store } from "./types";
 import { fail } from "./values";
+
+const metadata = (pin: Pin) => ({
+  scope: pin.scope,
+  key: pin.key,
+  revision: pin.revision,
+  active: pin.active,
+  source: pin.source,
+  kind: pin.kind,
+});
 
 export const pinCommand = (store: Store, scopes: Scope[], options: Options): unknown => {
   if (options.command === "pins")
     return {
       ok: true,
       pins: scopes.flatMap((scope) =>
-        store.pins(scope.id).filter((pin) => !options.key || pin.key === options.key),
+        store
+          .pins(scope.id)
+          .filter((pin) => !options.key || pin.key === options.key)
+          .map(metadata),
       ),
     };
   const scope = scopes[0];
@@ -44,13 +56,6 @@ export const pinCommand = (store: Store, scopes: Scope[], options: Options): unk
   return {
     ok: true,
     receipt,
-    pin: {
-      scope: pin.scope,
-      key: pin.key,
-      revision: pin.revision,
-      active: pin.active,
-      source: pin.source,
-      kind: pin.kind,
-    },
+    pin: metadata(pin),
   };
 };

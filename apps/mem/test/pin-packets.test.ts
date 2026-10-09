@@ -237,3 +237,62 @@ test("maximum project and key identifiers fit 512-byte mutation acknowledgements
     "512",
   ]);
 });
+
+test("oversized pins remain discoverable and releasable through small metadata responses", async () => {
+  const directory = temporary();
+  let stdout = "";
+  const run = async (args: string[]) => {
+    stdout = "";
+    const code = await main(args, {
+      cwd: directory,
+      env: { HOME: directory },
+      compress: async () => ({
+        text: "summary",
+        model: "fixture",
+        inputTokens: 1,
+        outputTokens: 1,
+      }),
+      io: {
+        write: (text) => {
+          stdout += text;
+        },
+        readFile: async () => "",
+        readStdin: async () => "x".repeat(12000),
+      },
+    });
+    expect(code).toBe(0);
+    expect(Buffer.byteLength(stdout)).toBeLessThanOrEqual(512);
+  };
+  await run(["save", "--global", "--stdin", "--max-bytes", "512"]);
+  await run([
+    "pin",
+    "global/0",
+    "--global",
+    "--key",
+    "large",
+    "--from",
+    "0",
+    "--to",
+    "12000",
+    "--expected-revision",
+    "0",
+    "--receipt",
+    "550e8400-e29b-41d4-a716-446655440000",
+    "--max-bytes",
+    "512",
+  ]);
+  await run(["pins", "--global", "--key", "large", "--max-bytes", "512"]);
+  expect(stdout).toContain('"revision":1');
+  expect(stdout).not.toContain('"text":');
+  await run([
+    "unpin",
+    "large",
+    "--global",
+    "--expected-revision",
+    "1",
+    "--receipt",
+    "550e8400-e29b-41d4-a716-446655440001",
+    "--max-bytes",
+    "512",
+  ]);
+});
