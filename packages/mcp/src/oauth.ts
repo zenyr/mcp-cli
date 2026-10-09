@@ -63,7 +63,10 @@ export const oauthAuthorize = (options: OAuthAuthorizeOptions): Authorize => {
         throw loginRequired(service, `${service} rejected the stored refresh token`);
       throw error;
     });
-    const next = toTokens(refreshed, record, now());
+    const next = {
+      ...toTokens(refreshed, record, now()),
+      ...(tokens.cacheIdentity ? { cacheIdentity: tokens.cacheIdentity } : {}),
+    };
     await store.write(service, next);
     return next;
   };

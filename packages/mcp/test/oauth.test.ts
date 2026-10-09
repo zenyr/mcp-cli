@@ -117,7 +117,8 @@ test("valid tokens are sent without refreshing", async () => {
 });
 
 test("expired tokens refresh once under the lock across concurrent authorizers", async () => {
-  await signIn();
+  const initial = await signIn();
+  await store.write("svc", { ...initial, cacheIdentity: "workflow-login" });
   fake.refreshDelayMs = 100;
   const later = () => Date.now() + 3600 * 1000;
   // Separate authorizers stand in for separate CLI processes sharing the credential file.
@@ -133,6 +134,7 @@ test("expired tokens refresh once under the lock across concurrent authorizers",
   expect(await store.read("svc")).toMatchObject({
     accessToken: "access-2",
     refreshToken: "refresh-2",
+    cacheIdentity: "workflow-login",
   });
   expect(fake.tokenRequests.at(-1)?.get("resource")).toBe(fake.resource);
 });

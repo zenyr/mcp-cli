@@ -18,6 +18,7 @@ import { loadManifest } from "./plugins";
 import { defaultRepeatGuard } from "./repeat";
 import { readSecret } from "./secret";
 import { putBytes } from "./transfer";
+import { extensionCacheScope } from "./cache-scope";
 
 export const EXIT = { ok: 0, failure: 1, usage: 2, repeated: 3 } as const;
 
@@ -61,6 +62,8 @@ export const main = async (argv: string[]): Promise<number> => {
     open: async (credential) =>
       connect(await resolveConnection(plugin, process.env, defaultStore(), credential)),
     guard: defaultRepeatGuard(process.env),
+    cacheScope: (credential) =>
+      extensionCacheScope(plugin, process.env, defaultStore(), credential),
     putBytes,
     io: {
       write: (text) => console.log(text),

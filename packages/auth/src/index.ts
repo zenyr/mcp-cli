@@ -44,6 +44,7 @@ export const decodeTokens = (value: unknown, source: string): Tokens => {
   if (client !== undefined && !isRecord(client)) throw fail("client must be an object");
   return {
     accessToken,
+    ...(text("cacheIdentity") ? { cacheIdentity: text("cacheIdentity") } : {}),
     tokenType: text("tokenType"),
     refreshToken: text("refreshToken"),
     expiresAt,

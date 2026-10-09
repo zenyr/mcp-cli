@@ -26,6 +26,8 @@ export type ApiKeySpec = Extract<AuthSpec, { type: "apiKey" }>;
 /** Stored credentials; `client` is opaque data the connection implementation needs to refresh. */
 export type Tokens = {
   accessToken: string;
+  /** Stable local cache partition retained across token refresh, replaced by a new login. */
+  cacheIdentity?: string;
   tokenType?: string;
   refreshToken?: string;
   /** Epoch milliseconds. */

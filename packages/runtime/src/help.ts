@@ -18,6 +18,15 @@ import {
 } from "./reserved";
 import { guardsRepeats } from "./repeat";
 import { typeLabel } from "./schema";
+import { findExtension } from "./extensions";
+
+const displayCommands = (manifest: Manifest): CommandSpec[] => [
+  ...manifest.commands,
+  ...(manifest.extensions ?? []).map((command) => ({
+    ...command,
+    name: command.tool ?? command.path.join(" "),
+  })),
+];
 
 const reservedUsage = (service: string): Map<string | undefined, string> =>
   new Map([
@@ -58,9 +67,9 @@ const within = (command: CommandSpec, path: string[]): boolean =>
   path.every((part, index) => command.path[index] === part);
 const childSummary = (manifest: Manifest, path: string[]): string => {
   const key = path.join(" ");
-  const command = manifest.commands.find((command) => command.path.join(" ") === key);
+  const command = displayCommands(manifest).find((command) => command.path.join(" ") === key);
   if (command) return brief(command.summary ?? command.name);
-  const count = manifest.commands.filter((command) => within(command, path)).length;
+  const count = displayCommands(manifest).filter((command) => within(command, path)).length;
   return manifest.groups[key] ?? `${count} command${count === 1 ? "" : "s"}`;
 };
 
@@ -89,7 +98,10 @@ export const findCommand = (manifest: Manifest, path: string[]): CommandSpec | u
   );
 };
 export const help = (manifest: Manifest, path: string[]): string => {
-  const command = findCommand(manifest, path);
+  const extension = findExtension(manifest, path);
+  const command =
+    findCommand(manifest, path) ??
+    (extension ? { ...extension, name: extension.tool ?? extension.path.join(" ") } : undefined);
   const title = [manifest.service, ...path].join(" ");
   // Resource and prompt subcommands share their group usage.
   const group = path[0] === RESOURCES || path[0] === PROMPTS || path.length === 1;
@@ -103,7 +115,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
     ]);
     return [text, "", "Tools:", ...table(tools)].join("\n");
   }
-  const scoped = manifest.commands.filter((command) => within(command, path));
+  const scoped = displayCommands(manifest).filter((command) => within(command, path));
   if (path.length && !command && !scoped.length && !RESERVED_COMMANDS.includes(path.join(" "))) {
     throw new UsageError(`Unknown command: ${path.join(" ")}`);
   }
@@ -114,12 +126,14 @@ export const help = (manifest: Manifest, path: string[]): string => {
   ];
   if (command) {
     // A summary taken from the description's first line is not repeated.
-    const description = command.description ?? "";
+    const description = "description" in command ? (command.description ?? "") : "";
     const summary = command.summary ?? "";
     const rest = description.startsWith(summary)
       ? description.slice(summary.length).trim()
       : description;
     if (rest) lines.push("", rest);
+    if (extension)
+      lines.push("", `Kind: ${extension.kind}${extension.tool ? ` (${extension.tool})` : ""}`);
     if (command.details) lines.push("", command.details);
     if (command.rules?.length)
       lines.push("", "Safety Rules:", ...command.rules.map((rule) => `  - ${rule}`));
@@ -129,7 +143,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
       lines.push("", "Arguments:");
       for (const [key, schema] of Object.entries(props)) {
         if (!isRecord(schema)) continue;
-        const upload = command.uploads?.includes(key) ?? false;
+        const upload = "uploads" in command ? (command.uploads?.includes(key) ?? false) : false;
         lines.push(
           argumentLine(key, schema, Array.isArray(required) && required.includes(key), upload),
         );
@@ -144,7 +158,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
       "  --json                Preserve the MCP result as JSON",
       "  -h, --help            Show command help",
     );
-    if (guardsRepeats(command))
+    if (extension || guardsRepeats(command))
       lines.push("  --allow-repeat        Run even if the same input ran in the last few minutes");
     for (const alternate of manifest.credentials)
       lines.push(`  --${alternate.flag}`.padEnd(24) + alternate.summary);
