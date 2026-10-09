@@ -1,4 +1,5 @@
 declare interface DesktopApp {
+  paths: { cache: string };
   spawnHidden(args: string[], options?: tjs.ProcessOptions): tjs.Process;
   push(event: string, data?: unknown): void;
   show(): void;
@@ -8,6 +9,7 @@ declare interface DesktopApp {
     set(spec: {
       title?: string;
       icon?: string;
+      template?: boolean;
       tooltip?: string;
       menu: ({ id: string; label: string } | { separator: true })[];
     }): void;
