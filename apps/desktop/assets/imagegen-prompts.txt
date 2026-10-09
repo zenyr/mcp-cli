@@ -1,0 +1,15 @@
+Built-in image_gen mode. Final source: exec-35c53e2e-758a-4624-933e-a3f612a30471.png.
+
+Generation prompt:
+Use case: logo-brand
+Asset type: final 1024 × 1024 desktop application icon for a small native utility that pools MCP connections and manages authentication.
+Primary request: create one distinctive, polished icon for the MCP CLI tray application. Use a strong, simple white connection-hub glyph on an indigo rounded-square tile. The glyph combines a rounded ring with three thick parallel connector stems that merge into the ring, suggesting several connections sharing one gateway. One compact coherent symbol, elegant negative space, bold enough to be recognized at 16–32 pixels.
+Composition: one centered icon only, straight-on orthographic view, no perspective. Large symbol occupies around 60% of the tile. Rounded square tile has a clean continuous curvature and occupies 88% of the canvas, leaving real transparent padding around the tile.
+Style: restrained modern native desktop app icon, mostly flat with a very subtle material finish and restrained edge lighting. Crisp clean edges. A tiny muted cyan accent on one connection stem may be used, without adding detail.
+Color palette: rich indigo aligned with an indigo desktop UI, warm white glyph, restrained muted cyan accent.
+Text: none.
+Avoid: letters, typography, wordmarks, watermarks, shields, literal padlocks, circuit-board patterns, tiny nodes, a network diagram, plug emojis, generic AI star symbols, excessive glow, glassmorphism, decorative background, cast shadow outside the tile. This must be an actual usable icon asset, not a mockup or a presentation sheet.
+Background outside the rounded tile must be genuinely transparent.
+
+Cleanup prompt:
+Edit the provided desktop app icon. Preserve the indigo rounded-square tile, white ring, white upper and lower merging connector stems, cyan middle stem, composition, proportions, and interior colors. Change only the outer alpha boundary: remove every stray blue pixel, paint speck, fringe, and artifact outside the rounded-square tile, including the patch above the top edge. Outside the tile must be fully transparent with clean smooth antialiased edges and generous transparent padding. Do not add anything or alter the symbol. Return one production-ready square PNG icon, ideally 1024 by 1024 pixels.

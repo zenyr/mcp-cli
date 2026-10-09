@@ -1,3 +1,4 @@
+import { prepareTrayIcon } from "./tray-icon";
 import { defaultCommand } from "./default-command";
 
 let loginBusy = false;
@@ -167,11 +168,11 @@ export const api = {
 };
 export const init = async (app: DesktopApp) => {
   app.setHideOnClose(true);
+  const trayIcon = await prepareTrayIcon(app);
   const refresh = async () => {
     const state = await api.status(undefined, app);
     app.tray.set({
-      title: "MCP",
-      icon: "emoji:🔌",
+      ...trayIcon,
       tooltip: state.online ? "MCP CLI · 실행 중" : "MCP CLI · 연결 안 됨",
       menu: [
         { id: "status", label: state.online ? "대몬 실행 중" : "대몬 연결 안 됨" },

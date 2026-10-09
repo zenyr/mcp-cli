@@ -93,3 +93,12 @@ apps/desktop/dist/mcp-desktop
 
 검증 페이지는 설정, 서비스 검색, 대몬 시작, 조회, 초기화, 종료를 확인합니다.
 완료하면 `MCP SMOKE PASS`를 출력하고 앱을 종료합니다.
+
+## 아이콘
+
+앱 아이콘은 `assets/app-icon.png`입니다.
+세 연결이 하나의 고리로 모이는 심볼을 내장 imagegen으로 제작했습니다.
+macOS 트레이는 `assets/connection-mark.svg`에서 만든 단색 template 아이콘을 사용합니다.
+Windows와 Linux 트레이는 `assets/tray-color.svg`에서 만든 컬러 아이콘을 사용합니다.
+트레이 PNG는 네이티브 빌드 전에 `scripts/tray-images.ts`가 생성합니다.
+앱은 PNG를 캐시에 저장하므로 현재 작업 경로에 의존하지 않습니다.

@@ -8,7 +8,7 @@
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "typecheck": "bun scripts/default-command.ts && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json",
     "desktop": "bun scripts/default-command.ts && tinyjs dev",
-    "native:build": "bun scripts/default-command.ts && tinyjs build"
+    "native:build": "bun scripts/default-command.ts && bun scripts/tray-images.ts && tinyjs build"
   },
   "dependencies": {
     "@mantine/core": "^9.7.1",
@@ -22,6 +22,7 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@txikijs/types": "^26.6.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
