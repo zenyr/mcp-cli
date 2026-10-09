@@ -33,6 +33,7 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     "inputBytes",
     "timeoutMs",
     "maxOutputTokens",
+    "thinking",
   ];
   if (Object.keys(config).some((key) => !keys.includes(key))) return invalid();
   const settings: Settings = {
@@ -53,6 +54,11 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     settings.nodeBytes = number(Number(env.MEM_NODE_BYTES), 1_048_576);
   if (env.MEM_MAX_OUTPUT_TOKENS !== undefined)
     settings.maxOutputTokens = number(Number(env.MEM_MAX_OUTPUT_TOKENS), 32768);
+  const thinking = env.MEM_THINKING ?? config.thinking;
+  if (thinking !== undefined && thinking !== "default") {
+    if (thinking !== "enabled" && thinking !== "disabled") return invalid();
+    settings.thinking = thinking;
+  }
   try {
     const url = new URL(settings.baseUrl);
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)

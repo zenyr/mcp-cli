@@ -1,106 +1,9 @@
 import type { Entry, Kind, Scope, Store } from "./types";
-import { fail, isRecord, output, positive } from "./values";
+import type { Options } from "./options";
+import { fail, isRecord, output } from "./values";
+export { parse } from "./options";
+export type { Options } from "./options";
 
-export type Options = {
-  command: string;
-  text: string[];
-  selection?: "global" | "project";
-  maxBytes: number;
-  limit: number;
-  cursor?: string;
-  receipt?: string;
-  file?: string;
-  stdin: boolean;
-  kind: Kind;
-  model?: string;
-  baseUrl?: string;
-};
-const valued = new Set([
-  "--max-bytes",
-  "--limit",
-  "--cursor",
-  "--receipt",
-  "--file",
-  "--kind",
-  "--model",
-  "--base-url",
-]);
-const allowed: Record<string, string[]> = {
-  start: [],
-  save: ["--receipt", "--file", "--stdin", "--kind"],
-  summarize: [],
-  recall: ["--cursor", "--limit"],
-  read: ["--cursor"],
-  status: [],
-  config: [],
-};
-export const parse = (argv: string[]): Options => {
-  const command = argv[0] ?? "--help";
-  const result: Options = {
-    command,
-    text: [],
-    maxBytes: 8192,
-    limit: 20,
-    stdin: false,
-    kind: "note",
-  };
-  if (["--help", "-h", "help"].includes(command)) return result;
-  const flags = allowed[command];
-  if (!flags) return fail("INVALID_OPTION", "Unknown command.");
-  const seen = new Set<string>();
-  for (let index = 1; index < argv.length; index++) {
-    const arg = argv[index];
-    if (arg === undefined) continue;
-    if (!arg.startsWith("--")) {
-      result.text.push(arg);
-      continue;
-    }
-    if (seen.has(arg)) fail("INVALID_OPTION", `Repeated option: ${arg}`);
-    seen.add(arg);
-    if (!["--global", "--project", "--max-bytes", "--model", "--base-url", ...flags].includes(arg))
-      fail("INVALID_OPTION", `Unknown option: ${arg}`);
-    if (arg === "--global" || arg === "--project") {
-      if (result.selection)
-        fail("INVALID_OPTION", "--global and --project are mutually exclusive.");
-      result.selection = arg === "--global" ? "global" : "project";
-      continue;
-    }
-    if (arg === "--stdin") {
-      result.stdin = true;
-      continue;
-    }
-    const value = argv[++index];
-    if (!valued.has(arg) || value === undefined || value.startsWith("--"))
-      fail("INVALID_OPTION", `${arg} requires a value.`);
-    if (arg === "--max-bytes") {
-      result.maxBytes = positive(value, arg, 20480);
-      if (result.maxBytes < 512) fail("INVALID_OPTION", "--max-bytes must be at least 512.");
-    } else if (arg === "--limit") result.limit = positive(value, arg, 1000);
-    else if (arg === "--cursor") result.cursor = value;
-    else if (arg === "--receipt") {
-      if (!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value))
-        fail("INVALID_OPTION", "--receipt must be a UUID.");
-      result.receipt = value;
-    } else if (arg === "--file") result.file = value;
-    else if (arg === "--model") result.model = value;
-    else if (arg === "--base-url") result.baseUrl = value;
-    else if (arg === "--kind") {
-      if (!["user", "talk", "tool", "echo", "note"].includes(value))
-        fail("INVALID_OPTION", "Invalid --kind.");
-      result.kind = value as Kind;
-    }
-  }
-  if (command === "save") {
-    if (
-      Number(result.stdin) + Number(result.file !== undefined) + Number(result.text.length > 0) !==
-      1
-    )
-      fail("INVALID_OPTION", "save requires exactly one source: text, --file, or --stdin.");
-  } else if (command === "read" || command === "recall") {
-    if (result.text.length !== 1) fail("INVALID_OPTION", `${command} requires one argument.`);
-  } else if (result.text.length) fail("INVALID_OPTION", "Unexpected positional argument.");
-  return result;
-};
 const id = (entry: Entry): string => `${entry.scope}/${entry.i}`;
 const normalized = (text: string): string => text.normalize("NFC").toLowerCase().normalize("NFC");
 const excerpt = (text: string, query: string): string[] => {
@@ -125,7 +28,7 @@ export const readRecord = (store: Store, scopes: Scope[], options: Options): unk
     fail("INVALID_OPTION", "Invalid record ID.");
   if (!scopes.some((item) => item.id === scope))
     fail("RECORD_UNAVAILABLE", "Record is unavailable in selected scopes.");
-  const entry = store.entries(scope).find((item) => item.i === Number(number));
+  const entry = store.entry(scope, Number(number));
   if (!entry) return fail("RECORD_UNAVAILABLE", "Record is unavailable in selected scopes.");
   const cursor = options.cursor ?? "0";
   if (!/^\d+$/.test(cursor) || !Number.isSafeInteger(Number(cursor)))

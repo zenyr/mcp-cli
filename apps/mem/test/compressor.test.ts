@@ -79,6 +79,14 @@ test("HTTP errors do not expose credentials or response bodies", async () => {
   }
 });
 
+test("thinking configuration is sent only when explicitly selected", async () => {
+  const config = local(async (request) => {
+    expect(await request.json()).toMatchObject({ thinking: { type: "disabled" } });
+    return Response.json(completion());
+  });
+  await createCompressor({ ...config, thinking: "disabled" }, {})(input);
+});
+
 test("HTTP rejects missing text, truncation, oversized responses, and invalid JSON", async () => {
   for (const [response, code] of [
     [Response.json(completion(" ")), "MODEL_PROTOCOL"],

@@ -1,0 +1,46 @@
+[
+  {
+    "stage": "before-short-merge",
+    "mode": "isolated",
+    "model": "deepseek-v4.1-flash",
+    "status": "failed",
+    "failure": {
+      "code": "SUMMARY_TOO_LARGE",
+      "message": "Summary did not shrink within three responses."
+    },
+    "totals": {
+      "attempts": 3,
+      "success": 3,
+      "failures": 0,
+      "unknownUsage": 0,
+      "retries": 2,
+      "knownInputTokens": 845,
+      "knownOutputTokens": 3380,
+      "durationMs": 33135.114875,
+      "wallDurationMs": 33144.995124999994
+    },
+    "observedDepths": [0]
+  },
+  {
+    "stage": "provider-default",
+    "mode": "isolated",
+    "model": "deepseek-v4.1-flash",
+    "status": "failed",
+    "failure": {
+      "code": "MODEL_OUTPUT_INCOMPLETE",
+      "message": "Summarizer reached its output limit."
+    },
+    "totals": {
+      "attempts": 11,
+      "success": 10,
+      "failures": 1,
+      "unknownUsage": 1,
+      "retries": 0,
+      "knownInputTokens": 4017,
+      "knownOutputTokens": 7375,
+      "durationMs": 81664.79375000001,
+      "wallDurationMs": 81703.367959
+    },
+    "observedDepths": [0, 1, 2, 4]
+  }
+]

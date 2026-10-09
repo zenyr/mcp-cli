@@ -178,7 +178,7 @@ test("short leaves remain verbatim and missing parents do not block a complete v
 
 test("parent failure leaves a usable complete leaf view and resumes eager hierarchy", async () => {
   const { store } = setup();
-  append(store, 2, "short");
+  append(store, 2, "x".repeat(35));
   await expect(
     summarize(store, scope, generation, settings, async () => {
       throw new Error("parent offline");
@@ -244,4 +244,17 @@ test("prior context overflow never silently drops earlier memory", async () => {
   ).rejects.toMatchObject({ code: "CONTEXT_OVERFLOW" });
   expect(store.entries(scope.id)).toHaveLength(2);
   expect(store.nodes(scope.id, generation)).toHaveLength(1);
+});
+
+test("short parents preserve both child summaries without model calls", async () => {
+  const { store } = setup();
+  store.append(scope.id, "user", "production forbidden", "one");
+  store.append(scope.id, "tool", "E731 expired token", "two");
+  await summarize(store, scope, generation, settings, async () => {
+    throw new Error("No model call is needed");
+  });
+  expect(store.node(scope.id, generation, 1, 0)?.text).toBe(
+    "user: production forbidden\ntool: E731 expired token",
+  );
+  expect(store.usage().calls).toBe(0);
 });

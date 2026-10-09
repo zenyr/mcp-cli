@@ -149,6 +149,7 @@ test("generation changes for semantic settings but remains stable for timeout", 
   expect(generationFor({ ...settings, maxOutputTokens: 4096 })).toBe(original);
   for (const change of [
     { model: "other" },
+    { thinking: "disabled" as const },
     { baseUrl: "http://other/v1" },
     { nodeBytes: 513 },
     { contextBytes: 1025 },
@@ -168,6 +169,31 @@ test("reopening rejects unsupported schemas and reading detects a log gap", asyn
     expect(() => store.entries("global")).toThrow(expect.objectContaining({ code: "LOG_CORRUPT" }));
     db.exec("PRAGMA user_version=99");
     expect(() => openStore(path)).toThrow(expect.objectContaining({ code: "SCHEMA_VERSION" }));
+  } finally {
+    db.close();
+  }
+});
+
+test("failed schema 1 migration rolls back new objects and preserves originals", async () => {
+  const { store, path } = await fixture();
+  store.append("global", "user", "original survives", "original");
+  const db = new Database(path);
+  try {
+    db.exec(
+      "DROP VIEW latest_pins; DROP TABLE pin_events; CREATE TABLE pin_events(unexpected TEXT); PRAGMA user_version=1;",
+    );
+    expect(() => openStore(path)).toThrow();
+    expect(db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version).toBe(
+      1,
+    );
+    expect(
+      db
+        .query<{ count: number }, []>(
+          "SELECT COUNT(*) AS count FROM sqlite_master WHERE name='latest_pins'",
+        )
+        .get()?.count,
+    ).toBe(0);
+    expect(store.entries("global")[0]?.text).toBe("original survives");
   } finally {
     db.close();
   }

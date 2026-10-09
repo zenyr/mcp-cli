@@ -11,6 +11,21 @@ export type Entry = {
 };
 export type Part = { l: number; i: number };
 export type Node = Part & { text: string };
+export type Pin = {
+  scope: string;
+  key: string;
+  revision: number;
+  active: boolean;
+  source: { i: number; from: number; to: number };
+  kind?: Kind;
+  text?: string;
+};
+export type PinChange = {
+  scope: string;
+  key: string;
+  expectedRevision: number;
+  receipt: string;
+} & ({ op: "pin"; i: number; from: number; to: number } | { op: "unpin" });
 export type Compression = { source: string; context: string; merge: boolean; targetBytes: number };
 export type SummaryResult = {
   text: string;
@@ -28,6 +43,7 @@ export type Settings = {
   inputBytes: number;
   timeoutMs: number;
   maxOutputTokens: number;
+  thinking?: "enabled" | "disabled";
 };
 export type ScopeStatus = Scope & {
   messages: number;
@@ -38,8 +54,12 @@ export type ScopeStatus = Scope & {
 export type Store = {
   scope: (scope: Scope) => void;
   entries: (scope: string, before?: number) => Entry[];
+  entry: (scope: string, i: number) => Entry | undefined;
   append: (scope: string, kind: Kind, text: string, receipt: string) => Entry;
   nodes: (scope: string, generation: string) => Node[];
+  node: (scope: string, generation: string, l: number, i: number) => Node | undefined;
+  pins: (scope: string) => Pin[];
+  changePin: (change: PinChange) => Pin;
   publish: (
     scope: string,
     generation: string,
