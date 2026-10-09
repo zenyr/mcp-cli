@@ -10,8 +10,9 @@ export const generationFor = (settings: Settings): string =>
   createHash("sha256")
     .update(
       JSON.stringify({
-        version: 1,
+        version: 2,
         model: settings.model,
+        thinking: settings.thinking,
         baseUrl: settings.baseUrl,
         nodeBytes: settings.nodeBytes,
         contextBytes: settings.contextBytes,

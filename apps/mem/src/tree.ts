@@ -61,11 +61,13 @@ export const summarize = async (
       sourceBytes = bytes(source),
     ) => {
       if (nodes.has(nodeKey(part))) return;
-      if (bytes(source) > settings.inputBytes)
-        fail("INPUT_OVERFLOW", "Whole source exceeds inputBytes.", { limit: settings.inputBytes });
       let text = raw;
       let usage = verbatim;
       if (text === undefined || bytes(text) > settings.nodeBytes) {
+        if (bytes(source) > settings.inputBytes)
+          fail("INPUT_OVERFLOW", "Whole source exceeds inputBytes.", {
+            limit: settings.inputBytes,
+          });
         const context = contextFor(
           [...nodes.values()],
           part.l === 0 ? start(part) : end(part),
@@ -130,7 +132,7 @@ export const summarize = async (
         await build(
           { l, i },
           JSON.stringify({ summaries: [left.text, right.text] }),
-          undefined,
+          `${left.text}\n${right.text}`,
           bytes(left.text) + bytes(right.text),
         );
       }
