@@ -37,6 +37,7 @@ export type Manifest = {
   quickstart: QuickstartEntry[];
   /** Credential switches such as `--xoxb` that pick an alternate key for one run. */
   credentials: import("./auth").ApiKeyAlternate[];
+  extensions?: import("./extensions").ExtensionCommand[];
 };
 export type ToolResult = {
   content: Array<Record<string, unknown>>;
@@ -63,6 +64,7 @@ export type ServicePlugin = {
   groups?: Record<string, string>;
   quickstart?: QuickstartEntry[];
   skill?: string;
+  extensions?: import("./extensions").ServiceExtensions;
   auth?: import("./auth").AuthSpec;
   connection(env: Record<string, string | undefined>): Connection | Promise<Connection>;
   beforeCall?: (command: CommandSpec, input: Record<string, unknown>) => Promise<void>;
@@ -156,3 +158,15 @@ export const FLAGS = {
 export const RESERVED_COMMANDS: readonly string[] = Object.values(COMMANDS);
 export const RESERVED_FLAGS: readonly string[] = Object.values(FLAGS);
 export const fallbackPath = (toolName: string): string[] => [COMMANDS.call, toolName];
+
+export type {
+  ExtensionIO,
+  ExtensionContext,
+  ExtensionCommand,
+  ServiceExtensions,
+} from "./extensions";
+
+/** The requested tool was not dispatched, so a workflow may safely clear its pending state. */
+export class CallNotStartedError extends Error {
+  override name = "CallNotStartedError";
+}

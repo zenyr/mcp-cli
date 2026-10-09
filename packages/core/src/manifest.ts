@@ -162,6 +162,14 @@ export const applyCustomizations = (
     absent.push(customization.path);
     absentNames.add(name);
   }
+  const extensions = plugin.extensions?.commands ?? [];
+  for (const extension of extensions) {
+    if (!validPath(extension.path)) throw new Error("Invalid extension command path");
+    claimPath(extension.path, [], [...paths, ...absent]);
+    paths.push(extension.path);
+    if (extension.kind === "alias" && (!extension.tool || !names.has(extension.tool)))
+      throw new Error(`Alias refers to missing tool: ${extension.tool}`);
+  }
   const declared = [...paths, ...absent];
   const groups: Record<string, string> = {};
   for (const [group, summary] of Object.entries(plugin.groups ?? {})) {
@@ -189,5 +197,6 @@ export const applyCustomizations = (
     groups,
     quickstart,
     credentials: credentialSwitches(plugin.auth),
+    ...(extensions.length ? { extensions } : {}),
   };
 };
