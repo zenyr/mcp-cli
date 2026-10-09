@@ -15,6 +15,7 @@ const settings: Settings = {
   contextBytes: 600,
   inputBytes: 10000,
   timeoutMs: 1000,
+  maxOutputTokens: 1024,
 };
 const scope: Scope = { id: "project:test", name: "test", kind: "project" };
 const generation = "test-generation";

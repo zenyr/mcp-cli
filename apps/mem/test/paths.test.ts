@@ -101,6 +101,7 @@ test("settings defaults and environment overrides", async () => {
     contextBytes: 8192,
     inputBytes: 131072,
     timeoutMs: 60000,
+    maxOutputTokens: 4096,
   });
   await writeFile(path, JSON.stringify({ model: "file-model", nodeBytes: 1024 }));
   expect(

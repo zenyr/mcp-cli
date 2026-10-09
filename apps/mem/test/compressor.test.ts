@@ -9,6 +9,7 @@ const settings: Settings = {
   contextBytes: 1024,
   inputBytes: 131072,
   timeoutMs: 1000,
+  maxOutputTokens: 1024,
 };
 const input = { source: "원문", context: "context", merge: false, targetBytes: 512 };
 test("invalid token counters are explicitly unmeasured", () => {

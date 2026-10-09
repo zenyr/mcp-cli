@@ -66,7 +66,7 @@ const httpCompressor =
     const body = JSON.stringify({
       model: settings.model,
       stream: false,
-      max_tokens: 1024,
+      max_tokens: settings.maxOutputTokens,
       messages: [
         { role: "system", content: SUMMARY_PROMPT },
         { role: "user", content: JSON.stringify(input) },

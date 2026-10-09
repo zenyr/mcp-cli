@@ -27,6 +27,7 @@ export type Settings = {
   contextBytes: number;
   inputBytes: number;
   timeoutMs: number;
+  maxOutputTokens: number;
 };
 export type ScopeStatus = Scope & {
   messages: number;

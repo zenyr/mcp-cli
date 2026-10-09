@@ -5,6 +5,7 @@
     "fish-audio": "bin/fish-audio.ts",
     "linear": "bin/linear.ts",
     "mcp-cli": "apps/cli/src/main.ts",
+    "mem": "apps/mem/src/main.ts",
     "notion": "bin/notion.ts",
     "slack": "bin/slack.ts"
   },
@@ -16,6 +17,7 @@
   "type": "module",
   "scripts": {
     "cli": "bun apps/cli/src/main.ts",
+    "mem": "bun apps/mem/src/main.ts",
     "generate": "bun apps/cli/src/main.ts generate",
     "test": "turbo run test && bun test scripts",
     "typecheck": "turbo run typecheck && tsc --noEmit -p scripts/tsconfig.json",

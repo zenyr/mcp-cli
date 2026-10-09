@@ -2,6 +2,9 @@
   "name": "@mcp-cli/mem",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "mem": "./src/main.ts"
+  },
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
