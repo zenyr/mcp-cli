@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { attemptTotals, evaluate, measureCompressor } from "../eval/evaluation";
 import { createFixture, proxyCheck } from "../eval/fixture";
-import type { Compression, Settings } from "../src/types";
+import { SUMMARY_POLICY, type Compression, type Settings } from "../src/types";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,7 +9,6 @@ import { isRecord } from "../src/values";
 
 const input: Compression = {
   source: '{"text":"test"}',
-  context: "historical fact",
   merge: false,
   targetBytes: 512,
 };
@@ -44,14 +43,10 @@ test("fixture has stable source labels, long critical records and scalar evidenc
 
 test("attempt budget guards the compressor before another call", async () => {
   let calls = 0;
-  const measured = measureCompressor(
-    async () => {
-      calls += 1;
-      return result;
-    },
-    1,
-    "system",
-  );
+  const measured = measureCompressor(async () => {
+    calls += 1;
+    return result;
+  }, 1);
   await measured.compress(input);
   await expect(measured.compress(input)).rejects.toThrow("EVAL_CALL_BUDGET_EXHAUSTED");
   expect(calls).toBe(1);
@@ -60,13 +55,9 @@ test("attempt budget guards the compressor before another call", async () => {
 });
 
 test("failed and incomplete usage remains unknown, retries retain budget", async () => {
-  const measured = measureCompressor(
-    async () => {
-      throw new Error("HTTP failure");
-    },
-    2,
-    "system",
-  );
+  const measured = measureCompressor(async () => {
+    throw new Error("HTTP failure");
+  }, 2);
   await expect(measured.compress(input)).rejects.toThrow();
   expect(attemptTotals(measured.attempts)).toMatchObject({
     attempts: 1,
@@ -74,8 +65,8 @@ test("failed and incomplete usage remains unknown, retries retain budget", async
     unknownUsage: 1,
   });
   expect(measured.attempts[0]?.inputTokens).toBeNull();
-  const incomplete = measureCompressor(async () => ({ ...result, usageKnown: false }), 2, "system");
-  await incomplete.compress({ ...input, source: '{"previousSummary":"long"}' });
+  const incomplete = measureCompressor(async () => ({ ...result, usageKnown: false }), 2);
+  await incomplete.compress({ ...input, retry: true });
   expect(attemptTotals(incomplete.attempts)).toMatchObject({
     retries: 1,
     unknownUsage: 1,
@@ -83,15 +74,21 @@ test("failed and incomplete usage remains unknown, retries retain budget", async
   });
 });
 
-test("isolated mode removes context at compressor seam", async () => {
-  const contexts: string[] = [];
-  const compressor = async (value: Compression) => {
-    contexts.push(value.context);
+test("measurement forwards only range input and explicit retry metadata", async () => {
+  const received: Compression[] = [];
+  const measured = measureCompressor(async (value) => {
+    received.push(value);
     return result;
-  };
-  await measureCompressor(compressor, 1, "system").compress(input);
-  await measureCompressor(compressor, 1, "isolated").compress(input);
-  expect(contexts).toEqual(["historical fact", ""]);
+  }, 3);
+  const extra = { ...input, context: "external", previousSummary: "old reply" };
+  await measured.compress(extra);
+  await measured.compress({ ...input, source: '{"previousSummary":"literal source"}' });
+  await measured.compress({ ...input, retry: true });
+  expect(received[0]).toEqual(input);
+  expect(measured.attempts.map((attempt) => attempt.retry)).toEqual([false, false, true]);
+  expect(measured.attempts.every((attempt) => attempt.externalContextBytes === 0)).toBe(true);
+  expect(measured.attempts[0]?.sourceBytes).toBe(Buffer.byteLength(input.source));
+  expect(measured.attempts[0]?.outputBytes).toBe(Buffer.byteLength(result.text));
 });
 
 test("evaluation observes actual depths and explicit budget stop without retrieval claims", async () => {
@@ -105,6 +102,8 @@ test("evaluation observes actual depths and explicit budget stop without retriev
     maxCalls: 80,
   });
   expect(report.status).toBe("complete");
+  expect(report.inputPolicy).toBe(SUMMARY_POLICY);
+  expect(report.externalContextBytes).toBe(0);
   expect(report.maxDepth).toBe(5);
   expect(report.observedDepths).toEqual([0, 1, 2, 4, 5]);
   expect(report.nodes.some((node) => node.depth === 5)).toBe(true);
@@ -154,6 +153,9 @@ test("dry-run CLI stores the manifest and returns a small response without a ser
     expect(response.outputPath).toBe(path);
     const report: unknown = await Bun.file(path).json();
     expect(report).toHaveProperty("fixture.records");
+    expect(report).toHaveProperty("inputPolicy", SUMMARY_POLICY);
+    expect(report).toHaveProperty("externalContextBytes", 0);
+    expect(response.mode).toBe("range-only");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -171,3 +173,29 @@ test("256-record reports include the actual deepest structural node", async () =
   expect(report.observedDepths).toContain(8);
   expect(report.nodes.some((node) => node.depth === 8 && node.index === 0)).toBe(true);
 });
+
+for (const mode of ["system", "isolated"]) {
+  for (const live of [false, true]) {
+    test(`CLI rejects historical ${mode} policy with live=${live}`, async () => {
+      const child = Bun.spawn(
+        [
+          process.execPath,
+          join(import.meta.dir, "../eval/main.ts"),
+          "--mode",
+          mode,
+          ...(live ? ["--live"] : []),
+        ],
+        { stdout: "pipe", stderr: "pipe" },
+      );
+      const [code, stdout, stderr] = await Promise.all([
+        child.exited,
+        new Response(child.stdout).text(),
+        new Response(child.stderr).text(),
+      ]);
+      expect(code).not.toBe(0);
+      expect(stdout).toBe("");
+      expect(stderr).toContain("historical policies");
+      expect(stderr).toContain("da2151a");
+    });
+  }
+}

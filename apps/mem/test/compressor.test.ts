@@ -11,7 +11,7 @@ const settings: Settings = {
   timeoutMs: 1000,
   maxOutputTokens: 1024,
 };
-const input = { source: "원문", context: "context", merge: false, targetBytes: 512 };
+const input = { source: "원문", merge: false, targetBytes: 512 };
 test("invalid token counters are explicitly unmeasured", () => {
   const result = decodeCompletion(
     {
@@ -120,4 +120,25 @@ test("HTTP enforces input cap before making requests and bounds network timeout"
     code: "MODEL_UNAVAILABLE",
   });
   expect(requests).toBe(1);
+});
+
+test("HTTP whitelists range-only fields and retains two stateless messages on retry", async () => {
+  const config = local(async (request) => {
+    expect(await request.json()).toMatchObject({
+      messages: [
+        { role: "system", content: SUMMARY_PROMPT },
+        { role: "user", content: JSON.stringify({ ...input, retry: true }) },
+      ],
+    });
+    return Response.json(completion());
+  });
+  const structuralInput = {
+    ...input,
+    retry: true,
+    context: "outside context",
+    history: ["previous reply"],
+    pins: ["outside pin"],
+    scopes: ["other scope"],
+  };
+  await createCompressor(config, {})(structuralInput);
 });

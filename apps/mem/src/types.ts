@@ -26,7 +26,8 @@ export type PinChange = {
   expectedRevision: number;
   receipt: string;
 } & ({ op: "pin"; i: number; from: number; to: number } | { op: "unpin" });
-export type Compression = { source: string; context: string; merge: boolean; targetBytes: number };
+export const SUMMARY_POLICY = "range-only-v1";
+export type Compression = { source: string; merge: boolean; targetBytes: number; retry?: boolean };
 export type SummaryResult = {
   text: string;
   inputTokens: number;

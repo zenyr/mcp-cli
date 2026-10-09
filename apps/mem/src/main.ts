@@ -10,6 +10,7 @@ import { loadSettings } from "./settings";
 import { generationFor, openStore } from "./store";
 import { summarize } from "./tree";
 import type { Compressor, Env, Store } from "./types";
+import { SUMMARY_POLICY } from "./types";
 import { bytes, fail, isRecord, output } from "./values";
 
 export type Dependencies = {
@@ -75,6 +76,8 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
               baseUrl: settings.baseUrl,
               nodeBytes: settings.nodeBytes,
               contextBytes: settings.contextBytes,
+              contextBytesIgnored: true,
+              summaryInputPolicy: SUMMARY_POLICY,
               inputBytes: settings.inputBytes,
               timeoutMs: settings.timeoutMs,
               maxOutputTokens: settings.maxOutputTokens,
