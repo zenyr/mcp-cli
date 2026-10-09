@@ -24,7 +24,9 @@ MCP_CLI_DAEMON=1 bun run cli demo message echo --text hello
 앱의 `설정` 화면에서 CLI 실행 명령을 변경할 수 있습니다.
 실행 파일과 인수를 각각 한 줄에 입력하십시오.
 개발 환경에서는 Bun의 절대 경로와 `apps/cli/src/main.ts`의 절대 경로를 입력하십시오.
-빌드한 앱은 기본값으로 PATH의 `mcp-cli`를 실행합니다.
+빌드한 앱은 빌드에 사용한 Bun과 저장소 CLI의 절대 경로를 기본값으로 포함합니다.
+앱을 더블클릭해도 전역 설치된 이전 CLI를 사용하지 않습니다.
+이 프로토타입을 실행할 때는 빌드한 저장소 경로를 유지하십시오.
 CLI 바이너리를 앱에 번들하지 않습니다.
 
 ## 기능
@@ -70,7 +72,7 @@ POSIX에서는 디렉터리 권한을 0700, token과 socket 권한을 0600으로
 bun run check
 cd apps/desktop
 bun run build
-tinyjs build
+bun run native:build
 ```
 
 `tinyjs build`는 실행한 OS의 앱을 만듭니다.

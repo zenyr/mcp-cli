@@ -1,3 +1,5 @@
+import { defaultCommand } from "./default-command";
+
 let loginBusy = false;
 let loginProcess: tjs.Process | undefined;
 const cliCommand = async (app: DesktopApp): Promise<string[]> => {
@@ -5,7 +7,7 @@ const cliCommand = async (app: DesktopApp): Promise<string[]> => {
   if (Array.isArray(saved) && saved.length && saved.every((item) => typeof item === "string"))
     return saved;
   const entry = tjs.env.MCP_CLI_DESKTOP_ENTRY;
-  return entry ? [tjs.env.MCP_CLI_DESKTOP_BUN || "bun", entry] : ["mcp-cli"];
+  return entry ? [tjs.env.MCP_CLI_DESKTOP_BUN || "bun", entry] : defaultCommand;
 };
 const run = async (app: DesktopApp, args: string[], input?: unknown) => {
   const decoder = new TextDecoder();
