@@ -23,7 +23,6 @@ export type Compressor = (input: Compression) => Promise<SummaryResult>;
 export type Settings = {
   model: string;
   baseUrl: string;
-  command?: string[];
   nodeBytes: number;
   contextBytes: number;
   inputBytes: number;
@@ -49,6 +48,7 @@ export type Store = {
   ) => void;
   recordUsage: (scope: string, generation: string, usage: SummaryResult) => void;
   claim: (scope: string, generation: string, owner: string) => void;
+  renew: (scope: string, generation: string, owner: string) => void;
   release: (scope: string, generation: string, owner: string) => void;
   failed: (scope: string, generation: string, owner: string, message: string) => void;
   status: (scopes: Scope[], generation: string) => ScopeStatus[];

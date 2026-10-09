@@ -12,7 +12,6 @@ export const generationFor = (settings: Settings): string =>
         version: 1,
         model: settings.model,
         baseUrl: settings.baseUrl,
-        command: settings.command,
         nodeBytes: settings.nodeBytes,
         contextBytes: settings.contextBytes,
         inputBytes: settings.inputBytes,
@@ -179,6 +178,16 @@ export const openStore = (path: string): Store => {
           "MEMORY_BUSY",
           "Another process is summarizing this scope; retry mem summarize later.",
         );
+    },
+    renew: (scope, generation, owner) => {
+      const now = Date.now();
+      const result = db
+        .query(
+          "UPDATE leases SET expires=? WHERE scope=? AND generation=? AND owner=? AND expires>?",
+        )
+        .run(now + 180000, scope, generation, owner, now);
+      if (result.changes !== 1)
+        fail("LEASE_LOST", "Summary lease ownership was lost; no result will be published.");
     },
     release: (scope, generation, owner) => {
       db.query("UPDATE leases SET expires=0 WHERE scope=? AND generation=? AND owner=?").run(

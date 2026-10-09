@@ -34,8 +34,6 @@ const completion = (content = "summary") => ({
   usage: { prompt_tokens: 11, completion_tokens: 4 },
   model: "returned-model",
 });
-const command = (script: string, overrides: Partial<Settings> = {}) =>
-  createCompressor({ ...settings, command: [process.execPath, "-e", script], ...overrides }, {});
 afterEach(() => {
   for (const server of servers.splice(0)) server.stop(true);
 });
@@ -113,51 +111,4 @@ test("HTTP enforces input cap before making requests and bounds network timeout"
     code: "MODEL_UNAVAILABLE",
   });
   expect(requests).toBe(1);
-});
-
-test("command receives prompt on stdin and literal arguments without a shell", async () => {
-  const literal = "$(echo injected); *";
-  const compressor = createCompressor(
-    {
-      ...settings,
-      command: [
-        process.execPath,
-        "-e",
-        "const text = await Bun.stdin.text(); console.log(JSON.stringify({text, arg: process.argv.at(-1)}))",
-        literal,
-      ],
-    },
-    {},
-  );
-  const result = await compressor(input);
-  expect(JSON.parse(result.text)).toEqual({
-    text: `${SUMMARY_PROMPT}\n${JSON.stringify(input)}\n`,
-    arg: literal,
-  });
-  expect(result).toMatchObject({
-    model: "test-model",
-    inputTokens: 0,
-    outputTokens: 0,
-    usageKnown: false,
-  });
-});
-
-test("command trims stdout and ignores stderr on success", async () => {
-  expect(
-    (await command('console.error("diagnostic"); console.log("  output  ")')(input)).text,
-  ).toBe("output");
-});
-
-test("command rejects nonzero exits, empty output, output overflow, and timeout", async () => {
-  for (const [script, code, overrides] of [
-    ['console.error("private diagnostic"); process.exit(7)', "MODEL_COMMAND_FAILED", {}],
-    ['console.log(" ")', "MODEL_PROTOCOL", {}],
-    ['console.log("x".repeat(262145))', "MODEL_OUTPUT_OVERFLOW", {}],
-    ["setInterval(() => {}, 1000)", "MODEL_TIMEOUT", { timeoutMs: 80 }],
-  ] as const) {
-    await expect(command(script, overrides)(input)).rejects.toMatchObject({ code });
-  }
-  await expect(
-    command('throw new Error("must not start")', { inputBytes: 1 })(input),
-  ).rejects.toMatchObject({ code: "SUMMARY_INPUT_OVERFLOW" });
 });

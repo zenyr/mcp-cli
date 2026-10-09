@@ -102,21 +102,16 @@ test("settings defaults and environment overrides", async () => {
     inputBytes: 131072,
     timeoutMs: 60000,
   });
-  await writeFile(
-    path,
-    JSON.stringify({ model: "file-model", command: ["file-command"], nodeBytes: 1024 }),
-  );
+  await writeFile(path, JSON.stringify({ model: "file-model", nodeBytes: 1024 }));
   expect(
     await loadSettings(path, {
       MEM_MODEL: "env-model",
       MEM_BASE_URL: "https://example.invalid/v1",
-      MEM_SUMMARIZER_COMMAND: '["command","--argument"]',
       MEM_NODE_BYTES: "2048",
     }),
   ).toMatchObject({
     model: "env-model",
     baseUrl: "https://example.invalid/v1",
-    command: ["command", "--argument"],
     nodeBytes: 2048,
   });
 });

@@ -39,6 +39,18 @@ export const summarize = async (
 ): Promise<void> => {
   const owner = randomUUID();
   store.claim(scope.id, generation, owner);
+  let leaseError: Error | undefined;
+  const heartbeat = setInterval(() => {
+    try {
+      store.renew(scope.id, generation, owner);
+    } catch (error) {
+      leaseError = error instanceof Error ? error : new Error("Lease renewal failed.");
+    }
+  }, 30000);
+  const renew = () => {
+    if (leaseError) throw leaseError;
+    store.renew(scope.id, generation, owner);
+  };
   try {
     const entries = store.entries(scope.id);
     const nodes = new Map(store.nodes(scope.id, generation).map((node) => [nodeKey(node), node]));
@@ -74,7 +86,7 @@ export const summarize = async (
             fail("INPUT_OVERFLOW", "Whole shortening source exceeds inputBytes.", {
               limit: settings.inputBytes,
             });
-          store.claim(scope.id, generation, owner);
+          renew();
           const result = await compress({
             source: input,
             context,
@@ -96,7 +108,7 @@ export const summarize = async (
       }
       if (text === undefined)
         return fail("SUMMARY_TOO_LARGE", "Summary did not shrink within three responses.");
-      store.claim(scope.id, generation, owner);
+      renew();
       const node: Node = { ...part, text };
       store.publish(scope.id, generation, owner, node, usage);
       nodes.set(nodeKey(node), node);
@@ -132,6 +144,7 @@ export const summarize = async (
     );
     throw error;
   } finally {
+    clearInterval(heartbeat);
     store.release(scope.id, generation, owner);
   }
 };
