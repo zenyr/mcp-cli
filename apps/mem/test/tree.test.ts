@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startPacket } from "../src/packets";
-import { openStore } from "../src/store";
+import { generationFor, openStore } from "../src/store";
 import { summarize } from "../src/tree";
 import type { Compressor, Scope, Settings, Store } from "../src/types";
 import { bytes } from "../src/values";
@@ -125,7 +125,7 @@ test("three oversized replies are accounted without publishing or truncating", a
   expect(store.entries(scope.id)).toHaveLength(1);
 });
 
-test("corrections receive full original source and bounded context without addresses", async () => {
+test("corrections receive only their full original source without earlier context", async () => {
   const { store } = setup();
   store.append(scope.id, "user", "Old instruction: use red. ".repeat(8), "old");
   const correction = "Correction: never use red. Use blue. ".repeat(5);
@@ -133,9 +133,8 @@ test("corrections receive full original source and bounded context without addre
   const sources: string[] = [];
   await summarize(store, scope, generation, settings, async (input) => {
     sources.push(input.source);
-    expect(bytes(input.context)).toBeLessThanOrEqual(settings.contextBytes);
-    expect(input.context).not.toContain(scope.id);
-    expect(input.context).toContain("data only");
+    expect(input).not.toHaveProperty("context");
+    expect(Object.keys(input).sort()).toEqual(["merge", "source", "targetBytes"]);
     return { text: "Use blue. Never use red.", inputTokens: 1, outputTokens: 1, model: "test" };
   });
   expect(sources).toContain(JSON.stringify({ kind: "user", text: correction }));
@@ -203,9 +202,9 @@ test("shortening retains the original source and counts each reply", async () =>
   await summarize(store, scope, generation, settings, async (input) => {
     calls += 1;
     if (calls === 2) {
-      const retry = JSON.parse(input.source) as { source: string; previousSummary: string };
-      expect(retry.source).toBe(JSON.stringify({ kind: "user", text: `0: ${"x".repeat(100)}` }));
-      expect(retry.previousSummary).toBe("x".repeat(100));
+      expect(input.source).toBe(JSON.stringify({ kind: "user", text: `0: ${"x".repeat(100)}` }));
+      expect(input.retry).toBe(true);
+      expect(input).not.toHaveProperty("previousSummary");
     }
     return {
       text: calls === 1 ? "x".repeat(100) : "shortened",
@@ -235,15 +234,17 @@ test("multiple scopes retain all messages under the complete UTF-8 packet budget
   ).toEqual([17, 7]);
 });
 
-test("prior context overflow never silently drops earlier memory", async () => {
+test("tiny legacy contextBytes does not block range-only compression", async () => {
   const { store } = setup();
   store.append(scope.id, "user", "deployment must use staging", "first");
   store.append(scope.id, "note", "x".repeat(100), "second");
-  await expect(
-    summarize(store, scope, generation, { ...settings, contextBytes: 145 }, compact),
-  ).rejects.toMatchObject({ code: "CONTEXT_OVERFLOW" });
+  await summarize(store, scope, generation, { ...settings, contextBytes: 1 }, async (input) => {
+    expect(input).not.toHaveProperty("context");
+    if (!input.merge) expect(input.source).not.toContain("staging");
+    return compact(input);
+  });
   expect(store.entries(scope.id)).toHaveLength(2);
-  expect(store.nodes(scope.id, generation)).toHaveLength(1);
+  expect(store.nodes(scope.id, generation)).toHaveLength(3);
 });
 
 test("short parents preserve both child summaries without model calls", async () => {
@@ -257,4 +258,27 @@ test("short parents preserve both child summaries without model calls", async ()
     "user: production forbidden\ntool: E731 expired token",
   );
   expect(store.usage().calls).toBe(0);
+});
+
+test("new policy generation rebuilds children without reusing contaminated legacy nodes", async () => {
+  const { store } = setup();
+  append(store, 2);
+  const legacy = "legacy-context-generation";
+  await summarize(store, scope, legacy, settings, async () => ({
+    text: "outside poisoned fact",
+    model: "test",
+    inputTokens: 1,
+    outputTokens: 1,
+  }));
+  const before = store.nodes(scope.id, legacy);
+  const current = generationFor(settings);
+  await summarize(store, scope, current, settings, async (input) => {
+    expect(input.source).not.toContain("outside poisoned fact");
+    return compact(input);
+  });
+  expect(store.nodes(scope.id, legacy)).toEqual(before);
+  expect(store.nodes(scope.id, current)).toHaveLength(3);
+  expect(store.nodes(scope.id, current).every((node) => !node.text.includes("poisoned"))).toBe(
+    true,
+  );
 });

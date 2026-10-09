@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { openStore, generationFor } from "../src/store";
 import { summarize } from "../src/tree";
-import type { Compressor, Settings } from "../src/types";
+import { SUMMARY_POLICY, type Compressor, type Settings } from "../src/types";
 import { isRecord } from "../src/values";
 import { bytes } from "../src/values";
 import { createFixture, proxyCheck } from "./fixture";
@@ -18,21 +18,13 @@ export type Attempt = {
   outputTokens: number | null;
   durationMs: number;
   sourceBytes: number;
-  contextBytes: number;
+  targetBytes: number;
+  externalContextBytes: 0;
   outputBytes: number | null;
-};
-const isRetry = (source: string): boolean => {
-  try {
-    const value: unknown = JSON.parse(source);
-    return isRecord(value) && Object.hasOwn(value, "previousSummary");
-  } catch {
-    return false;
-  }
 };
 export const measureCompressor = (
   compress: Compressor,
   maxCalls: number,
-  mode: "system" | "isolated",
   progress?: (attempt: Attempt) => void,
 ) => {
   if (!Number.isSafeInteger(maxCalls) || maxCalls < 1) throw new Error("Invalid maxCalls");
@@ -46,22 +38,25 @@ export const measureCompressor = (
     const attempt: Attempt = {
       ordinal: attempts.length + 1,
       merge: input.merge,
-      retry: isRetry(input.source),
+      retry: input.retry === true,
       success: false,
       usageKnown: false,
       inputTokens: null,
       outputTokens: null,
       durationMs: 0,
       sourceBytes: bytes(input.source),
-      contextBytes: mode === "isolated" ? 0 : bytes(input.context),
+      targetBytes: input.targetBytes,
+      externalContextBytes: 0,
       outputBytes: null,
     };
     attempts.push(attempt);
     const started = performance.now();
     try {
       const result = await compress({
-        ...input,
-        context: mode === "isolated" ? "" : input.context,
+        source: input.source,
+        merge: input.merge,
+        targetBytes: input.targetBytes,
+        ...(input.retry === undefined ? {} : { retry: input.retry }),
       });
       attempt.success = true;
       attempt.outputBytes = bytes(result.text);
@@ -95,17 +90,10 @@ export const evaluate = async (options: {
   compress: Compressor;
   records?: number;
   maxCalls?: number;
-  mode?: "system" | "isolated";
   progress?: (attempt: Attempt) => void;
 }) => {
   const fixture = createFixture(options.records);
-  const mode = options.mode ?? "system";
-  const measured = measureCompressor(
-    options.compress,
-    options.maxCalls ?? 80,
-    mode,
-    options.progress,
-  );
+  const measured = measureCompressor(options.compress, options.maxCalls ?? 80, options.progress);
   const directory = await mkdtemp(join(tmpdir(), "mem-eval-"));
   const store = openStore(join(directory, "memory.sqlite"));
   const scope = { id: "evaluation", name: "evaluation", kind: "project" } as const;
@@ -151,12 +139,12 @@ export const evaluate = async (options: {
     return {
       status,
       generation,
+      inputPolicy: SUMMARY_POLICY,
+      externalContextBytes: 0 as const,
       failure,
-      mode,
       model: options.settings.model,
       nodeBytes: options.settings.nodeBytes,
       settings: {
-        contextBytes: options.settings.contextBytes,
         inputBytes: options.settings.inputBytes,
         timeoutMs: options.settings.timeoutMs,
         maxOutputTokens: options.settings.maxOutputTokens,
