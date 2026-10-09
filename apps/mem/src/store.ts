@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import type { Entry, Kind, Node, Scope, Settings, Store, SummaryResult } from "./types";
 import { createHash } from "node:crypto";
 import { end, fail } from "./values";
+import { createPinStore } from "./pins-store";
 
 export const generationFor = (settings: Settings): string =>
   createHash("sha256")
@@ -26,11 +27,13 @@ export const openStore = (path: string): Store => {
   chmodSync(path, 0o600);
   db.exec("PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;");
   const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version;
-  if (version !== 0 && version !== 1) {
+  if (version !== 0 && version !== 1 && version !== 2) {
     db.close();
     return fail("SCHEMA_VERSION", "Unsupported memory database version.");
   }
-  db.exec(`
+  const pinStore = db
+    .transaction(() => {
+      db.exec(`
     CREATE TABLE IF NOT EXISTS scopes (id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS entries (
       scope TEXT NOT NULL, i INTEGER NOT NULL CHECK(i>=0), kind TEXT NOT NULL,
@@ -45,8 +48,12 @@ export const openStore = (path: string): Store => {
     CREATE TABLE IF NOT EXISTS usage (
       scope TEXT NOT NULL, generation TEXT NOT NULL, model TEXT NOT NULL,
       inputTokens INTEGER NOT NULL, outputTokens INTEGER NOT NULL, measured INTEGER NOT NULL);
-    PRAGMA user_version=1;
   `);
+      const pins = createPinStore(db);
+      db.exec("PRAGMA user_version=2");
+      return pins;
+    })
+    .immediate();
   const selectEntries = db.query<Entry, [string, number]>(
     "SELECT * FROM entries WHERE scope=? AND i<? ORDER BY i",
   );
@@ -69,12 +76,17 @@ export const openStore = (path: string): Store => {
       fail("LEASE_LOST", "Summary lease expired; no node was published.");
   };
   return {
+    ...pinStore,
     scope: (scope) => {
       db.query(
         "INSERT INTO scopes VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name",
       ).run(scope.id, scope.name, scope.kind);
     },
     entries,
+    entry: (scope, i) =>
+      db
+        .query<Entry, [string, number]>("SELECT * FROM entries WHERE scope=? AND i=?")
+        .get(scope, i) ?? undefined,
     append: (scope: string, kind: Kind, text: string, receipt: string) =>
       db
         .transaction(() => {
@@ -111,6 +123,12 @@ export const openStore = (path: string): Store => {
         })
         .immediate(),
     nodes: (scope, generation) => selectNodes.all(scope, generation),
+    node: (scope, generation, l, i) =>
+      db
+        .query<Node, [string, string, number, number]>(
+          "SELECT l,i,text FROM nodes WHERE scope=? AND generation=? AND l=? AND i=?",
+        )
+        .get(scope, generation, l, i) ?? undefined,
     publish: (
       scope: string,
       generation: string,
