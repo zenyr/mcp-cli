@@ -33,9 +33,11 @@ if (!isRecord(pkg)) throw new Error("Invalid root package.json");
 const bins = await serviceBins();
 // Sorted like oxfmt sorts package.json so the check and the formatter agree.
 const desired: Record<string, string> = Object.fromEntries(
-  [["mcp-cli", "apps/cli/src/main.ts"], ...bins.map(({ bin }) => [bin, `bin/${bin}.ts`])].sort(
-    ([a = ""], [b = ""]) => a.localeCompare(b),
-  ),
+  [
+    ["mcp-cli", "apps/cli/src/main.ts"],
+    ["mem", "apps/mem/src/main.ts"],
+    ...bins.map(({ bin }) => [bin, `bin/${bin}.ts`]),
+  ].sort(([a = ""], [b = ""]) => a.localeCompare(b)),
 );
 
 const problems: string[] = [];

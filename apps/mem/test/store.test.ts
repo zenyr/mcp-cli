@@ -17,6 +17,7 @@ const settings: Settings = {
   contextBytes: 1024,
   inputBytes: 4096,
   timeoutMs: 1000,
+  maxOutputTokens: 1024,
 };
 const fixture = async () => {
   const directory = await mkdtemp(join(tmpdir(), "mem-store-"));
@@ -145,6 +146,7 @@ test("usage records every reply separately from publication and persists unknown
 test("generation changes for semantic settings but remains stable for timeout", () => {
   const original = generationFor(settings);
   expect(generationFor({ ...settings, timeoutMs: 50 })).toBe(original);
+  expect(generationFor({ ...settings, maxOutputTokens: 4096 })).toBe(original);
   for (const change of [
     { model: "other" },
     { baseUrl: "http://other/v1" },

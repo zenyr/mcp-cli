@@ -25,7 +25,15 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) return invalid();
   }
   if (!isRecord(config)) return invalid();
-  const keys = ["model", "baseUrl", "nodeBytes", "contextBytes", "inputBytes", "timeoutMs"];
+  const keys = [
+    "model",
+    "baseUrl",
+    "nodeBytes",
+    "contextBytes",
+    "inputBytes",
+    "timeoutMs",
+    "maxOutputTokens",
+  ];
   if (Object.keys(config).some((key) => !keys.includes(key))) return invalid();
   const settings: Settings = {
     model: config.model === undefined ? "deepseek-v4.1-flash" : string(config.model),
@@ -35,12 +43,16 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
       config.contextBytes === undefined ? 8192 : number(config.contextBytes, 16_777_216),
     inputBytes: config.inputBytes === undefined ? 131072 : number(config.inputBytes, 16_777_216),
     timeoutMs: config.timeoutMs === undefined ? 60000 : number(config.timeoutMs, 3_600_000),
+    maxOutputTokens:
+      config.maxOutputTokens === undefined ? 4096 : number(config.maxOutputTokens, 32768),
   };
   if (env.MEM_MODEL !== undefined) settings.model = string(env.MEM_MODEL);
   if (env.MEM_BASE_URL !== undefined) settings.baseUrl = string(env.MEM_BASE_URL);
   if (env.MEM_SUMMARIZER_COMMAND !== undefined) return invalid();
   if (env.MEM_NODE_BYTES !== undefined)
     settings.nodeBytes = number(Number(env.MEM_NODE_BYTES), 1_048_576);
+  if (env.MEM_MAX_OUTPUT_TOKENS !== undefined)
+    settings.maxOutputTokens = number(Number(env.MEM_MAX_OUTPUT_TOKENS), 32768);
   try {
     const url = new URL(settings.baseUrl);
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
