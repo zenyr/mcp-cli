@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
-    "typecheck": "bun scripts/default-command.ts && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json",
+    "typecheck": "bun scripts/default-command.ts && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json && tsc --noEmit -p tsconfig.tools.json",
     "desktop": "bun scripts/default-command.ts && tinyjs dev",
-    "native:build": "bun scripts/default-command.ts && bun scripts/tray-images.ts && tinyjs build"
+    "native:build": "bun scripts/default-command.ts && bun scripts/icons.ts && tinyjs build",
+    "test": "bun test test"
   },
   "dependencies": {
     "@mantine/core": "^9.7.1",

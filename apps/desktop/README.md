@@ -96,9 +96,18 @@ apps/desktop/dist/mcp-desktop
 
 ## 아이콘
 
-앱 아이콘은 `assets/app-icon.png`입니다.
-세 연결이 하나의 고리로 모이는 심볼을 내장 imagegen으로 제작했습니다.
-macOS 트레이는 `assets/connection-mark.svg`에서 만든 단색 template 아이콘을 사용합니다.
-Windows와 Linux 트레이는 `assets/tray-color.svg`에서 만든 컬러 아이콘을 사용합니다.
-트레이 PNG는 네이티브 빌드 전에 `scripts/tray-images.ts`가 생성합니다.
+원본은 `assets/mcp-cli.svg`입니다.
+`>`를 반시계 방향으로 45도 돌려 MCP 심볼의 좌측 하단에 배치했습니다.
+두 요소는 같은 대각선 중심축을 사용합니다.
+메인 아이콘은 초록색 MCP 심볼과 구릿빛 `>`를 사용합니다.
+`scripts/icons.ts`가 SVG에서 1024px 앱 PNG와 48px 트레이 PNG를 생성합니다.
+이미지 생성 모델은 사용하지 않습니다.
+
+macOS 메뉴 막대는 단색 template 아이콘을 사용합니다.
+Windows와 Linux 트레이는 투톤을 유지합니다.
+대몬 실행 중에는 전체 심볼을 100% 불투명도로 표시합니다.
+대몬에 연결하지 못하면 MCP 심볼만 50% 투명도로 표시합니다.
+`>`는 두 상태에서 100% 불투명도를 유지합니다.
 앱은 PNG를 캐시에 저장하므로 현재 작업 경로에 의존하지 않습니다.
+
+MCP 심볼은 [공식 저장소의 favicon](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/favicon.svg)을 사용했습니다.
