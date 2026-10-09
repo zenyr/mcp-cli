@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
+import { playUiSound } from "./ui-sounds";
 import { call, type Api } from "./ipc";
 
 export const useStatus = () =>
@@ -17,23 +18,35 @@ export const useServices = () =>
     staleTime: 30_000,
     retry: false,
   });
+const feedbackActions = new Set<keyof Api>([
+  "start",
+  "stop",
+  "reset",
+  "login",
+  "logout",
+  "saveSettings",
+]);
+
 export const useAction = <K extends keyof Api>(method: K, message?: string) => {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: Api[K]["input"]) => call(method, input),
     onSuccess: async () => {
+      if (feedbackActions.has(method) && method !== "start") playUiSound("success");
       if (message) notifications.show({ message, color: "teal" });
       await Promise.all([
         client.invalidateQueries({ queryKey: ["status"] }),
         client.invalidateQueries({ queryKey: ["services"] }),
       ]);
     },
-    onError: (error) =>
+    onError: (error) => {
+      if (feedbackActions.has(method)) playUiSound("error");
       notifications.show({
         title: "작업을 완료하지 못했습니다",
         message: error.message,
         color: "red",
         autoClose: 6000,
-      }),
+      });
+    },
   });
 };

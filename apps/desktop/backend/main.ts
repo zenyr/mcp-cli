@@ -1,3 +1,5 @@
+import { isSoundKind, type SoundKind } from "../shared/ui-sounds";
+import { observeDaemonSound, playUiSound, setSoundsEnabled } from "./ui-sounds";
 import { prepareTrayIcons } from "./tray-icon";
 import { defaultCommand } from "./default-command";
 
@@ -78,15 +80,27 @@ const run = async (app: DesktopApp, args: string[], input?: unknown) => {
     if (loginProcess === child) loginProcess = undefined;
   }
 };
+let statusSequence = 0;
+let observedSequence = 0;
+const checkDaemonStatus = async (app: DesktopApp) => {
+  const sequence = ++statusSequence;
+  const observe = async (status: unknown) => {
+    if (sequence <= observedSequence) return;
+    observedSequence = sequence;
+    await observeDaemonSound(app, status);
+  };
+  try {
+    const status = await run(app, ["daemon", "status"]);
+    await observe(status);
+    return { online: true, status };
+  } catch (error) {
+    await observe(null);
+    return { online: false, error: error instanceof Error ? error.message : String(error) };
+  }
+};
 let starting = false;
 export const api = {
-  status: async (_params: unknown, app: DesktopApp) => {
-    try {
-      return { online: true, status: await run(app, ["daemon", "status"]) };
-    } catch (error) {
-      return { online: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  },
+  status: (_params: unknown, app: DesktopApp) => checkDaemonStatus(app),
   services: (_params: unknown, app: DesktopApp) => run(app, ["desktop", "services"]),
   start: async (_params: unknown, app: DesktopApp) => {
     if (starting) throw new Error("대몬 시작을 기다려 주세요.");
@@ -121,6 +135,7 @@ export const api = {
         )
           throw new Error("대몬 시작 응답을 확인하지 못했습니다.");
         await reader?.cancel();
+        await checkDaemonStatus(app);
       } finally {
         clearTimeout(deadline);
       }
@@ -152,7 +167,17 @@ export const api = {
   settings: async (_params: unknown, app: DesktopApp) => ({
     cliCommand: await cliCommand(app),
     autoStart: (await app.store.get("autoStart")) === true,
+    soundsEnabled: (await app.store.get("soundsEnabled")) !== false,
   }),
+  sound: (params: { kind: SoundKind }, app: DesktopApp) => {
+    if (!isSoundKind(params?.kind)) throw new Error("Unknown UI sound");
+    return playUiSound(app, params.kind);
+  },
+  setSoundsEnabled: async (params: { enabled: boolean }, app: DesktopApp) => {
+    if (typeof params?.enabled !== "boolean") throw new Error("Invalid sound setting");
+    await setSoundsEnabled(app, params.enabled);
+    return null;
+  },
   saveSettings: async (params: { cliCommand: string[]; autoStart: boolean }, app: DesktopApp) => {
     if (
       typeof params.autoStart !== "boolean" ||

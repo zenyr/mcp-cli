@@ -1,6 +1,7 @@
 declare interface DesktopApp {
   paths: { cache: string };
   spawnHidden(args: string[], options?: tjs.ProcessOptions): tjs.Process;
+  playSound(path: string): Promise<boolean>;
   push(event: string, data?: unknown): void;
   show(): void;
   quit(): void;
