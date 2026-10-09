@@ -1,0 +1,943 @@
+{
+  "status": "complete",
+  "generation": "165542abcfc142f7e56215d1",
+  "inputPolicy": "range-only-v1",
+  "externalContextBytes": 0,
+  "model": "deepseek-v4.1-flash",
+  "nodeBytes": 512,
+  "settings": {
+    "inputBytes": 131072,
+    "timeoutMs": 60000,
+    "maxOutputTokens": 4096,
+    "thinking": "disabled"
+  },
+  "maxCalls": 80,
+  "records": 32,
+  "maxDepth": 5,
+  "selectedDepths": [0, 1, 2, 4, 5],
+  "observedDepths": [0, 1, 2, 4, 5],
+  "limitations": [
+    "Attempt success means a parsed model response, not acceptance as a summary node.",
+    "Literal proxy checks require manual review; they do not measure semantic accuracy.",
+    "Contradictory candidates may occur in negated statements; inspect quotedText.",
+    "No agent retrieval, oracle discovery, monetary pricing, or model comparison is measured.",
+    "Unknown usage is excluded from known token totals; totals are not complete cost estimates."
+  ],
+  "totals": {
+    "attempts": 10,
+    "success": 10,
+    "failures": 0,
+    "unknownUsage": 0,
+    "retries": 1,
+    "knownInputTokens": 4566,
+    "knownOutputTokens": 809,
+    "durationMs": 17777.932541,
+    "wallDurationMs": 17825.099625000003
+  },
+  "attempts": [
+    {
+      "ordinal": 1,
+      "merge": false,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 488,
+      "outputTokens": 40,
+      "durationMs": 1505.599,
+      "sourceBytes": 1024,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 154
+    },
+    {
+      "ordinal": 2,
+      "merge": true,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 408,
+      "outputTokens": 63,
+      "durationMs": 1332.0491660000002,
+      "sourceBytes": 653,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 266
+    },
+    {
+      "ordinal": 3,
+      "merge": false,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 486,
+      "outputTokens": 36,
+      "durationMs": 1142.074791,
+      "sourceBytes": 954,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 125
+    },
+    {
+      "ordinal": 4,
+      "merge": true,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 399,
+      "outputTokens": 55,
+      "durationMs": 1484.617667,
+      "sourceBytes": 598,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 187
+    },
+    {
+      "ordinal": 5,
+      "merge": false,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 492,
+      "outputTokens": 57,
+      "durationMs": 1532.7419170000003,
+      "sourceBytes": 1016,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 211
+    },
+    {
+      "ordinal": 6,
+      "merge": true,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 420,
+      "outputTokens": 73,
+      "durationMs": 1607.154125,
+      "sourceBytes": 685,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 261
+    },
+    {
+      "ordinal": 7,
+      "merge": false,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 504,
+      "outputTokens": 49,
+      "durationMs": 1383.6459999999988,
+      "sourceBytes": 1114,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 194
+    },
+    {
+      "ordinal": 8,
+      "merge": true,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 412,
+      "outputTokens": 49,
+      "durationMs": 2353.1359169999996,
+      "sourceBytes": 668,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 194
+    },
+    {
+      "ordinal": 9,
+      "merge": true,
+      "retry": false,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 476,
+      "outputTokens": 217,
+      "durationMs": 3546.100042,
+      "sourceBytes": 933,
+      "targetBytes": 512,
+      "externalContextBytes": 0,
+      "outputBytes": 808
+    },
+    {
+      "ordinal": 10,
+      "merge": true,
+      "retry": true,
+      "success": true,
+      "usageKnown": true,
+      "inputTokens": 481,
+      "outputTokens": 170,
+      "durationMs": 1890.8139159999992,
+      "sourceBytes": 933,
+      "targetBytes": 384,
+      "externalContextBytes": 0,
+      "outputBytes": 596
+    }
+  ],
+  "fixture": {
+    "records": [
+      {
+        "label": "original-production-plan",
+        "kind": "user",
+        "text": "원래 계획은 production 배포 준비입니다. 아직 실행하지 않았습니다."
+      },
+      {
+        "label": "irrelevant-001",
+        "kind": "note",
+        "text": "무관 기록 1: 회의실 번호를 확인했습니다."
+      },
+      {
+        "kind": "user",
+        "label": "cancel-production",
+        "text": "[CANCEL] 기존 production 배포 계획을 취소합니다. staging에서만 검증하십시오. production 금지. 이 지시가 이전 production 계획을 대체합니다. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. [CANCEL] 기존 production 배포 계획을 취소합니다. staging에서만 검증하십시오. production 금지. 이 지시가 이전 production 계획을 대체합니다."
+      },
+      {
+        "label": "irrelevant-003",
+        "kind": "note",
+        "text": "무관 기록 3: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-004",
+        "kind": "note",
+        "text": "무관 기록 4: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-005",
+        "kind": "note",
+        "text": "무관 기록 5: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-006",
+        "kind": "note",
+        "text": "무관 기록 6: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-007",
+        "kind": "note",
+        "text": "무관 기록 7: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-008",
+        "kind": "note",
+        "text": "무관 기록 8: 회의실 번호를 확인했습니다."
+      },
+      {
+        "kind": "tool",
+        "label": "expired-token",
+        "text": "[E731] 도구 진단 결과 E731 원인은 만료된 토큰입니다. 네트워크 장애가 아닙니다. 토큰 갱신이 필요합니다. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. [E731] 도구 진단 결과 E731 원인은 만료된 토큰입니다. 네트워크 장애가 아닙니다. 토큰 갱신이 필요합니다."
+      },
+      {
+        "label": "irrelevant-010",
+        "kind": "note",
+        "text": "무관 기록 10: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-011",
+        "kind": "note",
+        "text": "무관 기록 11: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-012",
+        "kind": "note",
+        "text": "무관 기록 12: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-013",
+        "kind": "note",
+        "text": "무관 기록 13: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-014",
+        "kind": "note",
+        "text": "무관 기록 14: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-015",
+        "kind": "note",
+        "text": "무관 기록 15: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-016",
+        "kind": "note",
+        "text": "무관 기록 16: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-017",
+        "kind": "note",
+        "text": "무관 기록 17: 회의실 번호를 확인했습니다."
+      },
+      {
+        "kind": "tool",
+        "label": "deployment-unconfirmed",
+        "text": "[UNCONFIRMED] 배포 요청은 접수됐지만 완료 여부는 확인되지 않았습니다. 배포 성공으로 기록하지 마십시오. 완료 로그가 없습니다. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. [UNCONFIRMED] 배포 요청은 접수됐지만 완료 여부는 확인되지 않았습니다. 배포 성공으로 기록하지 마십시오. 완료 로그가 없습니다."
+      },
+      {
+        "label": "irrelevant-019",
+        "kind": "note",
+        "text": "무관 기록 19: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-020",
+        "kind": "note",
+        "text": "무관 기록 20: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-021",
+        "kind": "note",
+        "text": "무관 기록 21: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-022",
+        "kind": "note",
+        "text": "무관 기록 22: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-023",
+        "kind": "note",
+        "text": "무관 기록 23: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-024",
+        "kind": "note",
+        "text": "무관 기록 24: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-025",
+        "kind": "note",
+        "text": "무관 기록 25: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-026",
+        "kind": "note",
+        "text": "무관 기록 26: 회의실 번호를 확인했습니다."
+      },
+      {
+        "kind": "user",
+        "label": "user-vs-tool",
+        "text": "[SOURCE] 사용자는 staging 검증을 요청했습니다. 도구가 보고한 접수 상태는 사용자 승인이나 배포 성공을 의미하지 않습니다. 사용자 지시와 도구 보고를 구분하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. 이 기록의 출처와 상태를 보존하십시오. [SOURCE] 사용자는 staging 검증을 요청했습니다. 도구가 보고한 접수 상태는 사용자 승인이나 배포 성공을 의미하지 않습니다. 사용자 지시와 도구 보고를 구분하십시오."
+      },
+      {
+        "label": "irrelevant-028",
+        "kind": "note",
+        "text": "무관 기록 28: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-029",
+        "kind": "note",
+        "text": "무관 기록 29: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-030",
+        "kind": "note",
+        "text": "무관 기록 30: 회의실 번호를 확인했습니다."
+      },
+      {
+        "label": "irrelevant-031",
+        "kind": "note",
+        "text": "무관 기록 31: 회의실 번호를 확인했습니다."
+      }
+    ],
+    "facts": [
+      {
+        "id": "cancel-production",
+        "evidence": [
+          {
+            "i": 2,
+            "from": 0,
+            "to": 467
+          }
+        ],
+        "expected": ["staging", "production", "취소"],
+        "contradictoryCandidates": ["production 배포 성공", "production만 배포"]
+      },
+      {
+        "id": "expired-token",
+        "evidence": [
+          {
+            "i": 9,
+            "from": 0,
+            "to": 393
+          }
+        ],
+        "expected": ["E731", "토큰", "만료"],
+        "contradictoryCandidates": ["원인은 네트워크"]
+      },
+      {
+        "id": "deployment-unconfirmed",
+        "evidence": [
+          {
+            "i": 18,
+            "from": 0,
+            "to": 419
+          }
+        ],
+        "expected": ["확인", "완료"],
+        "contradictoryCandidates": ["배포 성공", "배포 완료"]
+      },
+      {
+        "id": "user-vs-tool",
+        "evidence": [
+          {
+            "i": 27,
+            "from": 0,
+            "to": 461
+          }
+        ],
+        "expected": ["사용자", "도구"],
+        "contradictoryCandidates": ["사용자가 배포 성공을 보고"]
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "depth": 0,
+      "index": 0,
+      "interval": [0, 1],
+      "quotedText": "user: 원래 계획은 production 배포 준비입니다. 아직 실행하지 않았습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 1,
+      "interval": [1, 2],
+      "quotedText": "note: 무관 기록 1: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 2,
+      "interval": [2, 3],
+      "quotedText": "사용자 지시: 기존 production 배포 계획 취소, staging에서만 검증, production 금지, 이 지시가 이전 production 계획을 대체함.",
+      "proxyChecks": [
+        {
+          "fact": "cancel-production",
+          "present": ["staging", "production", "취소"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 0,
+      "index": 3,
+      "interval": [3, 4],
+      "quotedText": "note: 무관 기록 3: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 4,
+      "interval": [4, 5],
+      "quotedText": "note: 무관 기록 4: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 5,
+      "interval": [5, 6],
+      "quotedText": "note: 무관 기록 5: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 6,
+      "interval": [6, 7],
+      "quotedText": "note: 무관 기록 6: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 7,
+      "interval": [7, 8],
+      "quotedText": "note: 무관 기록 7: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 8,
+      "interval": [8, 9],
+      "quotedText": "note: 무관 기록 8: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 9,
+      "interval": [9, 10],
+      "quotedText": "도구 진단 결과 E731 원인은 만료된 토큰이며 네트워크 장애가 아니고 토큰 갱신이 필요합니다.",
+      "proxyChecks": [
+        {
+          "fact": "expired-token",
+          "present": ["E731", "토큰", "만료"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 0,
+      "index": 10,
+      "interval": [10, 11],
+      "quotedText": "note: 무관 기록 10: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 11,
+      "interval": [11, 12],
+      "quotedText": "note: 무관 기록 11: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 12,
+      "interval": [12, 13],
+      "quotedText": "note: 무관 기록 12: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 13,
+      "interval": [13, 14],
+      "quotedText": "note: 무관 기록 13: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 14,
+      "interval": [14, 15],
+      "quotedText": "note: 무관 기록 14: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 15,
+      "interval": [15, 16],
+      "quotedText": "note: 무관 기록 15: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 16,
+      "interval": [16, 17],
+      "quotedText": "note: 무관 기록 16: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 17,
+      "interval": [17, 18],
+      "quotedText": "note: 무관 기록 17: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 18,
+      "interval": [18, 19],
+      "quotedText": "[UNCONFIRMED] 배포 요청은 접수됐지만 완료 여부는 확인되지 않았습니다; 완료 로그가 없습니다; 배포 성공으로 기록하지 마십시오; 출처와 상태를 보존하십시오.",
+      "proxyChecks": [
+        {
+          "fact": "deployment-unconfirmed",
+          "present": ["확인", "완료"],
+          "missing": [],
+          "contradictoryCandidates": ["배포 성공"]
+        }
+      ]
+    },
+    {
+      "depth": 0,
+      "index": 19,
+      "interval": [19, 20],
+      "quotedText": "note: 무관 기록 19: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 20,
+      "interval": [20, 21],
+      "quotedText": "note: 무관 기록 20: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 21,
+      "interval": [21, 22],
+      "quotedText": "note: 무관 기록 21: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 22,
+      "interval": [22, 23],
+      "quotedText": "note: 무관 기록 22: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 23,
+      "interval": [23, 24],
+      "quotedText": "note: 무관 기록 23: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 24,
+      "interval": [24, 25],
+      "quotedText": "note: 무관 기록 24: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 25,
+      "interval": [25, 26],
+      "quotedText": "note: 무관 기록 25: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 26,
+      "interval": [26, 27],
+      "quotedText": "note: 무관 기록 26: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 27,
+      "interval": [27, 28],
+      "quotedText": "사용자는 staging 검증을 요청했고, 도구 보고의 접수 상태는 사용자 승인·배포 성공을 의미하지 않으며 사용자 지시와 도구 보고는 구별되어야 함.",
+      "proxyChecks": [
+        {
+          "fact": "user-vs-tool",
+          "present": ["사용자", "도구"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 0,
+      "index": 28,
+      "interval": [28, 29],
+      "quotedText": "note: 무관 기록 28: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 29,
+      "interval": [29, 30],
+      "quotedText": "note: 무관 기록 29: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 30,
+      "interval": [30, 31],
+      "quotedText": "note: 무관 기록 30: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 0,
+      "index": 31,
+      "interval": [31, 32],
+      "quotedText": "note: 무관 기록 31: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 0,
+      "interval": [0, 2],
+      "quotedText": "user: 원래 계획은 production 배포 준비입니다. 아직 실행하지 않았습니다.\nnote: 무관 기록 1: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 1,
+      "interval": [2, 4],
+      "quotedText": "사용자 지시: 기존 production 배포 계획 취소, staging에서만 검증, production 금지, 이 지시가 이전 production 계획을 대체함.\nnote: 무관 기록 3: 회의실 번호를 확인했습니다.",
+      "proxyChecks": [
+        {
+          "fact": "cancel-production",
+          "present": ["staging", "production", "취소"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 1,
+      "index": 2,
+      "interval": [4, 6],
+      "quotedText": "note: 무관 기록 4: 회의실 번호를 확인했습니다.\nnote: 무관 기록 5: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 3,
+      "interval": [6, 8],
+      "quotedText": "note: 무관 기록 6: 회의실 번호를 확인했습니다.\nnote: 무관 기록 7: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 4,
+      "interval": [8, 10],
+      "quotedText": "note: 무관 기록 8: 회의실 번호를 확인했습니다.\n도구 진단 결과 E731 원인은 만료된 토큰이며 네트워크 장애가 아니고 토큰 갱신이 필요합니다.",
+      "proxyChecks": [
+        {
+          "fact": "expired-token",
+          "present": ["E731", "토큰", "만료"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 1,
+      "index": 5,
+      "interval": [10, 12],
+      "quotedText": "note: 무관 기록 10: 회의실 번호를 확인했습니다.\nnote: 무관 기록 11: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 6,
+      "interval": [12, 14],
+      "quotedText": "note: 무관 기록 12: 회의실 번호를 확인했습니다.\nnote: 무관 기록 13: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 7,
+      "interval": [14, 16],
+      "quotedText": "note: 무관 기록 14: 회의실 번호를 확인했습니다.\nnote: 무관 기록 15: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 8,
+      "interval": [16, 18],
+      "quotedText": "note: 무관 기록 16: 회의실 번호를 확인했습니다.\nnote: 무관 기록 17: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 9,
+      "interval": [18, 20],
+      "quotedText": "[UNCONFIRMED] 배포 요청은 접수됐지만 완료 여부는 확인되지 않았습니다; 완료 로그가 없습니다; 배포 성공으로 기록하지 마십시오; 출처와 상태를 보존하십시오.\nnote: 무관 기록 19: 회의실 번호를 확인했습니다.",
+      "proxyChecks": [
+        {
+          "fact": "deployment-unconfirmed",
+          "present": ["확인", "완료"],
+          "missing": [],
+          "contradictoryCandidates": ["배포 성공"]
+        }
+      ]
+    },
+    {
+      "depth": 1,
+      "index": 10,
+      "interval": [20, 22],
+      "quotedText": "note: 무관 기록 20: 회의실 번호를 확인했습니다.\nnote: 무관 기록 21: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 11,
+      "interval": [22, 24],
+      "quotedText": "note: 무관 기록 22: 회의실 번호를 확인했습니다.\nnote: 무관 기록 23: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 12,
+      "interval": [24, 26],
+      "quotedText": "note: 무관 기록 24: 회의실 번호를 확인했습니다.\nnote: 무관 기록 25: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 13,
+      "interval": [26, 28],
+      "quotedText": "note: 무관 기록 26: 회의실 번호를 확인했습니다.\n사용자는 staging 검증을 요청했고, 도구 보고의 접수 상태는 사용자 승인·배포 성공을 의미하지 않으며 사용자 지시와 도구 보고는 구별되어야 함.",
+      "proxyChecks": [
+        {
+          "fact": "user-vs-tool",
+          "present": ["사용자", "도구"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 1,
+      "index": 14,
+      "interval": [28, 30],
+      "quotedText": "note: 무관 기록 28: 회의실 번호를 확인했습니다.\nnote: 무관 기록 29: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 1,
+      "index": 15,
+      "interval": [30, 32],
+      "quotedText": "note: 무관 기록 30: 회의실 번호를 확인했습니다.\nnote: 무관 기록 31: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 2,
+      "index": 0,
+      "interval": [0, 4],
+      "quotedText": "user: 원래 계획은 production 배포 준비입니다. 아직 실행하지 않았습니다.\nnote: 무관 기록 1: 회의실 번호를 확인했습니다.\n사용자 지시: 기존 production 배포 계획 취소, staging에서만 검증, production 금지, 이 지시가 이전 production 계획을 대체함.\nnote: 무관 기록 3: 회의실 번호를 확인했습니다.",
+      "proxyChecks": [
+        {
+          "fact": "cancel-production",
+          "present": ["staging", "production", "취소"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 2,
+      "index": 1,
+      "interval": [4, 8],
+      "quotedText": "note: 무관 기록 4: 회의실 번호를 확인했습니다.\nnote: 무관 기록 5: 회의실 번호를 확인했습니다.\nnote: 무관 기록 6: 회의실 번호를 확인했습니다.\nnote: 무관 기록 7: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 2,
+      "index": 2,
+      "interval": [8, 12],
+      "quotedText": "note: 무관 기록 8: 회의실 번호를 확인했습니다.\n도구 진단 결과 E731 원인은 만료된 토큰이며 네트워크 장애가 아니고 토큰 갱신이 필요합니다.\nnote: 무관 기록 10: 회의실 번호를 확인했습니다.\nnote: 무관 기록 11: 회의실 번호를 확인했습니다.",
+      "proxyChecks": [
+        {
+          "fact": "expired-token",
+          "present": ["E731", "토큰", "만료"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 2,
+      "index": 3,
+      "interval": [12, 16],
+      "quotedText": "note: 무관 기록 12: 회의실 번호를 확인했습니다.\nnote: 무관 기록 13: 회의실 번호를 확인했습니다.\nnote: 무관 기록 14: 회의실 번호를 확인했습니다.\nnote: 무관 기록 15: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 2,
+      "index": 4,
+      "interval": [16, 20],
+      "quotedText": "note: 무관 기록 16: 회의실 번호를 확인했습니다.\nnote: 무관 기록 17: 회의실 번호를 확인했습니다.\n[UNCONFIRMED] 배포 요청은 접수됐지만 완료 여부는 확인되지 않았습니다; 완료 로그가 없습니다; 배포 성공으로 기록하지 마십시오; 출처와 상태를 보존하십시오.\nnote: 무관 기록 19: 회의실 번호를 확인했습니다.",
+      "proxyChecks": [
+        {
+          "fact": "deployment-unconfirmed",
+          "present": ["확인", "완료"],
+          "missing": [],
+          "contradictoryCandidates": ["배포 성공"]
+        }
+      ]
+    },
+    {
+      "depth": 2,
+      "index": 5,
+      "interval": [20, 24],
+      "quotedText": "note: 무관 기록 20: 회의실 번호를 확인했습니다.\nnote: 무관 기록 21: 회의실 번호를 확인했습니다.\nnote: 무관 기록 22: 회의실 번호를 확인했습니다.\nnote: 무관 기록 23: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 2,
+      "index": 6,
+      "interval": [24, 28],
+      "quotedText": "note: 무관 기록 24: 회의실 번호를 확인했습니다.\nnote: 무관 기록 25: 회의실 번호를 확인했습니다.\nnote: 무관 기록 26: 회의실 번호를 확인했습니다.\n사용자는 staging 검증을 요청했고, 도구 보고의 접수 상태는 사용자 승인·배포 성공을 의미하지 않으며 사용자 지시와 도구 보고는 구별되어야 함.",
+      "proxyChecks": [
+        {
+          "fact": "user-vs-tool",
+          "present": ["사용자", "도구"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 2,
+      "index": 7,
+      "interval": [28, 32],
+      "quotedText": "note: 무관 기록 28: 회의실 번호를 확인했습니다.\nnote: 무관 기록 29: 회의실 번호를 확인했습니다.\nnote: 무관 기록 30: 회의실 번호를 확인했습니다.\nnote: 무관 기록 31: 회의실 번호를 확인했습니다.",
+      "proxyChecks": []
+    },
+    {
+      "depth": 4,
+      "index": 0,
+      "interval": [0, 16],
+      "quotedText": "원래 계획은 production 배포 준비였고 아직 실행하지 않았습니다; 사용자 지시로 기존 production 배포 계획을 취소하고 staging에서만 검증하며 production은 금지되었고, 이 지시가 이전 production 계획을 대체함.\n도구 진단 결과 E731 원인은 만료된 토큰이며 네트워크 장애가 아니고 토큰 갱신이 필요합니다; 회의실 번호 확인 기록 8, 10–15는 무관합니다.",
+      "proxyChecks": [
+        {
+          "fact": "cancel-production",
+          "present": ["staging", "production", "취소"],
+          "missing": [],
+          "contradictoryCandidates": []
+        },
+        {
+          "fact": "expired-token",
+          "present": ["E731", "토큰", "만료"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 4,
+      "index": 1,
+      "interval": [16, 32],
+      "quotedText": "[UNCONFIRMED] 배포 요청은 접수됐지만 완료 여부는 확인되지 않았습니다; 완료 로그가 없습니다; 배포 성공으로 기록하지 마십시오; 출처와 상태를 보존하십시오. (무관 기록 16–23: 회의실 번호 확인.)\n사용자가 staging 검증을 요청했고, 도구 보고의 접수 상태는 사용자 승인·배포 성공을 의미하지 않으며 사용자 지시와 도구 보고는 구별되어야 함.",
+      "proxyChecks": [
+        {
+          "fact": "deployment-unconfirmed",
+          "present": ["확인", "완료"],
+          "missing": [],
+          "contradictoryCandidates": ["배포 성공"]
+        },
+        {
+          "fact": "user-vs-tool",
+          "present": ["사용자", "도구"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    },
+    {
+      "depth": 5,
+      "index": 0,
+      "interval": [0, 32],
+      "quotedText": "원래 production 배포 준비 계획은 실행되지 않았고, 사용자 지시로 취소되어 staging에서만 검증하며 production은 금지됨(이 지시가 이전 계획을 대체). 도구 진단상 E731 원인은 만료된 토큰이며 네트워크 장애가 아니고 토큰 갱신이 필요함. 배포 요청은 접수됐으나 완료 로그가 없어 완료·성공 여부는 미확인이며 성공으로 기록하면 안 됨; 도구 보고의 접수 상태는 사용자 승인·배포 성공을 의미하지 않음. 회의실 번호 확인 기록 8, 10–15, 16–23은 무관함.",
+      "proxyChecks": [
+        {
+          "fact": "cancel-production",
+          "present": ["staging", "production", "취소"],
+          "missing": [],
+          "contradictoryCandidates": []
+        },
+        {
+          "fact": "expired-token",
+          "present": ["E731", "토큰", "만료"],
+          "missing": [],
+          "contradictoryCandidates": []
+        },
+        {
+          "fact": "deployment-unconfirmed",
+          "present": ["확인", "완료"],
+          "missing": [],
+          "contradictoryCandidates": ["배포 성공"]
+        },
+        {
+          "fact": "user-vs-tool",
+          "present": ["사용자", "도구"],
+          "missing": [],
+          "contradictoryCandidates": []
+        }
+      ]
+    }
+  ]
+}

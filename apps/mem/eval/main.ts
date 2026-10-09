@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
+import { SUMMARY_POLICY } from "../src/types";
 import { createCompressor } from "../src/compressor";
 import { loadSettings } from "../src/settings";
 import { evaluate } from "./evaluation";
@@ -15,7 +16,7 @@ const main = async () => {
       live: { type: "boolean", default: false },
       records: { type: "string", default: "32" },
       model: { type: "string" },
-      mode: { type: "string", default: "system" },
+      mode: { type: "string", default: "range-only" },
       "max-calls": { type: "string", default: "80" },
       output: { type: "string" },
       "node-bytes": { type: "string" },
@@ -26,7 +27,10 @@ const main = async () => {
   const records = Number(values.records);
   const fixture = createFixture(records);
   const mode = values.mode;
-  if (mode !== "system" && mode !== "isolated") throw new Error("mode must be system or isolated");
+  if (mode !== "range-only")
+    throw new Error(
+      "Only --mode range-only is supported. system and isolated are historical policies. Use historical commit da2151a to reproduce them.",
+    );
   const maxCalls = Number(values["max-calls"]);
   if (!Number.isSafeInteger(maxCalls) || maxCalls < 1)
     throw new Error("max-calls must be a positive integer");
@@ -41,7 +45,6 @@ const main = async () => {
         settings,
         compress: createCompressor(settings, process.env),
         records,
-        mode,
         maxCalls,
         progress: (attempt) => {
           if (attempt.ordinal % 5 === 0 || !attempt.success)
@@ -52,7 +55,8 @@ const main = async () => {
       })
     : {
         status: "dry-run",
-        mode,
+        inputPolicy: SUMMARY_POLICY,
+        externalContextBytes: 0 as const,
         model: settings.model,
         nodeBytes: settings.nodeBytes,
         maxCalls,
