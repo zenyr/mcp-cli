@@ -1,0 +1,17 @@
+{
+  "name": "mcp-desktop",
+  "title": "MCP CLI",
+  "size": "880x640",
+  "id": "app.mcp-cli.desktop",
+  "version": "0.1.0",
+  "backend": "backend/main.ts",
+  "frontend": {
+    "build": "bun run build",
+    "dist": "dist",
+    "dev": "bun run dev",
+    "devUrl": "http://127.0.0.1:5173"
+  },
+  "activation": "accessory",
+  "minTinyjsVersion": "0.40.0",
+  "icon": "icon.png"
+}

@@ -363,3 +363,24 @@ bun scripts/worktree.ts init
 - 생성 코드는 문법 제한과 수동 포맷에서 제외합니다.
 - 일반 소스는 350라인 초과 시 경고합니다. 테스트와 fixture는 예외입니다.
 - `bun run check`는 품질 도구 자체의 테스트도 실행합니다.
+
+## Desktop prototype and connection daemon
+
+`apps/desktop` provides a tinyjs tray app with React, TanStack Router, TanStack Query, and Mantine UI.
+See [desktop setup](apps/desktop/README.md) for development, native builds, and authentication controls.
+
+```sh
+bun run cli daemon start
+# In another terminal:
+MCP_CLI_DAEMON=1 bun run cli demo message echo --text hello
+bun run cli daemon status
+bun run cli daemon reset
+bun run cli daemon stop
+```
+
+Daemon mode is opt-in and preserves command output and exit codes.
+Without `MCP_CLI_DAEMON=1`, commands keep using direct connections.
+The daemon keeps at most 32 connections and closes each after 60 seconds without requests.
+Reset and shutdown wait for active requests, and failed tool calls are not retried.
+The daemon uses authenticated local IPC and accepts an absolute `MCP_CLI_DAEMON_DIR` override.
+The current prototype does not automatically recover ownership files after a crash.

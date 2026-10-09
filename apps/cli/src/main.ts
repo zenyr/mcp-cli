@@ -1,5 +1,8 @@
 #!/usr/bin/env bun
 import { RepeatedCallError, UsageError } from "@mcp-cli/core";
+import { desktopCommand } from "./desktop";
+import { daemonCommand } from "./daemon/command";
+import { resetDaemonIfRunning, openDaemonSession } from "./daemon/client";
 import { connect } from "@mcp-cli/mcp";
 import { runService } from "@mcp-cli/runtime";
 import {
@@ -28,8 +31,16 @@ export const main = async (argv: string[]): Promise<number> => {
   if (!command || ["--help", "-h", "help"].includes(command)) {
     const serviceNames = (await registry()).plugins.map((plugin) => plugin.service);
     console.log(
-      `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n       mcp-cli plugins\n       mcp-cli login <service> [--no-browser]\n       mcp-cli logout <service>\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
+      `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n       mcp-cli plugins\n       mcp-cli daemon <start|status|reset|stop>\n       mcp-cli login <service> [--no-browser]\n       mcp-cli logout <service>\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
     );
+    return EXIT.ok;
+  }
+  if (command === "desktop") {
+    await desktopCommand(args);
+    return EXIT.ok;
+  }
+  if (command === "daemon") {
+    await daemonCommand(args);
     return EXIT.ok;
   }
   if (command === "generate") {
@@ -48,6 +59,7 @@ export const main = async (argv: string[]): Promise<number> => {
       manual: stdinRedirects,
       readSecret,
     });
+    await resetDaemonIfRunning();
     return EXIT.ok;
   }
   if (command === "plugins") {
@@ -60,7 +72,9 @@ export const main = async (argv: string[]): Promise<number> => {
   const manifest = await loadManifest(discovered, found);
   return runService(plugin, manifest, args, {
     open: async (credential) =>
-      connect(await resolveConnection(plugin, process.env, defaultStore(), credential)),
+      process.env.MCP_CLI_DAEMON === "1"
+        ? openDaemonSession(plugin.name, credential)
+        : connect(await resolveConnection(plugin, process.env, defaultStore(), credential)),
     guard: defaultRepeatGuard(process.env),
     cacheScope: (credential) =>
       extensionCacheScope(plugin, process.env, defaultStore(), credential),

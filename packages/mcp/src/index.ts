@@ -128,6 +128,7 @@ const openTransport = (config: Connection) => {
       transport: new StdioClientTransport({
         command: config.command,
         args: config.args,
+        cwd: config.cwd,
         env: config.env,
         stderr: "inherit",
       }),

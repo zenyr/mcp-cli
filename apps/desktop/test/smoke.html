@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <meta charset="utf-8" /><title>MCP native smoke</title>
+  <body>
+    네이티브 IPC 검증
+    <script type="module">
+      const check = (ok, label) => {
+        if (!ok) throw new Error(label);
+      };
+      try {
+        const settings = await tiny.api.call("settings");
+        check(Array.isArray(settings.cliCommand), "CLI settings");
+        const services = await tiny.api.call("services");
+        check(
+          services.some((service) => service.name === "demo"),
+          "service discovery",
+        );
+        const before = await tiny.api.call("status");
+        check(!before.online, "isolated daemon starts offline");
+        await tiny.api.call("start");
+        const online = await tiny.api.call("status");
+        check(online.online && online.status.connections.length === 0, "daemon ready");
+        await tiny.api.call("reset");
+        await tiny.api.call("stop");
+        await tiny.log("MCP SMOKE PASS: settings, discovery, start, status, reset, stop");
+      } catch (error) {
+        await tiny.log("MCP SMOKE FAIL: " + String(error));
+      } finally {
+        tiny.quit();
+      }
+    </script>
+  </body>
+</html>
