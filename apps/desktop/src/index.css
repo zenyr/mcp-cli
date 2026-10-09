@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  min-width: 700px;
+}
+.error-detail,
+.socket-path {
+  overflow-wrap: anywhere;
+}
+.mantine-Table-th {
+  color: var(--mantine-color-dimmed);
+  font-size: 12px;
+  font-weight: 500;
+}
+.mantine-Table-td {
+  font-size: 13px;
+}

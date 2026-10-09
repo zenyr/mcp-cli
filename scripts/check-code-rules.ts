@@ -4,7 +4,7 @@ import ts from "typescript";
 
 // Codegen must emit this marker as the first line of every generated file.
 const GENERATED_MARKER = "// @generated";
-const ignored = new Set(["node_modules", ".git", ".turbo", "dist", "coverage"]);
+const ignored = new Set(["node_modules", ".git", ".turbo", ".build", "dist", "coverage"]);
 const sourcePattern = /\.(?:[cm]?[jt]s|[jt]sx)$/;
 const collect = async (directory: string): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true });

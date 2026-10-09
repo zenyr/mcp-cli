@@ -54,7 +54,7 @@ export type ToolSession = import("./session").CatalogSession & {
 export type AuthorizeRequest = { refresh: boolean };
 export type Authorize = (request: AuthorizeRequest) => Promise<Record<string, string>>;
 export type Connection =
-  | { type: "stdio"; command: string; args?: string[]; env?: Record<string, string> }
+  | { type: "stdio"; command: string; args?: string[]; cwd?: string; env?: Record<string, string> }
   | { type: "http"; url: string; headers?: Record<string, string>; authorize?: Authorize };
 export type ServicePlugin = {
   name: string;
