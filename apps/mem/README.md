@@ -9,6 +9,10 @@ bun run mem save --stdin --kind talk < transcript.txt
 bun run mem save --file notes.txt --receipt 550e8400-e29b-41d4-a716-446655440000
 bun run mem recall '결정' --max-bytes 1024
 bun run mem read '<scopeId>/0' --cursor 0
+bun run mem zoom '<scopeId>/0' --count 4 --generation '<generation>'
+bun run mem pin '<scopeId>/0' --key deploy-target --from 0 --to 20 --expected-revision 0 --receipt 550e8400-e29b-41d4-a716-446655440000
+bun run mem unpin deploy-target --expected-revision 1 --receipt 550e8400-e29b-41d4-a716-446655440001
+bun run mem pins --key deploy-target
 bun run mem summarize
 bun run mem status
 bun run mem config
@@ -51,6 +55,8 @@ SQLite는 WAL과 FULL 동기화를 사용합니다. 프로젝트별 원문과 �
 
 `MEM_BASE_URL`, `MEM_MODEL`, `MEM_NODE_BYTES`는 파일 설정보다 우선합니다. `mem config`는 적용한 설정을 보여줍니다.
 `MEM_MAX_OUTPUT_TOKENS`는 모델의 출력 상한을 변경합니다. 추론 토큰도 해당 상한을 사용할 수 있습니다.
+`MEM_THINKING=enabled` 또는 `disabled`는 지원하는 공급자에 추론 모드를 명시합니다. 미지정 또는 `default`는 공급자 기본값을 사용합니다.
+이 설정은 공급자별 옵션입니다. 지원하지 않는 서버는 요청을 거부할 수 있습니다.
 출력 상한과 timeout 변경은 기존 generation을 유지하므로 중단된 작업을 재개할 수 있습니다.
 API 키는 `MEM_API_KEY`로만 받습니다. CLI는 API 키를 설정 출력에 포함하지 않습니다.
 이 버전은 임의 명령을 실행하는 요약 어댑터를 제공하지 않습니다.
@@ -63,7 +69,8 @@ API 키는 `MEM_API_KEY`로만 받습니다. CLI는 API 키를 설정 출력에 
 ## 요약과 복구
 
 `save`는 원문을 먼저 기록합니다. 요약기는 긴 메시지를 압축하고 인접한 형제 요약을 부모로 병합합니다.
-짧은 잎은 출처를 포함한 원문을 유지합니다. 부모 요약에는 LLM을 사용합니다.
+짧은 잎은 출처를 포함한 원문을 유지합니다. 짧은 부모도 두 자식의 텍스트를 그대로 합칩니다.
+목표 크기를 넘는 입력에만 LLM을 사용합니다.
 요약기는 사용자 결정, 정정, 금지, 실패 원인을 보존하도록 지시합니다.
 모델이 지시를 준수하는지는 별도 품질 평가가 필요합니다.
 
@@ -83,6 +90,26 @@ API 키는 `MEM_API_KEY`로만 받습니다. CLI는 API 키를 설정 출력에 
 세션 시작 지침이나 호스트 hook에서 `mem start`의 stdout을 문맥에 넣어야 시작 주입이 동작합니다.
 이 CLI는 호스트 지침과 hook을 자동 수정하지 않습니다.
 
-현재 버전은 CLI 첫 단계입니다. 자동 세션 hook, 엄격한 모델 token context 제한, 요약의 의미 품질 보장, V2 전체 기능과 pin은 구현하지 않습니다.
+## 트리 탐색과 원문 고정
+
+`zoom`은 `start`가 반환한 generation과 주소를 사용합니다. `--count`는 2의 거듭제곱이어야 합니다.
+메시지 번호는 count의 배수여야 합니다. count가 1보다 크면 두 자식 요약을 반환합니다.
+count가 1이면 원문의 첫 페이지를 반환합니다. 후속 페이지에는 같은 generation과 반환 cursor를 사용합니다.
+조회는 모델을 호출하거나 미완료 노드를 생성하지 않습니다. 이전 generation의 노드도 조회할 수 있습니다.
+
+`pin`은 선택한 원문 구간을 시작 패킷에 그대로 포함합니다. `--from`과 `--to`는 Unicode scalar 기준의 `[from, to)`입니다.
+새 key는 `--expected-revision 0`을 사용합니다. 기존 key의 교체는 `pins`가 반환한 revision을 사용합니다.
+같은 receipt와 같은 요청은 과거의 처리 결과를 반환합니다. 후속 변경이 있으면 현재 상태는 `pins`로 다시 확인하십시오.
+`unpin`은 고정을 해제합니다. 원문의 지시를 철회하거나 작업을 완료한다는 뜻은 아닙니다.
+
+고정 변경의 기본 범위는 현재 프로젝트입니다. 글로벌 원문에는 `--global`을 지정합니다.
+한 scope는 활성 고정 8개까지 허용합니다. 선택한 scope 전체의 고정 블록 상한은 JSON 기준 2,048바이트입니다.
+모든 활성 고정은 필수입니다. 상한 초과는 `PIN_OVERFLOW`, 전체 패킷 초과는 `MEMORY_OVERFLOW`로 반환합니다.
+CLI는 고정을 조용히 제외하지 않습니다. 원문이 없어진 고정은 `SOURCE_UNAVAILABLE`로 표시하고 해제를 허용합니다.
+
+고정의 kind는 호출자가 저장할 때 지정한 출처 표시입니다. 인증한 사용자 승인이나 사실 검증을 뜻하지 않습니다.
+짧은 부모 보존 규칙은 새 요약 generation을 사용합니다. 기존 기억에서 `SUMMARY_PENDING`이 나오면 `mem summarize`로 새 트리를 만드십시오.
+
+현재 버전은 자동 세션 hook, 엄격한 모델 token context 제한, 요약의 의미 품질 보장과 V2 전체 기능을 구현하지 않습니다.
 
 [검증 기록](VERIFICATION.md)은 자동 테스트와 실제 OpenCode GO 요약의 결과를 구분합니다.

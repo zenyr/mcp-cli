@@ -32,9 +32,11 @@ export const openStore = (path: string): Store => {
     db.close();
     return fail("SCHEMA_VERSION", "Unsupported memory database version.");
   }
-  const pinStore = db
-    .transaction(() => {
-      db.exec(`
+  const initialize = () => {
+    try {
+      return db
+        .transaction(() => {
+          db.exec(`
     CREATE TABLE IF NOT EXISTS scopes (id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS entries (
       scope TEXT NOT NULL, i INTEGER NOT NULL CHECK(i>=0), kind TEXT NOT NULL,
@@ -50,11 +52,17 @@ export const openStore = (path: string): Store => {
       scope TEXT NOT NULL, generation TEXT NOT NULL, model TEXT NOT NULL,
       inputTokens INTEGER NOT NULL, outputTokens INTEGER NOT NULL, measured INTEGER NOT NULL);
   `);
-      const pins = createPinStore(db);
-      db.exec("PRAGMA user_version=2");
-      return pins;
-    })
-    .immediate();
+          const pins = createPinStore(db);
+          db.exec("PRAGMA user_version=2");
+          return pins;
+        })
+        .immediate();
+    } catch (error) {
+      db.close();
+      throw error;
+    }
+  };
+  const pinStore = initialize();
   const selectEntries = db.query<Entry, [string, number]>(
     "SELECT * FROM entries WHERE scope=? AND i<? ORDER BY i",
   );

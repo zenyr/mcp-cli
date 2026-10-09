@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import { parse, readRecord, recall } from "./commands";
 import { createCompressor } from "./compressor";
 import { startPacket } from "./packets";
+import { pinCommand } from "./pin-commands";
+import { zoom } from "./zoom";
 import { resolvePaths, resolveScopes } from "./paths";
 import { loadSettings } from "./settings";
 import { generationFor, openStore } from "./store";
@@ -20,10 +22,14 @@ export type Dependencies = {
     readStdin: () => Promise<string>;
   };
 };
-const help = `Usage: mem <start|save|summarize|recall|read|status|config> [options]
+const help = `Usage: mem <start|save|summarize|recall|read|zoom|pin|unpin|pins|status|config> [options]
   save <text> | --stdin | --file <path> [--kind user|talk|tool|echo|note] [--receipt UUID]
   recall <keyword> [--cursor <opaque>] [--limit <count>]
   read <scopeId/index> [--cursor <scalar offset>]
+  zoom <scopeId/index> --count <power of two> --generation <id> [--cursor <offset>]
+  pin <scopeId/index> --key <name> --from <scalar> --to <scalar> --expected-revision <n> --receipt <UUID>
+  unpin <key> --expected-revision <n> --receipt <UUID>
+  pins [--key <name>]
   --global | --project   Select scopes
   --model <name> --base-url <url> --max-bytes <512..20480>
 `;
@@ -72,6 +78,7 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
               inputBytes: settings.inputBytes,
               timeoutMs: settings.timeoutMs,
               maxOutputTokens: settings.maxOutputTokens,
+              thinking: settings.thinking ?? "provider-default",
             },
           },
           maxBytes,
@@ -79,7 +86,9 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
       );
       return 0;
     }
-    const selection = options.selection ?? (options.command === "save" ? "project" : "both");
+    const selection =
+      options.selection ??
+      (["save", "pin", "unpin"].includes(options.command) ? "project" : "both");
     const scopes = await resolveScopes(cwd, selection, ["save", "start"].includes(options.command));
     store = openStore(paths.databaseFile);
     for (const scope of scopes) store.scope(scope);
@@ -129,6 +138,16 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
         });
       result = startPacket(store, scopes, generation, maxBytes);
     } else if (options.command === "read") result = readRecord(store, scopes, options);
+    else if (options.command === "zoom")
+      result = zoom(store, scopes, {
+        recordId: options.text[0] ?? "",
+        count: options.count ?? 0,
+        generation: options.generation ?? "",
+        maxBytes,
+        cursor: options.cursor,
+      });
+    else if (["pin", "unpin", "pins"].includes(options.command))
+      result = pinCommand(store, scopes, options);
     else if (options.command === "recall") result = recall(store, scopes, options);
     else
       result = {
