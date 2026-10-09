@@ -143,16 +143,16 @@ test("usage records every reply separately from publication and persists unknown
   });
 });
 
-test("generation changes for semantic settings but remains stable for timeout", () => {
+test("generation changes for semantic settings but remains stable for operational settings and legacy contextBytes", () => {
   const original = generationFor(settings);
   expect(generationFor({ ...settings, timeoutMs: 50 })).toBe(original);
   expect(generationFor({ ...settings, maxOutputTokens: 4096 })).toBe(original);
+  expect(generationFor({ ...settings, contextBytes: 1 })).toBe(original);
   for (const change of [
     { model: "other" },
     { thinking: "disabled" as const },
     { baseUrl: "http://other/v1" },
     { nodeBytes: 513 },
-    { contextBytes: 1025 },
     { inputBytes: 4097 },
   ]) {
     expect(generationFor({ ...settings, ...change })).not.toBe(original);

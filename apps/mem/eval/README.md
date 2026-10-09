@@ -4,14 +4,15 @@
 
 ```sh
 bun apps/mem/eval/main.ts --records 32 --model deepseek-v4.1-flash
-bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --mode system --max-calls 80 --node-bytes 512 --output /tmp/mem-eval-system.json
-bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --mode isolated --max-calls 80 --output /tmp/mem-eval-isolated.json
-bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --thinking disabled --mode system --max-calls 80 --output /tmp/mem-eval-disabled.json
+bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --thinking disabled --mode range-only --max-calls 80 --node-bytes 512 --output /tmp/mem-eval-range-only32.json
 bun test apps/mem/test/evaluation.test.ts
 ```
 
-- `system`은 실제 트리의 이전 요약 문맥을 전달합니다.
-- `isolated`는 모든 압축 호출의 `context`를 빈 문자열로 바꿉니다. 이전 문맥으로 유실 사실을 다시 주입하지 않습니다.
+- 기본 모드는 `range-only`입니다. `system`과 `isolated`는 dry-run과 live 모두 거부합니다.
+- 리프 요청은 해당 메시지만 전달합니다. 부모 요청은 두 자식만 전달합니다.
+- 재시도는 같은 원본 입력과 `retry: true`를 전달합니다. 이전 모델 응답과 외부 선행 기록은 전달하지 않습니다.
+- 보고서의 `inputPolicy`는 `range-only-v1`입니다. `externalContextBytes`는 항상 0입니다.
+- 각 시도는 실제 `sourceBytes`와 `outputBytes`를 기록합니다. 실패한 응답의 `outputBytes`는 null입니다.
 - `--records`는 32부터 256까지 지원합니다. 기본값은 32입니다.
 - `--model`을 생략하면 기존 설정 로더의 기본값과 `MEM_MODEL`을 사용합니다.
 - 기본 API 주소는 기존 설정의 CPA 주소입니다. `MEM_BASE_URL`로 바꿀 수 있습니다.
@@ -35,4 +36,4 @@ stdout은 짧은 상태·사용량·파일 경로만 반환합니다. fixture와
 호출의 `success`는 모델 응답의 정상 파싱을 뜻합니다. 크기 조건을 만족한 요약 노드의 게시 성공과 구분합니다.
 전체 트리의 성공 여부는 보고서의 `status`와 `failure`로 확인합니다.
 
-[실제 실행 결과](RESULTS.md)는 완료한 실행과 실패한 실행을 함께 기록합니다.
+[과거 실행 결과](RESULTS.md)는 generation v2의 완료 실행과 실패 실행을 보존합니다. 현재 정책의 모델 품질은 아직 확인하지 않았습니다.

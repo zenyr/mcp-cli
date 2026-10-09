@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { chmodSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Entry, Kind, Node, Scope, Settings, Store, SummaryResult } from "./types";
+import { SUMMARY_POLICY } from "./types";
 import { createHash } from "node:crypto";
 import { end, fail } from "./values";
 import { createPinStore } from "./pins-store";
@@ -10,12 +11,12 @@ export const generationFor = (settings: Settings): string =>
   createHash("sha256")
     .update(
       JSON.stringify({
-        version: 2,
+        version: 3,
+        summaryPolicy: SUMMARY_POLICY,
         model: settings.model,
         thinking: settings.thinking,
         baseUrl: settings.baseUrl,
         nodeBytes: settings.nodeBytes,
-        contextBytes: settings.contextBytes,
         inputBytes: settings.inputBytes,
       }),
     )
