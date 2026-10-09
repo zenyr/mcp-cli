@@ -14,15 +14,13 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { call } from "./ipc";
+import { SoundSettings } from "./sound-settings";
+import { useSettings } from "./ui-sounds";
 import { useAction, useStatus } from "./queries";
 
 export const SettingsPage = () => {
   const client = useQueryClient();
-  const { data: settings, error } = useQuery({
-    queryKey: ["settings"],
-    queryFn: () => call("settings"),
-  });
+  const { data: settings, error } = useSettings();
   const autostart = useQuery({
     queryKey: ["autostart"],
     queryFn: () => window.tiny?.app.launchAtLogin.get() ?? "unsupported",
@@ -103,6 +101,7 @@ export const SettingsPage = () => {
           </Group>
         </Stack>
       </Paper>
+      <SoundSettings />
       <Stack gap="xs">
         <Text size="xs" c="dimmed">
           앱 버전 <Code>0.1.0</Code>

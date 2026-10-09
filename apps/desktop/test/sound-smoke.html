@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+  <meta charset="utf-8" /><title>Native UI sound smoke</title>
+  <body>
+    효과음 검증
+    <script type="module">
+      let original;
+      const check = (ok, label) => {
+        if (!ok) throw new Error(label);
+      };
+      try {
+        original = await tiny.api.call("settings");
+        check(typeof original.soundsEnabled === "boolean", "sound setting");
+        await tiny.api.call("setSoundsEnabled", { enabled: false });
+        check((await tiny.api.call("settings")).soundsEnabled === false, "mute persisted");
+        for (const kind of ["start", "hover", "click", "success", "error"])
+          check((await tiny.api.call("sound", { kind })) === false, "muted " + kind);
+        await tiny.api.call("setSoundsEnabled", { enabled: true });
+        check((await tiny.api.call("sound", { kind: "hover" })) === true, "native WAV playback");
+        check((await tiny.api.call("settings")).soundsEnabled === true, "enabled persisted");
+        await tiny.log("UI SOUND SMOKE PASS: mute, persistence, native playback");
+      } catch (error) {
+        await tiny.log("UI SOUND SMOKE FAIL: " + String(error));
+      } finally {
+        if (original) await tiny.api.call("setSoundsEnabled", { enabled: original.soundsEnabled });
+        tiny.quit();
+      }
+    </script>
+  </body>
+</html>

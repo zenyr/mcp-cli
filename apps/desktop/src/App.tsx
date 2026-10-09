@@ -3,9 +3,11 @@ import { IconKey, IconPlugConnected, IconSettings } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useHotkeys } from "@mantine/hooks";
 import { useStatus } from "./queries";
+import { useInteractionSounds } from "./ui-sounds";
 import { DaemonBar } from "./daemon-bar";
 
 export const App = () => {
+  useInteractionSounds();
   const location = useLocation();
   const navigate = useNavigate();
   const { data } = useStatus();

@@ -8,7 +8,7 @@
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "typecheck": "bun scripts/default-command.ts && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json && tsc --noEmit -p tsconfig.tools.json",
     "desktop": "bun scripts/default-command.ts && tinyjs dev",
-    "native:build": "bun scripts/default-command.ts && bun scripts/icons.ts && tinyjs build",
+    "native:build": "bun scripts/default-command.ts && bun scripts/icons.ts && bun scripts/sounds.ts && tinyjs build",
     "test": "bun test test"
   },
   "dependencies": {

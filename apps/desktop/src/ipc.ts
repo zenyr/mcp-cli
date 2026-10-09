@@ -1,3 +1,5 @@
+import type { SoundKind } from "../shared/ui-sounds";
+
 export type Connection = {
   id: string;
   service: string;
@@ -25,7 +27,7 @@ export type Service = {
   auth: "none" | "oauth" | "apiKey";
   credentials: { flag: string; summary: string; stored: boolean; fromEnv: boolean }[];
 };
-export type Settings = { cliCommand: string[]; autoStart: boolean };
+export type Settings = { cliCommand: string[]; autoStart: boolean; soundsEnabled: boolean };
 export type AuthInput = { service: string; credential?: string; secret?: string };
 export type Api = {
   status: { input: undefined; output: Status };
@@ -37,7 +39,9 @@ export type Api = {
   logout: { input: AuthInput; output: null };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };
-  saveSettings: { input: Settings; output: null };
+  saveSettings: { input: Pick<Settings, "cliCommand" | "autoStart">; output: null };
+  sound: { input: { kind: SoundKind }; output: boolean };
+  setSoundsEnabled: { input: { enabled: boolean }; output: null };
 };
 export const call = <K extends keyof Api>(
   method: K,
