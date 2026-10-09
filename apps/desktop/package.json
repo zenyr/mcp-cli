@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json",
-    "desktop": "tinyjs dev"
+    "typecheck": "bun scripts/default-command.ts && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json",
+    "desktop": "bun scripts/default-command.ts && tinyjs dev",
+    "native:build": "bun scripts/default-command.ts && tinyjs build"
   },
   "dependencies": {
     "@mantine/core": "^9.7.1",
