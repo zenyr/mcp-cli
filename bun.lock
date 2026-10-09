@@ -27,6 +27,10 @@
         "@mcp-cli/runtime": "workspace:*",
       },
     },
+    "apps/mem": {
+      "name": "@mcp-cli/mem",
+      "version": "0.1.0",
+    },
     "packages/auth": {
       "name": "@mcp-cli/auth",
       "version": "0.1.0",
@@ -124,6 +128,8 @@
     "@mcp-cli/core": ["@mcp-cli/core@workspace:packages/core"],
 
     "@mcp-cli/mcp": ["@mcp-cli/mcp@workspace:packages/mcp"],
+
+    "@mcp-cli/mem": ["@mcp-cli/mem@workspace:apps/mem"],
 
     "@mcp-cli/plugin-demo": ["@mcp-cli/plugin-demo@workspace:plugins/demo"],
 
