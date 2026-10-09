@@ -7,12 +7,15 @@ for (const palette of ["template", "color"] as const) {
   test(`${palette} tray dims only MCP to 50% while the prompt remains opaque`, () => {
     const running = renderIcon(source, { palette, state: "running", width: 216 });
     const stopped = renderIcon(source, { palette, state: "stopped", width: 216 });
+    const prefixMask = renderIcon(
+      source.replace('data-part="mcp" opacity="1"', 'data-part="mcp" opacity="0"'),
+      { palette, state: "running", width: 216 },
+    );
     let prefixPixels = 0;
     let mcpPixels = 0;
     for (let offset = 0; offset < running.pixels.length; offset += 4) {
       if (running.pixels[offset + 3] !== 255) continue;
-      const pixel = offset / 4;
-      const isPrefix = pixel % running.width < 80 && Math.floor(pixel / running.width) > 145;
+      const isPrefix = (prefixMask.pixels[offset + 3] ?? 0) > 0;
       const alpha = isPrefix ? 255 : 128;
       expect(stopped.pixels[offset + 3]).toBe(alpha);
       for (let channel = 0; channel < 3; channel += 1) {
