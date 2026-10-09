@@ -103,49 +103,7 @@ const httpCompressor =
     return decodeCompletion(parseJson(await boundedText(response.body)), settings.model);
   };
 
-const commandCompressor =
-  (settings: Settings, command: string[], env: Env): Compressor =>
-  async (input) => {
-    const prompt = `${SUMMARY_PROMPT}\n${JSON.stringify(input)}\n`;
-    if (bytes(prompt) > settings.inputBytes)
-      return fail(
-        "SUMMARY_INPUT_OVERFLOW",
-        "Summary request exceeds inputBytes; original is preserved.",
-      );
-    const child = Bun.spawn(command, { stdin: "pipe", stdout: "pipe", stderr: "pipe", env });
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill();
-    }, settings.timeoutMs);
-    try {
-      child.stdin.write(prompt);
-      child.stdin.end();
-      const [stdout, , exitCode] = await Promise.all([
-        boundedText(child.stdout),
-        boundedText(child.stderr),
-        child.exited,
-      ]);
-      if (timedOut) return fail("MODEL_TIMEOUT", "Summarizer command timed out.");
-      if (exitCode !== 0)
-        return fail("MODEL_COMMAND_FAILED", "Summarizer command failed.", { exitCode });
-      if (!stdout.trim()) return fail("MODEL_PROTOCOL", "Summarizer command returned no text.");
-      return {
-        text: stdout.trim(),
-        model: settings.model,
-        inputTokens: 0,
-        outputTokens: 0,
-        usageKnown: false,
-      };
-    } finally {
-      clearTimeout(timer);
-      if (child.exitCode === null) child.kill();
-    }
-  };
-
 export const createCompressor = (settings: Settings, env: Env): Compressor => {
-  const compressor = settings.command
-    ? commandCompressor(settings, settings.command, env)
-    : httpCompressor(settings, env);
+  const compressor = httpCompressor(settings, env);
   return (input: Compression) => compressor(input);
 };

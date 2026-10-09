@@ -16,10 +16,6 @@ const number = (value: unknown, maximum: number): number =>
   typeof value === "number" && Number.isSafeInteger(value) && value >= 1 && value <= maximum
     ? value
     : invalid();
-const command = (value: unknown): string[] => {
-  if (!Array.isArray(value) || value.length === 0) return invalid();
-  return value.map((item: unknown) => string(item));
-};
 
 export const loadSettings = async (path: string, env: Env): Promise<Settings> => {
   let config: unknown = {};
@@ -29,15 +25,7 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) return invalid();
   }
   if (!isRecord(config)) return invalid();
-  const keys = [
-    "model",
-    "baseUrl",
-    "command",
-    "nodeBytes",
-    "contextBytes",
-    "inputBytes",
-    "timeoutMs",
-  ];
+  const keys = ["model", "baseUrl", "nodeBytes", "contextBytes", "inputBytes", "timeoutMs"];
   if (Object.keys(config).some((key) => !keys.includes(key))) return invalid();
   const settings: Settings = {
     model: config.model === undefined ? "deepseek-v4.1-flash" : string(config.model),
@@ -48,11 +36,9 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     inputBytes: config.inputBytes === undefined ? 131072 : number(config.inputBytes, 16_777_216),
     timeoutMs: config.timeoutMs === undefined ? 60000 : number(config.timeoutMs, 3_600_000),
   };
-  if (config.command !== undefined) settings.command = command(config.command);
   if (env.MEM_MODEL !== undefined) settings.model = string(env.MEM_MODEL);
   if (env.MEM_BASE_URL !== undefined) settings.baseUrl = string(env.MEM_BASE_URL);
-  if (env.MEM_SUMMARIZER_COMMAND !== undefined)
-    settings.command = command(parse(env.MEM_SUMMARIZER_COMMAND));
+  if (env.MEM_SUMMARIZER_COMMAND !== undefined) return invalid();
   if (env.MEM_NODE_BYTES !== undefined)
     settings.nodeBytes = number(Number(env.MEM_NODE_BYTES), 1_048_576);
   try {

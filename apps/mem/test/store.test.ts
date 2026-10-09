@@ -103,6 +103,10 @@ test("expired leases recover without waiting and missing children prevent parent
     db.close();
   }
   store.claim("global", "g", "new");
+  expect(() => store.renew("global", "g", "old")).toThrow(
+    expect.objectContaining({ code: "LEASE_LOST" }),
+  );
+  store.renew("global", "g", "new");
   expect(() => store.publish("global", "g", "old", { l: 0, i: 0, text: "stale" }, usage)).toThrow(
     expect.objectContaining({ code: "LEASE_LOST" }),
   );
@@ -144,7 +148,6 @@ test("generation changes for semantic settings but remains stable for timeout", 
   for (const change of [
     { model: "other" },
     { baseUrl: "http://other/v1" },
-    { command: ["bun", "script"] },
     { nodeBytes: 513 },
     { contextBytes: 1025 },
     { inputBytes: 4097 },
