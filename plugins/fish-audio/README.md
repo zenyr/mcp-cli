@@ -40,6 +40,57 @@ A cache-scope lock and per-output lock reject concurrent workflow processes for 
 
 Audio output extensions select MP3, WAV, OGG, FLAC, M4A, AAC or WebM. The adapter inspects audio bytes and invokes ffmpeg when conversion or merging is needed. Install ffmpeg before multi-part generation. Saved URLs can expire; an expired response does not trigger automatic paid regeneration.
 
+## Assets and media status
+
+Use group help to select a command, command `--help` for concise usage, and `--help=full` for nested input roles and the complete server specification.
+
+Use `account workspaces` to select a workspace before these commands:
+
+```bash
+fish-audio asset collection list --workspace-id <workspace-id> --all
+fish-audio asset list --workspace-id <workspace-id> --collection-id <collection-id>
+fish-audio asset list --workspace-id <workspace-id> --search portrait --kinds '["image"]'
+fish-audio asset get --workspace-id <workspace-id> --asset-id <asset-id>
+```
+
+Collections contain folders, avatars and styles; `asset list` returns files.
+Use `--cursor` with the previous `next_cursor` and identical filters to continue listing files.
+`asset get` returns the original `object_key` and a temporary download URL.
+Use the original object key for compatible generation inputs, never the thumbnail URL.
+
+`asset save` retains a completed upload (`--object-key`) or successful generation (`--source-task-id`).
+Saving again returns the existing location; use `asset update` to move or rename it.
+Omit `collection_id` to keep the location.
+To move to the root, use a JSON null:
+
+```bash
+fish-audio asset update --input '{"workspace_id":"<workspace-id>","asset_id":"<asset-id>","collection_id":null}'
+```
+
+`--collection-id null` sends the string `"null"`; use `--input` for an actual null.
+`asset folder create` creates a folder; `asset avatar create` creates an avatar from one prepared image source.
+Choose one of `object_key`, `source_task_id` or `portrait_asset_id` for an avatar, with an optional `default_voice_id`.
+These create commands require a UUID `request_id`; reuse it with identical input to recover a lost response.
+Approve `--move-existing` explicitly before moving a retained portrait into an avatar.
+Avatar creation does not generate media.
+To change an avatar's portrait later, move the image into its collection with `asset update`, then use `asset collection update`.
+The collection commands do not delete collections or create styles.
+
+Use `media model get` to select the model's input roles and capabilities before estimating a generation.
+The `inputs` array contains `{ "role": "...", "object_key": "..." }` entries; `--input-object-key` supplies the single-input shorthand.
+Video generation also accepts `--operation` to select a capability.
+Estimate first, then submit the same generation input with the returned pricing values.
+
+```bash
+fish-audio media job status --generation-id <generation-id>
+fish-audio media job status --generation-ids '["<generation-id-1>","<generation-id-2>"]'
+```
+
+Choose one ID or a batch of up to 20 IDs.
+Status checks can reconcile provider state and credits; wait the returned `poll_after_seconds` before checking again.
+Keep only running IDs in later batches.
+A completed status response includes the results, so a separate `media job result` call is unnecessary.
+
 ## Migration
 
 Keep the standalone checkout and existing global PATH unchanged. Test the commands through `bun bin/fish-audio.ts` or `bun run cli fish-audio`. Use the existing `mcp-cli login fish-audio` login when needed. Do not copy credential files from the standalone project.

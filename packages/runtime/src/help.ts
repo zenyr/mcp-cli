@@ -19,6 +19,7 @@ import {
 import { guardsRepeats } from "./repeat";
 import { typeLabel } from "./schema";
 import { findExtension } from "./extensions";
+import { compactDescription } from "./descriptions";
 
 const displayCommands = (manifest: Manifest): CommandSpec[] => [
   ...manifest.commands,
@@ -54,11 +55,6 @@ const DISCOVERY: Array<[string, string]> = [
   [RESOURCES, "List and read MCP resources (connects)"],
   [PROMPTS, "List and render MCP prompts (connects)"],
 ];
-// Keeps the first sentence so long tool descriptions fit on one listing line.
-const brief = (text: string): string => {
-  const sentence = text.split(/(?<=[.!?])\s|\n/)[0] ?? text;
-  return sentence.length > 80 ? `${sentence.slice(0, 79)}…` : sentence;
-};
 const table = (rows: Array<[string, string]>): string[] => {
   const width = Math.max(0, ...rows.map(([left]) => left.length));
   return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`.trimEnd());
@@ -68,9 +64,9 @@ const within = (command: CommandSpec, path: string[]): boolean =>
 const childSummary = (manifest: Manifest, path: string[]): string => {
   const key = path.join(" ");
   const command = displayCommands(manifest).find((command) => command.path.join(" ") === key);
-  if (command) return brief(command.summary ?? command.name);
+  if (command) return compactDescription(command.summary ?? command.name);
   const count = displayCommands(manifest).filter((command) => within(command, path)).length;
-  return manifest.groups[key] ?? `${count} command${count === 1 ? "" : "s"}`;
+  return compactDescription(manifest.groups[key] ?? `${count} command${count === 1 ? "" : "s"}`);
 };
 
 const argumentLine = (
@@ -78,6 +74,7 @@ const argumentLine = (
   schema: Record<string, unknown>,
   required: boolean,
   upload: boolean,
+  full: boolean,
 ): string => {
   const reserved = isReservedField(key);
   const name = reserved ? key : `--${flagForm(key)}`;
@@ -86,7 +83,9 @@ const argumentLine = (
     ...(reserved ? ["set via --input only"] : []),
     ...(upload ? ["@path uploads a local file"] : []),
   ];
-  const description = schema.description ? ` - ${String(schema.description)}` : "";
+  const description = schema.description
+    ? ` - ${full ? String(schema.description) : compactDescription(String(schema.description), 160)}`
+    : "";
   return `  ${name}  ${typeLabel(schema)} (${notes.join(", ")})${description}`;
 };
 
@@ -97,7 +96,12 @@ export const findCommand = (manifest: Manifest, path: string[]): CommandSpec | u
     manifest.commands.find((command) => command.path.join(" ") === key)
   );
 };
-export const help = (manifest: Manifest, path: string[]): string => {
+export const help = (
+  manifest: Manifest,
+  path: string[],
+  options: { full?: boolean } = {},
+): string => {
+  const full = options.full ?? false;
   const extension = findExtension(manifest, path);
   const command =
     findCommand(manifest, path) ??
@@ -111,7 +115,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
     if (path[0] !== CALL) return text;
     const tools = manifest.commands.map((command): [string, string] => [
       command.name,
-      brief(command.summary ?? command.name),
+      compactDescription(command.summary ?? command.name),
     ]);
     return [text, "", "Tools:", ...table(tools)].join("\n");
   }
@@ -122,7 +126,9 @@ export const help = (manifest: Manifest, path: string[]): string => {
   const lines = [
     `Usage: ${title}${command ? " [options]" : " <command>"}`,
     "",
-    command?.summary ?? manifest.groups[path.join(" ")] ?? manifest.summary,
+    full && command
+      ? (command.summary ?? command.name)
+      : compactDescription(command?.summary ?? manifest.groups[path.join(" ")] ?? manifest.summary),
   ];
   if (command) {
     // A summary taken from the description's first line is not repeated.
@@ -131,7 +137,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
     const rest = description.startsWith(summary)
       ? description.slice(summary.length).trim()
       : description;
-    if (rest) lines.push("", rest);
+    if (full && rest) lines.push("", rest);
     if (extension)
       lines.push("", `Kind: ${extension.kind}${extension.tool ? ` (${extension.tool})` : ""}`);
     if (command.details) lines.push("", command.details);
@@ -145,7 +151,13 @@ export const help = (manifest: Manifest, path: string[]): string => {
         if (!isRecord(schema)) continue;
         const upload = "uploads" in command ? (command.uploads?.includes(key) ?? false) : false;
         lines.push(
-          argumentLine(key, schema, Array.isArray(required) && required.includes(key), upload),
+          argumentLine(
+            key,
+            schema,
+            Array.isArray(required) && required.includes(key),
+            upload,
+            full,
+          ),
         );
       }
     }
@@ -156,7 +168,8 @@ export const help = (manifest: Manifest, path: string[]): string => {
       "  --input-file <path>    Read JSON object from file",
       "  --<obj>.<field> value  Nested input flag",
       "  --json                Preserve the MCP result as JSON",
-      "  -h, --help            Show command help",
+      "  -h, --help            Show concise command help",
+      "  --help=full           Show server description and full JSON schemas",
     );
     if (extension || guardsRepeats(command))
       lines.push("  --allow-repeat        Run even if the same input ran in the last few minutes");
@@ -164,6 +177,11 @@ export const help = (manifest: Manifest, path: string[]): string => {
       lines.push(`  --${alternate.flag}`.padEnd(24) + alternate.summary);
     if (command.examples?.length)
       lines.push("", "Examples:", ...command.examples.map((example) => `  ${example}`));
+    if (full) {
+      lines.push("", "Input schema:", JSON.stringify(command.inputSchema, null, 2));
+      if ("outputSchema" in command && command.outputSchema)
+        lines.push("", "Output schema:", JSON.stringify(command.outputSchema, null, 2));
+    } else lines.push("", `Full specification: ${title} --help=full`);
   } else {
     const children = [
       ...new Set(
@@ -176,7 +194,7 @@ export const help = (manifest: Manifest, path: string[]): string => {
     if (!path.length && manifest.quickstart.length) {
       const entries = manifest.quickstart.map(({ command, summary }): [string, string] => [
         `${manifest.service} ${command}`,
-        summary,
+        compactDescription(summary),
       ]);
       lines.push("", "Start here:", ...table(entries));
     }

@@ -9,10 +9,15 @@ const SAVE = "Create, or update when --id is given";
 
 // Linear's save_* tools upsert, so they map to `save`; deprecated create_* tools stay under `call`.
 export const commands: Record<string, CommandCustomization> = {
-  list_issues: at("issue list", "List issues by team, assignee, state, project or text", [
-    "linear issue list --assignee me --state started",
-    "linear issue list --team ENG --query login --limit 20",
-  ]),
+  list_issues: {
+    ...at("issue list", "List issues by team, assignee, state, project or text", [
+      "linear issue list --assignee me --state started",
+      "linear issue list --team ENG --includeSubTeams --query login --limit 20",
+    ]),
+    rules: [
+      "Use --includeSubTeams with a team name or key to include descendants; team ID filters already include them.",
+    ],
+  },
   get_issue: at("issue get", "Show an issue with attachments and branch name", [
     "linear issue get --id ENG-123 --includeRelations",
   ]),
@@ -33,9 +38,22 @@ export const commands: Record<string, CommandCustomization> = {
     'linear comment save --issueId ENG-123 --body "Reproduced on staging"',
   ]),
   delete_comment: at("comment delete"),
-  list_projects: at("project list", "List projects by team, state, member or name"),
+  list_projects: at("project list", "List projects by team, state, member or name", [
+    "linear project list --team ENG --includeSubTeams --limit 20",
+  ]),
   get_project: at("project get"),
-  save_project: at("project save", SAVE),
+  save_project: {
+    ...at("project save", SAVE, [
+      'linear project save --name "Mobile release" --addTeams \'["ENG"]\'',
+      'linear project save --input \'{"id":"<project-id>","targetDate":"2026-12-15","targetDateResolution":null}\'',
+      'linear project save --input \'{"id":"<project-id>","targetDate":null}\'',
+    ]),
+    rules: [
+      "Create with --name and at least one team via --addTeams or --setTeams.",
+      "Omitting a date resolution preserves it and snaps the date to that precision; null selects an exact day.",
+      "Use --input for JSON null; --targetDate null sends the literal string instead.",
+    ],
+  },
   list_project_labels: at("project label list"),
   save_project_label: at("project label save", SAVE),
   retire_project_label: at("project label retire"),
@@ -45,7 +63,9 @@ export const commands: Record<string, CommandCustomization> = {
   save_milestone: at("milestone save", SAVE),
   list_initiatives: at("initiative list"),
   get_initiative: at("initiative get"),
-  save_initiative: at("initiative save", SAVE),
+  save_initiative: at("initiative save", SAVE, [
+    'linear initiative save --input \'{"id":"<initiative-id>","targetDate":null}\'',
+  ]),
   list_initiative_labels: at("initiative label list"),
   save_initiative_label: at("initiative label save", SAVE),
   retire_initiative_label: at("initiative label retire"),
@@ -54,13 +74,30 @@ export const commands: Record<string, CommandCustomization> = {
     "status-update list",
     "List project or initiative updates, or get one by --id",
   ),
-  save_status_update: at("status-update save", SAVE),
+  save_status_update: {
+    ...at("status-update save", SAVE, [
+      'linear status-update save --type project --project <project-id> --body "Release is on track"',
+      "linear status-update save --type project --id <update-id> --health atRisk",
+    ]),
+    rules: [
+      "Create without id using body and project or initiative matching type.",
+      "On update, id selects the update and project/initiative are ignored; omit body to keep the current text.",
+    ],
+  },
   delete_status_update: at("status-update delete"),
   list_documents: at("document list"),
   get_document: at("document get"),
   save_document: at("document save", SAVE),
-  list_cycles: at("cycle list", "List a team's cycles"),
-  list_teams: at("team list"),
+  list_cycles: {
+    ...at("cycle list", "List cycles using a team's UUID", [
+      "linear cycle list --teamId <team-uuid> --type current",
+    ]),
+    rules: ["Get the team UUID from team list or team get; team names and keys are not accepted."],
+  },
+  list_teams: at("team list", "Find teams, direct children or all descendants", [
+    "linear team list --parentTeam ENG",
+    "linear team list --ancestorTeam ENG",
+  ]),
   get_team: at("team get"),
   get_triage_responsibility: at("team triage", "Show who handles a team's triage now"),
   list_users: at("user list"),
@@ -71,7 +108,10 @@ export const commands: Record<string, CommandCustomization> = {
   get_template: at("template get"),
   get_notifications: at("notification list", "Get a page of your inbox notifications"),
   mark_notification: at("notification mark", "Mark read or unread, or snooze or unsnooze"),
-  list_customers: at("customer list"),
+  list_customers: at("customer list", "Filter customers by domain or external IDs", [
+    "linear customer list --domain example.com",
+    "linear customer list --externalIds '[\"crm-123\"]'",
+  ]),
   save_customer: at("customer save", SAVE),
   delete_customer: at("customer delete"),
   list_customer_needs: at(
@@ -96,7 +136,15 @@ export const commands: Record<string, CommandCustomization> = {
   resolve_diff_thread: at("diff thread resolve", "Resolve or reopen a diff thread"),
   save_diff_comment: at("diff comment save", "Create, reply to or edit a diff comment or draft"),
   delete_diff_comment: at("diff comment delete"),
-  get_attachment: at("attachment get"),
+  get_attachment: {
+    ...at("attachment get", "Read an issue attachment or obtain its download URL", [
+      "linear attachment get --id <attachment-id> --format url",
+    ]),
+    rules: [
+      "Use attachments[].id from issue get; comment files have URLs but no issue attachment ID.",
+      "Signed Linear URLs expire after five minutes; request a new URL when needed.",
+    ],
+  },
   prepare_attachment_upload: at("attachment prepare-upload", "Get an upload URL for an issue file"),
   create_attachment_from_upload: at("attachment create", "Attach an uploaded asset to an issue"),
   delete_attachment: at("attachment delete"),
@@ -148,15 +196,25 @@ export const quickstart: QuickstartEntry[] = [
 
 export const skill = [
   "Discover progressively: linear --help, then <noun> --help, then <noun> <verb> --help.",
+  "Use --help=full for server instructions and nested schemas before an unfamiliar operation; methods [group] lists concise tool mappings.",
   "Flags keep Linear's camelCase argument names, such as --issueId and --includeRelations.",
   "",
   "Workflows:",
   "  Triage: issue list --assignee me -> issue get --id <KEY-123> -> issue save --id <KEY-123> --state <state>.",
   "  Create: team list and issue status list or issue label list for exact names -> issue save --team --title.",
   "  Discuss: comment list --issueId -> comment save --issueId --body.",
+  "  Team hierarchy: team list --parentTeam for direct children; --ancestorTeam for all descendants, excluding the ancestor.",
+  "  Scoped lists: issue list or project list --team ENG --includeSubTeams includes descendants for name/key filters.",
+  "  Pagination: omit cursor on the first page, then pass the returned cursor while hasNextPage is true; preserve filters and orderBy.",
+  "  Cycles: team get -> cycle list --teamId <UUID>; names and keys are rejected by cycle list.",
+  "  Customers: customer list --domain for an exact domain or --externalIds for stored CRM identifiers.",
+  "  Attachments: issue get -> attachment get --id <attachments[].id> --format url; refresh signed URLs after five minutes.",
+  "  Uploads: attachment prepare-upload -> upload bytes to the returned URL -> attachment create; URLs in comments need no issue attachment lookup.",
+  "  Status updates: --type is required; create with body plus project/initiative, update with id and only changed fields.",
   "",
   "Rules:",
   "  save commands create without --id and update with --id; never pass --id when creating.",
   "  --labels replaces every label; prefer --addLabels and --removeLabels for edits.",
+  "  Project dates keep their current resolution when omitted; use --input with JSON null for an exact-day resolution or to clear a date.",
   "  Confirm with the user before delete, retire, merge, share or unshare commands.",
 ].join("\n");

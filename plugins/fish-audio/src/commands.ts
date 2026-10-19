@@ -1,7 +1,14 @@
 import type { CommandCustomization, QuickstartEntry } from "@mcp-cli/core";
+import { assetCommands } from "./asset-commands";
+
+const mediaInputs = [
+  "Read media model get first; --inputs is a JSON array of role/object_key pairs matching that model's capability.",
+  "Use --input-object-key for one source; video shorthand also requires --operation.",
+];
 
 // Paths follow `fish-audio <noun> [sub-noun] <verb>`; get_audio_data is a player helper and stays under `call`.
 export const commands: Record<string, CommandCustomization> = {
+  ...assetCommands,
   text_to_speech: {
     path: ["speech", "create"],
     summary: "Generate speech from text and return an audio URL (1 credit per UTF-8 byte)",
@@ -87,23 +94,47 @@ export const commands: Record<string, CommandCustomization> = {
   estimate_image_edit: {
     path: ["media", "image-edit", "estimate"],
     summary: "Estimate and validate an image edit or upscale (read-only)",
+    examples: [
+      'fish-audio media image-edit estimate --workspace-id <id> --model-id <model> --inputs \'[{"role":"ref","object_key":"<key>"}]\'',
+    ],
+    rules: mediaInputs,
   },
   generate_image_edit: {
     path: ["media", "image-edit", "create"],
     summary: "Submit an image edit with the estimated parameters (charges credits)",
+    rules: [
+      ...mediaInputs,
+      "Use the estimated input and returned pricing values; show the quote before submitting.",
+    ],
   },
   estimate_video_generation: {
     path: ["media", "video", "estimate"],
     summary: "Estimate and validate a video, lip sync or avatar generation (read-only)",
+    examples: [
+      "fish-audio media video estimate --workspace-id <id> --model-id <model> --operation i2v --input-object-key <key> --prompt 'Camera moves slowly'",
+    ],
+    rules: mediaInputs,
   },
   generate_video: {
     path: ["media", "video", "create"],
     summary: "Submit a video generation with the estimated parameters (charges credits)",
+    rules: [
+      ...mediaInputs,
+      "Use the estimated input and returned pricing values; show the quote before submitting.",
+    ],
   },
   get_generation_status: {
     path: ["media", "job", "status"],
-    summary: "Poll a media generation's status and billing",
-    examples: ["fish-audio media job status --generation-id <id>"],
+    summary: "Check one generation or a batch; finished jobs include results",
+    examples: [
+      "fish-audio media job status --generation-id <id>",
+      'fish-audio media job status --generation-ids \'["<id-1>","<id-2>"]\'',
+    ],
+    rules: [
+      "Choose generation-id or generation-ids (up to 20); keep only running IDs in later batches.",
+      "Wait poll_after_seconds before checking again; status can reconcile provider state and credits.",
+      "A finished response includes results; a separate media job result call is unnecessary.",
+    ],
   },
   get_generation_result: {
     path: ["media", "job", "result"],
@@ -198,6 +229,10 @@ export const groups: Record<string, string> = {
   "studio block": "Read, edit, polish and synthesize blocks",
   "studio take": "Generated audio history per block",
   "studio speaker": "Change a speaker's voice project-wide",
+  asset: "Retained files, folders and avatars",
+  "asset collection": "Browse and edit folders, avatars and styles",
+  "asset folder": "Create folders for retained files",
+  "asset avatar": "Create an avatar from a prepared image",
 };
 
 export const quickstart: QuickstartEntry[] = [
@@ -211,10 +246,12 @@ export const quickstart: QuickstartEntry[] = [
   { command: 'speech create --text "..." --voice-id <id>', summary: "Generate speech" },
   { command: "transcription create --audio-url <url>", summary: "Transcribe audio" },
   { command: "studio manual", summary: "Read before any studio command" },
+  { command: "asset collection list --workspace-id <id>", summary: "Browse saved assets" },
 ];
 
 export const skill = [
   "Discover progressively: fish-audio --help, then <noun> --help, then <noun> <verb> --help.",
+  "Use --help=full for server instructions and nested schemas before an unfamiliar operation; methods [group] lists concise tool mappings.",
   "Help and discovery never connect to the server; tool commands do.",
   "",
   "Convenience aliases and local workflows:",
@@ -243,11 +280,18 @@ export const skill = [
   "  Transcription: transcription create --audio-url @./file.mp3 uploads a local file; https URLs pass through.",
   "  Voice clone: voice clone --audio-urls '[\"@./a.wav\"]'; follow its instructions field, which may ask for voice verify --recording-url @./r.wav.",
   "  Media: account workspaces -> media model list/get -> media <kind> estimate -> media <kind> create -> media job status/result.",
+  "  Media inputs: use model get to choose capability roles; inputs can contain multiple sources, while input-object-key is the single-input shorthand.",
+  "  Polling: media job status accepts one generation-id or up to 20 generation-ids; wait poll_after_seconds and read completed results there.",
+  "  Assets: asset collection list -> asset list -> asset get; feed the original object_key to compatible media inputs, never thumbnail_url.",
+  "  Retain: asset save after upload or generation finishes; repeated saves keep their actual location, so use asset update to move.",
+  "  Organize: asset folder create or asset avatar create -> asset update --collection-id; explicit null moves an asset to the root.",
+  "  Avatars: choose one prepared image source and optionally default-voice-id; creation does not generate media.",
   "  Studio: studio manual first. Run studio block generate --dry-run and studio project export without --confirmed-credits to get quotes.",
   "",
   "Cost rules:",
   "  Show the user a quote before any paid call: speech create, transcription create, media * create, studio block generate, studio project export.",
   "  Check account balance when a paid call may exceed the budget.",
+  "  Folder/avatar creation uses a UUID request-id; reuse identical input for recovery and explicitly approve moving an existing portrait.",
   "",
   "@path uploads a local file only in --audio-url, --audio-urls and --recording-url.",
   "Use --input or --input-file for nested or array arguments. Use call <tool> for exact MCP names.",

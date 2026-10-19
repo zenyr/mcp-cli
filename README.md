@@ -58,18 +58,23 @@ bun run mem recall '결정'
 
 ## 점진적 help
 
+Notion의 캘린더·댓글·메모리·파일 워크플로는 [Notion CLI 안내](plugins/notion/README.md)를 따릅니다.
+
 Notion CLI의 `Usage`, `Commands`, `Arguments`, `Options`, `Examples`, `Safety Rules` 구조를 참고했습니다.
 
 - `demo --help`: 추천 명령(`Start here`), 명령 그룹, 발견 명령을 한 줄 설명과 함께 표시합니다.
 - `demo message --help`: 해당 그룹의 하위 명령을 한 줄 설명과 함께 표시합니다.
 - `demo message echo --help`: 해당 도구의 인자·타입·필수 여부·예시를 표시합니다.
+- `demo message echo --help=full`: 서버 설명 원문과 중첩된 입력·출력 JSON Schema까지 표시합니다.
 - `demo methods message --json`: 해당 그룹의 도구 이름과 명령 경로만 표시합니다.
 - `demo call --help`: 모든 도구의 MCP 이름과 첫 문장 요약을 표시합니다.
 - `demo call demo-echo --help`: 같은 도구의 help를 원래 MCP 이름으로 찾습니다.
 - `demo skill`: 플러그인의 서비스 사용 지침을 표시합니다.
 
-루트 help에 모든 도구 스키마를 출력하지 않습니다.
-`methods`도 스키마 대신 도구 이름·경로·요약만 출력합니다.
+루트와 그룹 help는 하위 명령과 한 줄 요약만 표시합니다.
+개별 명령의 기본 help는 서버 설명 원문을 생략하고 인자 설명을 첫 문장, 최대 160자로 줄입니다.
+`methods`는 도구 이름·경로와 help와 같은 최대 80자 요약을 표시합니다.
+전체 스키마와 서버 원문은 `--help=full`에서 확인합니다. 이 명령도 서버에 연결하지 않습니다.
 
 ## 입력과 출력
 
@@ -219,7 +224,7 @@ export default definePlugin({
 ```
 
 `commands`에서 설명, 예시, 주의사항을 보강할 수 있습니다.
-`summary`를 지정하면 원래 도구 설명은 명령 help의 본문에 표시됩니다.
+`summary`를 지정하면 기본 help에 짧은 설명을 표시하고, 원래 도구 설명은 `--help=full` 본문에 표시합니다.
 `groups`는 공백으로 이은 그룹 경로(`"media image"`)에 한 줄 설명을 붙입니다.
 `quickstart`는 루트 help의 `Start here`에 표시할 추천 명령입니다.
 없는 그룹이나 명령을 가리키는 `groups`, `quickstart` 항목은 실행 시 오류로 처리합니다.
