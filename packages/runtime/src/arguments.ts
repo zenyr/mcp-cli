@@ -18,6 +18,7 @@ export type ParsedArguments = {
   tokens: InputToken[];
   json: boolean;
   wantsHelp: boolean;
+  fullHelp: boolean;
   allowRepeat: boolean;
   /** The plugin credential switch given for this run, such as `xoxb`. */
   credential?: string;
@@ -43,6 +44,7 @@ export const parseArguments = (
   const tokens: InputToken[] = [];
   let json = false;
   let wantsHelp = false;
+  let fullHelp = false;
   let allowRepeat = false;
   let credential: string | undefined;
   let schema: JsonSchema | undefined;
@@ -71,7 +73,10 @@ export const parseArguments = (
       continue;
     }
     if (reserved && switches.has(global)) {
-      if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
+      if (global === HELP_FLAG && inline === "full") {
+        wantsHelp = true;
+        fullHelp = true;
+      } else if (inline !== undefined) tokens.push(invalid(`${flag} does not take a value`));
       else if (global === JSON_FLAG) json = true;
       else if (global === ALLOW_REPEAT_FLAG) allowRepeat = true;
       else wantsHelp = true;
@@ -128,5 +133,13 @@ export const parseArguments = (
         : { kind: "field", flag, path: fieldPath, raw },
     );
   }
-  return { path, tokens, json, wantsHelp, allowRepeat, ...(credential && { credential }) };
+  return {
+    path,
+    tokens,
+    json,
+    wantsHelp,
+    fullHelp,
+    allowRepeat,
+    ...(credential && { credential }),
+  };
 };

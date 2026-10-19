@@ -1,4 +1,6 @@
 import type { CommandCustomization, QuickstartEntry } from "@mcp-cli/core";
+import { calendarCommands } from "./calendar-commands";
+import { workspaceCommands } from "./workspace-commands";
 
 const at = (path: string, summary: string, examples?: string[]): CommandCustomization => ({
   path: path.split(" "),
@@ -8,15 +10,23 @@ const at = (path: string, summary: string, examples?: string[]): CommandCustomiz
 
 // The two next-steps tools answer instructions inside tool results, so they stay under `call`.
 export const commands: Record<string, CommandCustomization> = {
+  ...calendarCommands,
+  ...workspaceCommands,
   "notion-get-tool-access": at(
     "access check",
     "Show tool availability and limits; run once before the first search",
     ["notion access check"],
   ),
-  "notion-search": at("search workspace", "Keyword search for pages, databases and users", [
-    "notion search workspace --query roadmap --query-type internal",
-    "notion search workspace --query jane@example.com --query-type user",
-  ]),
+  "notion-search": {
+    ...at("search workspace", "Keyword search for pages, databases and users", [
+      "notion search workspace --query roadmap --query-type internal",
+      "notion search workspace --query jane@example.com --query-type user",
+      "notion search workspace --query roadmap --filters.created_by_user_ids '[\"me\"]'",
+    ]),
+    rules: [
+      "Keep exact filters inside --filters or use --input; omit unused filters to avoid unnecessary plan requirements.",
+    ],
+  },
   "notion-ai-search": {
     ...at(
       "search ai",
@@ -24,13 +34,36 @@ export const commands: Record<string, CommandCustomization> = {
     ),
     optional: true,
   },
-  "notion-fetch": at("page get", "Fetch a page, database, data source or view by URL or ID", [
-    "notion page get --id https://www.notion.so/<page>",
-  ]),
-  "notion-create-pages": at("page create", "Create one or more pages under one parent"),
-  "notion-update-page": at("page update", "Update page properties or content with one --command", [
-    'notion page update --page-id <id> --command insert_content --content "## Notes"',
-  ]),
+  "notion-fetch": {
+    ...at("page get", "Fetch a page, database, data source or view by URL or ID", [
+      "notion page get --id https://www.notion.so/<page>",
+      "notion page get --id <page-id> --include-file-urls",
+      "notion page get --id memory",
+    ]),
+    rules: [
+      "Uploaded files use stable notion-file-block:// references by default; resolve them with attachment urls or request --include-file-urls.",
+    ],
+  },
+  "notion-create-pages": {
+    ...at("page create", "Create pages under a parent or as private drafts", [
+      "notion page create --input-file pages.json",
+    ]),
+    rules: [
+      "Use creation_mode draft for a requested durable page with no destination; do not combine it with parent.",
+      "Wait for task get to succeed before dependent actions; template content may need additional page get checks.",
+    ],
+  },
+  "notion-update-page": {
+    ...at("page update", "Update page properties or content with one --command", [
+      'notion page update --page-id <id> --command insert_content --content "## Notes"',
+      'notion page update --page-id <id> --command update_content --content-updates \'[{"old_str":"Draft","new_str":"Ready"}]\'',
+    ]),
+    rules: [
+      "Inspect warnings: update_content can apply matching edits while reporting unmatched edits.",
+      "Fetch the page again before retrying; already applied replacements may no longer match.",
+      "Show any child-page deletion preview and get confirmation before --allow-deleting-content.",
+    ],
+  },
   "notion-duplicate-page": at("page duplicate", "Duplicate a page"),
   "notion-move-pages": at("page move", "Move pages or databases to a new parent"),
   "notion-restore-pages": at("page restore", "Restore pages or databases from Trash"),
@@ -39,7 +72,15 @@ export const commands: Record<string, CommandCustomization> = {
   "notion-list-private-pages": at("page list-private", "List top-level Private sidebar pages"),
   "notion-list-shared-pages": at("page list-shared", "List Shared sidebar pages"),
   "notion-get-comments": at("comment list", "List comments and discussions on a page"),
-  "notion-create-comment": at("comment create", "Comment on a page or a specific block"),
+  "notion-create-comment": {
+    ...at("comment create", "Comment on a page, quote or existing comment", [
+      'notion comment create --page-id <page-id> --reply-to-comment-id <comment-id> --markdown "Thanks for the details"',
+    ]),
+    rules: [
+      "Provide exactly one of markdown or rich_text; use comment list to obtain reply IDs.",
+      "An unmatched selection-with-ellipsis fails; it does not fall back to a page comment.",
+    ],
+  },
   "notion-create-database": at(
     "database create",
     "Create a database from SQL DDL or a typed preset",
@@ -84,7 +125,7 @@ export const groups: Record<string, string> = {
   search: "Find pages, databases and users",
   page: "Fetch, create, edit and organize pages",
   comment: "Page comments and discussions",
-  database: "Create databases",
+  database: "Create databases or move them to Trash",
   "data-source": "Query and change database data sources",
   view: "Database views",
   "meeting-notes": "Meeting notes",
@@ -97,6 +138,13 @@ export const groups: Record<string, string> = {
   "agent-skill": "Notion pages used as agent skills",
   agent: "Custom Agents",
   session: "Custom Agent sessions",
+  account: "Connected workspace and user",
+  group: "Permission groups used by People properties",
+  memory: "Context saved by connected agents",
+  calendar: "Connected calendars, events, contacts and rooms",
+  "calendar event": "Read schedules, create events and manage invitations",
+  "calendar contact": "Resolve attendees",
+  "calendar room": "Available meeting rooms",
 };
 
 export const quickstart: QuickstartEntry[] = [
@@ -104,18 +152,33 @@ export const quickstart: QuickstartEntry[] = [
   { command: "search workspace --query <keywords>", summary: "Find a page or database" },
   { command: "page get --id <url-or-id>", summary: "Read a page before editing it" },
   { command: "page list-recent", summary: "Pick up recently viewed pages" },
+  { command: "calendar list", summary: "Find a calendar before working with events" },
 ];
 
 export const skill = [
   "Discover progressively: notion --help, then <noun> --help, then <noun> <verb> --help.",
+  "Use --help=full for server instructions and nested schemas before an unfamiliar operation; methods [group] lists concise tool mappings.",
   "",
   "Workflows:",
   "  Find: access check once -> search workspace (or search ai when available) -> page get.",
   "  Edit: page get first, then page update with one --command; read notion://docs/enhanced-markdown-spec before content changes.",
   "  Databases: page get on the database -> data-source query; view create/update for saved views.",
+  "  Layouts: read notion://docs/database-page-layouts before data-source update --page-layout; this replaces the layout.",
+  "  Views: --configure accepts map, chart and form settings; inspect the current view before changing it.",
+  "  Files: page get -> attachment urls using exact notion-file-block:// references; signed URLs expire.",
+  "  Comments: comment list -> comment create --reply-to-comment-id, or comment update with full replacement text.",
+  "  Memory: resources read notion://docs/memory once -> memory search; page get --id memory exposes its data source.",
+  "  Skills: agent-skill list-enabled -> tell the user which skill you will load -> agent-skill download.",
+  "  Calendar: calendar list -> calendar event list with explicit timeMin/timeMax/timeZone -> confirm -> create/update/cancel.",
+  "  Attendees: calendar contact search; calendar event list-coworkers reads details, while calendar room list finds rooms.",
   "  Async: page create and page update may return a task; follow it with task get.",
   "",
   "Rules:",
   "  Confirm with the user before replace_content, page move, or deleting content.",
+  "  page delete and database delete preview without --user-confirmed; show the preview before confirming the retry.",
+  "  Calendar writes may notify attendees; decline someone else's event with event update using RSVP, not event cancel.",
+  "  Resolve a comment discussion only on an explicit human request; comment update/delete/resolve/react require Business or Enterprise.",
+  "  Specify surfaces when updating enabled skills; the default changes both Notion AI and external MCP clients.",
+  "  Available tools depend on connection and plan; access check reports availability, and optional commands may be absent.",
   "  Use --input or --input-file for pages, properties and other nested arguments.",
 ].join("\n");

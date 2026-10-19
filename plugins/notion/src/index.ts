@@ -2,7 +2,7 @@ import { definePlugin } from "@mcp-cli/core";
 import { commands, groups, quickstart, skill } from "./commands";
 export default definePlugin({
   name: "notion",
-  summary: "Notion pages, databases, comments and agents",
+  summary: "Notion pages, databases, calendar, memory and agents",
   commands,
   groups,
   quickstart,

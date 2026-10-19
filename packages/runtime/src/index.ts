@@ -16,6 +16,7 @@ import { HELP, METHODS, PROMPTS, RESOURCES, SKILL } from "./reserved";
 import { runResources } from "./resources";
 import { createExecutor } from "./executor";
 import { findExtension } from "./extensions";
+import { compactDescription } from "./descriptions";
 export { help } from "./help";
 
 const formatResult = (result: ToolResult, json: boolean): string =>
@@ -59,18 +60,18 @@ export const runService = async (
       {},
     manifest.credentials.map((alternate) => alternate.flag),
   );
-  const { path, tokens, json, wantsHelp, allowRepeat, credential } = parsed;
+  const { path, tokens, json, wantsHelp, fullHelp, allowRepeat, credential } = parsed;
   // Every later connection, including resources and prompts, uses the chosen credential.
   const dependencies = { ...ports, open: () => ports.open(credential) };
   if (path[0] === HELP) {
     if (tokens.length) throw new UsageError("Help does not accept input flags");
-    dependencies.io.write(help(manifest, path.slice(1)));
+    dependencies.io.write(help(manifest, path.slice(1), { full: fullHelp }));
     return 0;
   }
   if (!path.length && tokens.length && !wantsHelp)
     throw new UsageError(`Missing command; run ${manifest.service} --help`);
   if (wantsHelp || !path.length) {
-    dependencies.io.write(help(manifest, path));
+    dependencies.io.write(help(manifest, path, { full: fullHelp }));
     return 0;
   }
   if (path[0] === METHODS) {
@@ -81,11 +82,16 @@ export const runService = async (
     const methods = commands.map((command) => ({
       tool: command.name,
       path: command.path,
-      summary: command.summary,
+      summary: compactDescription(command.summary ?? command.name),
     }));
     const extensions = (manifest.extensions ?? [])
       .filter((command) => path.slice(1).every((part, i) => command.path[i] === part))
-      .map(({ path, summary, kind, tool }) => ({ path, summary, kind, tool }));
+      .map(({ path, summary, kind, tool }) => ({
+        path,
+        summary: compactDescription(summary),
+        kind,
+        tool,
+      }));
     const entries = [...methods, ...extensions];
     dependencies.io.write(
       json
@@ -103,7 +109,7 @@ export const runService = async (
     if (tokens.length) throw new UsageError("Skill does not accept input flags");
     dependencies.io.write(
       plugin.skill ??
-        `Start with ${plugin.name} --help, then <group> --help, then <group> <action> --help.\nUse methods --json for the baked-in tool map.\nUse --input for complex schemas.\nHelp and discovery never connect to the server.\nresources and prompts commands fetch from the server at run time.`,
+        `Start with ${plugin.name} --help, then <group> --help, then <group> <action> --help.\nUse --help=full for server instructions and full JSON schemas.\nUse methods --json for the baked-in tool map.\nUse --input for complex schemas.\nHelp and discovery never connect to the server.\nresources and prompts commands fetch from the server at run time.`,
     );
     return 0;
   }
