@@ -5,151 +5,884 @@ export const manifest = {
   "tools": [
     {
       "annotations": {
-        "destructiveHint": false,
-        "idempotentHint": true,
+        "destructiveHint": true,
+        "idempotentHint": false,
         "openWorldHint": true,
-        "readOnlyHint": true
+        "readOnlyHint": false
       },
-      "description": "Use this tool for every content search when access discovery reports current_tool_access.ai_search.status=\"available\". This includes exact keywords, page titles, project names, and natural-language questions. Choose by the connection's access, not by query wording. If access is not already known, call get_tool_access first. If access discovery reports that AI search is not available, use search instead.\n\nSearch Notion and connected workspace sources available to you, such as Slack, Mail, and Calendar. Keywords are valid; a question is not required. Preserve distinctive names and identifiers. Prefer one topic per call, ideally under 50 words.\n\nStart with {\"query\":\"...\"} and omit optional parameters unless needed. For user lookup, set query_type=\"user\" and provide a name or email. Omit content filters and sort for user lookup. Do not send content_search_mode. Exact filters, non-relevance sorting, and filter-only browsing are supported by this tool and return Notion-only workspace results with supported constraints applied. Omit these options to search Notion and connected sources together. Filter and sort access is separate from AI access: check current_tool_access.ai_search.restricted_parameters. Unavailable options are dropped with a notice. If AI access is unavailable, this tool falls back to keyword search in Notion only and reports that connected sources were not searched. User name or email lookup uses this tool with query_type=\"user\".\n\n<example description=\"AI search available: find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"AI search available: find an exact identifier\">\n{\"query\":\"ACME-123\"}\n</example>\n<example description=\"AI search available: answer a question\">\n{\"query\":\"Why did we delay the launch?\"}\n</example>\n<example description=\"AI search available: browse Notion pages created in a date range\">\n{\"query\":\"\",\"filters\":{\"created_date_range\":{\"start_date\":\"2026-07-01\",\"end_date\":\"2026-08-01\"}}}\n</example>",
+      "description": "Cancel one or more identified events the user can manage. Cancellation may notify attendees. For an event the user does not organize, use calendar_update_events with updateType: \"RSVP\" instead.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
-          "data_source_url": {
-            "description": "Optionally restrict search to a data source URL returned in a <data-source> tag. Omit when searching the whole workspace.",
-            "type": "string"
-          },
-          "filters": {
-            "additionalProperties": false,
-            "description": "Optional exact filters for Notion pages and databases. Supplying an effective filter selects Notion-only workspace search so the filter is enforced exactly. Omit for unified search across Notion and connected sources. Keep filter fields nested here. Some filters require Business access.",
-            "properties": {
-              "content_status": {
-                "description": "Which pages to include by status. Omit for the default live pages. Supplying this field, even with the default value, requires Business access.",
-                "enum": [
-                  "all_with_archived",
-                  "all_without_archived",
-                  "verified_only",
-                  "archived_only"
-                ],
-                "type": "string"
-              },
-              "created_by_user_ids": {
-                "description": "Optional filter to only produce search results created by the Notion users that have the specified user IDs.",
-                "items": {
-                  "type": "string"
-                },
-                "maxItems": 100,
-                "type": "array"
-              },
-              "created_date_range": {
-                "additionalProperties": false,
-                "description": "Optional filter to only produce search results created within the specified date range.",
-                "properties": {
-                  "end_date": {
-                    "description": "The end date of the date range as an ISO 8601 date string, if any.",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
+          "events": {
+            "description": "Events to cancel.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "calendar": {
+                  "additionalProperties": false,
+                  "description": "Calendar containing the event.",
+                  "properties": {
+                    "accountId": {
+                      "description": "Account that owns the event calendar.",
+                      "type": "string"
+                    },
+                    "calendarId": {
+                      "description": "Event calendar identifier within the account.",
+                      "type": "string"
+                    }
                   },
-                  "start_date": {
-                    "description": "The start date of the date range as an ISO 8601 date string, if any.",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
-                  }
+                  "required": [
+                    "accountId",
+                    "calendarId"
+                  ],
+                  "type": "object"
                 },
-                "type": "object"
-              },
-              "edited_by_user_ids": {
-                "description": "Optional filter to only produce search results edited by the Notion users that have the specified user IDs. Available on the Business plan.",
-                "items": {
+                "eventId": {
+                  "description": "Identifier of the event to cancel.",
                   "type": "string"
                 },
-                "maxItems": 100,
-                "type": "array"
-              },
-              "last_edited_date_range": {
-                "additionalProperties": false,
-                "description": "Optional filter to only produce search results last edited within the specified date range. Available on the Business plan.",
-                "properties": {
-                  "end_date": {
-                    "description": "The end date of the date range as an ISO 8601 date string, if any.",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
-                  },
-                  "start_date": {
-                    "description": "The start date of the date range as an ISO 8601 date string, if any.",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "teamspace_ids": {
-                "description": "Optional filter to only produce search results inside one of the specified teamspaces. Selecting more than one teamspace is available on the Business plan; use teamspace_id for one teamspace on other plans.",
-                "items": {
+                "eventSummary": {
+                  "description": "Optional summary of the event, used by agent UI.",
                   "type": "string"
-                },
-                "maxItems": 100,
-                "type": "array"
+                }
               },
-              "title_only": {
-                "description": "When true, match the query only against page and database titles instead of page content. Available on the Business plan.",
-                "type": "boolean"
-              }
+              "required": [
+                "calendar",
+                "eventId"
+              ],
+              "type": "object"
             },
-            "type": "object"
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "type": "object"
+      },
+      "name": "notion-calendar-cancel-events"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Create one or more events on writable calendars. Use this after the date, time, attendees, and target calendar are known. Creating events may notify attendees.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "description": "Events to create.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "attendees": {
+                  "description": "Attendees to invite to the event",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "displayName": {
+                        "description": "Totally optional, provide only if you are sure of the attendee's name",
+                        "type": "string"
+                      },
+                      "email": {
+                        "description": "Email address of the attendee.",
+                        "type": "string"
+                      },
+                      "isOptional": {
+                        "description": "Set only if the user was explicit about an attendee not being required",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "calendar": {
+                  "additionalProperties": false,
+                  "description": "Will create the event on the primary, default calendar if not specified.",
+                  "properties": {
+                    "accountId": {
+                      "description": "Account that owns the target calendar.",
+                      "type": "string"
+                    },
+                    "calendarId": {
+                      "description": "Target calendar identifier within the account.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "accountId",
+                    "calendarId"
+                  ],
+                  "type": "object"
+                },
+                "description": {
+                  "description": "Description of the event.",
+                  "type": "string"
+                },
+                "disableConferencing": {
+                  "description": "Whether to disable conferencing for this event.",
+                  "type": "boolean"
+                },
+                "location": {
+                  "description": "Physical location where the event takes place, or remote conference link/info.",
+                  "type": "string"
+                },
+                "period": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "description": "A date-only period, denoting an all-day event. Property `type` must be set to the exact string \"DATE\"",
+                      "properties": {
+                        "end": {
+                          "additionalProperties": false,
+                          "description": "End of the event.",
+                          "properties": {
+                            "date": {
+                              "description": "Date in ISO 8601 format (no time)",
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "date"
+                          ],
+                          "type": "object"
+                        },
+                        "start": {
+                          "additionalProperties": false,
+                          "description": "Start of the event.",
+                          "properties": {
+                            "date": {
+                              "description": "Date in ISO 8601 format (no time)",
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "date"
+                          ],
+                          "type": "object"
+                        },
+                        "type": {
+                          "description": "Whether the event period uses all-day dates or date-times.",
+                          "enum": [
+                            "DATE"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "start",
+                        "end"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "description": "A date-time period, denoting an time-bound event (can span multiple days). Property `type` must be set to the exact string \"DATE_TIME\"",
+                      "properties": {
+                        "end": {
+                          "additionalProperties": false,
+                          "description": "End of the event.",
+                          "properties": {
+                            "dateTime": {
+                              "description": "Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone",
+                              "type": "string"
+                            },
+                            "timeZone": {
+                              "description": "IANA time zone for the event end date-time.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "dateTime"
+                          ],
+                          "type": "object"
+                        },
+                        "start": {
+                          "additionalProperties": false,
+                          "description": "Start of the event.",
+                          "properties": {
+                            "dateTime": {
+                              "description": "Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone",
+                              "type": "string"
+                            },
+                            "timeZone": {
+                              "description": "IANA time zone for the event start date-time.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "dateTime"
+                          ],
+                          "type": "object"
+                        },
+                        "type": {
+                          "description": "Whether the event period uses all-day dates or date-times.",
+                          "enum": [
+                            "DATE_TIME"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "start",
+                        "end"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "When the event is happening"
+                },
+                "recurrenceRules": {
+                  "description": "Recurrence rules in RRULE format (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10']). Can also include EXDATE for exception dates (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10', 'EXDATE:2026-03-24T13:00:00']).",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "resources": {
+                  "description": "Resources (such as rooms) to invite to the event. Must be from the same account as `event.calendar`.",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "displayName": {
+                        "description": "Display name of the resource.",
+                        "type": "string"
+                      },
+                      "email": {
+                        "description": "Email address of the resource.",
+                        "type": "string"
+                      },
+                      "isOptional": {
+                        "description": "Set only if the user was explicit about a resource not being required",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "isOptional"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "summary": {
+                  "description": "Title of the event.",
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "summary",
+                "period"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "type": "array"
           },
-          "max_highlight_length": {
-            "description": "Maximum result highlight length (default 200). Set to 0 to omit highlights.",
-            "maximum": 500,
-            "minimum": 0,
-            "type": "integer"
-          },
-          "page_size": {
-            "description": "Maximum number of results to return (default 10).",
-            "maximum": 50,
-            "minimum": 1,
-            "type": "integer"
-          },
-          "page_url": {
-            "description": "Optionally restrict search to a page and its descendants. Accepts a Notion page URL or ID. Omit when searching the whole workspace.",
-            "type": "string"
-          },
-          "query": {
-            "description": "Exact keywords, a page title, a project name, or a concise natural-language question. Keywords are valid; a question is not required. Preserve distinctive names and identifiers. Prefer one topic per call, ideally under 50 words. Provide a non-empty query unless intentionally browsing Notion with filters or a non-relevance sort.",
-            "type": "string"
-          },
-          "query_type": {
-            "description": "Omit or use \"internal\" for content search. Use \"user\" to look up a workspace user by name or email.",
-            "enum": [
-              "internal",
-              "user"
-            ],
-            "type": "string"
-          },
-          "sort": {
-            "description": "Omit for the default \"relevance\" ordering. \"last_edited\" and \"created\" select Notion-only workspace search and require Business access.",
-            "enum": [
-              "relevance",
-              "last_edited",
-              "created"
-            ],
-            "type": "string"
-          },
-          "teamspace_id": {
-            "description": "Optionally restrict search to a teamspace ID.",
+          "timeZone": {
+            "description": "Date-times of returned events will be expressed in this time-zone",
             "type": "string"
           }
         },
         "required": [
-          "query"
+          "timeZone",
+          "events"
         ],
         "type": "object"
       },
-      "name": "notion-ai-search"
+      "name": "notion-calendar-create-events"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
+      "description": "List rooms or other calendar resources available for specific times. Resource discovery is scoped to the connected account of the target calendar and only works with Google Workspace accounts that have admin permissions to view Calendar resources.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "calendar": {
+            "additionalProperties": false,
+            "description": "Calendar of the event the rooms will be attached to. Rooms are scoped to a single account.",
+            "properties": {
+              "accountId": {
+                "description": "Account that owns the target calendar.",
+                "type": "string"
+              },
+              "calendarId": {
+                "description": "Target calendar identifier within the account.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "accountId",
+              "calendarId"
+            ],
+            "type": "object"
+          },
+          "ignoreWorkingLocation": {
+            "description": "If true, do not narrow rooms to the user's working-location building for this day. Set this when the user is explicitly asking about rooms in a different office (e.g. for a visiting team).",
+            "type": "boolean"
+          },
+          "maxCount": {
+            "description": "Maximum number of resources to return per time slot (default: 20, max: 40)",
+            "exclusiveMinimum": 0,
+            "maximum": 40,
+            "type": "integer"
+          },
+          "minCapacity": {
+            "description": "Minimum room capacity (number of people). MUST include the meeting organizer/user themselves in the count. For a 1-on-1, pass 2. For a meeting with N invitees besides the user, pass N+1.",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "type": "integer"
+          },
+          "timeSlots": {
+            "description": "Specific time slots to check. Returns available resources for each time slot independently.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "endAt": {
+                  "description": "End of the time slot to check, as an ISO 8601 date-time.",
+                  "type": "string"
+                },
+                "startAt": {
+                  "description": "Start of the time slot to check, as an ISO 8601 date-time.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "startAt",
+                "endAt"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "timeZone": {
+            "description": "Date-times of returned events will be expressed in this time-zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timeSlots",
+          "minCapacity",
+          "timeZone"
+        ],
+        "type": "object"
+      },
+      "name": "notion-calendar-list-calendar-resources"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
+      "description": "List calendars grouped by connected account. Use this to identify a target or conflict calendar before another Calendar operation.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "onlyAccountEmails": {
+            "description": "Return only accounts linked to these email addresses. Useful to get calendars from a work account only for example. Do not specify if you are interested in getting the whole picture of someone's agenda across work and personal accounts.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-calendar-list-calendars"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
+      "description": "Find contacts by name or email across the user's connected Calendar accounts. Use this to resolve attendee identities before another Calendar operation.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "queries": {
+            "description": "Optional search queries to filter contacts by name or email. Results matching any query are included.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-calendar-list-contacts"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
+      "description": "List detailed events for coworkers in the same organization within a time range. Use this when event titles or context are needed, not only free/busy availability.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "coworkerEmails": {
+            "description": "Emails of relevant coworkers",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "timeMax": {
+            "description": "End of the time range, as an ISO 8601 date-time.",
+            "type": "string"
+          },
+          "timeMin": {
+            "description": "Start of the time range, as an ISO 8601 date-time.",
+            "type": "string"
+          },
+          "timeZone": {
+            "description": "Date-times of returned events will be expressed in this time-zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "coworkerEmails",
+          "timeMin",
+          "timeMax",
+          "timeZone"
+        ],
+        "type": "object"
+      },
+      "name": "notion-calendar-list-coworkers-events"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      },
+      "description": "List the user's events across connected calendars within a time range. Use this to inspect the user's own schedule or identify events before changing them.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "includeDeclinedInvites": {
+            "description": "Whether to include event invites the user has declined",
+            "type": "boolean"
+          },
+          "timeMax": {
+            "description": "End of the time range, as an ISO 8601 date-time.",
+            "type": "string"
+          },
+          "timeMin": {
+            "description": "Start of the time range, as an ISO 8601 date-time.",
+            "type": "string"
+          },
+          "timeZone": {
+            "description": "Date-times of returned events will be expressed in this time-zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timeMin",
+          "timeMax",
+          "timeZone"
+        ],
+        "type": "object"
+      },
+      "name": "notion-calendar-list-events"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Update one or more identified events, including timing, attendees, recurrence, resources, or RSVP status. Updates require permission and may notify attendees.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "timeZone": {
+            "description": "Date-times of returned events will be expressed in this time-zone",
+            "type": "string"
+          },
+          "updates": {
+            "description": "Event updates to apply.",
+            "items": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "event": {
+                      "additionalProperties": false,
+                      "description": "Event to update.",
+                      "properties": {
+                        "calendar": {
+                          "additionalProperties": false,
+                          "description": "Calendar containing the event.",
+                          "properties": {
+                            "accountId": {
+                              "description": "Account that owns the event calendar.",
+                              "type": "string"
+                            },
+                            "calendarId": {
+                              "description": "Event calendar identifier within the account.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "accountId",
+                            "calendarId"
+                          ],
+                          "type": "object"
+                        },
+                        "eventId": {
+                          "description": "Identifier of the event to update.",
+                          "type": "string"
+                        },
+                        "eventSummary": {
+                          "description": "Optional summary of the event, used by agent UI.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "calendar",
+                        "eventId"
+                      ],
+                      "type": "object"
+                    },
+                    "rsvp": {
+                      "additionalProperties": false,
+                      "description": "RSVP update to apply to the event.",
+                      "properties": {
+                        "comment": {
+                          "description": "Optional comment accompanying the RSVP.",
+                          "type": "string"
+                        },
+                        "responseStatus": {
+                          "description": "The calendar user's RSVP status",
+                          "enum": [
+                            "needsAction",
+                            "accepted",
+                            "declined",
+                            "tentative"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "responseStatus"
+                      ],
+                      "type": "object"
+                    },
+                    "updateType": {
+                      "description": "Must be set to the exact string \"RSVP\" in upper case.",
+                      "enum": [
+                        "RSVP"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "updateType",
+                    "event",
+                    "rsvp"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "event": {
+                      "additionalProperties": false,
+                      "description": "Event to update.",
+                      "properties": {
+                        "calendar": {
+                          "additionalProperties": false,
+                          "description": "Calendar containing the event.",
+                          "properties": {
+                            "accountId": {
+                              "description": "Account that owns the event calendar.",
+                              "type": "string"
+                            },
+                            "calendarId": {
+                              "description": "Event calendar identifier within the account.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "accountId",
+                            "calendarId"
+                          ],
+                          "type": "object"
+                        },
+                        "eventId": {
+                          "description": "Identifier of the event to update.",
+                          "type": "string"
+                        },
+                        "eventSummary": {
+                          "description": "Optional summary of the event, used by agent UI.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "calendar",
+                        "eventId"
+                      ],
+                      "type": "object"
+                    },
+                    "update": {
+                      "additionalProperties": false,
+                      "description": "Changes to apply to the event.",
+                      "properties": {
+                        "addConferencing": {
+                          "description": "Whether to add conferencing to this event. Only adds conferencing if the event has attendees and doesn't already have conferencing.",
+                          "type": "boolean"
+                        },
+                        "attendees": {
+                          "description": "Updated list of attendees for the event",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "displayName": {
+                                "description": "Totally optional, provide only if you are sure of the attendee's name",
+                                "type": "string"
+                              },
+                              "email": {
+                                "description": "Email address of the attendee.",
+                                "type": "string"
+                              },
+                              "isOptional": {
+                                "description": "Set only if the user was explicit about an attendee not being required",
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "email"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "description": {
+                          "description": "Updated description of the event.",
+                          "type": "string"
+                        },
+                        "location": {
+                          "description": "Physical location where the event takes place, or remote conference link/info.",
+                          "type": "string"
+                        },
+                        "period": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "description": "A date-only period, denoting an all-day event. Property `type` must be set to the exact string \"DATE\"",
+                              "properties": {
+                                "end": {
+                                  "additionalProperties": false,
+                                  "description": "Updated end of the event.",
+                                  "properties": {
+                                    "date": {
+                                      "description": "Date in ISO 8601 format (no time)",
+                                      "format": "date",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "date"
+                                  ],
+                                  "type": "object"
+                                },
+                                "start": {
+                                  "additionalProperties": false,
+                                  "description": "Updated start of the event.",
+                                  "properties": {
+                                    "date": {
+                                      "description": "Date in ISO 8601 format (no time)",
+                                      "format": "date",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "date"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": {
+                                  "description": "Whether the updated event period uses all-day dates or date-times.",
+                                  "enum": [
+                                    "DATE"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "start",
+                                "end"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "description": "A date-time period, denoting an time-bound event (can span multiple days). Property `type` must be set to the exact string \"DATE_TIME\"",
+                              "properties": {
+                                "end": {
+                                  "additionalProperties": false,
+                                  "description": "Updated end of the event.",
+                                  "properties": {
+                                    "dateTime": {
+                                      "description": "Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone",
+                                      "type": "string"
+                                    },
+                                    "timeZone": {
+                                      "description": "IANA time zone for the updated event end date-time.",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "dateTime"
+                                  ],
+                                  "type": "object"
+                                },
+                                "start": {
+                                  "additionalProperties": false,
+                                  "description": "Updated start of the event.",
+                                  "properties": {
+                                    "dateTime": {
+                                      "description": "Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone",
+                                      "type": "string"
+                                    },
+                                    "timeZone": {
+                                      "description": "IANA time zone for the updated event start date-time.",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "dateTime"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": {
+                                  "description": "Whether the updated event period uses all-day dates or date-times.",
+                                  "enum": [
+                                    "DATE_TIME"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "start",
+                                "end"
+                              ],
+                              "type": "object"
+                            }
+                          ],
+                          "description": "When the event is happening"
+                        },
+                        "recurrenceRules": {
+                          "description": "Recurrence rules in RRULE format (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10']). Can also include EXDATE for exception dates (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10', 'EXDATE:2026-03-24T13:00:00']).",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "resources": {
+                          "description": "Updated list of resources (such as rooms) for the event. Must be from the same account as `event.calendar`.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "displayName": {
+                                "description": "Display name of the resource.",
+                                "type": "string"
+                              },
+                              "email": {
+                                "description": "Email address of the resource.",
+                                "type": "string"
+                              },
+                              "isOptional": {
+                                "description": "Set only if the user was explicit about a resource not being required",
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "isOptional"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "summary": {
+                          "description": "Updated title of the event.",
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "updateType": {
+                      "description": "Must be set to the exact string \"UPDATE\" in upper case.",
+                      "enum": [
+                        "UPDATE"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "updateType",
+                    "event",
+                    "update"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "timeZone",
+          "updates"
+        ],
+        "type": "object"
+      },
+      "name": "notion-calendar-update-events"
     },
     {
       "annotations": {
@@ -209,7 +942,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Mark an existing Notion page as a skill without changing its content. The page must be in the current workspace, and the authenticated user must have permission to edit it. Use this tool only when the user wants the page's current contents designated as a skill.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Mark an existing Notion page as a skill without changing its content. The page must be in the current workspace, and the authenticated user must have permission to edit it. Use this tool only when the user wants the page's current contents designated as a skill.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -235,7 +968,7 @@ export const manifest = {
         "openWorldHint": true,
         "readOnlyHint": false
       },
-      "description": "Create an attachment and upload it to Notion.\n\nProvide exactly one source:\n- content for small UTF-8 text artifacts such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG files.\n- source_url for a direct, publicly reachable HTTPS file URL.\n- source_file_id for a file this exact integration already uploaded. When create_file_upload is available, use it for local files so the upload has the same owner.\n\n\nFor content and source_url, filename must use a supported extension and content_type must agree with it. Omit content_type to infer it. source_file_id takes neither because the stored upload carries both. For larger files, redirects, or authenticated downloads, upload through the Notion File Upload API with this integration's token and pass source_file_id.\n\nThe response includes a markdown_source value. To place the uploaded file on a page, pass that source to create-pages or update-page. To attach it to a comment, include suggested_markdown on a separate line in create-comment markdown. Unattached uploads remain temporary and are deleted once they expire: content and source_url open a fresh one-hour window, while source_file_id keeps the window that opened when the file was first uploaded, so place that source promptly and upload the file again if it has already expired. \"HTML\", \"HTML block\", \"HTML artifact\", and \"HTML embed\" all mean an HTML file placed with <embed src=\"file-upload://...\"> so Notion renders the sandboxed preview. Never place HTML in a code block or file block. Use <file src=\"file-upload://...\"> for other files.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Create an attachment and upload it to Notion.\n\nProvide exactly one source:\n- content for small UTF-8 text artifacts such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG files.\n- source_url for a direct, publicly reachable HTTPS file URL.\n- source_file_id for a file this exact integration already uploaded. When create_file_upload is available, use it for local files so the upload has the same owner.\n\n\nFor content and source_url, filename must use a supported extension and content_type must agree with it. Omit content_type to infer it. source_file_id takes neither because the stored upload carries both. For larger files, redirects, or authenticated downloads, upload through the Notion File Upload API with this integration's token and pass source_file_id.\n\nThe response includes a markdown_source value. To place the uploaded file on a page, pass that source to create-pages or update-page. To attach it to a comment, include suggested_markdown on a separate line in create-comment markdown. Unattached uploads remain temporary and are deleted once they expire: content and source_url open a fresh one-hour window, while source_file_id keeps the window that opened when the file was first uploaded, so place that source promptly and upload the file again if it has already expired. \"HTML\", \"HTML block\", \"HTML artifact\", and \"HTML embed\" all mean an HTML file placed with <embed src=\"file-upload://...\"> so Notion renders the sandboxed preview. Never place HTML in a code block or file block. Use <file src=\"file-upload://...\"> for other files.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -280,7 +1013,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Add a comment to a page or specific content.\n\nProvide `page_id` to identify the page, then choose ONE targeting mode:\n- `page_id` alone: Add a top-level comment to the page\n- `page_id` + `selection_with_ellipsis`: Start a new discussion on the matching block\n- `discussion_id`: Reply to an existing discussion thread (page_id is still required)\n\n\nProvide exactly one content format:\n- `markdown`: Preferred. Inline Notion-flavored Markdown for comment text. For exact syntax, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using `$`Equation`$`, and user/page/database/date mention tags such as `<mention-date start=\"YYYY-MM-DD\"/>`. To attach a file created by `create-file-upload` or `create-attachment`, include its returned `suggested_markdown` on a separate line; up to three file attachments are supported. Do not use UI shortcuts like `@today`, `@name`, `[[page]]`, or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real `url` where required by the spec. Other block-level Markdown such as headings, lists, tables, blockquotes, and fenced code blocks is stored as plain comment text rather than rendered as blocks.\n- `rich_text`: Array of rich text objects.\n\n\nFor content targeting, use `selection_with_ellipsis` with ~10 chars from start and end: \"# Section Ti...tle content\"",
+      "description": "Add a comment to a page or specific content.\n\nProvide `page_id` to identify the page, then choose ONE targeting mode:\n- `page_id` alone: Add a top-level comment to the page\n- `page_id` + `selection_with_ellipsis`: Highlight selected text within one block, or comment on the block where the match starts if no inline highlight can be resolved. No matching content returns an error.\n- `reply_to_comment_id`: Reply to a comment using its `id` from get-comments (page_id is still required)\n- `discussion_id`: Reply to an existing discussion (page_id is still required)\n\n\nProvide exactly one content format:\n- `markdown`: Preferred. Inline Notion-flavored Markdown for comment text. For exact syntax, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using `$`Equation`$`, and user/page/database/date mention tags such as `<mention-date start=\"YYYY-MM-DD\"/>`. To attach a file created by `create-file-upload` or `create-attachment`, include its returned `suggested_markdown` on a separate line; up to three file attachments are supported. Do not use UI shortcuts like `@today`, `@name`, `[[page]]`, or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real `url` where required by the spec. Other block-level Markdown such as headings, lists, tables, blockquotes, and fenced code blocks is stored as plain comment text rather than rendered as blocks.\n- `rich_text`: Array of rich text objects.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -295,6 +1028,10 @@ export const manifest = {
           },
           "page_id": {
             "description": "The ID of the page to comment on (with or without dashes).",
+            "type": "string"
+          },
+          "reply_to_comment_id": {
+            "description": "The ID of the comment to reply to.",
             "type": "string"
           },
           "rich_text": {
@@ -710,7 +1447,7 @@ export const manifest = {
             "type": "array"
           },
           "selection_with_ellipsis": {
-            "description": "Unique start and end snippet of the content to comment on. DO NOT provide the entire string. Instead, provide up to the first ~10 characters, an ellipsis, and then up to the last ~10 characters. Make sure you provide enough of the start and end snippet to uniquely identify the content. For example: \"# Section heading...last paragraph.\"",
+            "description": "Unique content snippet: ~10 characters from each end, joined by \"...\". A match within one block's text gets an inline comment on that text; otherwise, comment on the block where the match starts. No match returns an error.",
             "type": "string"
           }
         },
@@ -728,7 +1465,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Creates a new Notion database using SQL DDL syntax, or a canonical typed database for tasks, projects, or skills.\n\nProvide exactly one of:\n- schema: a CREATE TABLE statement. If no title property is provided, \"Name\" is auto-added.\n- database_type: one of tasks, projects, or skills. The database is created with the canonical required properties and typed metadata used by Notion.\n\n\nFor schema, use CREATE TABLE with double-quoted column names and single-quoted type options. If no title property is provided, \"Name\" is auto-added.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, STATUS, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nReturns Markdown with schema, SQLite definition, and data source ID in <data-source> tag for use with update_data_source and query_data_sources tools.",
+      "description": "Creates a new Notion database using SQL DDL syntax, or a canonical typed database for tasks, projects, or skills.\n\nProvide exactly one of:\n- schema: a CREATE TABLE statement. If no title property is provided, \"Name\" is auto-added.\n- database_type: one of tasks, projects, or skills. The database is created with the canonical required properties and typed metadata used by Notion.\n\n\nFor schema, use CREATE TABLE with double-quoted column names and single-quoted type options. If no title property is provided, \"Name\" is auto-added.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nReturns Markdown with schema, SQLite definition, and data source ID in <data-source> tag for use with update_data_source and query_data_sources tools.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -768,7 +1505,7 @@ export const manifest = {
             "type": "object"
           },
           "schema": {
-            "description": "SQL DDL CREATE TABLE statement defining the database schema. Cannot be combined with database_type. Column names must be double-quoted and type options use single quotes.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, STATUS, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- Minimal: <example>CREATE TABLE (\"Name\" TITLE)</example>\n- With options: <example>CREATE TABLE (\"Name\" TITLE, \"Budget\" NUMBER FORMAT 'dollar', \"Tags\" MULTI_SELECT('eng':blue, 'design':pink), \"Task ID\" UNIQUE_ID PREFIX 'PRJ')</example>\n- Self-relations are a two-step flow: create the database, then use its data source ID with update_data_source to add paired properties such as RELATION('ds', DUAL 'Children' 'children').",
+            "description": "SQL DDL CREATE TABLE statement defining the database schema. Cannot be combined with database_type. Column names must be double-quoted and type options use single quotes.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- Minimal: <example>CREATE TABLE (\"Name\" TITLE)</example>\n- With options: <example>CREATE TABLE (\"Name\" TITLE, \"Budget\" NUMBER FORMAT 'dollar', \"Tags\" MULTI_SELECT('eng':blue, 'design':pink), \"Task ID\" UNIQUE_ID PREFIX 'PRJ')</example>\n- Self-relations are a two-step flow: create the database, then use its data source ID with update_data_source to add paired properties such as RELATION('ds', DUAL 'Children' 'children').",
             "type": "string"
           },
           "title": {
@@ -955,6 +1692,13 @@ export const manifest = {
           "parent": {
             "anyOf": [
               {
+                "description": "Always `memory`",
+                "enum": [
+                  "memory"
+                ],
+                "type": "string"
+              },
+              {
                 "additionalProperties": {},
                 "properties": {
                   "page_id": {
@@ -1013,9 +1757,22 @@ export const manifest = {
                   "data_source_id"
                 ],
                 "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "teamspace_id": {
+                    "description": "The ID of the teamspace in which to create top-level pages (with or without dashes).",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "teamspace_id"
+                ],
+                "type": "object"
               }
             ],
-            "description": "All pages in one call share this parent. Otherwise use a page (page_id), database page (database_id), or data source (data_source_id). A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit \"creation_mode\": \"draft\" over omitting the parent."
+            "description": "All pages in one call share this parent. Pass \"memory\" to save a personal memory; see notion://docs/memory. Otherwise use a page (page_id), database page (database_id), data source (data_source_id), or teamspace root (teamspace_id, from get_teams). Teamspace roots require a user-backed connection and permission to add top-level pages. A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit \"creation_mode\": \"draft\" over omitting the parent."
           }
         },
         "required": [
@@ -1038,7 +1795,7 @@ export const manifest = {
         "additionalProperties": {},
         "properties": {
           "configure": {
-            "description": "View configuration DSL directives and examples:\n- FILTER \"Property\" = \"value\" — filter rows. Relation values must be a page URL or UUID; person values must be a user URI (user://<user_id>), user UUID, or \"me\". Names are not supported for either.\n- QUICK FILTER \"Property\" — add a quick filter to the view's filter bar with no criteria; add a condition to preselect one (QUICK FILTER \"Status\" = \"Done\")\n- SORT BY \"Property\" ASC — sort rows\n- GROUP BY \"Property\" — group by property (required for board views)\n- CALENDAR BY \"Property\" — date property (required for calendar views)\n- TIMELINE BY \"Start\" TO \"End\" — date range (required for timeline views)\n- MAP BY \"Property\" — location property (required for map views)\n- CHART column|bar|line|donut|number — chart type with optional AGGREGATE, COLOR, HEIGHT, SORT, STACK BY, CAPTION\n- FORM CLOSE|OPEN — close/open form submissions\n- FORM ANONYMOUS true|false — toggle anonymous submissions\n- FORM PERMISSIONS none|reader|editor — set submission permissions\n- SHOW \"Prop1\", \"Prop2\" — set visible properties\n- COVER \"Property\" — cover image property\n\n\n<example>SHOW \"Name\", \"Status\", \"Due Date\"</example>\n<example>GROUP BY \"Status\"</example>\n<example>FILTER \"Status\" = \"In Progress\"; SORT BY \"Due Date\" ASC</example>\n<example>CALENDAR BY \"Due Date\"</example>\n<example>TIMELINE BY \"Start\" TO \"End\"</example>\n<example>FILTER \"Company\" = \"Acme\"</example>",
+            "description": "View configuration DSL directives and examples:\n- FILTER \"Property\" = \"value\" — filter rows. Relation values must be a page URL or UUID; person values must be a user URI (user://<user_id>), user UUID, or \"me\". Names are not supported for either.\n- QUICK FILTER \"Property\" — add a quick filter to the view's filter bar with no criteria; add a condition to preselect one (QUICK FILTER \"Status\" = \"Done\")\n- SORT BY \"Property\" ASC — sort rows\n- GROUP BY \"Property\" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — group by property (required for board views)\n- SUB GROUP BY \"Property\" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — add board sub-grouping\n- CARD LAYOUT default | compact — set board or gallery card layout\n- CALENDAR BY \"Property\" — date property (required for calendar views)\n- TIMELINE BY \"Start\" TO \"End\" — date range (required for timeline views)\n- MAP BY \"Property\" — location property (required for map views)\n- CHART column|bar|line|donut|number — chart type with optional AGGREGATE, COLOR, HEIGHT, SORT, STACK BY, CAPTION\n- FORM CLOSE|OPEN — close/open form submissions\n- FORM ANONYMOUS true|false — toggle anonymous submissions\n- FORM PERMISSIONS none|reader|editor — set submission permissions\n- SHOW \"Prop1\", \"Prop2\" — set visible properties\n- COVER \"Property\" — cover image property\n\n\n<example>SHOW \"Name\", \"Status\", \"Due Date\"</example>\n<example>GROUP BY \"Status\" BY GROUP SHOW EMPTY; SUB GROUP BY \"Priority\"; CARD LAYOUT compact</example>\n<example>FILTER \"Status\" = \"In Progress\"; SORT BY \"Due Date\" ASC</example>\n<example>CALENDAR BY \"Due Date\"</example>\n<example>TIMELINE BY \"Start\" TO \"End\"</example>\n<example>FILTER \"Company\" = \"Acme\"</example>",
             "type": "string"
           },
           "data_source_id": {
@@ -1085,12 +1842,102 @@ export const manifest = {
     },
     {
       "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Delete a comment you wrote. Get the comment ID from get_comments or create_comment. If it is the last comment in its discussion, the discussion is removed too. Use this only when the user asks to delete a comment; to fix a comment, use update_comment instead. You can only delete your own comments.\n\nRequires a Business or Enterprise plan.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "comment_id": {
+            "description": "The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment_id"
+        ],
+        "type": "object"
+      },
+      "name": "notion-delete-comment"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Move Notion databases to Trash. They can be restored with the restore_pages tool or from Trash in Notion. Each database goes to Trash with all of its rows. Pass a full-page or inline database that owns its data, not a linked view. To move a page or database row to Trash, use delete_pages. Use this tool only when the user explicitly asks to delete specific databases. Never use it on your own initiative to clean up, deduplicate, or reorganize content. Without user_confirmed: true, nothing is trashed and the error lists what would be moved to Trash; show that list to the user and retry only after they confirm.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "database_ids": {
+            "description": "IDs of the databases to move to Trash, 1 to 20. Each must be a full-page or inline database that owns its data, not a linked view. Duplicate IDs are processed once.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "user_confirmed": {
+            "description": "Set to true only after the user explicitly asked to delete these exact databases, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "database_ids"
+        ],
+        "type": "object"
+      },
+      "name": "notion-delete-databases"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Move Notion pages to Trash. They can be restored with the restore_pages tool or from Trash in Notion. Database rows are pages. To move a database to Trash, use delete_databases. To remove content inside a page, use update_page instead. Use this tool only when the user explicitly asks to delete specific pages. Never use it on your own initiative to clean up, deduplicate, or reorganize content. Without user_confirmed: true, nothing is trashed and the error lists what would be moved to Trash; show that list to the user and retry only after they confirm.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "page_ids": {
+            "description": "IDs of the pages to move to Trash, 1 to 20. Database rows are pages. Duplicate IDs are processed once.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "user_confirmed": {
+            "description": "Set to true only after the user explicitly asked to delete these exact pages, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "page_ids"
+        ],
+        "type": "object"
+      },
+      "name": "notion-delete-pages"
+    },
+    {
+      "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Download the contents of a small UTF-8 text attachment created by the Notion MCP `create-attachment` tool.\n\nPass the `file_upload_id` returned by `create-attachment`. The attachment must belong to the requesting integration, have completed uploading, and use a supported text format such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG.\n\nThe response contains the complete text in `content` so you can save it locally, edit it, and call `create-attachment` again to upload a new version. Downloads are limited to 200 KiB. This tool does not fetch arbitrary URLs or return binary files. For larger or binary attachments, use the signed file URL returned when reading the containing Notion page.\n\n<examples>\n1. Download a text attachment: {\"file_upload_id\":\"12345678-90ab-cdef-1234-567890abcdef\"}\n</examples>\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Download the contents of a small UTF-8 text attachment created by the Notion MCP `create-attachment` tool.\n\nPass the `file_upload_id` returned by `create-attachment`. The attachment must belong to the requesting integration, have completed uploading, and use a supported text format such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG.\n\nThe response contains the complete text in `content` so you can save it locally, edit it, and call `create-attachment` again to upload a new version. Downloads are limited to 200 KiB. This tool does not fetch arbitrary URLs or return binary files. For larger or binary attachments, use the signed file URL returned when reading the containing Notion page.\n\n<examples>\n1. Download a text attachment: {\"file_upload_id\":\"12345678-90ab-cdef-1234-567890abcdef\"}\n</examples>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1114,7 +1961,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Download a spec-compliant Notion Skill as a complete tar.gz archive containing SKILL.md and its supporting files and nested folders. Pass the skill page ID. Returns a temporary signed url. Download and extract the archive to read or use the skill.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Download a spec-compliant Notion Skill as a complete tar.gz archive containing SKILL.md and its supporting files and nested folders. Pass the skill page ID. Returns a temporary signed url. Download and extract the archive to read or use the skill.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1162,17 +2009,21 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieves details about a Notion entity (page, database, data source, or saved database view) by URL or ID.\n\nProvide a URL or ID in `id`. Make multiple calls for multiple entities.\n\nFor pages, use path, verification, edit time, and truncation metadata to assess the source. Treat recency as context, not proof. Report material uncertainty when sources conflict.\n\nPages use enhanced Markdown format. For the complete specification, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool.\n\nPass a `notion://docs/*` URI as `id` to read that MCP documentation resource.\n\nDatabases return data sources in `<data-source url=\"collection://...\">` tags. Fetch the collection:// URL for its schema and use it with update_data_source or query_data_sources. Multi-source databases return more than one data source.\n\nSaved views return filters, sorts, and display settings. To query their rows, use query_data_sources with `mode: \"view\"`.\n\nIn results, a null cover or icon means none. An omitted cover or icon means unavailable or not applicable, not that none exists. File URLs expire; re-fetch to refresh them. Keep a page Markdown icon attribute for edit round trips. Uploaded media blocks may use stable `notion-file-block://` sources in Markdown. Look up each source in the response's `references` map for its current signed download URL, and preserve the stable source when editing or copying Markdown. Before relying on page content, check `truncated`, `unknown_block_count`, and `unknown_block_ids` for omitted subtrees.\n\nSet `include_discussions` to true for discussion counts, markers, previews, and `discussion://` URLs that correlate with get_comments.\n\nUse get_tool_access to check tool availability, parameter restrictions, and upgrade links for this connection.",
+      "description": "Retrieves details about a Notion entity (page, database, data source, or saved database view) by URL or ID.\n\nProvide a URL or ID in `id`. Make multiple calls for multiple entities.\n\nFor pages, use path, verification, edit time, and truncation metadata to assess the source. Treat recency as context, not proof. Report material uncertainty when sources conflict.\n\nPages use enhanced Markdown format. For the complete specification, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool.\n\nPass a `notion://docs/*` URI as `id` to read that MCP documentation resource.\n\nDatabases return data sources in `<data-source url=\"collection://...\">` tags. Fetch the collection:// URL for its schema and use it with update_data_source or query_data_sources. Multi-source databases return more than one data source.\n\nSaved views return filters, sorts, and display settings. To query their rows, use query_data_sources with `mode: \"view\"`.\n\nA null cover or icon means none; an omitted one means unavailable, not absent. Keep a page's Markdown icon attribute for edit round trips. File URLs expire; re-fetch to refresh them. Uploaded media blocks use stable `notion-file-block://` sources; keep them when editing or copying Markdown. Get download URLs with get_file_download_urls, or set `include_file_urls` to true for a `references` map. Before relying on page content, check `truncated`, `unknown_block_count`, and `unknown_block_ids` for omitted subtrees.\n\nSet `include_discussions` to true for discussion counts, markers, previews, and `discussion://` URLs that correlate with get_comments.\n\nUse get_tool_access to check tool availability, parameter restrictions, and upgrade links for this connection.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
           "id": {
-            "description": "The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/enhanced-markdown-spec</example>.",
+            "description": "The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass \"memory\" to fetch the connected user's About page and memory database in this workspace without creating them. Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/enhanced-markdown-spec</example>.",
             "type": "string"
           },
           "include_discussions": {
             "description": "Whether to include discussion/comment indicators in the page output. When true, adds a <page-discussions> summary with discussion count, preview snippets, and discussion:// URLs. Use with the get_comments tool to retrieve full discussion content. Defaults to false.",
+            "type": "boolean"
+          },
+          "include_file_urls": {
+            "description": "Whether to return signed download URLs for uploaded files. Defaults to false. When false, page Markdown cites uploaded files by stable notion-file-block:// references and the response has no references map; call get_file_download_urls with the references when you need those files' contents. When true, the response's references map gives the signed URL for each reference.",
             "type": "boolean"
           },
           "include_transcript": {
@@ -1219,7 +2070,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get comments and discussions from a Notion page.\n\nReturns discussions with full comment content in XML format. By default, returns page-level discussions only. On supported Business connections, pending suggested edits use `kind=\"suggested_edit\"` and their `discussion://` URL can be passed to `get_suggested_edit`. Resolved suggestions stay retired. Check `suggested_edits_status` to distinguish an empty result from unavailable suggestion discovery.\n\nTip: Use the `fetch` tool with `include_discussions: true` first to see where discussions are anchored in the page content, then use this tool to retrieve full discussion threads. The `discussion://` URLs in the fetch output match the discussion IDs returned here.\n\nParameters:\n- `include_all_blocks`: Include discussions on child blocks (default: false)\n- `include_resolved`: Include resolved discussions (default: false)\n- `discussion_id`: Fetch a specific discussion by ID or URL\n\n\n<example>{\"page_id\": \"page-uuid\"}</example>\n<example>{\"page_id\": \"page-uuid\", \"include_all_blocks\": true}</example>\n<example>{\"page_id\": \"page-uuid\", \"discussion_id\": \"discussion://pageId/blockId/discussionId\"}</example>",
+      "description": "Get comments and discussions from a Notion page.\n\nReturns discussions with full comment content in XML format. By default, returns page-level discussions only. On supported Business connections, pending suggested edits use `kind=\"suggested_edit\"` and their `discussion://` URL can be passed to `get_suggested_edit`. Resolved suggestions stay retired. Check `suggested_edits_status` to distinguish an empty result from unavailable suggestion discovery. Comments you wrote have `by-you=\"true\"`.\n\nTip: Use the `fetch` tool with `include_discussions: true` first to see where discussions are anchored in the page content, then use this tool to retrieve full discussion threads. The `discussion://` URLs in the fetch output match the discussion IDs returned here.\n\nParameters:\n- `include_all_blocks`: Include discussions on child blocks (default: false)\n- `include_resolved`: Include resolved discussions (default: false)\n- `discussion_id`: Fetch a specific discussion by ID or URL\n\n\n<example>{\"page_id\": \"page-uuid\"}</example>\n<example>{\"page_id\": \"page-uuid\", \"include_all_blocks\": true}</example>\n<example>{\"page_id\": \"page-uuid\", \"discussion_id\": \"discussion://pageId/blockId/discussionId\"}</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1251,11 +2102,95 @@ export const manifest = {
     {
       "annotations": {
         "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Use this tool to view the Notion skills the user has enabled for you and other external MCP clients, each with a name and a description of when it should be used. If you choose to use one of these skills, mention to the user that you are loading the skill from Notion first, then download them.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "notion-get-enabled-skills"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Get signed download URLs for files that fetch output cites by stable `notion-file-block://` references.\n\nPass up to 25 references exactly as they appear in the page Markdown. Each reference resolves independently: `files` lists the ones that resolved and `unresolved` lists the rest with a reason. The URLs expire after a few minutes; call this tool again for fresh ones. Keep the stable references, not the URLs, when editing or copying page Markdown.\n\n<examples>\n1. Get download URLs: {\"references\":[\"notion-file-block://12345678-90ab-4def-8234-567890abcdef/abcdef12-3456-4890-abcd-ef1234567890?space_id=fedcba98-7654-4321-8fed-cba987654321&name=diagram.png\"]}\n</examples>",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "references": {
+            "description": "Stable notion-file-block:// file references, copied exactly from the Markdown returned by fetch. Up to 25 per call.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "references"
+        ],
+        "type": "object"
+      },
+      "name": "notion-get-file-download-urls"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Retrieves permission groups in the current workspace that you can see, with their IDs and names.\n\nPeople properties reference a group as `space_permission_group-<id>`. Use this tool to find the name of a group in a People property value, or to find a group by name before setting it in a People property.\n\nListings are sorted by name and searches return the closest matches first. Results are limited to a maximum of 25 groups.\n\n<examples>\n1. List groups (up to the limit): {}\n\n2. Search for groups by name: {\"query\": \"engineering\"}\n\n3. Look up a group from a People property value: {\"query\": \"space_permission_group-141083e9-5e66-4c8f-8a38-bce5762903c2\"}\n</examples>",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "description": "Optional group name to search for (case-insensitive), or a group ID from a People property value (`space_permission_group-<id>` or the bare ID) to look up that group.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-get-groups"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Get the current Notion connection's workspace and authenticated user. Call with {}. Returns the workspace ID and name, and the user's ID, name, type, and email when available. Use this tool to identify the connected account. To check tool availability, use get_tool_access.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "name": "notion-get-self"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get the latest turn's status for a Custom Agent session without waiting.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Get the latest turn's status for a Custom Agent session without waiting.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1303,7 +2238,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get current tool availability, parameter restrictions, and available upgrade links for this Notion connection. Call with {} to get the full access map before using a conditionally available tool, unless current access is already in context. Reuse this map across tools. When current_tool_access.ai_search.status is \"available\", use ai_search for every content search; otherwise use search. Tool availability and restricted_parameters are independent: omit restricted options even when the tool is available. Optionally pass tool_names, for example [\"search\", \"ai_search\"], to narrow the result. Unknown names and tools not exposed to this connection are omitted. When ai_search is available, legacy search is also omitted from this map; user lookup uses ai_search with query_type=\"user\". This tool does not grant access or change the workspace.",
+      "description": "Get current tool availability, parameter restrictions, and available upgrade links for this Notion connection. This lookup is optional: tools apply access limits themselves and report them in their results as notices or errors with upgrade links. Use it when the user asks which Notion tools or features are available, or after a result reports restricted access or an upgrade requirement. Call with {} for the full access map, or pass tool_names to narrow the result. Unknown names and tools not exposed to this connection are omitted. The map may report AI search access under ai_search; use search for every content search, which runs AI search when it is available. Tool availability and restricted_parameters are independent. This tool does not grant access or change the workspace.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1395,7 +2330,56 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List the current user's top-level pages and databases in their Private sidebar section. Use this to browse private workspace structure. For content searches, including keywords and titles, use ai_search when get_tool_access reports it is available; otherwise use search. Follow cursor pagination when the complete list is needed.",
+      "description": "List the pages that link to or mention a Notion page (backlinks), in the same workspace. Returns IDs, titles and URLs only; fetch a result to read it. Only pages you can open are listed. Follow next_cursor for more.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "description": "next_cursor from the previous call.",
+            "type": "string"
+          },
+          "page_id": {
+            "description": "ID or URL of the page or database to find backlinks for.",
+            "type": "string"
+          },
+          "page_size": {
+            "description": "Maximum backlinks to return (1-100; default 25).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "types": {
+            "description": "Only return these kinds of backlinks. page_mention is an inline @-mention in text, a title, or a caption; link_to_page is a link-to-page block; property_mention is a mention in a database property; comment_mention is a mention in a comment. Omit for all kinds.",
+            "items": {
+              "description": "One of: `page_mention`, `link_to_page`, `property_mention`, `comment_mention`",
+              "enum": [
+                "page_mention",
+                "link_to_page",
+                "property_mention",
+                "comment_mention"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "type": "array"
+          }
+        },
+        "required": [
+          "page_id"
+        ],
+        "type": "object"
+      },
+      "name": "notion-list-page-backlinks"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List the current user's top-level pages and databases in their Private sidebar section. Use this to browse private workspace structure. For content searches, including keywords and titles, use search. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1420,7 +2404,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List pages and databases the current user recently viewed, ranked by recency and visit frequency. Use this to recover likely navigation context when the user refers to something they were recently working on. Follow cursor pagination when the complete list is needed.",
+      "description": "List pages and databases the current user recently viewed, ranked by recency and visit frequency. Use this to recover likely navigation context when the user refers to something they were recently working on. This reflects views, not edits; to find pages the user edited, use search with filters.edited_by_user_ids: [\"me\"] and sort: \"last_edited\". Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1445,7 +2429,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List short summaries of saved events in a Custom Agent session.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "List short summaries of saved events in a Custom Agent session.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1489,7 +2473,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List pages and databases in the current user's Shared sidebar section. Use this to browse content shared directly with the user. For content searches, including keywords and titles, use ai_search when get_tool_access reports it is available; otherwise use search. Follow cursor pagination when the complete list is needed.",
+      "description": "List pages and databases in the current user's Shared sidebar section. Use this to browse content shared directly with the user. For content searches, including keywords and titles, use search. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1506,6 +2490,38 @@ export const manifest = {
         "type": "object"
       },
       "name": "notion-list-shared-pages"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Search memories that the user's connected agents saved in earlier sessions: context, preferences, corrections, and decisions. Returns the best matches, not every memory. To list, count, or filter memories, fetch id \"memory\" and run query-data-sources on its data source. The first time you use memory in a conversation, whether searching or saving, read notion://docs/memory once.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "Maximum number of memories to return. Defaults to 10 and cannot exceed 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Words or a short phrase to find in personal memories.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "notion-memory-search"
     },
     {
       "annotations": {
@@ -1625,7 +2641,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Query Notion data sources using faithful structured rows, SQL, or a saved view.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.\n\nUse fetch first to read the schema and collection:// URL for every data source you query.\n\nChoose the mode by the data needed; omitting mode uses sql:\n- rows preserves rich-text mentions, links, formatting, dates, and equations. Use it before repairing or rewriting rich-text properties.\n- sql runs read-only SQLite. Use only table and column names shown in each fetched `<sqlite-table>` definition. The system columns include `url` and `createdTime`; use other metadata names only when the table lists them. Do not assume generic names such as `Name` or `Title`, or names such as `page_id`, `rowid`, or `lastEditedTime`. Date properties use the listed expanded columns `date:<Property Name>:start`, `date:<Property Name>:end`, and `date:<Property Name>:is_datetime`; the base date property is not a SQL column. If SQLite reports a missing column, fetch the data source again and rewrite the query using its current `<sqlite-table>` names. Do not guess another name. Bind untrusted values with `?` placeholders and `params`, and include every needed filter. View filters are not applied automatically. SQL text is lossy: mentions and formatting may be omitted, and links may lose their destination. Never treat that output as proof that a property is corrupt.\n- view runs one saved view's filters and sorts. Omit is_archived or set it false for active rows; true selects archived rows. When has_more is true, pass next_cursor as start_cursor with the same is_archived value.\n\n\nView mode has no tool-specific plan quota. SQL is unlimited on Business and Enterprise with Notion AI. Other plans have a shared workspace limit for single-data-source SQL and cannot query multiple data sources at once.",
+      "description": "Query Notion data sources using faithful structured rows, SQL, or a saved view.\n\nUse fetch first to read the schema and collection:// URL for every data source you query.\n\nChoose the mode by the data needed; omitting mode uses sql:\n- rows preserves rich-text mentions, links, formatting, dates, and equations. Use it before repairing or rewriting rich-text properties.\n- sql runs read-only SQLite. Use only table and column names shown in each fetched `<sqlite-table>` definition. The system columns include `url` and `createdTime`; use other metadata names only when the table lists them. Do not assume generic names such as `Name` or `Title`, or names such as `page_id`, `rowid`, or `lastEditedTime`. Date properties expand to `date:<Name>:start`, `:end`, `:is_datetime`; `created_time` keeps its base name. Try a column the error suggests, or fetch the data source again for its current `<sqlite-table>` names. Bind untrusted values with `?` placeholders and `params`, and include every needed filter. View filters are not applied automatically. SQL text is lossy: mentions and formatting may be omitted, and links may lose their destination. Never treat that output as proof that a property is corrupt.\n- view runs one saved view's filters and sorts. Omit is_archived or set it false for active rows; true selects archived rows. When has_more is true, pass next_cursor as start_cursor with the same is_archived value.\n\n\nView mode has no tool-specific plan quota. SQL is unlimited on Business and Enterprise with Notion AI. Other plans have a shared workspace limit for single-data-source SQL and cannot query multiple data sources at once.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -6606,7 +7622,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Query the current user's meeting notes data source.\n\nUse search first to resolve people IDs for attendee filters. By default, results already include meetings where the current user is an attendee or creator; do not add a current-user filter.\n\nTreat words such as summaries, notes, todos, action items, and deliverables as requested meeting output, not title terms. Example: \"What are my meeting todos?\" needs no title filter for \"todos\". Add a title filter only when the user clearly names a meeting, such as \"standup\", \"sprint planning\", or \"1:1 with Alice\". Generic date phrases like \"recent meetings\", \"latest meetings\", \"meetings this week\", or \"yesterday's meetings\" should be interpreted as date range filters — never as title filters. Unless the user asks about a meeting whose title contains another person's name, treat that person as an attendee or creator. Use their name as a title fallback only after attendee filtering returns no results.\n\nTitle keyword matching is case-insensitive; capitalization does not matter. Matching is lexical, so simplify a filter to one term when it returns no results. The filter parameter contains the complete property, date, Boolean-combination, and example reference.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Query the current user's meeting notes data source.\n\nUse search first to resolve people IDs for attendee filters. By default, results already include meetings where the current user is an attendee or creator; do not add a current-user filter.\n\nTreat words such as summaries, notes, todos, action items, and deliverables as requested meeting output, not title terms. Example: \"What are my meeting todos?\" needs no title filter for \"todos\". Add a title filter only when the user clearly names a meeting, such as \"standup\", \"sprint planning\", or \"1:1 with Alice\". Generic date phrases like \"recent meetings\", \"latest meetings\", \"meetings this week\", or \"yesterday's meetings\" should be interpreted as date range filters — never as title filters. Unless the user asks about a meeting whose title contains another person's name, treat that person as an attendee or creator. Use their name as a title fallback only after attendee filtering returns no results.\n\nTitle keyword matching is case-insensitive; capitalization does not matter. Matching is lexical, so simplify a filter to one term when it returns no results. The filter parameter contains the complete property, date, Boolean-combination, and example reference.\n\nRequires Notion AI. Admins can turn off AI Meeting Notes.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -7685,7 +8701,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Query data across multiple Notion data sources using read-only SQLite SQL.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.\n\nUse this tool for JOINs, UNIONs, comparisons, and aggregations that need two or more data sources. Queries across multiple data sources require a Business or Enterprise plan with Notion AI. Use query_data_sources instead when you need one data source or a saved database view.\n\nPrerequisites:\n1. Use the \"fetch\" tool first to get each data source's schema and collection:// URL.\n2. Data source URLs are found in <data-source url=\"...\"> tags in fetch results.\n\n\nSQL:\n- Use each collection:// URL as a quoted SQLite table name in the query.\n- Bind untrusted values with ? placeholders and params; do not interpolate them into SQL.\n- Include every needed filter in WHERE. Saved-view filters and sorts are not automatically applied.\n- Checkbox values: use \"__YES__\" for checked and \"__NO__\" for unchecked.\n\n\nReturns matching rows, the queried data source IDs, and whether results were truncated.",
+      "description": "Query data across multiple Notion data sources using read-only SQLite SQL.\n\nUse this tool for JOINs, UNIONs, comparisons, and aggregations that need two or more data sources. Queries across multiple data sources require a Business or Enterprise plan with Notion AI. Use query_data_sources instead when you need one data source or a saved database view.\n\nPrerequisites:\n1. Use the \"fetch\" tool first to get each data source's schema and collection:// URL.\n2. Data source URLs are found in <data-source url=\"...\"> tags in fetch results.\n\n\nSQL:\n- Use each collection:// URL as a quoted SQLite table name in the query.\n- Bind untrusted values with ? placeholders and params; do not interpolate them into SQL.\n- Include every needed filter in WHERE. Saved-view filters and sorts are not automatically applied.\n- Checkbox values: use \"__YES__\" for checked and \"__NO__\" for unchecked.\n- Date properties expand to `date:<Name>:start`, `:end`, `:is_datetime`; `created_time` keeps its base name.\n\n\nReturns matching rows, the queried data source IDs, and whether results were truncated.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -7747,7 +8763,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List agent sessions available to the integration. Filter, sort, or search by title. A bounded page can be empty while has_more is true; follow next_cursor until has_more is false.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "List agent sessions available to the integration. Filter, sort, or search by title. A bounded page can be empty while has_more is true; follow next_cursor until has_more is false.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -9023,7 +10039,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Read the full visible content of one saved Custom Agent session event.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Read the full visible content of one saved Custom Agent session event.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9084,7 +10100,7 @@ export const manifest = {
         "openWorldHint": true,
         "readOnlyHint": true
       },
-      "description": "Before the first content search for this connection, call get_tool_access with {} unless its current access result is already in context. Choose the content-search tool by current_tool_access.ai_search.status, not by query wording:\n- If the status is \"available\", use ai_search for every keyword, page-title, project-name, or natural-language content search.\n- If access discovery reports that AI search is not available to this connection, use search with short, specific keywords. Missing access information is not a denial; call get_tool_access first.\n\n\nStart with a non-empty query and omit optional parameters unless needed. Do not add filters or sorting just to fill in defaults. Business or Enterprise is required for filters.edited_by_user_ids, filters.last_edited_date_range, filters.title_only=true, filters.content_status, more than one distinct teamspace across teamspace_id and filters.teamspace_ids, and sort other than relevance. Check current_tool_access.search.restricted_parameters; unavailable options are dropped with a notice and results may be broader. Keep filters nested inside \"filters\". Use page_size, not limit. When AI search is available, use ai_search for structured content searches too.\n\nFor user lookup, use ai_search with query_type=\"user\" when AI search is available; otherwise use search with query_type=\"user\". A document about a person is a content search, not a user lookup.\n\n<example description=\"AI search unavailable: find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"Find a user on any plan\">\n{\"query\":\"alex@example.com\",\"query_type\":\"user\"}\n</example>",
+      "description": "Search Notion and connected workspace sources available to you, such as Slack, Mail, and Calendar, with AI search. Use this tool for every content search: exact keywords, page titles, project names, and natural-language questions. Keywords are valid; a question is not required. Preserve distinctive names and identifiers. Prefer one topic per call, ideally under 50 words.\n\nStart with {\"query\":\"...\"} and omit optional parameters unless needed. For user lookup, set query_type=\"user\" and provide a name or email, and omit content filters and sort. Filters, sort other than relevance, and filter-only browsing return Notion-only keyword results with supported constraints applied; omit them to search Notion and connected sources together. Business or Enterprise is required for filters.edited_by_user_ids, filters.last_edited_date_range, filters.title_only=true, filters.content_status, more than one distinct teamspace across teamspace_id and filters.teamspace_ids, and sort other than relevance. On other plans, those options are dropped with a notice in the result, and results may be broader. Keep filters nested inside \"filters\". Use page_size, not limit.\n\n<example description=\"Find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"Find an exact identifier\">\n{\"query\":\"ACME-123\"}\n</example>\n<example description=\"Answer a question\">\n{\"query\":\"Why did we delay the launch?\"}\n</example>\n<example description=\"Browse Notion pages created in a date range\">\n{\"query\":\"\",\"filters\":{\"created_date_range\":{\"start_date\":\"2026-07-01\",\"end_date\":\"2026-08-01\"}}}\n</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9108,7 +10124,7 @@ export const manifest = {
                 "type": "string"
               },
               "created_by_user_ids": {
-                "description": "Optional filter to only produce search results created by the Notion users that have the specified user IDs.",
+                "description": "Optional filter to only produce search results created by the Notion users that have the specified user IDs. Use \"me\" for the connected user.",
                 "items": {
                   "type": "string"
                 },
@@ -9135,7 +10151,7 @@ export const manifest = {
                 "type": "object"
               },
               "edited_by_user_ids": {
-                "description": "Optional filter to only produce search results edited by the Notion users that have the specified user IDs. Available on the Business plan.",
+                "description": "Optional filter to only produce search results edited by the Notion users that have the specified user IDs. Use \"me\" for the connected user. Available on the Business plan.",
                 "items": {
                   "type": "string"
                 },
@@ -9232,7 +10248,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search agents by name or description, or browse the current user's favorite agents and the workspace's newest agents. Queries return one page. Without a query, follow nextCursor until it is omitted, even when a bounded workspace page is empty. Use this instead of list_agents when personal favorites or relevance-ranked search are needed.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Search agents by name or description, or browse the current user's favorite agents and the workspace's newest agents. Queries return one page. Without a query, follow nextCursor until it is omitted, even when a bounded workspace page is empty. Use this instead of list_agents when personal favorites or relevance-ranked search are needed.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -9272,7 +10288,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search past agent sessions by topic in a periodically refreshed index and return matching session URLs and excerpts. Recently created or updated sessions may not appear; use query_sessions for recent sessions.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Search past agent sessions by topic in a periodically refreshed index and return matching session URLs and excerpts. Recently created or updated sessions may not appear; use query_sessions for recent sessions.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9300,7 +10316,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Send a follow-up message to a Custom Agent session you can access.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Send a follow-up message to a Custom Agent session you can access.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9323,6 +10339,69 @@ export const manifest = {
         "type": "object"
       },
       "name": "notion-send-message-to-session"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Add or remove your emoji reaction on a comment. Get the comment ID from get_comments or create_comment. Safe to repeat: setting the same state twice changes nothing.\n\nRequires a Business or Enterprise plan.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "comment_id": {
+            "description": "The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.",
+            "type": "string"
+          },
+          "emoji": {
+            "description": "One standard Unicode emoji.",
+            "type": "string"
+          },
+          "reacted": {
+            "description": "True to add the reaction, false to remove it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "comment_id",
+          "emoji",
+          "reacted"
+        ],
+        "type": "object"
+      },
+      "name": "notion-set-comment-reaction"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Resolve or reopen a comment discussion. Get the discussion ID from get_comments or create_comment. Use this tool only when a human explicitly asks to resolve that discussion. Do not infer resolution from addressing feedback, replying, completing related work, passing checks, or changing task status.\n\nRequires a Business or Enterprise plan.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "discussion_id": {
+            "description": "The discussion ID or URL, such as the id of a <discussion> from get_comments (discussion://pageId/blockId/discussionId) or the discussion_id returned by create_comment.",
+            "type": "string"
+          },
+          "resolved": {
+            "description": "True to resolve the discussion, false to reopen it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "discussion_id",
+          "resolved"
+        ],
+        "type": "object"
+      },
+      "name": "notion-set-discussion-resolved"
     },
     {
       "annotations": {
@@ -9382,7 +10461,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Start a session with a published Custom Agent. Use get_session_status or wait_session to check its progress.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Start a session with a published Custom Agent. Use get_session_status or wait_session to check its progress.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9413,7 +10492,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Stop a running Custom Agent session you can access.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Stop a running Custom Agent session you can access.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9433,12 +10512,41 @@ export const manifest = {
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Replace the text of a comment you wrote. Get the comment ID from get_comments or create_comment. The new text replaces the whole comment, so send the full corrected text. To fix a comment, update it instead of deleting it and posting a new one. You can only edit your own comments.\n\nRequires a Business or Enterprise plan.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "comment_id": {
+            "description": "The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.",
+            "type": "string"
+          },
+          "markdown": {
+            "description": "The full replacement text for the comment, as inline Markdown. It replaces the whole comment, so include any text you want to keep. Use the same inline syntax as create_comment. Lists, headings, and other block-level Markdown are not supported in comments.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment_id",
+          "markdown"
+        ],
+        "type": "object"
+      },
+      "name": "notion-update-comment"
+    },
+    {
+      "annotations": {
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Update a Notion data source's schema, title, attributes, or page layout. Schema changes use SQL DDL statements. Returns Markdown showing updated structure and schema.\n\nAccepts a data source ID (collection ID from fetch response's <data-source> tag) or a single-source database ID. Multi-source databases require the specific data source ID.\n\nThe statements param accepts semicolon-separated DDL statements:\n- ADD COLUMN \"Name\" <type> - add a new property\n- DROP COLUMN \"Name\" - remove a property\n- RENAME COLUMN \"Old\" TO \"New\" - rename a property\n- ALTER COLUMN \"Name\" SET <type> - change type/options\n\n\nThe page_layout param replaces the layout every page in the data source uses (pinned properties, sidebar, property sections, and a content tab next to views). Fetch the data source first to get the current layout, then edit it. See notion://docs/database-page-layouts for the format.\n\nNotes: Cannot delete/create title properties. Max one unique_id property. Cannot update synced databases. Use \"fetch\" first to see current schema and get the data source ID from <data-source url=\"collection://...\"> tags.",
+      "description": "Update a Notion data source's schema, title, attributes, or page layout. Schema changes use SQL DDL statements. Returns Markdown showing updated structure and schema.\n\nAccepts a data source ID (collection ID from fetch response's <data-source> tag) or a single-source database ID. Multi-source databases require the specific data source ID.\n\nThe statements param accepts semicolon-separated DDL statements:\n- ADD COLUMN \"Name\" <type> - add a new property\n- DROP COLUMN \"Name\" - remove a property\n- RENAME COLUMN \"Old\" TO \"New\" - rename a property\n- ALTER COLUMN \"Name\" SET <type> - change type/options. For SELECT, MULTI_SELECT, and STATUS, list every option to keep; omitted options are removed. Existing options keep their id and can be recolored. STATUS options keep their group when the group is omitted.\n\n\nThe page_layout param replaces the layout every page in the data source uses (pinned properties, sidebar, property sections, and a content tab next to views). Fetch the data source first to get the current layout, then edit it. See notion://docs/database-page-layouts for the format.\n\nNotes: Cannot delete/create title properties. Max one unique_id property. Cannot update synced databases. Use \"fetch\" first to see current schema and get the data source ID from <data-source url=\"collection://...\"> tags.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9493,7 +10601,6 @@ export const manifest = {
                           "description": "The module type.",
                           "enum": [
                             "cover",
-                            "properties",
                             "editor",
                             "discussions",
                             "relations",
@@ -9506,6 +10613,111 @@ export const manifest = {
                       },
                       "required": [
                         "type"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "properties": {
+                          "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "property": {
+                                "description": "The property name.",
+                                "type": "string"
+                              },
+                              "visibility": {
+                                "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                                "enum": [
+                                  "show",
+                                  "hide_if_empty",
+                                  "hide"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "property"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "type": {
+                          "description": "The module type.",
+                          "enum": [
+                            "properties"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "sections": {
+                          "description": "Named sections in order. Unlisted properties go in the last section and show.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "description": "The section name.",
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "properties": {
+                                "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
+                                "items": {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "property": {
+                                      "description": "The property name.",
+                                      "type": "string"
+                                    },
+                                    "visibility": {
+                                      "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                                      "enum": [
+                                        "show",
+                                        "hide_if_empty",
+                                        "hide"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "property"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "properties"
+                            ],
+                            "type": "object"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "type": {
+                          "description": "The module type.",
+                          "enum": [
+                            "properties"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "sections"
                       ],
                       "type": "object"
                     },
@@ -9617,6 +10829,32 @@ export const manifest = {
                     {
                       "additionalProperties": false,
                       "properties": {
+                        "properties": {
+                          "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "property": {
+                                "description": "The property name.",
+                                "type": "string"
+                              },
+                              "visibility": {
+                                "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                                "enum": [
+                                  "show",
+                                  "hide_if_empty",
+                                  "hide"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "property"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "type": {
                           "description": "The module type.",
                           "enum": [
@@ -9627,6 +10865,69 @@ export const manifest = {
                       },
                       "required": [
                         "type"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "sections": {
+                          "description": "Named sections in order. Unlisted properties go in the last section and show.",
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "description": "The section name.",
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "properties": {
+                                "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
+                                "items": {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "property": {
+                                      "description": "The property name.",
+                                      "type": "string"
+                                    },
+                                    "visibility": {
+                                      "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                                      "enum": [
+                                        "show",
+                                        "hide_if_empty",
+                                        "hide"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "property"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "properties"
+                            ],
+                            "type": "object"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "type": {
+                          "description": "The module type.",
+                          "enum": [
+                            "properties"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "sections"
                       ],
                       "type": "object"
                     },
@@ -9697,7 +10998,6 @@ export const manifest = {
                             "type": {
                               "description": "The module type.",
                               "enum": [
-                                "properties",
                                 "editor",
                                 "discussions",
                                 "relations"
@@ -9707,6 +11007,111 @@ export const manifest = {
                           },
                           "required": [
                             "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "properties": {
+                              "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "property": {
+                                    "description": "The property name.",
+                                    "type": "string"
+                                  },
+                                  "visibility": {
+                                    "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                                    "enum": [
+                                      "show",
+                                      "hide_if_empty",
+                                      "hide"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "property"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "type": {
+                              "description": "The module type.",
+                              "enum": [
+                                "properties"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "sections": {
+                              "description": "Named sections in order. Unlisted properties go in the last section and show.",
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "name": {
+                                    "description": "The section name.",
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "properties": {
+                                    "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
+                                    "items": {
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "property": {
+                                          "description": "The property name.",
+                                          "type": "string"
+                                        },
+                                        "visibility": {
+                                          "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                                          "enum": [
+                                            "show",
+                                            "hide_if_empty",
+                                            "hide"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "property"
+                                      ],
+                                      "type": "object"
+                                    },
+                                    "type": "array"
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "properties"
+                                ],
+                                "type": "object"
+                              },
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            "type": {
+                              "description": "The module type.",
+                              "enum": [
+                                "properties"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "sections"
                           ],
                           "type": "object"
                         },
@@ -9772,7 +11177,7 @@ export const manifest = {
             "type": "object"
           },
           "statements": {
-            "description": "Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, STATUS, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- <example>ADD COLUMN \"Priority\" SELECT('High':red, 'Medium':yellow, 'Low':green); ADD COLUMN \"Due Date\" DATE</example>\n- <example>RENAME COLUMN \"Status\" TO \"Project Status\"</example>\n- <example>DROP COLUMN \"Old Property\"</example>\n- For a self-relation, add both relation properties in one call with matching DUAL names and IDs, such as <example>ADD COLUMN \"Parent\" RELATION('ds', DUAL 'Children' 'children')</example>.",
+            "description": "Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- <example>ADD COLUMN \"Priority\" SELECT('High':red, 'Medium':yellow, 'Low':green); ADD COLUMN \"Due Date\" DATE</example>\n- <example>RENAME COLUMN \"Status\" TO \"Project Status\"</example>\n- <example>DROP COLUMN \"Old Property\"</example>\n- For a self-relation, add both relation properties in one call with matching DUAL names and IDs, such as <example>ADD COLUMN \"Parent\" RELATION('ds', DUAL 'Children' 'children')</example>.",
             "type": "string"
           },
           "title": {
@@ -9786,6 +11191,53 @@ export const manifest = {
         "type": "object"
       },
       "name": "notion-update-data-source"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Enable or disable Notion Skills for external MCP clients, Notion AI, or both by adding or removing their page URLs. The surfaces option defaults to both and changes only the current user's Skill settings.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "add_skill_urls": {
+            "description": "Notion Skill page URLs to enable on the requested surfaces.",
+            "items": {
+              "description": "A Notion Skill page URL.",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "remove_skill_urls": {
+            "description": "Notion Skill page URLs to disable on the requested surfaces.",
+            "items": {
+              "description": "A Notion Skill page URL.",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "surfaces": {
+            "description": "Skill settings to update. Defaults to both external MCP and Notion AI.",
+            "items": {
+              "enum": [
+                "mcp",
+                "notion_ai"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-update-enabled-skills"
     },
     {
       "annotations": {
@@ -9850,7 +11302,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Update a Notion page's properties or content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT guess or hallucinate Markdown syntax. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nBefore changing content, fetch unless already loaded. Match nearby headings, block types, nesting, list or table patterns, and prose style.\n\nMake the smallest edit. Use \"update_content\" for targeted search-and-replace and \"insert_content\" only to prepend or append. Avoid full-page \"replace_content\" when a targeted command is sufficient. Preserve unrelated wording, structure, order, and native references. Do not broadly rewrite unless asked.\n\nFor \"update_content\", use the smallest exact old_str that uniquely identifies the target. If the edit would remove material content the user did not identify, ask for confirmation first. After a multi-part or structural edit, fetch the page again and verify the requested content and nesting. Skip this extra read for a simple exact edit.\n\nFor \"replace_content\", preserve child pages and databases with their exact fetched tags. If validation reports that child content would be deleted, show the list and ask for confirmation. Never retry with \"allow_deleting_content\": true without confirmation.",
+      "description": "Update a Notion page's properties or content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT guess or hallucinate Markdown syntax. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nBefore changing content, fetch unless already loaded. Match nearby headings, block types, nesting, list or table patterns, and prose style.\n\nMake the smallest edit. Use \"update_content\" for targeted search-and-replace and \"insert_content\" only to prepend or append. Avoid full-page \"replace_content\" when a targeted command is sufficient. Preserve unrelated wording, structure, order, and native references. Do not broadly rewrite unless asked.\n\nFor \"update_content\", use the smallest exact old_str that uniquely identifies the target. If the edit would remove material content the user did not identify, ask for confirmation first. After a multi-part or structural edit, fetch the page again and verify the requested content and nesting. Skip this extra read for a simple exact edit.\n\nFor \"replace_content\", preserve child pages and databases with their exact fetched tags. If validation reports that child content would be deleted, show the list and ask for confirmation. Never retry with \"allow_deleting_content\": true without confirmation. Report any \"warnings\" in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -9880,7 +11332,7 @@ export const manifest = {
             "type": "string"
           },
           "content_updates": {
-            "description": "Required for \"update_content\" command. An array of search-and-replace operations, each with old_str (content to find) and new_str (replacement content).",
+            "description": "Required for \"update_content\" command. An array of search-and-replace operations, each with old_str (content to find) and new_str (replacement content). Operations that match are applied, and each one that matches nothing is reported in \"warnings\". The call fails only when no operation that changes content matches.",
             "items": {
               "additionalProperties": {},
               "properties": {
@@ -10060,13 +11512,13 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Update a view's name, filters, sorts, or display configuration.\n\nUse \"fetch\" to get view IDs from database responses. Only include fields\nyou want to change. The \"configure\" param uses the same DSL as create_view.\nUse CLEAR to remove settings:\n- CLEAR FILTER — remove all filters\n- CLEAR QUICK FILTER — remove all quick filters, or name properties to remove only theirs (CLEAR QUICK FILTER \"Status\")\n- CLEAR SORT — remove all sorts\n- CLEAR GROUP BY — remove grouping\n\n\nSee notion://docs/view-dsl-spec resource for full syntax (readable via your MCP client's resource-reading interface, or by passing the URI to the Notion \"fetch\" tool).\n\n<example description=\"Rename\">{\"view_id\": \"abc123\", \"name\": \"Sprint Board\"}</example>\n<example description=\"Update filter\">{\"view_id\": \"abc123\", \"configure\": \"FILTER \"Status\" = \"Done\"\"}</example>\n<example description=\"Add quick filters without criteria\">{\"view_id\": \"abc123\", \"configure\": \"QUICK FILTER \"Status\", \"Assignee\"\"}</example>\n<example description=\"Clear filter, add sort\">{\"view_id\": \"abc123\", \"configure\": \"CLEAR FILTER; SORT BY \"Created\" DESC\"}</example>\n<example description=\"Update grouping\">{\"view_id\": \"abc123\", \"configure\": \"GROUP BY \"Priority\"; SHOW \"Name\", \"Status\"\"}</example>",
+      "description": "Update a view's name, filters, sorts, or display configuration.\n\nUse \"fetch\" to get view IDs from database responses. Only include fields\nyou want to change. The \"configure\" param uses the same DSL as create_view.\nUse CLEAR to remove settings:\n- CLEAR FILTER — remove all filters\n- CLEAR QUICK FILTER — remove all quick filters, or name properties to remove only theirs (CLEAR QUICK FILTER \"Status\")\n- CLEAR SORT — remove all sorts\n- CLEAR GROUP BY — remove grouping. Boards reject it; use GROUP BY with another property instead (CLEAR SUB GROUP BY still works).\n- CLEAR SUB GROUP BY — remove board sub-grouping\n\n\nSet board or gallery card layout with CARD LAYOUT default or CARD LAYOUT compact. Status sub-groups accept BY OPTION or BY GROUP.\n\nSee notion://docs/view-dsl-spec resource for full syntax (readable via your MCP client's resource-reading interface, or by passing the URI to the Notion \"fetch\" tool).\n\n<example description=\"Rename\">{\"view_id\": \"abc123\", \"name\": \"Sprint Board\"}</example>\n<example description=\"Update filter\">{\"view_id\": \"abc123\", \"configure\": \"FILTER \"Status\" = \"Done\"\"}</example>\n<example description=\"Add quick filters without criteria\">{\"view_id\": \"abc123\", \"configure\": \"QUICK FILTER \"Status\", \"Assignee\"\"}</example>\n<example description=\"Clear filter, add sort\">{\"view_id\": \"abc123\", \"configure\": \"CLEAR FILTER; SORT BY \"Created\" DESC\"}</example>\n<example description=\"Update grouping\">{\"view_id\": \"abc123\", \"configure\": \"GROUP BY \"Status\" BY GROUP SHOW EMPTY; SUB GROUP BY \"Priority\"; CARD LAYOUT compact\"}</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
           "configure": {
-            "description": "View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, FREEZE COLUMNS, and CLEAR directives.",
+            "description": "View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, SUB GROUP BY, CARD LAYOUT, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, FREEZE COLUMNS, and CLEAR directives.",
             "type": "string"
           },
           "name": {
@@ -10092,7 +11544,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Import a spec-compliant Agent Skills directory into a page in a Skills database. First call action=prepare with page_id and the exact tar.gz content_length and checksum_crc32. PUT the raw archive bytes to upload_url with all upload_headers, then call action=complete with the same page_id and upload_token. The archive must contain SKILL.md with name/description YAML frontmatter, either at the root or in a single matching skill-name directory. Completion replaces the page title, Description, body, and Files; it preserves the page and uses the page-update diff engine rather than recreating all content blocks. SKILL.md becomes page content. Its sibling folders and files are added directly to Files, preserving nested directories without a skill-name wrapper. Previous folders are not deleted. For a new skill, create a page in a Skills database first. Maximum 20 MiB compressed, 25 MiB expanded, 1000 entries, 20 path levels, and 200 UTF-8 bytes per filename. Paths must be unique ignoring case. Only name and description are imported from frontmatter; optional fields are ignored. Links and special files are rejected. Upload URLs and tokens expire after ten minutes. Uploading never executes skill instructions or scripts.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Import a spec-compliant Agent Skills directory into a page in a Skills database. First call action=prepare with page_id and the exact tar.gz content_length and checksum_crc32. PUT the raw archive bytes to upload_url with all upload_headers, then call action=complete with the same page_id and upload_token. The archive must contain SKILL.md with name/description YAML frontmatter, either at the root or in a single matching skill-name directory. Completion replaces the page title, Description, body, and Files; it preserves the page and uses the page-update diff engine rather than recreating all content blocks. SKILL.md becomes page content. Its sibling folders and files are added directly to Files, preserving nested directories without a skill-name wrapper. Previous folders are not deleted. For a new skill, create a page in a Skills database first. Maximum 20 MiB compressed, 25 MiB expanded, 1000 entries, 20 path levels, and 200 UTF-8 bytes per filename. Paths must be unique ignoring case. Only name and description are imported from frontmatter; optional fields are ignored. Links and special files are rejected. Upload URLs and tokens expire after ten minutes. Uploading never executes skill instructions or scripts.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -10143,7 +11595,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Wait for the latest turn in a Custom Agent session to stop running.\n\nIf availability is not already known for this connection, call get_tool_access with {} before using this tool. Reuse the returned access map across tools; check the status and restricted_parameters.",
+      "description": "Wait for the latest turn in a Custom Agent session to stop running.\n\nRequires Notion AI.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -10171,96 +11623,489 @@ export const manifest = {
   ],
   "version": 2
 } satisfies GeneratedManifest;
-export interface NotionAiSearchInput {
+export interface NotionCalendarCancelEventsInput {
 /**
- * Optionally restrict search to a data source URL returned in a <data-source> tag. Omit when searching the whole workspace.
- */
-data_source_url?: string
-/**
- * Optional exact filters for Notion pages and databases. Supplying an effective filter selects Notion-only workspace search so the filter is enforced exactly. Omit for unified search across Notion and connected sources. Keep filter fields nested here. Some filters require Business access.
- */
-filters?: {
-/**
- * Which pages to include by status. Omit for the default live pages. Supplying this field, even with the default value, requires Business access.
- */
-content_status?: ("all_with_archived" | "all_without_archived" | "verified_only" | "archived_only")
-/**
- * Optional filter to only produce search results created by the Notion users that have the specified user IDs.
+ * Events to cancel.
  * 
- * @maxItems 100
+ * @maxItems 50
  */
-created_by_user_ids?: string[]
+events: {
 /**
- * Optional filter to only produce search results created within the specified date range.
+ * Calendar containing the event.
  */
-created_date_range?: {
+calendar: {
 /**
- * The end date of the date range as an ISO 8601 date string, if any.
+ * Account that owns the event calendar.
  */
-end_date?: string
+accountId: string
 /**
- * The start date of the date range as an ISO 8601 date string, if any.
+ * Event calendar identifier within the account.
  */
-start_date?: string
+calendarId: string
 }
 /**
- * Optional filter to only produce search results edited by the Notion users that have the specified user IDs. Available on the Business plan.
+ * Identifier of the event to cancel.
+ */
+eventId: string
+/**
+ * Optional summary of the event, used by agent UI.
+ */
+eventSummary?: string
+}[]
+}
+
+export interface NotionCalendarCreateEventsInput {
+/**
+ * Events to create.
  * 
- * @maxItems 100
+ * @maxItems 50
  */
-edited_by_user_ids?: string[]
+events: {
 /**
- * Optional filter to only produce search results last edited within the specified date range. Available on the Business plan.
+ * Attendees to invite to the event
  */
-last_edited_date_range?: {
+attendees?: {
 /**
- * The end date of the date range as an ISO 8601 date string, if any.
+ * Totally optional, provide only if you are sure of the attendee's name
  */
-end_date?: string
+displayName?: string
 /**
- * The start date of the date range as an ISO 8601 date string, if any.
+ * Email address of the attendee.
  */
-start_date?: string
+email: string
+/**
+ * Set only if the user was explicit about an attendee not being required
+ */
+isOptional?: boolean
+}[]
+/**
+ * Will create the event on the primary, default calendar if not specified.
+ */
+calendar?: {
+/**
+ * Account that owns the target calendar.
+ */
+accountId: string
+/**
+ * Target calendar identifier within the account.
+ */
+calendarId: string
 }
 /**
- * Optional filter to only produce search results inside one of the specified teamspaces. Selecting more than one teamspace is available on the Business plan; use teamspace_id for one teamspace on other plans.
- * 
- * @maxItems 100
+ * Description of the event.
  */
-teamspace_ids?: string[]
+description?: string
 /**
- * When true, match the query only against page and database titles instead of page content. Available on the Business plan.
+ * Whether to disable conferencing for this event.
  */
-title_only?: boolean
+disableConferencing?: boolean
+/**
+ * Physical location where the event takes place, or remote conference link/info.
+ */
+location?: string
+/**
+ * When the event is happening
+ */
+period: ({
+/**
+ * End of the event.
+ */
+end: {
+/**
+ * Date in ISO 8601 format (no time)
+ */
+date: string
 }
 /**
- * Maximum result highlight length (default 200). Set to 0 to omit highlights.
+ * Start of the event.
  */
-max_highlight_length?: number
+start: {
 /**
- * Maximum number of results to return (default 10).
+ * Date in ISO 8601 format (no time)
  */
-page_size?: number
+date: string
+}
 /**
- * Optionally restrict search to a page and its descendants. Accepts a Notion page URL or ID. Omit when searching the whole workspace.
+ * Whether the event period uses all-day dates or date-times.
  */
-page_url?: string
+type: "DATE"
+} | {
 /**
- * Exact keywords, a page title, a project name, or a concise natural-language question. Keywords are valid; a question is not required. Preserve distinctive names and identifiers. Prefer one topic per call, ideally under 50 words. Provide a non-empty query unless intentionally browsing Notion with filters or a non-relevance sort.
+ * End of the event.
  */
-query: string
+end: {
 /**
- * Omit or use "internal" for content search. Use "user" to look up a workspace user by name or email.
+ * Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone
  */
-query_type?: ("internal" | "user")
+dateTime: string
 /**
- * Omit for the default "relevance" ordering. "last_edited" and "created" select Notion-only workspace search and require Business access.
+ * IANA time zone for the event end date-time.
  */
-sort?: ("relevance" | "last_edited" | "created")
+timeZone?: string
+}
 /**
- * Optionally restrict search to a teamspace ID.
+ * Start of the event.
  */
-teamspace_id?: string
+start: {
+/**
+ * Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone
+ */
+dateTime: string
+/**
+ * IANA time zone for the event start date-time.
+ */
+timeZone?: string
+}
+/**
+ * Whether the event period uses all-day dates or date-times.
+ */
+type: "DATE_TIME"
+})
+/**
+ * Recurrence rules in RRULE format (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10']). Can also include EXDATE for exception dates (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10', 'EXDATE:2026-03-24T13:00:00']).
+ */
+recurrenceRules?: string[]
+/**
+ * Resources (such as rooms) to invite to the event. Must be from the same account as `event.calendar`.
+ */
+resources?: {
+/**
+ * Display name of the resource.
+ */
+displayName?: string
+/**
+ * Email address of the resource.
+ */
+email?: string
+/**
+ * Set only if the user was explicit about a resource not being required
+ */
+isOptional: boolean
+}[]
+/**
+ * Title of the event.
+ */
+summary: string
+}[]
+/**
+ * Date-times of returned events will be expressed in this time-zone
+ */
+timeZone: string
+}
+
+export interface NotionCalendarListCalendarResourcesInput {
+/**
+ * Calendar of the event the rooms will be attached to. Rooms are scoped to a single account.
+ */
+calendar?: {
+/**
+ * Account that owns the target calendar.
+ */
+accountId: string
+/**
+ * Target calendar identifier within the account.
+ */
+calendarId: string
+}
+/**
+ * If true, do not narrow rooms to the user's working-location building for this day. Set this when the user is explicitly asking about rooms in a different office (e.g. for a visiting team).
+ */
+ignoreWorkingLocation?: boolean
+/**
+ * Maximum number of resources to return per time slot (default: 20, max: 40)
+ */
+maxCount?: number
+/**
+ * Minimum room capacity (number of people). MUST include the meeting organizer/user themselves in the count. For a 1-on-1, pass 2. For a meeting with N invitees besides the user, pass N+1.
+ */
+minCapacity: number
+/**
+ * Specific time slots to check. Returns available resources for each time slot independently.
+ * 
+ * @minItems 1
+ */
+timeSlots: [{
+/**
+ * End of the time slot to check, as an ISO 8601 date-time.
+ */
+endAt: string
+/**
+ * Start of the time slot to check, as an ISO 8601 date-time.
+ */
+startAt: string
+}, ...({
+/**
+ * End of the time slot to check, as an ISO 8601 date-time.
+ */
+endAt: string
+/**
+ * Start of the time slot to check, as an ISO 8601 date-time.
+ */
+startAt: string
+})[]]
+/**
+ * Date-times of returned events will be expressed in this time-zone
+ */
+timeZone: string
+}
+
+export interface NotionCalendarListCalendarsInput {
+/**
+ * Return only accounts linked to these email addresses. Useful to get calendars from a work account only for example. Do not specify if you are interested in getting the whole picture of someone's agenda across work and personal accounts.
+ */
+onlyAccountEmails?: string[]
+}
+
+export interface NotionCalendarListContactsInput {
+/**
+ * Optional search queries to filter contacts by name or email. Results matching any query are included.
+ * 
+ * @maxItems 50
+ */
+queries?: string[]
+}
+
+export interface NotionCalendarListCoworkersEventsInput {
+/**
+ * Emails of relevant coworkers
+ */
+coworkerEmails: string[]
+/**
+ * End of the time range, as an ISO 8601 date-time.
+ */
+timeMax: string
+/**
+ * Start of the time range, as an ISO 8601 date-time.
+ */
+timeMin: string
+/**
+ * Date-times of returned events will be expressed in this time-zone
+ */
+timeZone: string
+}
+
+export interface NotionCalendarListEventsInput {
+/**
+ * Whether to include event invites the user has declined
+ */
+includeDeclinedInvites?: boolean
+/**
+ * End of the time range, as an ISO 8601 date-time.
+ */
+timeMax: string
+/**
+ * Start of the time range, as an ISO 8601 date-time.
+ */
+timeMin: string
+/**
+ * Date-times of returned events will be expressed in this time-zone
+ */
+timeZone: string
+}
+
+export interface NotionCalendarUpdateEventsInput {
+/**
+ * Date-times of returned events will be expressed in this time-zone
+ */
+timeZone: string
+/**
+ * Event updates to apply.
+ * 
+ * @maxItems 50
+ */
+updates: ({
+/**
+ * Event to update.
+ */
+event: {
+/**
+ * Calendar containing the event.
+ */
+calendar: {
+/**
+ * Account that owns the event calendar.
+ */
+accountId: string
+/**
+ * Event calendar identifier within the account.
+ */
+calendarId: string
+}
+/**
+ * Identifier of the event to update.
+ */
+eventId: string
+/**
+ * Optional summary of the event, used by agent UI.
+ */
+eventSummary?: string
+}
+/**
+ * RSVP update to apply to the event.
+ */
+rsvp: {
+/**
+ * Optional comment accompanying the RSVP.
+ */
+comment?: string
+/**
+ * The calendar user's RSVP status
+ */
+responseStatus: ("needsAction" | "accepted" | "declined" | "tentative")
+}
+/**
+ * Must be set to the exact string "RSVP" in upper case.
+ */
+updateType: "RSVP"
+} | {
+/**
+ * Event to update.
+ */
+event: {
+/**
+ * Calendar containing the event.
+ */
+calendar: {
+/**
+ * Account that owns the event calendar.
+ */
+accountId: string
+/**
+ * Event calendar identifier within the account.
+ */
+calendarId: string
+}
+/**
+ * Identifier of the event to update.
+ */
+eventId: string
+/**
+ * Optional summary of the event, used by agent UI.
+ */
+eventSummary?: string
+}
+/**
+ * Changes to apply to the event.
+ */
+update: {
+/**
+ * Whether to add conferencing to this event. Only adds conferencing if the event has attendees and doesn't already have conferencing.
+ */
+addConferencing?: boolean
+/**
+ * Updated list of attendees for the event
+ */
+attendees?: {
+/**
+ * Totally optional, provide only if you are sure of the attendee's name
+ */
+displayName?: string
+/**
+ * Email address of the attendee.
+ */
+email: string
+/**
+ * Set only if the user was explicit about an attendee not being required
+ */
+isOptional?: boolean
+}[]
+/**
+ * Updated description of the event.
+ */
+description?: string
+/**
+ * Physical location where the event takes place, or remote conference link/info.
+ */
+location?: string
+/**
+ * When the event is happening
+ */
+period?: ({
+/**
+ * Updated end of the event.
+ */
+end: {
+/**
+ * Date in ISO 8601 format (no time)
+ */
+date: string
+}
+/**
+ * Updated start of the event.
+ */
+start: {
+/**
+ * Date in ISO 8601 format (no time)
+ */
+date: string
+}
+/**
+ * Whether the updated event period uses all-day dates or date-times.
+ */
+type: "DATE"
+} | {
+/**
+ * Updated end of the event.
+ */
+end: {
+/**
+ * Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone
+ */
+dateTime: string
+/**
+ * IANA time zone for the updated event end date-time.
+ */
+timeZone?: string
+}
+/**
+ * Updated start of the event.
+ */
+start: {
+/**
+ * Date-time in ISO 8601 format, in UTC (ending with Z), or with TZ offset, or without TZ offset if `timeZone` is specified in which case will be interpreted as local time in that timeZone
+ */
+dateTime: string
+/**
+ * IANA time zone for the updated event start date-time.
+ */
+timeZone?: string
+}
+/**
+ * Whether the updated event period uses all-day dates or date-times.
+ */
+type: "DATE_TIME"
+})
+/**
+ * Recurrence rules in RRULE format (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10']). Can also include EXDATE for exception dates (e.g., ['RRULE:FREQ=WEEKLY;COUNT=10', 'EXDATE:2026-03-24T13:00:00']).
+ */
+recurrenceRules?: string[]
+/**
+ * Updated list of resources (such as rooms) for the event. Must be from the same account as `event.calendar`.
+ */
+resources?: {
+/**
+ * Display name of the resource.
+ */
+displayName?: string
+/**
+ * Email address of the resource.
+ */
+email?: string
+/**
+ * Set only if the user was explicit about a resource not being required
+ */
+isOptional: boolean
+}[]
+/**
+ * Updated title of the event.
+ */
+summary?: string
+}
+/**
+ * Must be set to the exact string "UPDATE" in upper case.
+ */
+updateType: "UPDATE"
+})[]
 }
 
 export interface NotionCheckMcpNextStepsInput {
@@ -10314,6 +12159,10 @@ markdown?: string
  * The ID of the page to comment on (with or without dashes).
  */
 page_id: string
+/**
+ * The ID of the comment to reply to.
+ */
+reply_to_comment_id?: string
 /**
  * An array of rich text objects that represent the content of the comment. Provide exactly one of rich_text or markdown.
  * 
@@ -10531,7 +12380,7 @@ type?: "equation"
 [k: string]: unknown
 }))[]
 /**
- * Unique start and end snippet of the content to comment on. DO NOT provide the entire string. Instead, provide up to the first ~10 characters, an ellipsis, and then up to the last ~10 characters. Make sure you provide enough of the start and end snippet to uniquely identify the content. For example: "# Section heading...last paragraph."
+ * Unique content snippet: ~10 characters from each end, joined by "...". A match within one block's text gets an inline comment on that text; otherwise, comment on the block where the match starts. No match returns an error.
  */
 selection_with_ellipsis?: string
 [k: string]: unknown
@@ -10564,8 +12413,9 @@ type?: "page_id"
  * SQL DDL CREATE TABLE statement defining the database schema. Cannot be combined with database_type. Column names must be double-quoted and type options use single quotes.
  * 
  * Property type syntax:
- * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, STATUS, FILES
+ * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES
  * - SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)
+ * - STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete
  * - NUMBER [FORMAT 'dollar'] / FORMULA('expression')
  * - RELATION('ds') for a one-way relation
  * - RELATION('ds', DUAL) for a two-way relation
@@ -10682,9 +12532,9 @@ properties?: {
 template_id?: string
 }[]
 /**
- * All pages in one call share this parent. Otherwise use a page (page_id), database page (database_id), or data source (data_source_id). A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit "creation_mode": "draft" over omitting the parent.
+ * All pages in one call share this parent. Pass "memory" to save a personal memory; see notion://docs/memory. Otherwise use a page (page_id), database page (database_id), data source (data_source_id), or teamspace root (teamspace_id, from get_teams). Teamspace roots require a user-backed connection and permission to add top-level pages. A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit "creation_mode": "draft" over omitting the parent.
  */
-parent?: ({
+parent?: ("memory" | {
 /**
  * The ID of the parent page (with or without dashes), for example, 195de9221179449fab8075a27c979105
  */
@@ -10714,6 +12564,11 @@ data_source_id: string
  */
 type?: "data_source_id"
 [k: string]: unknown
+} | {
+/**
+ * The ID of the teamspace in which to create top-level pages (with or without dashes).
+ */
+teamspace_id: string
 })
 [k: string]: unknown
 }
@@ -10724,7 +12579,9 @@ export interface NotionCreateViewInput {
  * - FILTER "Property" = "value" — filter rows. Relation values must be a page URL or UUID; person values must be a user URI (user://<user_id>), user UUID, or "me". Names are not supported for either.
  * - QUICK FILTER "Property" — add a quick filter to the view's filter bar with no criteria; add a condition to preselect one (QUICK FILTER "Status" = "Done")
  * - SORT BY "Property" ASC — sort rows
- * - GROUP BY "Property" — group by property (required for board views)
+ * - GROUP BY "Property" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — group by property (required for board views)
+ * - SUB GROUP BY "Property" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — add board sub-grouping
+ * - CARD LAYOUT default | compact — set board or gallery card layout
  * - CALENDAR BY "Property" — date property (required for calendar views)
  * - TIMELINE BY "Start" TO "End" — date range (required for timeline views)
  * - MAP BY "Property" — location property (required for map views)
@@ -10737,7 +12594,7 @@ export interface NotionCreateViewInput {
  * 
  * 
  * <example>SHOW "Name", "Status", "Due Date"</example>
- * <example>GROUP BY "Status"</example>
+ * <example>GROUP BY "Status" BY GROUP SHOW EMPTY; SUB GROUP BY "Priority"; CARD LAYOUT compact</example>
  * <example>FILTER "Status" = "In Progress"; SORT BY "Due Date" ASC</example>
  * <example>CALENDAR BY "Due Date"</example>
  * <example>TIMELINE BY "Start" TO "End"</example>
@@ -10767,6 +12624,41 @@ type: ("table" | "board" | "list" | "calendar" | "timeline" | "gallery" | "form"
 [k: string]: unknown
 }
 
+export interface NotionDeleteCommentInput {
+/**
+ * The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.
+ */
+comment_id: string
+}
+
+export interface NotionDeleteDatabasesInput {
+/**
+ * IDs of the databases to move to Trash, 1 to 20. Each must be a full-page or inline database that owns its data, not a linked view. Duplicate IDs are processed once.
+ * 
+ * @minItems 1
+ * @maxItems 20
+ */
+database_ids: [string]|[string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]
+/**
+ * Set to true only after the user explicitly asked to delete these exact databases, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.
+ */
+user_confirmed?: boolean
+}
+
+export interface NotionDeletePagesInput {
+/**
+ * IDs of the pages to move to Trash, 1 to 20. Database rows are pages. Duplicate IDs are processed once.
+ * 
+ * @minItems 1
+ * @maxItems 20
+ */
+page_ids: [string]|[string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]
+/**
+ * Set to true only after the user explicitly asked to delete these exact pages, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.
+ */
+user_confirmed?: boolean
+}
+
 export interface NotionDownloadAttachmentInput {
 /**
  * The FileUpload ID returned by the create-attachment tool.
@@ -10792,13 +12684,17 @@ page_id: string
 
 export interface NotionFetchInput {
 /**
- * The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/enhanced-markdown-spec</example>.
+ * The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass "memory" to fetch the connected user's About page and memory database in this workspace without creating them. Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/enhanced-markdown-spec</example>.
  */
 id: string
 /**
  * Whether to include discussion/comment indicators in the page output. When true, adds a <page-discussions> summary with discussion count, preview snippets, and discussion:// URLs. Use with the get_comments tool to retrieve full discussion content. Defaults to false.
  */
 include_discussions?: boolean
+/**
+ * Whether to return signed download URLs for uploaded files. Defaults to false. When false, page Markdown cites uploaded files by stable notion-file-block:// references and the response has no references map; call get_file_download_urls with the references when you need those files' contents. When true, the response's references map gives the signed URL for each reference.
+ */
+include_file_urls?: boolean
 /**
  * Whether to include meeting note transcripts. Defaults to false. When true, full transcripts are included; when false, a placeholder with the meeting note URL is shown instead.
  */
@@ -10832,6 +12728,31 @@ include_resolved?: boolean
  */
 page_id: string
 [k: string]: unknown
+}
+
+export interface NotionGetEnabledSkillsInput {
+
+}
+
+export interface NotionGetFileDownloadUrlsInput {
+/**
+ * Stable notion-file-block:// file references, copied exactly from the Markdown returned by fetch. Up to 25 per call.
+ * 
+ * @minItems 1
+ * @maxItems 25
+ */
+references: [string, ...(string)[]]
+}
+
+export interface NotionGetGroupsInput {
+/**
+ * Optional group name to search for (case-insensitive), or a group ID from a People property value (`space_permission_group-<id>` or the bare ID) to look up that group.
+ */
+query?: string
+}
+
+export interface NotionGetSelfInput {
+
 }
 
 export interface NotionGetSessionStatusInput {
@@ -10890,6 +12811,27 @@ cursor?: string
 limit?: number
 }
 
+export interface NotionListPageBacklinksInput {
+/**
+ * next_cursor from the previous call.
+ */
+cursor?: string
+/**
+ * ID or URL of the page or database to find backlinks for.
+ */
+page_id: string
+/**
+ * Maximum backlinks to return (1-100; default 25).
+ */
+page_size?: number
+/**
+ * Only return these kinds of backlinks. page_mention is an inline @-mention in text, a title, or a caption; link_to_page is a link-to-page block; property_mention is a mention in a database property; comment_mention is a mention in a comment. Omit for all kinds.
+ * 
+ * @maxItems 4
+ */
+types?: []|[("page_mention" | "link_to_page" | "property_mention" | "comment_mention")]|[("page_mention" | "link_to_page" | "property_mention" | "comment_mention"), ("page_mention" | "link_to_page" | "property_mention" | "comment_mention")]|[("page_mention" | "link_to_page" | "property_mention" | "comment_mention"), ("page_mention" | "link_to_page" | "property_mention" | "comment_mention"), ("page_mention" | "link_to_page" | "property_mention" | "comment_mention")]|[("page_mention" | "link_to_page" | "property_mention" | "comment_mention"), ("page_mention" | "link_to_page" | "property_mention" | "comment_mention"), ("page_mention" | "link_to_page" | "property_mention" | "comment_mention"), ("page_mention" | "link_to_page" | "property_mention" | "comment_mention")]
+}
+
 export interface NotionListPrivatePagesInput {
 /**
  * Opaque pagination cursor from the previous response.
@@ -10941,6 +12883,17 @@ cursor?: string
  * Maximum results to return (1-200).
  */
 limit?: number
+}
+
+export interface NotionMemorySearchInput {
+/**
+ * Maximum number of memories to return. Defaults to 10 and cannot exceed 50.
+ */
+limit?: number
+/**
+ * Words or a short phrase to find in personal memories.
+ */
+query: string
 }
 
 export interface NotionMovePagesInput {
@@ -14290,7 +16243,7 @@ filters?: {
  */
 content_status?: ("all_with_archived" | "all_without_archived" | "verified_only" | "archived_only")
 /**
- * Optional filter to only produce search results created by the Notion users that have the specified user IDs.
+ * Optional filter to only produce search results created by the Notion users that have the specified user IDs. Use "me" for the connected user.
  * 
  * @maxItems 100
  */
@@ -14309,7 +16262,7 @@ end_date?: string
 start_date?: string
 }
 /**
- * Optional filter to only produce search results edited by the Notion users that have the specified user IDs. Available on the Business plan.
+ * Optional filter to only produce search results edited by the Notion users that have the specified user IDs. Use "me" for the connected user. Available on the Business plan.
  * 
  * @maxItems 100
  */
@@ -14413,6 +16366,32 @@ session_url: string
 [k: string]: unknown
 }
 
+export interface NotionSetCommentReactionInput {
+/**
+ * The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.
+ */
+comment_id: string
+/**
+ * One standard Unicode emoji.
+ */
+emoji: string
+/**
+ * True to add the reaction, false to remove it.
+ */
+reacted: boolean
+}
+
+export interface NotionSetDiscussionResolvedInput {
+/**
+ * The discussion ID or URL, such as the id of a <discussion> from get_comments (discussion://pageId/blockId/discussionId) or the discussion_id returned by create_comment.
+ */
+discussion_id: string
+/**
+ * True to resolve the discussion, false to reopen it.
+ */
+resolved: boolean
+}
+
 export interface NotionShowAdvancedAnalysisNextStepsInput {
 
 }
@@ -14435,6 +16414,17 @@ export interface NotionStopSessionInput {
  */
 session_url: string
 [k: string]: unknown
+}
+
+export interface NotionUpdateCommentInput {
+/**
+ * The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.
+ */
+comment_id: string
+/**
+ * The full replacement text for the comment, as inline Markdown. It replaces the whole comment, so include any text you want to keep. Use the same inline syntax as create_comment. Lists, headings, and other block-level Markdown are not supported in comments.
+ */
+markdown: string
 }
 
 export interface NotionUpdateDataSourceInput {
@@ -14478,7 +16468,72 @@ main: ({
 /**
  * The module type.
  */
-type: ("cover" | "properties" | "editor" | "discussions" | "relations" | "backlinks" | "page_sections" | "bottom_controls")
+type: ("cover" | "editor" | "discussions" | "relations" | "backlinks" | "page_sections" | "bottom_controls")
+} | {
+/**
+ * Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties?: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+/**
+ * The module type.
+ */
+type: "properties"
+} | {
+/**
+ * Named sections in order. Unlisted properties go in the last section and show.
+ * 
+ * @minItems 1
+ */
+sections: [{
+/**
+ * The section name.
+ */
+name: string
+/**
+ * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+}, ...({
+/**
+ * The section name.
+ */
+name: string
+/**
+ * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+})[]]
+/**
+ * The module type.
+ */
+type: "properties"
 } | {
 /**
  * Property names to show under the title.
@@ -14525,6 +16580,66 @@ type: "views"
  */
 sidebar?: ({
 /**
+ * Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties?: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+/**
+ * The module type.
+ */
+type: "properties"
+} | {
+/**
+ * Named sections in order. Unlisted properties go in the last section and show.
+ * 
+ * @minItems 1
+ */
+sections: [{
+/**
+ * The section name.
+ */
+name: string
+/**
+ * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+}, ...({
+/**
+ * The section name.
+ */
+name: string
+/**
+ * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+})[]]
+/**
  * The module type.
  */
 type: "properties"
@@ -14562,7 +16677,72 @@ modules: ({
 /**
  * The module type.
  */
-type: ("properties" | "editor" | "discussions" | "relations")
+type: ("editor" | "discussions" | "relations")
+} | {
+/**
+ * Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties?: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+/**
+ * The module type.
+ */
+type: "properties"
+} | {
+/**
+ * Named sections in order. Unlisted properties go in the last section and show.
+ * 
+ * @minItems 1
+ */
+sections: [{
+/**
+ * The section name.
+ */
+name: string
+/**
+ * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+}, ...({
+/**
+ * The section name.
+ */
+name: string
+/**
+ * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
+ */
+properties: {
+/**
+ * The property name.
+ */
+property: string
+/**
+ * Defaults to show. Changes how pages look, not who can see the value.
+ */
+visibility?: ("show" | "hide_if_empty" | "hide")
+}[]
+})[]]
+/**
+ * The module type.
+ */
+type: "properties"
 } | {
 /**
  * How the property looks.
@@ -14588,8 +16768,9 @@ type: "property"
  * Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.
  * 
  * Property type syntax:
- * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, STATUS, FILES
+ * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES
  * - SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)
+ * - STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete
  * - NUMBER [FORMAT 'dollar'] / FORMULA('expression')
  * - RELATION('ds') for a one-way relation
  * - RELATION('ds', DUAL) for a two-way relation
@@ -14612,6 +16793,27 @@ statements?: string
  */
 title?: string
 [k: string]: unknown
+}
+
+export interface NotionUpdateEnabledSkillsInput {
+/**
+ * Notion Skill page URLs to enable on the requested surfaces.
+ * 
+ * @maxItems 50
+ */
+add_skill_urls?: string[]
+/**
+ * Notion Skill page URLs to disable on the requested surfaces.
+ * 
+ * @maxItems 50
+ */
+remove_skill_urls?: string[]
+/**
+ * Skill settings to update. Defaults to both external MCP and Notion AI.
+ * 
+ * @maxItems 2
+ */
+surfaces?: []|[("mcp" | "notion_ai")]|[("mcp" | "notion_ai"), ("mcp" | "notion_ai")]
 }
 
 export interface NotionUpdateFolderInput {
@@ -14661,7 +16863,7 @@ command: ("update_properties" | "update_content" | "replace_content" | "insert_c
  */
 content?: string
 /**
- * Required for "update_content" command. An array of search-and-replace operations, each with old_str (content to find) and new_str (replacement content).
+ * Required for "update_content" command. An array of search-and-replace operations, each with old_str (content to find) and new_str (replacement content). Operations that match are applied, and each one that matches nothing is reported in "warnings". The call fails only when no operation that changes content matches.
  * 
  * @maxItems 100
  */
@@ -14770,7 +16972,7 @@ verification_status?: ("verified" | "unverified")
 
 export interface NotionUpdateViewInput {
 /**
- * View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, FREEZE COLUMNS, and CLEAR directives.
+ * View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, SUB GROUP BY, CARD LAYOUT, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, FREEZE COLUMNS, and CLEAR directives.
  */
 configure?: string
 /**

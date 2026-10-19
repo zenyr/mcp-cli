@@ -10,7 +10,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Deprecated fallback for tiny files only. Accepts base64 file content, verifies SHA-256 checksum, and uploads it through the MCP worker.\nPrefer `prepare_attachment_upload` plus direct PUT plus `create_attachment_from_upload`.\n\nCRITICAL: Do not print base64Content and then copy it into this tool call.\nOpaque base64 copied through model-visible text is easy to corrupt.\n\nGenerate base64Content mechanically from the source bytes and pass it through a programmatic argument construction path whenever available. Before calling this tool, verify the values are consistent:\n\nUnix-like shells:\nfile=\"/path/to/file\"\nbase64Content=$(base64 < \"$file\" | tr -d '\\n\\r')\nsha256=$(shasum -a 256 \"$file\" | awk '{print $1}')\ndecodedSha256=$(printf '%s' \"$base64Content\" | base64 -d | shasum -a 256 | awk '{print $1}')\nsize=$(wc -c < \"$file\" | tr -d ' ') # optional; stat can also get file byte size\ndecodedSize=$(printf '%s' \"$base64Content\" | base64 -d | wc -c | tr -d ' ')\n\nPowerShell:\n$file = 'C:\\path\\to\\file'\n$bytes = [IO.File]::ReadAllBytes($file)\n$base64Content = [Convert]::ToBase64String($bytes)\n$sha256 = (Get-FileHash -Algorithm SHA256 -Path $file).Hash.ToLower()\n$size = $bytes.Length # optional\n$decoded = [Convert]::FromBase64String($base64Content)\n$decodedStream = [IO.MemoryStream]::new($decoded)\n$decodedSha256 = (Get-FileHash -Algorithm SHA256 -InputStream $decodedStream).Hash.ToLower()\n$decodedSize = $decoded.Length\n\ndecodedSha256 must equal sha256. If you pass size, decodedSize must equal size.\nPass `sha256`. Passing `size` is optional, but recommended for clearer mismatch errors.",
+      "description": "Deprecated fallback for tiny files only. Accepts base64 file content, verifies SHA-256 checksum, and uploads it through the MCP worker.\nPrefer `prepare_attachment_upload` plus direct PUT plus `create_attachment_from_upload`.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nCRITICAL: Do not print base64Content and then copy it into this tool call.\nOpaque base64 copied through model-visible text is easy to corrupt.\n\nGenerate base64Content mechanically from the source bytes and pass it through a programmatic argument construction path whenever available. Before calling this tool, verify the values are consistent:\n\nUnix-like shells:\nfile=\"/path/to/file\"\nbase64Content=$(base64 < \"$file\" | tr -d '\\n\\r')\nsha256=$(shasum -a 256 \"$file\" | awk '{print $1}')\ndecodedSha256=$(printf '%s' \"$base64Content\" | base64 -d | shasum -a 256 | awk '{print $1}')\nsize=$(wc -c < \"$file\" | tr -d ' ') # optional; stat can also get file byte size\ndecodedSize=$(printf '%s' \"$base64Content\" | base64 -d | wc -c | tr -d ' ')\n\nPowerShell:\n$file = 'C:\\path\\to\\file'\n$bytes = [IO.File]::ReadAllBytes($file)\n$base64Content = [Convert]::ToBase64String($bytes)\n$sha256 = (Get-FileHash -Algorithm SHA256 -Path $file).Hash.ToLower()\n$size = $bytes.Length # optional\n$decoded = [Convert]::FromBase64String($base64Content)\n$decodedStream = [IO.MemoryStream]::new($decoded)\n$decodedSha256 = (Get-FileHash -Algorithm SHA256 -InputStream $decodedStream).Hash.ToLower()\n$decodedSize = $decoded.Length\n\ndecodedSha256 must equal sha256. If you pass size, decodedSize must equal size.\nPass `sha256`. Passing `size` is optional, but recommended for clearer mismatch errors.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -69,7 +69,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Link an already-uploaded Linear assetUrl to an existing issue as an attachment.\n\nUse this only after:\n1. prepare_attachment_upload returned an assetUrl and uploadRequest.\n2. The client successfully PUT raw file bytes to uploadRequest.url.\n\nThis tool does not upload file content. It only creates the Linear attachment row.\nIf the direct upload failed or the signed URL expired, rerun prepare_attachment_upload and upload again.",
+      "description": "Link an already-uploaded Linear assetUrl to an existing issue as an attachment.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nUse this only after:\n1. prepare_attachment_upload returned an assetUrl and uploadRequest.\n2. The client successfully PUT raw file bytes to uploadRequest.url.\n\nThis tool does not upload file content. It only creates the Linear attachment row.\nIf the direct upload failed or the signed URL expired, rerun prepare_attachment_upload and upload again.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -193,13 +193,13 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Delete an attachment by ID",
+      "description": "Remove an attachment link from an issue's Resources. This does not delete the stored file. Use the attachment ID from get_issue's attachments array, not a UUID from the upload URL.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "id": {
-            "description": "Attachment ID",
+            "description": "Issue attachment ID from get_issue's attachments array (attachments[].id)",
             "type": "string"
           }
         },
@@ -322,7 +322,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "id": {
-            "description": "Status update ID",
+            "description": "Update ID from get_status_updates results (statusUpdates[].id) or save_status_update's id; type must match the update",
             "type": "string"
           },
           "type": {
@@ -403,7 +403,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "format": {
-            "description": "Response format. Defaults to content.",
+            "description": "Omit or use content to fetch a Linear-hosted file. Use url for attachment metadata without fetching the file; also supports external links",
             "enum": [
               "content",
               "url"
@@ -411,7 +411,7 @@ export const manifest = {
             "type": "string"
           },
           "id": {
-            "description": "Attachment ID",
+            "description": "Issue attachment ID from get_issue's attachments array (attachments[].id)",
             "type": "string"
           }
         },
@@ -716,12 +716,12 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
@@ -855,7 +855,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List or get project/initiative status updates. Pass `id` to get a specific update, or filter to list.",
+      "description": "List or get project/initiative status updates with their body, health, author, and parent project or initiative. Pass id to get one update and ignore list filters; omit id to list.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -865,11 +865,11 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "id": {
-            "description": "Status update ID - if provided, returns this specific update",
+            "description": "Update ID from get_status_updates results (statusUpdates[].id) or save_status_update's id",
             "type": "string"
           },
           "includeArchived": {
@@ -878,18 +878,18 @@ export const manifest = {
             "type": "boolean"
           },
           "initiative": {
-            "description": "Initiative name, ID, identifier (e.g., I-123), or slug",
+            "description": "Initiative name, ID, identifier (e.g., I-123), or slug. Filters initiative updates only; omit to include all accessible initiatives",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -897,7 +897,7 @@ export const manifest = {
             "type": "string"
           },
           "project": {
-            "description": "Project name, ID, identifier (e.g., P-ENG-123), or slug",
+            "description": "Project name, ID, identifier (e.g., P-ENG-123), or slug. Filters project updates only; omit to include all accessible projects",
             "type": "string"
           },
           "type": {
@@ -913,7 +913,7 @@ export const manifest = {
             "type": "string"
           },
           "user": {
-            "description": "User ID, name, email, or \"me\"",
+            "description": "Filter by update author: User ID, name, email, or \"me\". Omit to include all authors",
             "type": "string"
           }
         },
@@ -931,7 +931,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieve details of a specific Linear team",
+      "description": "Retrieve details of a specific Linear team, including its parent ID and hierarchy name. Use list_teams with parentTeam or ancestorTeam to find its sub-teams",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1014,7 +1014,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieve details of a specific Linear user",
+      "description": "Retrieve one user's profile, email, admin, guest, and active flags, plus team IDs, names, and keys. Use list_users to find matching users.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1038,7 +1038,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieve the connected Linear workspace",
+      "description": "Retrieve the connected workspace's ID, name, and URL to confirm which workspace you are using",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -1058,18 +1058,18 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1094,7 +1094,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "documentId": {
@@ -1111,7 +1111,7 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
@@ -1121,7 +1121,7 @@ export const manifest = {
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1162,18 +1162,18 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1219,7 +1219,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "initiative": {
@@ -1232,13 +1232,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1271,8 +1271,21 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
+          },
+          "domain": {
+            "description": "Exact customer domain (case-insensitive); combined with other filters",
+            "minLength": 1,
+            "type": "string"
+          },
+          "externalIds": {
+            "description": "Match any stored external ID exactly (case-sensitive); combined with other filters",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
           },
           "includeArchived": {
             "default": false,
@@ -1286,13 +1299,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1331,17 +1344,17 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieve cycles for a specific Linear team",
+      "description": "List a team's cycles with their IDs, numbers, dates, and issue and scope histories",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "teamId": {
-            "description": "Team ID",
+            "description": "Team UUID from list_teams or get_team; names and keys are not accepted",
             "type": "string"
           },
           "type": {
-            "description": "Filter: current, previous, next, or all",
+            "description": "Filter relative to the team's current cycle. Omit to return cycles without this filter",
             "enum": [
               "current",
               "previous",
@@ -1374,18 +1387,18 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1449,7 +1462,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "fields": {
@@ -1485,13 +1498,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1532,7 +1545,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "includeArchived": {
@@ -1547,7 +1560,7 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
@@ -1557,7 +1570,7 @@ export const manifest = {
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1586,7 +1599,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "customView": {
@@ -1647,13 +1660,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1698,7 +1711,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "includeArchived": {
@@ -1713,7 +1726,7 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
@@ -1723,7 +1736,7 @@ export const manifest = {
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1791,7 +1804,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "customView": {
@@ -1860,19 +1873,24 @@ export const manifest = {
             "description": "Include archived items",
             "type": "boolean"
           },
+          "includeSubTeams": {
+            "default": false,
+            "description": "Include results from the selected team and all descendants when team is set. Team ID filters already include descendants; this also expands name and key filters",
+            "type": "boolean"
+          },
           "label": {
             "description": "Label name or ID",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -1957,7 +1975,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "includeArchived": {
@@ -1972,7 +1990,7 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
@@ -1982,7 +2000,7 @@ export const manifest = {
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -2015,7 +2033,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "customView": {
@@ -2073,6 +2091,11 @@ export const manifest = {
             "description": "Include milestones",
             "type": "boolean"
           },
+          "includeSubTeams": {
+            "default": false,
+            "description": "Include results from the selected team and all descendants when team is set. Team ID filters already include descendants; this also expands name and key filters",
+            "type": "boolean"
+          },
           "initiative": {
             "description": "Initiative name, ID, identifier (e.g., I-123), or slug",
             "type": "string"
@@ -2093,7 +2116,7 @@ export const manifest = {
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -2138,7 +2161,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "includeArchived": {
@@ -2158,13 +2181,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -2209,7 +2232,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "includeArchived": {
@@ -2233,13 +2256,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -2288,7 +2311,7 @@ export const manifest = {
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "hasReleaseNotes": {
@@ -2307,13 +2330,13 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -2362,17 +2385,21 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List teams in the user's Linear workspace",
+      "description": "List teams in the user's Linear workspace, including their parent IDs and hierarchy names",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "ancestorTeam": {
+            "description": "All descendant teams of this team, at any depth, excluding itself (name, key, or ID)",
+            "type": "string"
+          },
           "createdAt": {
             "description": "Created after: ISO-8601 date/duration (e.g., -P1D)",
             "type": "string"
           },
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "includeArchived": {
@@ -2382,17 +2409,21 @@ export const manifest = {
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
             ],
+            "type": "string"
+          },
+          "parentTeam": {
+            "description": "Only direct sub-teams of this team (name, key, or ID)",
             "type": "string"
           },
           "query": {
@@ -2445,24 +2476,24 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieve users in the Linear workspace",
+      "description": "List workspace users with their IDs, names, emails, and admin, guest, and active flags. Use get_user for team memberships.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "cursor": {
-            "description": "Next page cursor",
+            "description": "Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true",
             "type": "string"
           },
           "limit": {
             "default": 50,
-            "description": "Max results (default 50, max 250)",
+            "description": "Maximum number of results to return per page",
             "maximum": 250,
             "type": "number"
           },
           "orderBy": {
             "default": "updatedAt",
-            "description": "Sort: createdAt | updatedAt",
+            "description": "Timestamp to sort results by: creation time or last update time",
             "enum": [
               "createdAt",
               "updatedAt"
@@ -2470,11 +2501,11 @@ export const manifest = {
             "type": "string"
           },
           "query": {
-            "description": "Filter by name or email",
+            "description": "Match part of a name or email. Omit to list users without a name or email filter",
             "type": "string"
           },
           "team": {
-            "description": "Team name or ID",
+            "description": "Team name or ID. Only return members of this team; omit to search the workspace",
             "type": "string"
           }
         },
@@ -2564,7 +2595,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Prepare a direct Linear file upload for an existing issue.\n\nWorkflow:\n1. Call this tool with issue, filename, contentType, and size.\n2. Upload raw bytes with PUT to uploadRequest.url outside MCP.\n3. All headers in uploadRequest.headers are part of the signed request, so send them verbatim.\n4. After PUT succeeds, call create_attachment_from_upload with assetUrl to link it to the issue.\n\nDo not base64-encode or transform the file. Use curl --data-binary @path or fetch(url, { method: 'PUT', body: blob }).\nOmitting or modifying any signed header, including casing, will return HTTP 403.\nThe signed URL must be used within 60 seconds or it will expire.\n\nUpload sequencing:\nPrepare, PUT, and finalize one file before calling this tool for another file.\nDo not batch multiple prepare_attachment_upload calls before starting the PUTs because earlier signed URLs can expire while later files are prepared.\n\nExample:\ncurl -X PUT --data-binary @file.png \\\n  -H \"content-type: image/png\" \\\n  -H \"x-goog-content-length-range: N,N\" \\\n  -H \"cache-control: public, max-age=31536000\" \\\n  -H 'Content-Disposition: attachment; filename=\"file.png\"' \\\n  \"<uploadRequest.url>\"",
+      "description": "Prepare a direct Linear file upload for an existing issue.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nWorkflow:\n1. Call this tool with issue, filename, contentType, and size.\n2. Upload raw bytes with PUT to uploadRequest.url outside MCP.\n3. All headers in uploadRequest.headers are part of the signed request, so send them verbatim.\n4. After PUT succeeds, call create_attachment_from_upload with assetUrl to link it to the issue.\n\nDo not base64-encode or transform the file. Use curl --data-binary @path or fetch(url, { method: 'PUT', body: blob }).\nOmitting or modifying any signed header, including casing, will return HTTP 403.\nThe signed URL must be used within 60 seconds or it will expire.\n\nUpload sequencing:\nPrepare, PUT, and finalize one file before calling this tool for another file.\nDo not batch multiple prepare_attachment_upload calls before starting the PUTs because earlier signed URLs can expire while later files are prepared.\n\nExample:\ncurl -X PUT --data-binary @file.png \\\n  -H \"content-type: image/png\" \\\n  -H \"x-goog-content-length-range: N,N\" \\\n  -H \"cache-control: public, max-age=31536000\" \\\n  -H 'Content-Disposition: attachment; filename=\"file.png\"' \\\n  \"<uploadRequest.url>\"",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -3440,8 +3471,11 @@ export const manifest = {
             "type": "string"
           },
           "targetDate": {
-            "description": "Target date (ISO format)",
-            "type": "string"
+            "description": "Target date (ISO format). Null to remove",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "type": "object"
@@ -4255,18 +4289,28 @@ export const manifest = {
             "type": "array"
           },
           "startDate": {
-            "description": "Start date (ISO format). Pair with startDateResolution to indicate precision (e.g. month, quarter)",
-            "type": "string"
+            "description": "Start date (ISO format). Pair with startDateResolution to indicate precision (e.g. month, quarter). Null to remove",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "startDateResolution": {
-            "description": "Start date resolution",
-            "enum": [
-              "halfYear",
-              "month",
-              "quarter",
-              "year"
+            "anyOf": [
+              {
+                "enum": [
+                  "halfYear",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "type": "string"
+            "description": "Start date resolution. Null for an exact day. When omitted, the current resolution stays and the date snaps to it"
           },
           "state": {
             "description": "Project status name, type, or ID. Names resolve within the lead team's project statuses. If the lead team is unknown, standard labels resolve as status types; custom names require a status ID or leadTeam",
@@ -4277,18 +4321,28 @@ export const manifest = {
             "type": "string"
           },
           "targetDate": {
-            "description": "Target date (ISO format). Pair with targetDateResolution to indicate precision (e.g. month, quarter)",
-            "type": "string"
+            "description": "Target date (ISO format). Pair with targetDateResolution to indicate precision (e.g. month, quarter). Null to remove",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "targetDateResolution": {
-            "description": "Target date resolution",
-            "enum": [
-              "halfYear",
-              "month",
-              "quarter",
-              "year"
+            "anyOf": [
+              {
+                "enum": [
+                  "halfYear",
+                  "month",
+                  "quarter",
+                  "year"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "type": "string"
+            "description": "Target date resolution. Null for an exact day. When omitted, the current resolution stays and the date snaps to it"
           },
           "template": {
             "description": "Template name or ID. Applied on create only. The template fills in the content, fields, and sub-issues server-side. A `description` replaces the template body rather than merging with it, but an empty `description` keeps the template body. Labels merge with the template's own",
@@ -4632,13 +4686,13 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Create or update a project/initiative status update. Omit `id` to create, provide `id` to update.",
+      "description": "Create or update a project/initiative status update and return the saved update. To create, omit id and provide body plus project or initiative matching type. To update, provide id; project and initiative are ignored.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "body": {
-            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)",
+            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). Required on create; replaces the body on update. Omit on update to leave the body unchanged",
             "type": "string"
           },
           "health": {
@@ -4651,7 +4705,7 @@ export const manifest = {
             "type": "string"
           },
           "id": {
-            "description": "Status update ID - if provided, updates this existing update",
+            "description": "Update ID from get_status_updates results (statusUpdates[].id) or save_status_update's id. Omit to create",
             "type": "string"
           },
           "initiative": {
@@ -4689,18 +4743,18 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search Linear's documentation to learn about features and usage",
+      "description": "Search Linear's product documentation for feature and usage guidance. Returns up to five results with titles, URLs, and content snippets per page.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "page": {
             "default": 0,
-            "description": "Page number",
+            "description": "Zero-based page number. Increment by one to fetch the next page for the same query",
             "type": "number"
           },
           "query": {
-            "description": "Search query",
+            "description": "Feature name, topic, or question to search for in Linear's product documentation",
             "type": "string"
           }
         },
@@ -5111,7 +5165,7 @@ teamId?: string
 
 export interface DeleteAttachmentInput {
 /**
- * Attachment ID
+ * Issue attachment ID from get_issue's attachments array (attachments[].id)
  */
 id: string
 }
@@ -5150,7 +5204,7 @@ draftId?: string
 
 export interface DeleteStatusUpdateInput {
 /**
- * Status update ID
+ * Update ID from get_status_updates results (statusUpdates[].id) or save_status_update's id; type must match the update
  */
 id: string
 /**
@@ -5175,11 +5229,11 @@ id: string
 
 export interface GetAttachmentInput {
 /**
- * Response format. Defaults to content.
+ * Omit or use content to fetch a Linear-hosted file. Use url for attachment metadata without fetching the file; also supports external links
  */
 format?: ("content" | "url")
 /**
- * Attachment ID
+ * Issue attachment ID from get_issue's attachments array (attachments[].id)
  */
 id: string
 }
@@ -5283,11 +5337,11 @@ query: string
 
 export interface GetNotificationsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
@@ -5355,11 +5409,11 @@ export interface GetStatusUpdatesInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
- * Status update ID - if provided, returns this specific update
+ * Update ID from get_status_updates results (statusUpdates[].id) or save_status_update's id
  */
 id?: string
 /**
@@ -5367,19 +5421,19 @@ id?: string
  */
 includeArchived?: boolean
 /**
- * Initiative name, ID, identifier (e.g., I-123), or slug
+ * Initiative name, ID, identifier (e.g., I-123), or slug. Filters initiative updates only; omit to include all accessible initiatives
  */
 initiative?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
- * Project name, ID, identifier (e.g., P-ENG-123), or slug
+ * Project name, ID, identifier (e.g., P-ENG-123), or slug. Filters project updates only; omit to include all accessible projects
  */
 project?: string
 /**
@@ -5391,7 +5445,7 @@ type: ("project" | "initiative")
  */
 updatedAt?: string
 /**
- * User ID, name, email, or "me"
+ * Filter by update author: User ID, name, email, or "me". Omit to include all authors
  */
 user?: string
 }
@@ -5438,22 +5492,22 @@ export interface GetWorkspaceInput {
 
 export interface ListAgentSkillsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 }
 
 export interface ListCommentsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5469,7 +5523,7 @@ initiativeId?: string
  */
 issueId?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
@@ -5477,7 +5531,7 @@ limit?: number
  */
 milestoneId?: string
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5496,15 +5550,15 @@ statusUpdateType?: ("project" | "initiative")
 
 export interface ListCustomViewsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5527,7 +5581,7 @@ type?: ("Issue" | "Project" | "Initiative")
 
 export interface ListCustomerNeedsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5539,11 +5593,11 @@ initiative?: string
  */
 issue?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5558,9 +5612,19 @@ export interface ListCustomersInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
+/**
+ * Exact customer domain (case-insensitive); combined with other filters
+ */
+domain?: string
+/**
+ * Match any stored external ID exactly (case-sensitive); combined with other filters
+ * 
+ * @minItems 1
+ */
+externalIds?: [string, ...(string)[]]
 /**
  * Include archived items
  */
@@ -5570,11 +5634,11 @@ includeArchived?: boolean
  */
 includeNeeds?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5601,11 +5665,11 @@ updatedAt?: string
 
 export interface ListCyclesInput {
 /**
- * Team ID
+ * Team UUID from list_teams or get_team; names and keys are not accepted
  */
 teamId: string
 /**
- * Filter: current, previous, next, or all
+ * Filter relative to the team's current cycle. Omit to return cycles without this filter
  */
 type?: ("current" | "previous" | "next")
 }
@@ -5616,15 +5680,15 @@ export interface ListDiffsInput {
  */
 author?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5663,7 +5727,7 @@ createdAt?: string
  */
 creatorId?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5679,11 +5743,11 @@ includeArchived?: boolean
  */
 initiativeId?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5706,7 +5770,7 @@ updatedAt?: string
 
 export interface ListInitiativeLabelsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5718,7 +5782,7 @@ includeArchived?: boolean
  */
 includeGroups?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
@@ -5726,7 +5790,7 @@ limit?: number
  */
 name?: string
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 }
@@ -5737,7 +5801,7 @@ export interface ListInitiativesInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5769,11 +5833,11 @@ label?: string
  */
 leadTeam?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5800,7 +5864,7 @@ updatedAt?: string
 
 export interface ListIssueLabelsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5812,7 +5876,7 @@ includeArchived?: boolean
  */
 includeGroups?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
@@ -5820,7 +5884,7 @@ limit?: number
  */
 name?: string
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5850,7 +5914,7 @@ createdAt?: string
  */
 creator?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5874,15 +5938,19 @@ fields?: ("id" | "uuid" | "title" | "description" | "projectMilestone" | "priori
  */
 includeArchived?: boolean
 /**
+ * Include results from the selected team and all descendants when team is set. Team ID filters already include descendants; this also expands name and key filters
+ */
+includeSubTeams?: boolean
+/**
  * Label name or ID
  */
 label?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5932,7 +6000,7 @@ project: string
 
 export interface ListProjectLabelsInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5944,7 +6012,7 @@ includeArchived?: boolean
  */
 includeGroups?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
@@ -5952,7 +6020,7 @@ limit?: number
  */
 name?: string
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -5967,7 +6035,7 @@ export interface ListProjectsInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -5991,6 +6059,10 @@ includeMembers?: boolean
  */
 includeMilestones?: boolean
 /**
+ * Include results from the selected team and all descendants when team is set. Team ID filters already include descendants; this also expands name and key filters
+ */
+includeSubTeams?: boolean
+/**
  * Initiative name, ID, identifier (e.g., I-123), or slug
  */
 initiative?: string
@@ -6007,7 +6079,7 @@ limit?: number
  */
 member?: string
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -6034,7 +6106,7 @@ export interface ListReleaseNotesInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -6050,11 +6122,11 @@ includeContent?: boolean
  */
 includeReleases?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -6081,7 +6153,7 @@ export interface ListReleasePipelinesInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -6101,11 +6173,11 @@ includeTeams?: boolean
  */
 isProduction?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -6132,7 +6204,7 @@ export interface ListReleasesInput {
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -6148,11 +6220,11 @@ includeArchived?: boolean
  */
 includeReleaseNotes?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
@@ -6183,11 +6255,15 @@ version?: string
 
 export interface ListTeamsInput {
 /**
+ * All descendant teams of this team, at any depth, excluding itself (name, key, or ID)
+ */
+ancestorTeam?: string
+/**
  * Created after: ISO-8601 date/duration (e.g., -P1D)
  */
 createdAt?: string
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
@@ -6195,13 +6271,17 @@ cursor?: string
  */
 includeArchived?: boolean
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
+/**
+ * Only direct sub-teams of this team (name, key, or ID)
+ */
+parentTeam?: string
 /**
  * Search query
  */
@@ -6225,23 +6305,23 @@ type?: ("issue" | "project" | "document")
 
 export interface ListUsersInput {
 /**
- * Next page cursor
+ * Omit for the first page. To continue, pass the previous response's cursor when hasNextPage is true
  */
 cursor?: string
 /**
- * Max results (default 50, max 250)
+ * Maximum number of results to return per page
  */
 limit?: number
 /**
- * Sort: createdAt | updatedAt
+ * Timestamp to sort results by: creation time or last update time
  */
 orderBy?: ("createdAt" | "updatedAt")
 /**
- * Filter by name or email
+ * Match part of a name or email. Omit to list users without a name or email filter
  */
 query?: string
 /**
- * Team name or ID
+ * Team name or ID. Only return members of this team; omit to search the workspace
  */
 team?: string
 }
@@ -6873,9 +6953,9 @@ status?: string
  */
 summary?: string
 /**
- * Target date (ISO format)
+ * Target date (ISO format). Null to remove
  */
-targetDate?: string
+targetDate?: (string | null)
 }
 
 export interface SaveInitiativeLabelInput {
@@ -7442,13 +7522,13 @@ setInitiatives?: string[]
  */
 setTeams?: string[]
 /**
- * Start date (ISO format). Pair with startDateResolution to indicate precision (e.g. month, quarter)
+ * Start date (ISO format). Pair with startDateResolution to indicate precision (e.g. month, quarter). Null to remove
  */
-startDate?: string
+startDate?: (string | null)
 /**
- * Start date resolution
+ * Start date resolution. Null for an exact day. When omitted, the current resolution stays and the date snaps to it
  */
-startDateResolution?: ("halfYear" | "month" | "quarter" | "year")
+startDateResolution?: (("halfYear" | "month" | "quarter" | "year") | null)
 /**
  * Project status name, type, or ID. Names resolve within the lead team's project statuses. If the lead team is unknown, standard labels resolve as status types; custom names require a status ID or leadTeam
  */
@@ -7458,13 +7538,13 @@ state?: string
  */
 summary?: string
 /**
- * Target date (ISO format). Pair with targetDateResolution to indicate precision (e.g. month, quarter)
+ * Target date (ISO format). Pair with targetDateResolution to indicate precision (e.g. month, quarter). Null to remove
  */
-targetDate?: string
+targetDate?: (string | null)
 /**
- * Target date resolution
+ * Target date resolution. Null for an exact day. When omitted, the current resolution stays and the date snaps to it
  */
-targetDateResolution?: ("halfYear" | "month" | "quarter" | "year")
+targetDateResolution?: (("halfYear" | "month" | "quarter" | "year") | null)
 /**
  * Template name or ID. Applied on create only. The template fills in the content, fields, and sub-issues server-side. A `description` replaces the template body rather than merging with it, but an empty `description` keeps the template body. Labels merge with the template's own
  */
@@ -7725,7 +7805,7 @@ title?: string
 
 export interface SaveStatusUpdateInput {
 /**
- * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)
+ * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). Required on create; replaces the body on update. Omit on update to leave the body unchanged
  */
 body?: string
 /**
@@ -7733,7 +7813,7 @@ body?: string
  */
 health?: ("onTrack" | "atRisk" | "offTrack")
 /**
- * Status update ID - if provided, updates this existing update
+ * Update ID from get_status_updates results (statusUpdates[].id) or save_status_update's id. Omit to create
  */
 id?: string
 /**
@@ -7756,11 +7836,11 @@ type: ("project" | "initiative")
 
 export interface SearchDocumentationInput {
 /**
- * Page number
+ * Zero-based page number. Increment by one to fetch the next page for the same query
  */
 page?: number
 /**
- * Search query
+ * Feature name, topic, or question to search for in Linear's product documentation
  */
 query: string
 }

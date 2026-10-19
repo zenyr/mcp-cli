@@ -3,10 +3,163 @@
     {
       "annotations": {
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Create a one-hour workspace-scoped upload slot for an image, video or audio input. When the user will upload through web_upload_url, ask which format the file is (for example png, jpg, webp, mp4, mov, mp3 or wav) before calling this tool and use that extension in file_name: the link only accepts files of that format. For web_upload_url file_size need not be exact (the page re-signs the slot for the real size); when you PUT to upload_url yourself, file_size must be the exact byte size.",
+      "description": "Create an ordinary nested folder. Reuse the same UUID request_id and input to recover a lost response.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parent Id"
+          },
+          "request_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "title": "Request Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "name", "request_id"],
+        "title": "FolderArgs",
+        "type": "object"
+      },
+      "name": "create_asset_folder"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create an avatar from one prepared image source, optionally bind an existing voice. Explicit move_existing approval is required for retained images. Reuse identical UUID request_id and arguments to resume; does not generate media.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "default_voice_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Default Voice Id"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "File Name"
+          },
+          "move_existing": {
+            "default": false,
+            "title": "Move Existing",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "object_key": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Object Key"
+          },
+          "portrait_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Portrait Asset Id"
+          },
+          "request_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "title": "Request Id",
+            "type": "string"
+          },
+          "source_task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Task Id"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "name", "request_id"],
+        "title": "AvatarArgs",
+        "type": "object"
+      },
+      "name": "create_avatar"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create a one-hour workspace-scoped upload slot for an image, video or audio input, only for a file that is not in Fish yet. To reuse a finished generation result as an input, pass its media.object_key to the estimate and generate tools instead; do not download a result and upload it again. When the user will upload through web_upload_url, ask which format the file is (for example png, jpg, webp, mp4, mov, mp3 or wav) before calling this tool and use that extension in file_name: the link only accepts files of that format. For web_upload_url file_size need not be exact (the page re-signs the slot for the real size); when you PUT to upload_url yourself, file_size must be the exact byte size.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -53,6 +206,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": true,
         "readOnlyHint": false
       },
       "description": "Clone a voice from sample audio and get a voice usable with text_to_speech. Provide 1-5 https URLs of clean speech from ONE speaker (for local files call get_upload_url first, keeping the file extension); 10-60 seconds total gives the best results, 270 seconds is the hard maximum. Creation is free. Instead of creating immediately, the response may report quality warnings or require speaker verification — always follow its instructions field. Only clone voices the user owns, has the speaker's consent to use, or is otherwise legally allowed to use; Fish Audio may remove voices that violate these rules.",
@@ -99,6 +254,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Estimate image edit or upscale cost and validate the request; pass input_object_key for a single image, or inputs for several. This is read-only and creates no task or quote.",
@@ -111,7 +268,7 @@
             "type": "string"
           },
           "inputs": {
-            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key comes from create_media_upload or is a finished generation result in the same workspace.",
+            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key is the media.object_key of a finished generation result in the same workspace (use it directly, no upload needed) or comes from create_media_upload for a file that is not in Fish yet.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -163,6 +320,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Estimate image generation cost and validate the request. This is read-only and creates no task or quote.",
@@ -200,6 +359,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Estimate video generation cost (text/image/reference-to-video, lip sync, talking avatar) and validate the request. Pass operation, or inputs with roles and let the capability follow from them. This is read-only and creates no task or quote.",
@@ -212,7 +373,7 @@
             "type": "string"
           },
           "inputs": {
-            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key comes from create_media_upload or is a finished generation result in the same workspace.",
+            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key is the media.object_key of a finished generation result in the same workspace (use it directly, no upload needed) or comes from create_media_upload for a file that is not in Fish yet.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -268,9 +429,9 @@
     },
     {
       "annotations": {
-        "destructiveHint": false,
+        "destructiveHint": true,
         "idempotentHint": true,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Submit an image generation with the same parameters used for estimation. The API revalidates price before charging credits.",
@@ -328,9 +489,9 @@
     },
     {
       "annotations": {
-        "destructiveHint": false,
+        "destructiveHint": true,
         "idempotentHint": true,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Submit an image edit with the same parameters used for estimation. The API revalidates price before charging credits.",
@@ -352,7 +513,7 @@
             "type": "string"
           },
           "inputs": {
-            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key comes from create_media_upload or is a finished generation result in the same workspace.",
+            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key is the media.object_key of a finished generation result in the same workspace (use it directly, no upload needed) or comes from create_media_upload for a file that is not in Fish yet.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -414,9 +575,9 @@
     },
     {
       "annotations": {
-        "destructiveHint": false,
+        "destructiveHint": true,
         "idempotentHint": true,
-        "openWorldHint": true,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Submit a video generation with the same parameters used for estimation. The API revalidates price before charging credits.",
@@ -438,7 +599,7 @@
             "type": "string"
           },
           "inputs": {
-            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key comes from create_media_upload or is a finished generation result in the same workspace.",
+            "description": "Input media, each with its role, in order. The capability follows from the roles given, as in the Fish web app (get_media_model lists each capability's required_roles and accepted inputs), e.g. startFrame → i2v, ref → reference, videoRef/audioRef → reference video/audio, sourceVideo + sourceAudio → lip sync, ref + sourceAudio → talking avatar. object_key is the media.object_key of a finished generation result in the same workspace (use it directly, no upload needed) or comes from create_media_upload for a file that is not in Fish yet.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -504,6 +665,68 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read asset original object_key and temporary download URL. Use object_key with compatible generation input roles, never thumbnail_url.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "asset_id"],
+        "title": "AssetIdArgs",
+        "type": "object"
+      },
+      "name": "get_asset"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read folder position or avatar portrait/default voice; list children and images separately.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Collection Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "collection_id"],
+        "title": "CollectionIdArgs",
+        "type": "object"
+      },
+      "name": "get_asset_collection"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Internal helper for the Fish Audio player UI: returns the base64-encoded bytes of a fish.audio audio URL. Agents should pass audio URLs around directly instead of calling this.",
@@ -522,6 +745,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Get the authenticated user's Fish Audio plan, remaining package credits, and the per-call TTS text budget. Speech generation costs 1 credit per UTF-8 byte of text; transcription costs 500 credits per minute. Top up at https://fish.audio/go-premium/",
@@ -533,10 +758,12 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get terminal media results and billing; this may reconcile provider state.",
+      "description": "Get terminal media results and billing; this may reconcile provider state. A finished get_generation_status returns the same results. A result's media.object_key can be passed directly as an input to image edit or video generation in the same workspace.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -552,28 +779,41 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Poll media status and billing; this may reconcile provider state and credits.",
+      "description": "Poll media status and billing; this may reconcile provider state and credits. While running it returns poll_after_seconds (about 20 for images, 60 for videos): wait that long before calling again. Once finished it also returns the results, so get_generation_result is not needed. Pass generation_id for one generation, or generation_ids (up to 20) to check several at once.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
           "generation_id": {
             "minLength": 1,
             "type": "string"
+          },
+          "generation_ids": {
+            "description": "Check several generations in one call instead of generation_id; list only the ones still running.",
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
           }
         },
-        "required": ["generation_id"],
         "type": "object"
       },
       "name": "get_generation_status"
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get one media model's prompt policy and, per capability, its parameter schema, required_roles and accepted inputs (kind, mime_types, max_bytes, max_count, dimension limits).",
+      "description": "Get one media model's prompt policy and, per capability, its parameter schema, required_roles and accepted inputs (kind, mime_types, max_bytes, max_count, dimension limits). Call it once per model and keep the result for the whole conversation; call it again only after an invalid_arguments error. Accepted inputs can also be a finished generation result's media.object_key.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -589,6 +829,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Get a temporary upload slot for a local audio file: HTTP PUT the raw file bytes to upload_url (within 1 hour), then pass file_url to speech_to_text. Environments that cannot make HTTP uploads (e.g. claude.ai or ChatGPT web chat) should send the user web_upload_url to upload from their browser instead. Uploaded files are deleted automatically after 7 days.",
@@ -606,6 +848,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Get details of one Fish Audio voice by its id: description, languages, tags, popularity stats, a sample audio URL and a default demo text.",
@@ -623,6 +867,168 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List direct child folders/avatars/styles; all=true returns a flat tree. Files are listed separately with list_assets.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "all": {
+            "default": false,
+            "title": "All",
+            "type": "boolean"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": ["folder", "avatar", "style"],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Kind"
+          },
+          "kinds": {
+            "items": {
+              "enum": ["image", "audio", "video"],
+              "type": "string"
+            },
+            "maxItems": 3,
+            "title": "Kinds",
+            "type": "array"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parent Id"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "enum": ["task_output", "upload"],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id"],
+        "title": "ListCollectionsArgs",
+        "type": "object"
+      },
+      "name": "list_asset_collections"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List direct assets; search without collection_id searches the workspace. Paginate using next_cursor and identical filters.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Collection Id"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "kinds": {
+            "items": {
+              "enum": ["image", "audio", "video"],
+              "type": "string"
+            },
+            "maxItems": 3,
+            "title": "Kinds",
+            "type": "array"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Search"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "enum": ["task_output", "upload"],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id"],
+        "title": "ListAssetsArgs",
+        "type": "object"
+      },
+      "name": "list_assets"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "List available Fish image and video models (video includes lip sync and talking avatars). Capabilities are named as in the Fish web app, e.g. t2i (text-to-image), edit (image edit), upscale, t2v (text-to-video), i2v (image-to-video), first_last, reference, reference_video, video_audio (lip sync), avatar_audio (talking avatar). default_credits is the price of one output with default parameters; capabilities billed by input length report credits_per_input_second instead, with input_seconds_rounding: ceil where every started second is billed.",
@@ -644,6 +1050,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "List the workspaces of the team this connection is authorized for.",
@@ -656,6 +1064,108 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Save a completed upload or successful task result. Repeated saves return the existing actual location; use update_asset to move it.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Collection Id"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "File Name"
+          },
+          "object_key": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Object Key"
+          },
+          "source_task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Task Id"
+          },
+          "stem": {
+            "anyOf": [
+              {
+                "enum": ["target", "residual"],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stem"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id"],
+        "title": "SaveAssetArgs",
+        "type": "object"
+      },
+      "name": "save_asset"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Search public voices (TTS models) on Fish Audio, or list your own with self=true (includes private and team-shared voices). Omit query and set language to browse curated/popular voices for that language. Prefer voices with high task_count; the returned voice ids are what text_to_speech takes.",
@@ -700,6 +1210,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Transcribe speech audio to text. Provide a public https URL to the audio file (max 20MB) — for local files get one from get_upload_url first. model=pro (default) costs 50 package credits per second; model=flash costs 500 credits per minute (~6x cheaper, smaller model).",
@@ -727,6 +1239,11 @@
       "name": "speech_to_text"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Bind a previous take's audio back to its block (free, no generation). Only adopts cleanly when the take matches the block's current text/voice — see content_matches_current in studio_list_takes.",
       "inputSchema": {
         "additionalProperties": false,
@@ -748,6 +1265,11 @@
       "name": "studio_adopt_take"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Add a chapter (optionally after an existing chapter anchor). New chapters start with one empty block.",
       "inputSchema": {
         "additionalProperties": false,
@@ -770,6 +1292,11 @@
       "name": "studio_create_chapter"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create a studio project from structured chapters (max 200 blocks — use studio_import_document for whole books). roster maps speaker names to voice_ids from search_voices; block.voice takes a roster name or a voice_id. Free. Retrying may duplicate — check studio_list_projects first. First time operating the studio? Call studio_help.",
       "inputSchema": {
         "additionalProperties": false,
@@ -838,6 +1365,11 @@
       "name": "studio_create_project"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Platform-tuned text polish for TTS: expands numbers, phone numbers, dates and symbols into spoken words and adds delivery tags at the density the studio voices are tuned for. Pass one block's text, write the result back with studio_write_blocks. Free.",
       "inputSchema": {
         "additionalProperties": false,
@@ -853,6 +1385,11 @@
       "name": "studio_enhance_text"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Export the project (or selected chapters) to a downloadable audio file. Two phases: without confirmed_credits it returns a quote {blocks_to_generate, credits} — show it to the user; then call again with confirmed_credits=<that number> to start the background job (poll studio_project). Only not-yet-generated blocks are billed. Requires a paid plan.",
       "inputSchema": {
         "additionalProperties": false,
@@ -886,6 +1423,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Search block text across the project (case-insensitive substring, or regex=true). Returns matching anchors with snippets and revs — the entry point for fixing something everywhere without reading every chapter.",
@@ -919,7 +1458,12 @@
       "name": "studio_find"
     },
     {
-      "description": "Synthesize audio for blocks: pass blocks (anchors) or chapter, or neither for the whole project. By default only dirty blocks run (unchanged audio is free/cached). Costs 1 credit per UTF-8 byte of spoken text (2x for another team's professional clone voices); ALWAYS dry_run=true first and show the user the quote. force=true re-rolls already-generated blocks (paid; requires explicit blocks — prefer free studio_adopt_take). Runs up to ~45s; remaining blocks continue in the background and a re-call collects them as cached.",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Synthesize audio for blocks: pass blocks (anchors) or chapter, or neither for the whole project. By default only dirty blocks run (unchanged audio is free/cached). Costs 1 credit per UTF-8 byte of spoken text (2x for another team's professional clone voices); ALWAYS dry_run=true first and show the user the quote. force=true re-rolls already-generated blocks (paid; requires explicit blocks — prefer free studio_adopt_take). A dirty block whose exact text/voice/settings already have a take reuses it for free (reused_take=true). Each done result has take_id (null if the take cannot be found). Runs up to ~45s; remaining blocks continue in the background and a re-call collects them as cached.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {
@@ -956,6 +1500,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "The operating manual for Story Studio (multi-speaker audio projects). Call this before your first studio operation. Topics: quickstart (default), editing, tags, billing, errors, workflows.",
@@ -972,6 +1518,11 @@
       "name": "studio_help"
     },
     {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Import a document or long text (novel, script, article — up to 1.5M chars) into a new studio project. A background LLM splits chapters, casts voices per speaker and adds delivery tags (auto_tags) or rewrites for naturalness (rewrite). Free. Returns immediately; poll studio_project. For files, upload via get_upload_url first and pass storage_key. First time operating the studio? Call studio_help.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1005,6 +1556,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "List the user's Story Studio projects (name, chapter count, importing flag), newest first. First time operating the studio? Call studio_help.",
@@ -1029,6 +1582,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "List a block's generated takes (audio history): audio URL, duration, the exact text/voice each take was generated from, and whether it still matches the block (content_matches_current). Adopting an old take is free — check here before paying for a re-roll.",
@@ -1050,6 +1605,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Project overview: chapter outline (anchors, titles, block/dirty counts, durations), speaker roster, and live import/export job state. This is the polling verb for imports and exports (poll_after_seconds tells you when to check again). First time operating the studio? Call studio_help.",
@@ -1067,6 +1624,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": true
       },
       "description": "Read blocks: pass chapter (anchor) for a whole chapter (paginated) or blocks (list of anchors) for specific ones. Returns anchor, rev, voice, text, kind, dirty, duration per block; include_audio adds audio URLs. format=script renders a read-only script view for showing the user.",
@@ -1112,6 +1671,11 @@
       "name": "studio_read_blocks"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Swap every block using one voice to another voice across the whole project (e.g. change a character's voice after import). Free; affected blocks become dirty and regenerate at the normal rate. Voice ids come from the roster in studio_project or search_voices.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1132,6 +1696,11 @@
       "name": "studio_recast_speaker"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Rename a chapter.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1154,6 +1723,11 @@
       "name": "studio_update_chapter"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Project-wide settings: rename, default voice/backend for new blocks, audio settings defaults, scene_preset (off|studio adds room ambience), chapter_order (list of chapter anchors) to reorder chapters. Defaults only affect blocks created later — use studio_recast_speaker / studio_write_blocks for existing ones.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1194,6 +1768,11 @@
       "name": "studio_update_project"
     },
     {
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Edit blocks with up to 100 ops, applied in order. Op shapes: {\"block\", \"rev\", \"text\"?, \"voice\"?, \"kind\"?, \"delay\"?, \"audio_settings\"?} updates in place (rev required when changing text/voice/settings); {\"insert_after\": anchor, \"text\", ...} / {\"append_to\": chapter, \"text\", ...} insert; {\"move\": block, \"after\": anchor} reorders; {\"delete\": block} removes. Per-op results report ok/noop/conflict/missing; conflicts include the current text+rev inline. Free — writing never bills; edits show up live in the user's web editor. dry_run validates without writing. See studio_help topic=editing.",
       "inputSchema": {
         "additionalProperties": false,
@@ -1221,6 +1800,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Send feedback about these Fish Audio tools to the team — friction, bugs, missing capabilities, confusing behavior, or things that worked well. Please send one short note whenever something surprised you or took more steps than it should; every message is read.",
@@ -1248,6 +1829,8 @@
     },
     {
       "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false,
         "readOnlyHint": false
       },
       "description": "Generate speech audio from text with a Fish Audio voice and return a permanent audio URL. Costs 1 package credit per UTF-8 byte of text (audio tags included; a professional voice cloned by another team costs double). If a call fails or times out, one identical retry within 5 minutes is free.",
@@ -1274,6 +1857,145 @@
     },
     {
       "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Rename/move an asset. Omitted collection_id leaves its location; explicit null moves to root. No delete.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "collection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Collection Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "asset_id"],
+        "title": "UpdateAssetArgs",
+        "type": "object"
+      },
+      "name": "update_asset"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Rename/move ordinary folders or edit avatar name/default voice/portrait. Portrait must already be inside the avatar; use update_asset to add reference images. No delete or style creation.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Collection Id",
+            "type": "string"
+          },
+          "default_voice_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Default Voice Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parent Id"
+          },
+          "portrait_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Portrait Asset Id"
+          },
+          "workspace_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "collection_id"],
+        "title": "UpdateCollectionArgs",
+        "type": "object"
+      },
+      "name": "update_asset_collection"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": true,
         "readOnlyHint": false
       },
       "description": "Complete speaker verification for a voice clone that returned verification_required: the actual speaker records themselves reading the exact prompt sentence, the recording is uploaded (use get_upload_url), and its URL is passed here. On success the voice is created. Call without recording_url to check the session status and get the current prompt.",

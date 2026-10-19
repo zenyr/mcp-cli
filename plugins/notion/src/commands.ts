@@ -17,10 +17,13 @@ export const commands: Record<string, CommandCustomization> = {
     "notion search workspace --query roadmap --query-type internal",
     "notion search workspace --query jane@example.com --query-type user",
   ]),
-  "notion-ai-search": at(
-    "search ai",
-    "AI search across Notion and connected sources when access check reports it available",
-  ),
+  "notion-ai-search": {
+    ...at(
+      "search ai",
+      "AI search across Notion and connected sources when access check reports it available",
+    ),
+    optional: true,
+  },
   "notion-fetch": at("page get", "Fetch a page, database, data source or view by URL or ID", [
     "notion page get --id https://www.notion.so/<page>",
   ]),
