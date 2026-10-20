@@ -5,14 +5,16 @@
   "type": "module",
   "exports": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "bun test"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p experiments/txiki/tsconfig.json",
+    "test": "bun test",
+    "probe:txiki": "bun experiments/txiki/verify.ts"
   },
   "dependencies": {
     "@mcp-cli/core": "workspace:*",
     "@modelcontextprotocol/client": "2.2.0"
   },
   "devDependencies": {
-    "@mcp-cli/auth": "workspace:*"
+    "@mcp-cli/auth": "workspace:*",
+    "@txikijs/types": "^26.6.0"
   }
 }

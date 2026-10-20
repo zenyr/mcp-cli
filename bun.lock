@@ -85,6 +85,7 @@
       },
       "devDependencies": {
         "@mcp-cli/auth": "workspace:*",
+        "@txikijs/types": "^26.6.0",
       },
     },
     "packages/runtime": {

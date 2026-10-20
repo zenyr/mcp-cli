@@ -40,12 +40,12 @@ export const startFakeAuthServer = (): FakeAuthServer => {
     redirect: {},
     refreshDelayMs: 0,
   };
-  const server = Bun.serve({
+  const server: Bun.Server<undefined> = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,
     fetch: async (request) => {
       const url = new URL(request.url);
-      const base = url.origin;
+      const base = server.url.origin;
       if (url.pathname.startsWith("/.well-known/oauth-protected-resource"))
         return json({
           resource: `${base}/mcp`,
