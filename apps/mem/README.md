@@ -1,5 +1,9 @@
 # mem
 
+`mem`은 이 저장소에서 함께 개발하는 독립 CLI입니다. `mcp-cli`의 하위 명령이나 MCP 플러그인이 아닙니다.
+MCP 서버 연결 없이 별도 설정과 SQLite 저장소를 사용합니다.
+명령은 저장소 루트에서 실행합니다. 설치와 개발 환경은 [개발 안내](../../docs/development.md)를 참고하십시오.
+
 `mem`은 원문과 요약 트리를 로컬 SQLite에 저장합니다. 기본 모델은 로컬 CPA의 OpenCode GO `deepseek-v4.1-flash`입니다.
 
 ```sh

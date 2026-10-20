@@ -1,7 +1,7 @@
-# MCP CLI desktop prototype
+# MCP CLI 데스크톱 시제품
 
 React, TanStack Router, TanStack Query, Mantine UI와 tinyjs를 사용합니다.
-Opus fast의 화면 설계는 [design.md](./design.md)에 있습니다.
+화면 설계는 [design.md](./design.md)에 있습니다.
 
 ## 개발 실행
 
