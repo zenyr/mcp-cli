@@ -1,4 +1,4 @@
-import { Badge, Button, Code, Group, Loader, Text } from "@mantine/core";
+import { Badge, Button, Group, Loader, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useAction, useStatus } from "./queries";
 
@@ -18,7 +18,7 @@ export const DaemonBar = () => {
       return;
     }
     modals.openConfirmModal({
-      title: "대몬을 종료할까요?",
+      title: "백그라운드 연결을 중지할까요?",
       children: <Text size="sm">진행 중 요청 {active}개가 끝나면 종료합니다.</Text>,
       labels: { confirm: "종료", cancel: "취소" },
       confirmProps: { color: "red" },
@@ -32,7 +32,7 @@ export const DaemonBar = () => {
           <Loader size={14} />
         ) : (
           <Badge color={online ? "teal" : "gray"} variant="dot">
-            {online ? "실행 중" : "연결 안 됨"}
+            {online ? "준비됨" : "중지됨"}
           </Badge>
         )}
         {busy && (
@@ -41,12 +41,12 @@ export const DaemonBar = () => {
               ? "진행 중 요청을 기다립니다"
               : stop.isPending
                 ? "종료 요청을 보냅니다"
-                : "대몬을 시작합니다"}
+                : "연결을 준비합니다"}
           </Text>
         )}
         {!busy && status && (
           <Text size="xs" c="dimmed">
-            <Code>PID {status.pid}</Code> · 연결 {status.connections.length}
+            열린 연결 {status.connections.length}개
           </Text>
         )}
       </Group>
@@ -61,12 +61,12 @@ export const DaemonBar = () => {
               연결 초기화
             </Button>
             <Button variant="subtle" color="red" disabled={busy} onClick={stopDaemon}>
-              대몬 종료
+              연결 중지
             </Button>
           </>
         ) : (
           <Button loading={busy} onClick={() => start.mutate(undefined)}>
-            대몬 시작
+            연결 준비
           </Button>
         )}
       </Group>

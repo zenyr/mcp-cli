@@ -13,7 +13,7 @@ const root = createRootRoute({ component: App });
 const index = createRoute({
   getParentRoute: () => root,
   path: "/",
-  component: () => <Navigate to="/connections" />,
+  component: () => <Navigate to="/services" />,
 });
 const connections = createRoute({
   getParentRoute: () => root,

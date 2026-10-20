@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+  <meta charset="utf-8" /><title>MCP packaged smoke</title>
+  <body>
+    독립 배포 검증
+    <script type="module">
+      const check = (ok, label) => {
+        if (!ok) throw new Error(label);
+      };
+      try {
+        const settings = await tiny.api.call("settings");
+        check(settings.cliCommand.length === 1, "bundled executable");
+        check(settings.cliCommand[0].endsWith("/mcp-cli"), "bundled CLI path");
+        await tiny.api.call("saveSettings", { autoStart: false });
+        check(
+          (await tiny.store.get("cliCommand")) === null,
+          "automatic settings do not pin the app path",
+        );
+        await tiny.api.call("saveSettings", { autoStart: false, cliCommand: ["custom-cli"] });
+        check((await tiny.api.call("settings")).cliCommand[0] === "custom-cli", "custom command");
+        await tiny.api.call("saveSettings", { autoStart: false, cliCommand: null });
+        check(
+          (await tiny.api.call("settings")).cliCommand[0] === settings.cliCommand[0],
+          "restore bundled CLI",
+        );
+        const services = await tiny.api.call("services");
+        check(
+          services.some((service) => service.name === "notion"),
+          "bundled services",
+        );
+        await tiny.api.call("start");
+        check((await tiny.api.call("status")).online, "daemon starts without Bun");
+        await tiny.api.call("reset");
+        await tiny.api.call("stop");
+        await tiny.log("MCP PACKAGED PASS: bundled CLI, settings, services, daemon");
+      } catch (error) {
+        await tiny.log("MCP PACKAGED FAIL: " + String(error));
+        try {
+          await tiny.api.call("stop");
+        } catch {}
+      } finally {
+        tiny.quit();
+      }
+    </script>
+  </body>
+</html>
