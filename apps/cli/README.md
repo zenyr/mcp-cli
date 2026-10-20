@@ -5,6 +5,10 @@ MCP 서버의 도구를 정적 명령으로 탐색하고 실행하는 `mcp-cli`�
 
 ## 시작
 
+최초 실행 시 설정 폴더를 자동으로 만듭니다. 기본 위치는 `~/.config/mcp-cli`입니다.
+`XDG_CONFIG_HOME`이나 `MCP_CLI_CONFIG`를 지정하면 해당 설정 파일의 상위 폴더를 만듭니다.
+기존 설정 파일은 변경하지 않습니다.
+
 ```bash
 bun install
 bun run generate demo

@@ -1,5 +1,13 @@
+import { mkdir } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname } from "node:path";
 import { isRecord, UsageError } from "@mcp-cli/core";
-import { expandHome } from "./paths";
+import { configPath, expandHome, type Env } from "./paths";
+
+export const ensureConfigDirectory = async (env: Env = process.env): Promise<void> => {
+  const path = configPath({ env, home: env.HOME || homedir() });
+  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+};
 
 export type PluginReference =
   | { kind: "path"; value: string; dir: string }

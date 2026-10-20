@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { RepeatedCallError, UsageError } from "@mcp-cli/core";
+import { ensureConfigDirectory } from "./config";
 import { desktopCommand } from "./desktop";
 import { daemonCommand } from "./daemon/command";
 import { resetDaemonIfRunning, openDaemonSession } from "./daemon/client";
@@ -26,6 +27,7 @@ import { extensionCacheScope } from "./cache-scope";
 export const EXIT = { ok: 0, failure: 1, usage: 2, repeated: 3 } as const;
 
 export const main = async (argv: string[]): Promise<number> => {
+  await ensureConfigDirectory();
   const [command, ...args] = argv;
   const registry = async () => discover(await defaultContext());
   if (!command || ["--help", "-h", "help"].includes(command)) {
