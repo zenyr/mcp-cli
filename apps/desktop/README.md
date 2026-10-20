@@ -1,7 +1,21 @@
-# MCP CLI desktop prototype
+# MCP CLI 데스크톱 앱
 
 React, TanStack Router, TanStack Query, Mantine UI와 tinyjs를 사용합니다.
-Opus fast의 화면 설계는 [design.md](./design.md)에 있습니다.
+화면 설계는 [design.md](./design.md)에 있습니다.
+
+## 앱 사용
+
+빌드된 `dist/MCP CLI.app`을 응용 프로그램 폴더에 복사한 뒤 실행합니다.
+Bun, Node, tinyjs 설치나 소스 저장소가 필요하지 않습니다.
+최초 실행 시 서비스 화면이 열립니다. 사용할 서비스의 로그인 버튼을 누르십시오.
+API 키 방식의 서비스는 해당 서비스에서 발급받은 키를 입력합니다.
+
+앱은 CLI와 기본 플러그인의 도구 정의를 포함합니다. 설정 폴더는 자동으로 만듭니다.
+트레이의 `관리 화면 열기`로 화면을 다시 열 수 있습니다.
+CLI 실행 경로를 지정하지 않아도 됩니다. 별도 CLI가 필요할 때만 설정의 `고급 설정`을 사용합니다.
+`기본 명령 사용`은 직접 지정한 실행 명령을 해제합니다.
+
+현재 로컬 macOS 빌드는 임시 서명을 사용합니다. 공개 다운로드 배포에는 개발자 서명과 공증이 별도로 필요합니다.
 
 ## 개발 실행
 
@@ -21,13 +35,9 @@ bun run --cwd apps/desktop desktop
 MCP_CLI_DAEMON=1 bun run cli demo message echo --text hello
 ```
 
-앱의 `설정` 화면에서 CLI 실행 명령을 변경할 수 있습니다.
-실행 파일과 인수를 각각 한 줄에 입력하십시오.
-개발 환경에서는 Bun의 절대 경로와 `apps/cli/src/main.ts`의 절대 경로를 입력하십시오.
-빌드한 앱은 빌드에 사용한 Bun과 저장소 CLI의 절대 경로를 기본값으로 포함합니다.
-앱을 더블클릭해도 전역 설치된 이전 CLI를 사용하지 않습니다.
-이 프로토타입을 실행할 때는 빌드한 저장소 경로를 유지하십시오.
-CLI 바이너리를 앱에 번들하지 않습니다.
+개발 실행은 빌드한 Bun과 소스 CLI 경로를 사용합니다.
+네이티브 빌드는 Bun 런타임이 포함된 CLI를 앱에 넣고 앱 내부의 상대 위치로 찾습니다.
+빌드한 앱은 소스 저장소를 옮기거나 제거해도 실행할 수 있습니다.
 
 ## 기능
 
@@ -94,6 +104,20 @@ apps/desktop/dist/mcp-desktop
 검증 페이지는 설정, 서비스 검색, 대몬 시작, 조회, 초기화, 종료를 확인합니다.
 완료하면 `MCP SMOKE PASS`를 출력하고 앱을 종료합니다.
 
+내장 CLI를 사용하는 배포 빌드는 다음 환경에서 추가 검증할 수 있습니다.
+개발용 CLI 경로를 지정하지 않고 실행합니다.
+
+```sh
+MCP_CLI_DESKTOP_ENTRY= \
+MCP_CLI_DESKTOP_BUN= \
+MCP_CLI_DAEMON_DIR="$(mktemp -d /tmp/mcp-packaged-XXXXXX)" \
+TINYJS_HTML="$PWD/apps/desktop/test/packaged-smoke.html" \
+apps/desktop/dist/mcp-desktop
+```
+
+이 검증은 CLI 기본 경로, 고급 설정 초기화, 내장 서비스와 대몬을 검사합니다.
+기존 앱 설정과도 분리하려면 HOME과 XDG 경로를 별도 임시 폴더로 지정하십시오.
+
 ## 아이콘
 
 원본은 `assets/mcp-cli.svg`입니다.
@@ -117,7 +141,7 @@ MCP 심볼은 [공식 저장소의 favicon](https://github.com/modelcontextproto
 선택한 조합은 시작 B, 호버 B, 클릭 B, 완료 A, 오류 A입니다.
 효과음은 로컬 WAV이며 실행 중 외부 API를 호출하지 않습니다.
 설정의 `효과음` 토글은 즉시 저장하며 기본값은 켜짐입니다.
-끄면 미리듣기와 대기 중인 재생도 차단합니다.
+끄면 대기 중인 재생도 차단합니다.
 
 - 시작음은 새 대몬 PID를 확인했을 때 한 번 재생합니다.
 - 앱을 열었을 때 이미 실행 중인 대몬은 시작음을 내지 않습니다.
@@ -126,7 +150,6 @@ MCP 심볼은 [공식 저장소의 favicon](https://github.com/modelcontextproto
 - 호버음은 180ms 간격으로 제한합니다.
 - 작업 완료와 실패는 완료음과 오류음을 재생합니다.
 - 상태 조회의 실패는 오류음을 내지 않습니다.
-- 미리듣기 버튼에는 별도 호버음과 클릭음을 붙이지 않습니다.
 
 네이티브 효과음 검증은 `test/sound-smoke.html`을 `TINYJS_HTML`로 지정해 실행합니다.
 검증은 기존 효과음 설정을 읽고, 완료 후 같은 값으로 복원합니다.

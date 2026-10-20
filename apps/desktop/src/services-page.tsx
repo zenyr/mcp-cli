@@ -81,7 +81,7 @@ export const ServicesPage = () => {
       <Group justify="space-between">
         <Title order={3}>서비스</Title>
         <Text size="xs" c="dimmed">
-          CLI와 같은 인증을 사용합니다.
+          사용할 서비스에 로그인해 주세요.
         </Text>
       </Group>
       {error && (
@@ -187,7 +187,7 @@ export const ServicesPage = () => {
             <>
               <PasswordInput
                 label="API key"
-                description="키는 CLI의 인증 저장소에 저장합니다."
+                description="키는 이 기기의 인증 저장소에 저장합니다."
                 value={secret}
                 onChange={(event) => setSecret(event.currentTarget.value)}
                 autoFocus

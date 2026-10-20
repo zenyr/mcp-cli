@@ -24,7 +24,7 @@ export const outputFiles = async (
   registry: Registry,
   plugin: DiscoveredPlugin,
 ): Promise<GeneratedFiles> =>
-  (await registry.context.writable(plugin.dir))
+  !plugin.bundled && (await registry.context.writable(plugin.dir))
     ? packageFiles(plugin)
     : cacheFiles(registry, plugin);
 
@@ -33,7 +33,9 @@ export const existingFiles = async (
   registry: Registry,
   plugin: DiscoveredPlugin,
 ): Promise<GeneratedFiles | undefined> => {
-  for (const files of [packageFiles(plugin), cacheFiles(registry, plugin)])
+  for (const files of plugin.bundled
+    ? [cacheFiles(registry, plugin)]
+    : [packageFiles(plugin), cacheFiles(registry, plugin)])
     if (await Bun.file(files.module).exists()) return files;
   return undefined;
 };
@@ -44,6 +46,7 @@ export const loadManifest = async (
 ): Promise<GeneratedManifest> => {
   const name = plugin.service;
   const files = await existingFiles(registry, plugin);
+  if (!files && plugin.bundled) return decodeManifest(plugin.bundled.manifest);
   if (!files)
     throw new NotGeneratedError(`${name} is not generated yet. Run mcp-cli generate ${name} first`);
   const module: unknown = await import(pathToFileURL(files.module).href);

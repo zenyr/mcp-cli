@@ -39,7 +39,7 @@ export type Api = {
   logout: { input: AuthInput; output: null };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };
-  saveSettings: { input: Pick<Settings, "cliCommand" | "autoStart">; output: null };
+  saveSettings: { input: { cliCommand?: string[] | null; autoStart: boolean }; output: null };
   sound: { input: { kind: SoundKind }; output: boolean };
   setSoundsEnabled: { input: { enabled: boolean }; output: null };
 };

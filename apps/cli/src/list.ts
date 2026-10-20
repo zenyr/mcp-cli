@@ -26,7 +26,11 @@ export const listPlugins = async (registry: Registry, args: string[]): Promise<s
   const rows = await Promise.all(
     registry.plugins.map(async (plugin) => {
       const files = await existingFiles(registry, plugin);
-      const generated = files ? `generated (${files.location})` : "not generated";
+      const generated = files
+        ? `generated (${files.location})`
+        : plugin.bundled
+          ? "generated (bundled)"
+          : "not generated";
       return [plugin.service, plugin.source, generated, plugin.packageName, plugin.dir];
     }),
   );

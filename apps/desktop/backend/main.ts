@@ -1,17 +1,10 @@
 import { isSoundKind, type SoundKind } from "../shared/ui-sounds";
 import { observeDaemonSound, playUiSound, setSoundsEnabled } from "./ui-sounds";
 import { prepareTrayIcons } from "./tray-icon";
-import { defaultCommand } from "./default-command";
+import { cliCommand } from "./command";
 
 let loginBusy = false;
 let loginProcess: tjs.Process | undefined;
-const cliCommand = async (app: DesktopApp): Promise<string[]> => {
-  const saved = await app.store.get("cliCommand");
-  if (Array.isArray(saved) && saved.length && saved.every((item) => typeof item === "string"))
-    return saved;
-  const entry = tjs.env.MCP_CLI_DESKTOP_ENTRY;
-  return entry ? [tjs.env.MCP_CLI_DESKTOP_BUN || "bun", entry] : defaultCommand;
-};
 const run = async (app: DesktopApp, args: string[], input?: unknown) => {
   const decoder = new TextDecoder();
   const child = app.spawnHidden([...(await cliCommand(app)), ...args], {
@@ -178,15 +171,22 @@ export const api = {
     await setSoundsEnabled(app, params.enabled);
     return null;
   },
-  saveSettings: async (params: { cliCommand: string[]; autoStart: boolean }, app: DesktopApp) => {
-    if (
-      typeof params.autoStart !== "boolean" ||
-      !Array.isArray(params.cliCommand) ||
-      !params.cliCommand.length ||
-      params.cliCommand.some((item) => typeof item !== "string" || !item.trim())
-    )
-      throw new Error("CLI 명령을 입력해 주세요.");
-    await app.store.set("cliCommand", params.cliCommand);
+  saveSettings: async (
+    params: { cliCommand?: string[] | null; autoStart: boolean },
+    app: DesktopApp,
+  ) => {
+    if (typeof params.autoStart !== "boolean") throw new Error("자동 시작 설정을 확인해 주세요.");
+    const command = params.cliCommand;
+    if (command !== undefined) {
+      if (
+        command !== null &&
+        (!Array.isArray(command) ||
+          !command.length ||
+          command.some((item) => typeof item !== "string" || !item.trim()))
+      )
+        throw new Error("CLI 명령을 입력해 주세요.");
+      await app.store.set("cliCommand", command);
+    }
     await app.store.set("autoStart", params.autoStart);
     return null;
   },
@@ -198,15 +198,20 @@ export const init = async (app: DesktopApp) => {
     const state = await api.status(undefined, app);
     app.tray.set({
       ...trayIcons[state.online ? "running" : "stopped"],
-      tooltip: state.online ? "MCP CLI · 실행 중" : "MCP CLI · 연결 안 됨",
+      tooltip: state.online ? "MCP CLI · 연결 준비됨" : "MCP CLI · 연결 중지됨",
       menu: [
-        { id: "status", label: state.online ? "대몬 실행 중" : "대몬 연결 안 됨" },
+        { id: "status", label: state.online ? "연결 준비됨" : "연결 중지됨" },
         { id: "show", label: "관리 화면 열기" },
         { separator: true },
         { id: "quit", label: "앱 종료" },
       ],
     });
   };
+  const firstLaunch = (await app.store.get("initialized")) !== true;
+  if (firstLaunch) {
+    app.show();
+    await app.store.set("initialized", true);
+  }
   await refresh();
   setInterval(() => {
     void refresh();

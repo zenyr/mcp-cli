@@ -1,4 +1,4 @@
-import { AppShell, Badge, Code, Group, NavLink, Stack, Text } from "@mantine/core";
+import { AppShell, Badge, NavLink, Stack, Text } from "@mantine/core";
 import { IconKey, IconPlugConnected, IconSettings } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useHotkeys } from "@mantine/hooks";
@@ -65,17 +65,6 @@ export const App = () => {
             leftSection={<IconSettings size={16} />}
             active={location.pathname === "/settings"}
           />
-        </Stack>
-        <Stack mt="auto" px="sm" pb="xs" gap={6}>
-          <Text size="xs" c="dimmed">
-            로컬 연결 관리자
-          </Text>
-          <Group gap={6}>
-            <Code>v0.1.0</Code>
-            <Text size="xs" c="dimmed">
-              미리 보기
-            </Text>
-          </Group>
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>

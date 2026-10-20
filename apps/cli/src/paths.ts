@@ -3,6 +3,8 @@ import { homedir } from "node:os";
 import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { bundledPlugins } from "./bundled";
+
 export type Env = Record<string, string | undefined>;
 
 /** Roots and environment that discovery reads, injectable so tests never touch the real home. */
@@ -66,6 +68,13 @@ const hasWorkspaces = async (dir: string): Promise<boolean> => {
 
 // Follows Node resolution order: node_modules beside each ancestor of the CLI package.
 export const defaultContext = async (env: Env = process.env): Promise<DiscoveryContext> => {
+  if (bundledPlugins().length)
+    return {
+      env,
+      home: env.HOME || homedir(),
+      nodeModules: [],
+      writable: async () => false,
+    };
   const cliDir = fileURLToPath(new URL("..", import.meta.url)).replace(/[/\\]$/, "");
   const chain = ancestors(cliDir);
   const roots = await Promise.all(

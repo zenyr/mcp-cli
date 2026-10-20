@@ -23,8 +23,8 @@ export const ConnectionsPage = () => {
       </Group>
       {error && <Alert color="red">{error.message}</Alert>}
       {data && !data.online && (
-        <Alert color="gray" title="대몬에 연결하지 못했습니다">
-          대몬을 시작하거나 설정에서 CLI 경로를 확인해 주세요.
+        <Alert color="gray" title="연결 준비가 필요합니다">
+          위의 연결 준비 버튼을 눌러 주세요.
           <Text size="xs" mt="xs" className="error-detail">
             {data.error}
           </Text>
@@ -81,9 +81,12 @@ export const ConnectionsPage = () => {
             <IconPlugConnected size={28} color="var(--mantine-color-dimmed)" />
             <Text fw={500}>{isPending ? "연결을 확인합니다" : "아직 열린 연결이 없습니다"}</Text>
             <Text size="sm" c="dimmed" ta="center">
-              대몬 사용을 켠 CLI 명령이 실행되면 여기에 표시됩니다.
+              연결 유지를 사용하는 도구의 요청이 여기에 표시됩니다.
             </Text>
-            <Code>MCP_CLI_DAEMON=1 mcp-cli demo message echo --text hello</Code>
+            <details>
+              <summary>터미널에서 연결 유지 사용하기</summary>
+              <Code>MCP_CLI_DAEMON=1 mcp-cli demo message echo --text hello</Code>
+            </details>
             <Button component={Link} to="/services" variant="subtle">
               서비스 인증 확인
             </Button>
@@ -91,7 +94,7 @@ export const ConnectionsPage = () => {
         </Paper>
       )}
       <Text size="xs" c="dimmed">
-        창을 닫아도 대몬은 연결을 유지합니다. 앱 종료와 대몬 종료는 별도입니다.
+        창을 닫아도 백그라운드 연결은 유지됩니다. 연결을 끝내려면 연결 중지를 눌러 주세요.
       </Text>
     </Stack>
   );

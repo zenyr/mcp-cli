@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Accordion,
   Alert,
   Button,
   Code,
-  Divider,
   Group,
   Paper,
   Stack,
@@ -30,10 +30,12 @@ export const SettingsPage = () => {
   const save = useAction("saveSettings", "설정을 저장했습니다.");
   const persist = async (autoStart = settings?.autoStart ?? false) => {
     await save.mutateAsync({
-      cliCommand: (command ?? settings?.cliCommand.join("\n") ?? "mcp-cli")
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean),
+      ...(command !== undefined && {
+        cliCommand: command
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean),
+      }),
       autoStart,
     });
     await client.invalidateQueries({ queryKey: ["settings"] });
@@ -71,34 +73,70 @@ export const SettingsPage = () => {
             }}
           />
           <Switch
-            label="앱을 시작할 때 대몬 시작"
-            description="앱을 종료해도 대몬은 계속 실행합니다."
+            label="앱을 시작할 때 연결 준비"
+            description="앱을 종료해도 백그라운드에서 실행합니다."
             checked={settings?.autoStart ?? false}
             disabled={!settings || save.isPending}
             onChange={(event) => {
               void persist(event.currentTarget.checked).catch(() => undefined);
             }}
           />
-          <Divider />
-          <Textarea
-            label="CLI 실행 명령"
-            description="실행 파일과 인수를 줄마다 하나씩 입력해 주세요. 개발 환경에서는 bun 경로와 main.ts 경로를 입력합니다."
-            autosize
-            minRows={2}
-            value={command ?? settings?.cliCommand.join("\n") ?? ""}
-            onChange={(event) => setCommand(event.currentTarget.value)}
-            styles={{ input: { fontFamily: "var(--mantine-font-family-monospace)", fontSize: 12 } }}
-          />
-          <Group justify="flex-end">
-            <Button
-              loading={save.isPending}
-              onClick={() => {
-                void persist().catch(() => undefined);
-              }}
-            >
-              저장
-            </Button>
-          </Group>
+          <Accordion variant="contained">
+            <Accordion.Item value="advanced">
+              <Accordion.Control>고급 설정</Accordion.Control>
+              <Accordion.Panel>
+                <Stack gap="md">
+                  <Textarea
+                    label="CLI 실행 명령"
+                    description="별도 CLI를 사용할 때만 변경해 주세요. 실행 파일과 인수를 줄마다 하나씩 입력합니다."
+                    autosize
+                    minRows={2}
+                    value={command ?? settings?.cliCommand.join("\n") ?? ""}
+                    onChange={(event) => setCommand(event.currentTarget.value)}
+                    styles={{
+                      input: { fontFamily: "var(--mantine-font-family-monospace)", fontSize: 12 },
+                    }}
+                  />
+                  <Group justify="flex-end">
+                    <Button
+                      variant="default"
+                      disabled={!settings || save.isPending}
+                      onClick={async () => {
+                        try {
+                          await save.mutateAsync({
+                            cliCommand: null,
+                            autoStart: settings?.autoStart ?? false,
+                          });
+                          setCommand(undefined);
+                          await client.invalidateQueries({ queryKey: ["settings"] });
+                        } catch {
+                          /* The mutation displays the error. */
+                        }
+                      }}
+                    >
+                      기본 명령 사용
+                    </Button>
+                    <Button
+                      loading={save.isPending}
+                      onClick={() => {
+                        void persist().catch(() => undefined);
+                      }}
+                    >
+                      저장
+                    </Button>
+                  </Group>
+                  <Text size="xs" c="dimmed">
+                    유휴 종료 <Code>60초</Code>
+                  </Text>
+                  {data?.online && (
+                    <Text size="xs" c="dimmed">
+                      IPC <Code className="socket-path">{data.status.address}</Code>
+                    </Text>
+                  )}
+                </Stack>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
         </Stack>
       </Paper>
       <SoundSettings />
@@ -106,14 +144,6 @@ export const SettingsPage = () => {
         <Text size="xs" c="dimmed">
           앱 버전 <Code>0.1.0</Code>
         </Text>
-        <Text size="xs" c="dimmed">
-          유휴 종료 <Code>60초</Code>
-        </Text>
-        {data?.online && (
-          <Text size="xs" c="dimmed">
-            IPC <Code className="socket-path">{data.status.address}</Code>
-          </Text>
-        )}
       </Stack>
     </Stack>
   );
