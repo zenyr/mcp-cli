@@ -1,5 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { definePlugin } from "@mcp-cli/core";
+declare const MCP_CLI_BUNDLED: boolean;
+
 export default definePlugin({
   name: "demo",
   summary: "Local MCP example",
@@ -11,9 +13,12 @@ export default definePlugin({
     },
     "demo-fail": { path: ["message", "fail"], summary: "Return a tool error" },
   },
-  connection: () => ({
-    type: "stdio",
-    command: "bun",
-    args: [fileURLToPath(new URL("./server.ts", import.meta.url))],
-  }),
+  connection: () =>
+    typeof MCP_CLI_BUNDLED !== "undefined" && MCP_CLI_BUNDLED
+      ? { type: "stdio", command: process.execPath, args: ["--demo-server"] }
+      : {
+          type: "stdio",
+          command: "bun",
+          args: [fileURLToPath(new URL("./server.ts", import.meta.url))],
+        },
 });

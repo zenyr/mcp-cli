@@ -1,6 +1,7 @@
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isRecord, UsageError, type ServicePlugin } from "@mcp-cli/core";
+import { bundledPlugins, type BundledPlugin } from "./bundled";
 import { readConfig, type PluginReference, type UserConfig } from "./config";
 import { nodeModulePackages, readPackage, workspacePackages, type PackageInfo } from "./packages";
 import { configPath, type DiscoveryContext } from "./paths";
@@ -13,7 +14,7 @@ export const TOP_LEVEL_COMMANDS: readonly string[] = [
   "login",
   "logout",
 ];
-export type PluginSource = "workspace" | "node_modules" | "config";
+export type PluginSource = "workspace" | "node_modules" | "config" | "bundled";
 export type DiscoveredPlugin = {
   service: string;
   packageName: string;
@@ -22,6 +23,7 @@ export type DiscoveredPlugin = {
   source: PluginSource;
   /** Where discovery found the package, for listings and duplicate errors. */
   origin: string;
+  bundled?: BundledPlugin;
 };
 export type Registry = { context: DiscoveryContext; plugins: DiscoveredPlugin[] };
 type Candidate = { info: PackageInfo; source: PluginSource; origin: string };
@@ -108,7 +110,15 @@ export const discover = async (context: DiscoveryContext): Promise<Registry> => 
   const resolved = await Promise.all(
     unique.map(async (candidate) => ({ ...candidate, service: await serviceOf(candidate) })),
   );
-  const plugins: DiscoveredPlugin[] = [];
+  const plugins: DiscoveredPlugin[] = bundledPlugins().map((bundled) => ({
+    service: bundled.plugin.name,
+    packageName: bundled.packageName,
+    dir: "(bundled)",
+    entry: "",
+    source: "bundled",
+    origin: "bundled executable",
+    bundled,
+  }));
   for (const { info, source, origin, service } of resolved) {
     const other = plugins.find((plugin) => plugin.service === service);
     if (other)
@@ -134,7 +144,7 @@ export const findPlugin = (registry: Registry, name: string): DiscoveredPlugin =
 };
 
 export const loadPlugin = async (plugin: DiscoveredPlugin): Promise<ServicePlugin> => {
-  const loaded = await importPlugin(plugin.entry);
+  const loaded = plugin.bundled?.plugin ?? (await importPlugin(plugin.entry));
   if (loaded.name !== plugin.service)
     throw new Error(
       `Plugin ${plugin.packageName} declares service ${plugin.service} but exports plugin ${loaded.name}`,
