@@ -110,6 +110,9 @@ bun run cli demo prompts get summarize --input '{"text":"hello"}' --json
 
 루트에서 `bun link`를 한 번 실행하면 `mcp-cli`와 서비스별 명령이 `~/.bun/bin`에 연결됩니다.
 서비스 명령은 `mcp-cli <service>`와 같습니다. 예: `notion page get --help`.
+링크된 명령은 기본으로 대몬에 연결합니다. 먼저 `mcp-cli daemon start` 또는 데스크톱 앱에서 대몬을 시작하십시오.
+대몬이 꺼져 있으면 도구 실행은 실패합니다. `MCP_CLI_DAEMON=0`을 지정하면 직접 연결합니다.
+도움말은 대몬 없이 확인할 수 있습니다. `mem`은 별도 CLI이므로 이 설정을 사용하지 않습니다.
 
 플러그인 `package.json`의 `"mcp-cli"` 표식에 `"bin": "<name>"`을 넣으면 서비스 명령이 생깁니다.
 `bun run bins`가 루트 `bin` 필드와 `bin/<name>.ts` shim을 다시 씁니다. `bun run lint`는 둘이 맞는지 검사합니다.

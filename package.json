@@ -4,7 +4,7 @@
   "bin": {
     "fish-audio": "bin/fish-audio.ts",
     "linear": "bin/linear.ts",
-    "mcp-cli": "apps/cli/src/main.ts",
+    "mcp-cli": "bin/mcp-cli.ts",
     "mem": "apps/mem/src/main.ts",
     "notion": "bin/notion.ts",
     "slack": "bin/slack.ts"
