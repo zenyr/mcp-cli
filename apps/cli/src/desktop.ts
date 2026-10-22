@@ -1,8 +1,29 @@
-import { credentialName, credentialSwitches, isRecord, UsageError } from "@mcp-cli/core";
-import { defaultStore, loginCommand, logoutCommand } from "./auth";
+import { createInterface } from "node:readline";
+import { credentialSwitches, isRecord, UsageError } from "@mcp-cli/core";
+import { authCredentialName, defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
+
+const readAuthInput = async (): Promise<string> => {
+  const lines = createInterface({ input: process.stdin });
+  const input: string[] = [];
+  try {
+    for await (const line of lines) {
+      input.push(line);
+      try {
+        JSON.parse(input.join("\n"));
+        return input.join("\n");
+      } catch {
+        continue;
+      }
+    }
+    return input.join("\n");
+  } finally {
+    lines.close();
+    process.stdin.destroy();
+  }
+};
 
 export const desktopCommand = async (args: string[]) => {
   const [action, ...rest] = args;
@@ -27,7 +48,7 @@ export const desktopCommand = async (args: string[]) => {
               flag,
               summary,
               stored:
-                (await store.read(credentialName(plugin.name, flag || undefined))) !== undefined,
+                (await store.read(authCredentialName(plugin, flag || undefined))) !== undefined,
               fromEnv:
                 plugin.auth?.type === "apiKey" &&
                 Boolean(
@@ -45,7 +66,7 @@ export const desktopCommand = async (args: string[]) => {
     console.log(JSON.stringify({ result: services }));
     return;
   }
-  const value: unknown = JSON.parse(await Bun.stdin.text());
+  const value: unknown = JSON.parse(await readAuthInput());
   if (
     !isRecord(value) ||
     typeof value.service !== "string" ||

@@ -19,11 +19,11 @@ test("desktop API key operations share CLI storage without printing secrets", as
   );
   await Bun.write(
     join(pluginDir, "index.ts"),
-    `export default { name: "desktop-test", summary: "Test", auth: { type: "apiKey", env: "DESKTOP_TEST_KEY", alternates: [{ flag: "bot", env: "DESKTOP_TEST_BOT", summary: "Bot" }] }, connection: () => ({ type: "http", url: "http://127.0.0.1:1/mcp" }) };`,
+    `export default { name: "desktop-test", summary: "Test", auth: { type: "apiKey", env: "DESKTOP_TEST_KEY", alternates: [{ flag: "user", base: true, env: "DESKTOP_TEST_KEY", summary: "User" }, { flag: "bot", env: "DESKTOP_TEST_BOT", summary: "Bot" }] }, connection: () => ({ type: "http", url: "http://127.0.0.1:1/mcp" }) };`,
   );
   const config = join(directory, "config.json");
   await Bun.write(config, JSON.stringify({ plugins: [pluginDir] }));
-  const run = async (action: string, input?: unknown) => {
+  const run = async (action: string, input?: unknown, keepInputOpen = false) => {
     const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", "desktop", action], {
       cwd: fileURLToPath(new URL("../../../", import.meta.url)),
       env: {
@@ -36,10 +36,13 @@ test("desktop API key operations share CLI storage without printing secrets", as
         DESKTOP_TEST_KEY: "",
         DESKTOP_TEST_BOT: "",
       },
-      stdin: new Blob([JSON.stringify(input ?? {})]),
+      stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
     });
+    child.stdin.write(JSON.stringify(input ?? {}) + (keepInputOpen ? "\n" : ""));
+    if (keepInputOpen) await child.stdin.flush();
+    else child.stdin.end();
     const [stdout, stderr, code] = await Promise.all([
       new Response(child.stdout).text(),
       new Response(child.stderr).text(),
@@ -54,10 +57,18 @@ test("desktop API key operations share CLI storage without printing secrets", as
       secret: "fixture-private-key",
     });
     expect(saved).toEqual({ stdout: '{"result":null}\n', stderr: "", code: 0 });
+    expect(
+      (await run("login", { service: "desktop-test", secret: "framed-fixture-key" }, true)).code,
+    ).toBe(0);
     const listed = await run("services");
     expect(listed.code).toBe(0);
     expect(listed.stdout).toContain('"flag":"bot","summary":"Bot","stored":true');
     expect(listed.stdout).not.toContain("fixture-private-key");
+    expect(listed.stdout).toContain('"flag":"user","summary":"User","stored":true');
+    expect((await run("logout", { service: "desktop-test", credential: "user" })).code).toBe(0);
+    const afterUserLogout = await run("services");
+    expect(afterUserLogout.stdout).toContain('"flag":"user","summary":"User","stored":false');
+    expect(afterUserLogout.stdout).toContain('"flag":"bot","summary":"Bot","stored":true');
     expect(
       (await run("login", { service: "desktop-test", credential: "invalid", secret: "x" })).code,
     ).toBe(2);

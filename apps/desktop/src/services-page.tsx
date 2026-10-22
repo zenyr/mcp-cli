@@ -53,11 +53,15 @@ export const ServicesPage = () => {
     if (item.service.auth === "oauth")
       login.mutate(
         { service: item.service.name, credential: item.credential.flag },
-        { onSuccess: () => setSelection(undefined) },
+        {
+          onSuccess: (result) => {
+            if (result === null) setSelection(undefined);
+          },
+        },
       );
   };
   const close = () => {
-    if (login.isPending) cancel.mutate(undefined);
+    if (login.isPending) cancel.mutate(undefined, { onSuccess: () => login.reset() });
     setSecret("");
     setUrl("");
     setSelection(undefined);
@@ -143,7 +147,7 @@ export const ServicesPage = () => {
                             <Group justify="flex-end" gap={4} wrap="nowrap">
                               <Button
                                 variant="default"
-                                disabled={login.isPending || logout.isPending}
+                                disabled={login.isPending || cancel.isPending || logout.isPending}
                                 onClick={() => begin(item)}
                               >
                                 {service.auth === "apiKey" ? "키 저장" : "로그인"}
@@ -152,7 +156,7 @@ export const ServicesPage = () => {
                                 <Button
                                   variant="subtle"
                                   color="red"
-                                  disabled={login.isPending || logout.isPending}
+                                  disabled={login.isPending || cancel.isPending || logout.isPending}
                                   onClick={() => remove(item)}
                                 >
                                   로그아웃
@@ -218,8 +222,12 @@ export const ServicesPage = () => {
           ) : (
             <>
               <Group>
-                <Loader size="sm" />
-                <Text size="sm">브라우저에서 로그인을 완료해 주세요.</Text>
+                {login.isPending && <Loader size="sm" />}
+                <Text size="sm">
+                  {login.isPending
+                    ? "브라우저에서 로그인을 완료해 주세요."
+                    : "로그인 요청이 종료되었습니다."}
+                </Text>
               </Group>
               <Text size="xs" c="dimmed">
                 로그인은 5분 뒤 만료됩니다. 취소하면 로그인 요청을 종료합니다.

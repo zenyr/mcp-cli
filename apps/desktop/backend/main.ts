@@ -1,19 +1,28 @@
+import { createLoginController } from "../shared/login-controller";
 import { isSoundKind, type SoundKind } from "../shared/ui-sounds";
 import { observeDaemonSound, playUiSound, setSoundsEnabled } from "./ui-sounds";
 import { prepareTrayIcons } from "./tray-icon";
 import { cliCommand } from "./command";
 
-let loginBusy = false;
-let loginProcess: tjs.Process | undefined;
-const run = async (app: DesktopApp, args: string[], input?: unknown) => {
+const logins = createLoginController();
+const run = async (app: DesktopApp, args: string[], input?: unknown, signal?: AbortSignal) => {
   const decoder = new TextDecoder();
-  const child = app.spawnHidden([...(await cliCommand(app)), ...args], {
+  const command = await cliCommand(app);
+  signal?.throwIfAborted();
+  const child = app.spawnHidden([...command, ...args], {
     stdin: input === undefined ? "ignore" : "pipe",
     stdout: "pipe",
     stderr: "pipe",
   });
   const isLogin = args[0] === "desktop" && args[1] === "login";
-  if (isLogin) loginProcess = child;
+  const terminate = () => {
+    try {
+      child.kill("SIGKILL");
+    } catch {
+      /* The process already exited. */
+    }
+  };
+  signal?.addEventListener("abort", terminate, { once: true });
   const deadline = setTimeout(
     () => {
       try {
@@ -27,8 +36,10 @@ const run = async (app: DesktopApp, args: string[], input?: unknown) => {
   try {
     const writer = child.stdin?.getWriter();
     if (writer) {
-      await writer.write(new TextEncoder().encode(JSON.stringify(input ?? {})));
-      await writer.close();
+      // tjs sends pipe bytes without settling write(), so the CLI reads a newline-framed request.
+      void writer
+        .write(new TextEncoder().encode(`${JSON.stringify(input ?? {})}\n`))
+        .catch(terminate);
     }
     const errors = child.stderr?.text();
     const reader = child.stdout?.getReader();
@@ -70,7 +81,7 @@ const run = async (app: DesktopApp, args: string[], input?: unknown) => {
     return result;
   } finally {
     clearTimeout(deadline);
-    if (loginProcess === child) loginProcess = undefined;
+    signal?.removeEventListener("abort", terminate);
   }
 };
 let statusSequence = 0;
@@ -139,22 +150,11 @@ export const api = {
   },
   reset: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "reset"]),
   stop: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "stop"]),
-  login: async (params: unknown, app: DesktopApp) => {
-    if (loginBusy) throw new Error("기존 로그인 요청을 먼저 완료해 주세요.");
-    loginBusy = true;
-    try {
-      return await run(app, ["desktop", "login"], params);
-    } finally {
-      loginBusy = false;
-    }
-  },
+  login: (params: unknown, app: DesktopApp) =>
+    logins.start((signal) => run(app, ["desktop", "login"], params, signal)),
   logout: (params: unknown, app: DesktopApp) => run(app, ["desktop", "logout"], params),
   cancelLogin: async () => {
-    try {
-      loginProcess?.kill("SIGTERM");
-    } catch {
-      /* The login already finished. */
-    }
+    await logins.cancel();
     return null;
   },
   settings: async (_params: unknown, app: DesktopApp) => ({

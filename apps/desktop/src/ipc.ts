@@ -35,7 +35,7 @@ export type Api = {
   start: { input: undefined; output: null };
   stop: { input: undefined; output: null };
   reset: { input: undefined; output: null };
-  login: { input: AuthInput; output: null };
+  login: { input: AuthInput; output: null | { cancelled: true } };
   logout: { input: AuthInput; output: null };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };

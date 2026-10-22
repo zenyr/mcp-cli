@@ -31,7 +31,8 @@ export const useAction = <K extends keyof Api>(method: K, message?: string) => {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: Api[K]["input"]) => call(method, input),
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      if (method === "login" && result !== null) return;
       if (feedbackActions.has(method) && method !== "start") playUiSound("success");
       if (message) notifications.show({ message, color: "teal" });
       await Promise.all([
