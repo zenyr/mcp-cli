@@ -19,7 +19,7 @@ export type AuthSpec =
     }
   | { type: "none" };
 /** A second credential such as a bot token; `summary` appears in help next to `--<flag>`. */
-export type ApiKeyAlternate = { flag: string; env: string; summary: string };
+export type ApiKeyAlternate = { flag: string; env: string; summary: string; base?: boolean };
 export type OAuthSpec = Extract<AuthSpec, { type: "oauth" }>;
 export type ApiKeySpec = Extract<AuthSpec, { type: "apiKey" }>;
 

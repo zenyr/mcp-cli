@@ -11,6 +11,8 @@ export type ExtensionContext = {
   callTool: ToolCaller;
   io: ExtensionIO;
   json: boolean;
+  credential?: string;
+  runCommand?: (argv: string[]) => Promise<{ exitCode: number; output: string[] }>;
   cacheScope?: string;
 };
 export type ExtensionCommand = {

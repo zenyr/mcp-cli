@@ -53,13 +53,35 @@ export type ToolSession = import("./session").CatalogSession & {
 /** `refresh` is true once after the server rejects a request with 401. */
 export type AuthorizeRequest = { refresh: boolean };
 export type Authorize = (request: AuthorizeRequest) => Promise<Record<string, string>>;
+export type WebApiConfig = {
+  url: string;
+  tools: Array<
+    ToolDefinition & {
+      method: string;
+      requiredTokenPrefix?: string;
+      credentialError?: string;
+      credentialKinds?: Record<string, string>;
+      errorCategories?: Record<string, string>;
+      download?: boolean;
+      maxDownloadBytes?: number;
+    }
+  >;
+  downloadHosts?: string[];
+};
 export type Connection =
   | { type: "stdio"; command: string; args?: string[]; cwd?: string; env?: Record<string, string> }
-  | { type: "http"; url: string; headers?: Record<string, string>; authorize?: Authorize };
+  | {
+      type: "http";
+      url: string;
+      headers?: Record<string, string>;
+      authorize?: Authorize;
+      webApi?: WebApiConfig;
+    };
 export type ServicePlugin = {
   name: string;
   summary: string;
   commands?: Record<string, CommandCustomization>;
+  apiCommands?: CommandSpec[];
   /** One-line descriptions keyed by a space-joined command group path such as "media image". */
   groups?: Record<string, string>;
   quickstart?: QuickstartEntry[];
@@ -143,6 +165,7 @@ export class NotGeneratedError extends Error {
 export const COMMANDS = {
   help: "help",
   methods: "methods",
+  schema: "schema",
   call: "call",
   skill: "skill",
   resources: "resources",

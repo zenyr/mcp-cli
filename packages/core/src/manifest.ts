@@ -162,6 +162,13 @@ export const applyCustomizations = (
     absent.push(customization.path);
     absentNames.add(name);
   }
+  for (const command of plugin.apiCommands ?? []) {
+    if (names.has(command.name)) throw invalid(`Duplicate tool: ${command.name}`);
+    claimPath(command.path, fallbackPath(command.name), [...paths, ...absent]);
+    names.add(command.name);
+    paths.push(command.path);
+    commands.push(command);
+  }
   const extensions = plugin.extensions?.commands ?? [];
   for (const extension of extensions) {
     if (!validPath(extension.path)) throw new Error("Invalid extension command path");

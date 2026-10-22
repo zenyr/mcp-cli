@@ -449,7 +449,7 @@ test("reserved command help keeps its usage lines", async () => {
     "Usage: demo help [command]\n\nShow help for a command.",
     "Usage: demo skill\n\nPrint the service workflow.",
     [
-      "Usage: demo call <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse demo methods to discover names.",
+      "Usage: demo call <tool> [options]\n\nCall a declared tool by its exact name.\nUse demo methods to discover names.",
       "",
       "Tools:",
       "  demo-echo    Echo a message",

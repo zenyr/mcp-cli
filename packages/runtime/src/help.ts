@@ -32,11 +32,12 @@ const displayCommands = (manifest: Manifest): CommandSpec[] => [
 const reservedUsage = (service: string): Map<string | undefined, string> =>
   new Map([
     [METHODS, " [group] [--json]\n\nList baked-in tool names and command paths."],
+    ["schema", " <command>\n\nPrint the declared input schema without connecting."],
     [HELP, " [command]\n\nShow help for a command."],
     [SKILL, "\n\nPrint the service workflow."],
     [
       CALL,
-      ` <tool> [options]\n\nCall a baked-in MCP tool by its exact name.\nUse ${service} ${METHODS} to discover names.`,
+      ` <tool> [options]\n\nCall a declared tool by its exact name.\nUse ${service} ${METHODS} to discover names.`,
     ],
     [
       RESOURCES,
@@ -49,7 +50,8 @@ const reservedUsage = (service: string): Map<string | undefined, string> =>
   ]);
 const DISCOVERY: Array<[string, string]> = [
   [METHODS, "List tool names and command paths"],
-  [CALL, "Call a tool by its exact MCP name"],
+  ["schema", "Print a command input schema"],
+  [CALL, "Call a tool by its exact name"],
   [SKILL, "Print the service workflow"],
   [HELP, "Show help for a command"],
   [RESOURCES, "List and read MCP resources (connects)"],

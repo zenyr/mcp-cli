@@ -1,0 +1,163 @@
+import { expect, test } from "bun:test";
+import { readFile, rm, stat } from "node:fs/promises";
+import { dirname } from "node:path";
+import { isRecord, type Connection } from "@mcp-cli/core";
+import { connectWebApi } from "../src/web-api";
+const config: Extract<Connection, { type: "http" }> = {
+  type: "http",
+  url: "http://127.0.0.1:1/mcp",
+  headers: { Authorization: "Bearer xoxp-fixture" },
+  webApi: {
+    url: "https://slack.com/api/",
+    downloadHosts: ["files.slack.com"],
+    tools: [
+      { name: "read", method: "users.list", inputSchema: {}, annotations: { readOnlyHint: true } },
+      { name: "write", method: "chat.postMessage", inputSchema: {} },
+      { name: "download", method: "download", download: true, inputSchema: {} },
+    ],
+  },
+};
+const noMcp = async (): Promise<never> => {
+  throw new Error("MCP must not open");
+};
+
+test("429 preserves Retry-After; writes are not retried; read zero-delay retries once", async () => {
+  let calls = 0;
+  const request: typeof fetch = Object.assign(
+    async () => {
+      calls++;
+      return Response.json(
+        { ok: false, error: "ratelimited" },
+        { status: 429, headers: { "retry-after": "0" } },
+      );
+    },
+    { preconnect: fetch.preconnect },
+  );
+  const session = connectWebApi(config, noMcp, 100, request);
+  expect((await session.callTool("write", {})).structuredContent).toMatchObject({
+    category: "rate_limit",
+    retryAfter: "0",
+  });
+  expect(calls).toBe(1);
+  await session.callTool("read", {});
+  expect(calls).toBe(3);
+});
+
+test("network failure and server failure preserve uncertain writes without retry", async () => {
+  let calls = 0;
+  const request: typeof fetch = Object.assign(
+    async () => {
+      calls++;
+      throw new Error("timeout");
+    },
+    { preconnect: fetch.preconnect },
+  );
+  const session = connectWebApi(config, noMcp, 1, request);
+  expect((await session.callTool("write", {})).structuredContent).toMatchObject({
+    category: "network",
+    outcome: "unknown",
+  });
+  expect(calls).toBe(1);
+});
+
+test("download rejects non-HTTPS and unapproved hosts before authentication", async () => {
+  let calls = 0;
+  const request: typeof fetch = Object.assign(
+    async () => {
+      calls++;
+      return new Response("text");
+    },
+    { preconnect: fetch.preconnect },
+  );
+  const session = connectWebApi(config, noMcp, 100, request);
+  for (const url of [
+    "http://files.slack.com/a",
+    "https://evil.test/a",
+    "https://files.slack.com.evil.test/a",
+    "https://user:pass@files.slack.com/a",
+  ])
+    expect((await session.callTool("download", { url })).isError).toBe(true);
+  expect(calls).toBe(0);
+});
+
+test("downloads enforce declared and streamed 5 MiB limits and refuse redirects", async () => {
+  for (const response of [
+    new Response("small", { headers: { "content-length": String(5 * 1024 * 1024 + 1) } }),
+    new Response(new Uint8Array(5 * 1024 * 1024 + 1)),
+    new Response(null, { status: 302, headers: { location: "https://evil.test/secret" } }),
+  ]) {
+    let seen: RequestInit | undefined;
+    const request: typeof fetch = Object.assign(
+      async (_url: string | URL | Request, options?: RequestInit) => {
+        seen = options;
+        return response;
+      },
+      { preconnect: fetch.preconnect },
+    );
+    const result = await connectWebApi(config, noMcp, 100, request).callTool("download", {
+      url: "https://files.slack.com/file",
+    });
+    expect(result.isError).toBe(true);
+    expect(seen?.redirect).toBe("error");
+  }
+});
+
+test("binary content uses base64 and saved files use private random paths", async () => {
+  const request: typeof fetch = Object.assign(
+    async () =>
+      new Response(new Uint8Array([0, 255, 1]), {
+        headers: { "content-type": "application/octet-stream" },
+      }),
+    { preconnect: fetch.preconnect },
+  );
+  const session = connectWebApi(config, noMcp, 100, request);
+  expect(
+    (await session.callTool("download", { url: "https://files.slack.com/file" })).structuredContent,
+  ).toMatchObject({ content: "AP8B", encoding: "base64", untrusted: true });
+  const result = await session.callTool("download", {
+    url: "https://files.slack.com/file",
+    save: true,
+  });
+  const data = isRecord(result.structuredContent) ? result.structuredContent : {};
+  expect(typeof data.path).toBe("string");
+  if (typeof data.path !== "string") throw new Error("Missing saved path");
+  try {
+    expect((await stat(dirname(data.path))).mode & 0o777).toBe(0o700);
+    expect((await stat(data.path)).mode & 0o777).toBe(0o600);
+    expect(await readFile(data.path)).toEqual(Buffer.from([0, 255, 1]));
+  } finally {
+    await rm(dirname(data.path), { recursive: true, force: true });
+  }
+});
+
+test("HTTP request timeout is bounded and a write is sent only once", async () => {
+  let calls = 0;
+  const server = Bun.serve({
+    port: 0,
+    fetch: async () => {
+      calls++;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return Response.json({ ok: true });
+    },
+  });
+  const session = connectWebApi(
+    {
+      ...config,
+      webApi: { ...config.webApi, url: String(server.url), tools: config.webApi?.tools ?? [] },
+    },
+    noMcp,
+    5,
+  );
+  try {
+    const result = await session.callTool("write", {});
+    expect(result.structuredContent).toMatchObject({
+      category: "network",
+      error: "timeout",
+      outcome: "unknown",
+    });
+    expect(calls).toBe(1);
+  } finally {
+    await session.close();
+    server.stop(true);
+  }
+});

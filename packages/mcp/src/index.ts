@@ -1,3 +1,4 @@
+import { connectWebApi } from "./web-api";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import type { CatalogSession, Connection, ResourceContent, ToolSession } from "@mcp-cli/core";
@@ -141,7 +142,7 @@ const openTransport = (config: Connection) => {
   return { transport, terminate: () => transport.terminateSession() };
 };
 
-export const connect = async (
+const connectMcp = async (
   config: Connection,
   options: ConnectOptions = {},
 ): Promise<ToolSession> => {
@@ -199,3 +200,15 @@ export const connect = async (
     },
   };
 };
+
+export const connect = async (
+  config: Connection,
+  options: ConnectOptions = {},
+): Promise<ToolSession> =>
+  config.type === "http" && config.webApi
+    ? connectWebApi(
+        config,
+        () => connectMcp(config, options),
+        options.callTimeoutMs ?? options.timeoutMs,
+      )
+    : connectMcp(config, options);

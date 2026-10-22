@@ -9,7 +9,11 @@ export const extensionCacheScope = async (
 ): Promise<string> => {
   const connection = await plugin.connection(env);
   const endpoint = connection.type === "http" ? connection.url : connection.command;
-  const name = credentialName(plugin.name, credential);
+  const alternate =
+    plugin.auth?.type === "apiKey"
+      ? plugin.auth.alternates?.find((item) => item.flag === credential)
+      : undefined;
+  const name = credentialName(plugin.name, alternate?.base ? undefined : credential);
   const auth = plugin.auth;
   let identity: unknown = name;
   if (connection.type === "http" && connection.authorize) {

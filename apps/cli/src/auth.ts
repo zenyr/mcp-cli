@@ -34,7 +34,7 @@ const keyChoice = (spec: ApiKeySpec, service: string, credential?: string): KeyC
   if (!credential) return { env: spec.env };
   const alternate = spec.alternates?.find((item) => item.flag === credential);
   if (!alternate) throw new UsageError(`${service} has no --${credential} credential`);
-  return { env: alternate.env, credential };
+  return { env: alternate.env, credential: alternate.base ? undefined : credential };
 };
 
 // An explicit environment variable wins over the key stored by `mcp-cli login`.
@@ -46,8 +46,8 @@ const apiKey = async (
   credential?: string,
 ): Promise<string> => {
   const choice = keyChoice(spec, service, credential);
-  const stored = await store.read(credentialName(service, choice.credential));
-  const key = env[choice.env] || stored?.accessToken;
+  const key =
+    env[choice.env] || (await store.read(credentialName(service, choice.credential)))?.accessToken;
   const login = `mcp-cli login ${service}${credential ? ` --${credential}` : ""}`;
   if (!key) throw new AuthRequiredError(`Set ${choice.env} or run ${login} to use ${service}`);
   return key;
@@ -167,7 +167,13 @@ export const loginCommand = async (args: string[], context: AuthContext): Promis
 export const logoutCommand = async (args: string[], context: AuthContext): Promise<void> => {
   const parsed = serviceArguments("logout", args);
   const plugin = await context.plugin(parsed.service);
-  const name = credentialName(plugin.name, credentialFlag(plugin, parsed.flags, []));
+  const choice = credentialFlag(plugin, parsed.flags, []);
+  const name = credentialName(
+    plugin.name,
+    plugin.auth?.type === "apiKey"
+      ? keyChoice(plugin.auth, plugin.name, choice).credential
+      : choice,
+  );
   const { store } = context;
   const removed = await store.withLock(name, async () => {
     const existing = await store.read(name).catch(() => true);

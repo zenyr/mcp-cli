@@ -60,9 +60,24 @@ export const runService = async (
       {},
     manifest.credentials.map((alternate) => alternate.flag),
   );
-  const { path, tokens, json, wantsHelp, fullHelp, allowRepeat, credential } = parsed;
+  const { path, tokens, json, wantsHelp, fullHelp, allowRepeat } = parsed;
+  const credential = manifest.credentials.find((item) => item.flag === parsed.credential)?.base
+    ? undefined
+    : parsed.credential;
   // Every later connection, including resources and prompts, uses the chosen credential.
-  const dependencies = { ...ports, open: () => ports.open(credential) };
+  let stdinRead = false;
+  const dependencies = {
+    ...ports,
+    open: () => ports.open(credential),
+    io: {
+      ...ports.io,
+      readStdin: async () => {
+        if (stdinRead) throw new UsageError("stdin cannot be used by multiple inputs");
+        stdinRead = true;
+        return ports.io.readStdin();
+      },
+    },
+  };
   if (path[0] === HELP) {
     if (tokens.length) throw new UsageError("Help does not accept input flags");
     dependencies.io.write(help(manifest, path.slice(1), { full: fullHelp }));
@@ -72,6 +87,28 @@ export const runService = async (
     throw new UsageError(`Missing command; run ${manifest.service} --help`);
   if (wantsHelp || !path.length) {
     dependencies.io.write(help(manifest, path, { full: fullHelp }));
+    return 0;
+  }
+  if (path[0] === "schema") {
+    if (tokens.length) throw new UsageError("Schema does not accept input flags");
+    const requested = path.slice(1);
+    const command =
+      findCommand(manifest, requested) ??
+      findExtension(manifest, requested) ??
+      manifest.commands.find((item) => item.name === requested.join(" "));
+    if (!command) throw new UsageError(`Unknown schema: ${requested.join(" ")}`);
+    dependencies.io.write(
+      JSON.stringify(
+        {
+          path: command.path,
+          summary: command.summary,
+          details: command.details,
+          inputSchema: command.inputSchema,
+        },
+        null,
+        2,
+      ),
+    );
     return 0;
   }
   if (path[0] === METHODS) {
@@ -137,6 +174,27 @@ export const runService = async (
           callTool: executor.callWorkflowTool,
           io: dependencies.io,
           json,
+          credential,
+          runCommand: async (args) => {
+            const output: string[] = [];
+            const exitCode = await runService(
+              plugin,
+              generated,
+              credential &&
+                !args.some((arg) => manifest.credentials.some((item) => arg === `--${item.flag}`))
+                ? [`--${credential}`, ...args]
+                : args,
+              {
+                ...ports,
+                io: {
+                  ...dependencies.io,
+                  write: (value) => output.push(value),
+                  writeError: (value) => output.push(value),
+                },
+              },
+            );
+            return { exitCode, output };
+          },
           cacheScope: await dependencies.cacheScope?.(credential),
         })
       : { result: await executor.callTool(command?.name ?? "", input) };

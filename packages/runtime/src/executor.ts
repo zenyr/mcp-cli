@@ -3,6 +3,7 @@ import {
   RepeatedCallError,
   CallNotStartedError,
   UsageError,
+  isRecord,
   type Manifest,
   type ServicePlugin,
   type ToolCaller,
@@ -89,7 +90,10 @@ export const createExecutor = (
       await prepare().catch(markUnstarted);
     const result = await connected.callTool(command.name, payload);
     // A thrown call stays pending because the server may still have applied it.
-    await guard?.finish(manifest.service, key, attempt, result.isError ? "error" : "ok");
+    const uncertain =
+      isRecord(result.structuredContent) && result.structuredContent.outcome === "unknown";
+    if (!uncertain)
+      await guard?.finish(manifest.service, key, attempt, result.isError ? "error" : "ok");
     return result;
   };
   const callTool: ToolCaller = async (name, input) => {
