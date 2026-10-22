@@ -32,7 +32,7 @@ bun run --cwd apps/desktop desktop
 앱에서 대몬을 시작한 뒤 터미널에서 실행하십시오.
 
 ```sh
-MCP_CLI_DAEMON=1 bun run cli demo message echo --text hello
+bun run cli demo message echo --text hello
 ```
 
 개발 실행은 빌드한 Bun과 소스 CLI 경로를 사용합니다.
@@ -56,9 +56,9 @@ API key는 stdin으로 전달하며 실행 인수에 넣지 않습니다.
 
 ## 연결 계약
 
-대몬 사용은 `MCP_CLI_DAEMON=1`로 선택합니다.
-이 설정 없이 CLI를 실행하면 기존 직접 연결을 사용합니다.
-대몬 사용을 선택했는데 대몬이 꺼져 있으면 명령은 실패합니다.
+CLI는 기본으로 대몬을 사용합니다. `MCP_CLI_DAEMON=1`을 따로 지정할 필요가 없습니다.
+직접 연결은 `MCP_CLI_DAEMON=0`으로 선택합니다.
+대몬이 꺼져 있으면 도구 요청을 보내기 전에 직접 연결로 전환합니다.
 도구 호출을 자동으로 재시도하지 않습니다.
 대몬은 서비스, 자격 증명, 인증 식별자, 연결 설정, 환경 변수, 작업 경로로 풀을 격리합니다.
 연결 수는 최대 32개이고 유휴 종료 시간은 60초입니다.

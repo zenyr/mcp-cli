@@ -5,13 +5,16 @@ import { join } from "node:path";
 
 const root = join(import.meta.dir, "../../..");
 
-test("linked commands require the daemon by default and allow direct connections", async () => {
+test("linked commands share daemon selection and fall back when it is absent", async () => {
   const directory = await mkdtemp(join(tmpdir(), "mcp-linked-"));
   const execute = async (bin: string, args: string[], mode?: string) => {
     const env: NodeJS.ProcessEnv = {
       ...process.env,
       MCP_CLI_DAEMON_DIR: directory,
       XDG_STATE_HOME: directory,
+      XDG_CONFIG_HOME: directory,
+      XDG_CACHE_HOME: directory,
+      MCP_CLI_CONFIG: "",
     };
     delete env.MCP_CLI_DAEMON;
     if (mode !== undefined) env.MCP_CLI_DAEMON = mode;
@@ -30,11 +33,14 @@ test("linked commands require the daemon by default and allow direct connections
   try {
     for (const bin of ["mcp-cli", "slack", "notion", "linear", "fish-audio"]) {
       const args = bin === "mcp-cli" ? ["demo", "resources", "list"] : ["resources", "list"];
-      const result = await execute(bin, args);
-      expect(result.code).toBe(1);
-      expect(result.error).toContain(join(directory, "token"));
+      const result = await execute(bin, args, "invalid");
+      expect(result.code).toBe(2);
+      expect(result.error).toContain("MCP_CLI_DAEMON must be 0 or 1");
       expect((await execute(bin, ["--help"])).code).toBe(0);
     }
+    const fallback = await execute("mcp-cli", ["demo", "resources", "list"]);
+    expect(fallback.code).toBe(0);
+    expect(fallback.output).toContain("demo://readme");
     const direct = await execute("mcp-cli", ["demo", "message", "echo", "--text", "linked"], "0");
     expect(direct.code).toBe(0);
     expect(direct.output).toContain("linked");

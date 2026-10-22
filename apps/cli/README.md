@@ -12,6 +12,10 @@ MCP 서버의 도구를 정적 명령으로 탐색하고 실행하는 `mcp-cli`�
 
 ## 시작
 
+대몬을 사용하려면 데스크톱 앱에서 연결을 준비하거나 별도 터미널에서 `mcp-cli daemon start`를 실행하십시오.
+대몬이 꺼져 있으면 CLI가 직접 연결로 실행합니다.
+직접 연결이 필요하면 `MCP_CLI_DAEMON=0`을 지정하십시오.
+
 최초 실행 시 설정 폴더를 자동으로 만듭니다. 기본 위치는 `~/.config/mcp-cli`입니다.
 `XDG_CONFIG_HOME`이나 `MCP_CLI_CONFIG`를 지정하면 해당 설정 파일의 상위 폴더를 만듭니다.
 기존 설정 파일은 변경하지 않습니다.
@@ -110,8 +114,8 @@ bun run cli demo prompts get summarize --input '{"text":"hello"}' --json
 
 루트에서 `bun link`를 한 번 실행하면 `mcp-cli`와 서비스별 명령이 `~/.bun/bin`에 연결됩니다.
 서비스 명령은 `mcp-cli <service>`와 같습니다. 예: `notion page get --help`.
-링크된 명령은 기본으로 대몬에 연결합니다. 먼저 `mcp-cli daemon start` 또는 데스크톱 앱에서 대몬을 시작하십시오.
-대몬이 꺼져 있으면 도구 실행은 실패합니다. `MCP_CLI_DAEMON=0`을 지정하면 직접 연결합니다.
+링크된 명령도 기본으로 대몬을 우선 사용합니다. 대몬이 꺼져 있으면 직접 연결로 실행합니다.
+`MCP_CLI_DAEMON=0`을 지정하면 대몬을 확인하지 않고 직접 연결합니다.
 도움말은 대몬 없이 확인할 수 있습니다. `mem`은 별도 CLI이므로 이 설정을 사용하지 않습니다.
 
 플러그인 `package.json`의 `"mcp-cli"` 표식에 `"bin": "<name>"`을 넣으면 서비스 명령이 생깁니다.
@@ -178,14 +182,16 @@ MCP SDK의 OAuth 함수는 `packages/mcp`만 사용합니다. 저장소는 `pack
 ```sh
 bun run cli daemon start
 # 다른 터미널에서 실행합니다.
-MCP_CLI_DAEMON=1 bun run cli demo message echo --text hello
+bun run cli demo message echo --text hello
 bun run cli daemon status
 bun run cli daemon reset
 bun run cli daemon stop
 ```
 
-`MCP_CLI_DAEMON=1`을 지정하면 대몬 연결을 사용합니다. 출력과 종료 코드는 직접 연결과 같습니다.
-지정하지 않으면 명령마다 직접 연결합니다.
+CLI는 기본으로 대몬 연결을 사용합니다. 출력과 종료 코드는 직접 연결과 같습니다.
+`MCP_CLI_DAEMON=0`을 지정하면 해당 명령만 직접 연결합니다.
+대몬이 꺼져 있으면 도구 요청을 보내기 전에 직접 연결로 전환합니다.
+도구 요청을 보낸 뒤 발생한 오류는 직접 연결로 재실행하지 않습니다.
 대몬은 최대 32개 연결을 유지하고, 요청이 없는 연결은 60초 뒤 닫습니다.
 초기화와 종료는 진행 중인 요청을 기다립니다. 실패한 도구 호출은 재시도하지 않습니다.
 대몬은 인증된 로컬 IPC를 사용합니다. `MCP_CLI_DAEMON_DIR`로 절대 경로를 지정할 수 있습니다.

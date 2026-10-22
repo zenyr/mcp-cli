@@ -3,7 +3,7 @@
 하나의 CLI에서 공식 Slack MCP와 Slack Web API를 사용합니다.
 기존 단수형 명령은 MCP를 호출합니다.
 새 복수형 명령은 `https://slack.com/api/<method>`를 호출합니다.
-한 경로가 실패해도 다른 경로로 전환하지 않습니다.
+Web API와 MCP 호출 경로는 실패해도 서로 전환하지 않습니다.
 
 ## 인증과 실행
 
@@ -13,7 +13,7 @@ mcp-cli login slack --xoxb
 slack auth check
 slack auth whoami --xoxb
 slack channels list --json
-MCP_CLI_DAEMON=1 slack channels list --json
+MCP_CLI_DAEMON=0 slack channels list --json
 ```
 
 - 기본 인증과 `--xoxp`는 같은 사용자 자격 증명을 선택합니다.
@@ -21,7 +21,8 @@ MCP_CLI_DAEMON=1 slack channels list --json
 - 두 옵션을 함께 지정하면 사용 오류가 발생합니다.
 - `SLACK_MCP_TOKEN`과 `SLACK_MCP_BOT_TOKEN`은 각각 저장된 인증보다 우선합니다.
 - 토큰을 명령 인수로 전달하지 마십시오.
-- `MCP_CLI_DAEMON=1`은 대몬 연결을 요구합니다. 대몬이 없으면 실행에 실패합니다.
+- 기본값은 대몬 우선입니다. 대몬이 없으면 요청 전 직접 연결로 전환합니다.
+- `MCP_CLI_DAEMON=0`은 해당 명령만 직접 연결합니다. `1` 또는 빈 값은 대몬을 사용합니다.
 - 대몬은 자격 증명과 연결 설정별로 연결을 격리합니다.
 - 쓰기 요청은 자동 재시도하지 않습니다. 결과가 불명확하면 중복 방지 상태를 유지합니다.
 - 읽기 요청은 `429`의 `Retry-After: 0`에 한해 한 번 재시도합니다.

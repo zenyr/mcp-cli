@@ -3,7 +3,12 @@ import { RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { ensureConfigDirectory } from "./config";
 import { desktopCommand } from "./desktop";
 import { daemonCommand } from "./daemon/command";
-import { resetDaemonIfRunning, openDaemonSession } from "./daemon/client";
+import {
+  resetDaemonIfRunning,
+  openDaemonSession,
+  usesDaemon,
+  DaemonUnavailableError,
+} from "./daemon/client";
 import { connect } from "@mcp-cli/mcp";
 import { runService } from "@mcp-cli/runtime";
 import {
@@ -73,10 +78,16 @@ export const main = async (argv: string[]): Promise<number> => {
   const plugin = await loadPlugin(found);
   const manifest = await loadManifest(discovered, found);
   return runService(plugin, manifest, args, {
-    open: async (credential) =>
-      process.env.MCP_CLI_DAEMON === "1"
-        ? openDaemonSession(plugin.name, credential)
-        : connect(await resolveConnection(plugin, process.env, defaultStore(), credential)),
+    open: async (credential) => {
+      if (usesDaemon()) {
+        try {
+          return await openDaemonSession(plugin.name, credential);
+        } catch (error) {
+          if (!(error instanceof DaemonUnavailableError)) throw error;
+        }
+      }
+      return connect(await resolveConnection(plugin, process.env, defaultStore(), credential));
+    },
     guard: defaultRepeatGuard(process.env),
     cacheScope: (credential) =>
       extensionCacheScope(plugin, process.env, defaultStore(), credential),

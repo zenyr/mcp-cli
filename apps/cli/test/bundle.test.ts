@@ -28,7 +28,7 @@ test("installed binary discovers bundled plugins and runs without Bun or the che
       XDG_CONFIG_HOME: join(directory, "config"),
       XDG_CACHE_HOME: join(directory, "cache"),
       XDG_STATE_HOME: join(directory, "state"),
-      MCP_CLI_DAEMON: "",
+      MCP_CLI_DAEMON: "0",
       MCP_CLI_DAEMON_DIR: join(directory, "daemon"),
     };
     const run = async (...args: string[]) => {
@@ -70,13 +70,17 @@ test("installed binary discovers bundled plugins and runs without Bun or the che
     try {
       const ready = await daemon.stdout.getReader().read();
       expect(new TextDecoder().decode(ready.value)).toContain('"event":"ready"');
-      env.MCP_CLI_DAEMON = "1";
+      env.MCP_CLI_DAEMON = "";
       expect(await run("demo", "message", "echo", "--text", "백그라운드 연결")).toBe(
         "백그라운드 연결\n",
       );
-      env.MCP_CLI_DAEMON = "";
+      env.MCP_CLI_DAEMON = "0";
       await run("daemon", "stop");
       expect(await daemon.exited).toBe(0);
+      env.MCP_CLI_DAEMON = "";
+      expect(await run("demo", "message", "echo", "--text", "대몬 없이 실행")).toBe(
+        "대몬 없이 실행\n",
+      );
     } finally {
       if (daemon.exitCode === null) daemon.kill();
       await daemon.exited;

@@ -56,6 +56,17 @@ export const daemonRequest = async <T>(
   });
 };
 
+export class DaemonUnavailableError extends Error {
+  override name = "DaemonUnavailableError";
+}
+
+export const usesDaemon = (env: Record<string, string | undefined> = process.env): boolean => {
+  const mode = env.MCP_CLI_DAEMON;
+  if (mode === undefined || mode === "" || mode === "1") return true;
+  if (mode === "0") return false;
+  throw new UsageError("MCP_CLI_DAEMON must be 0 or 1");
+};
+
 export const openDaemonSession = async (
   service: string,
   credential?: string,
@@ -77,6 +88,8 @@ export const openDaemonSession = async (
     await call("ensure");
   } catch (error) {
     agent.destroy();
+    if (isRecord(error) && ["ENOENT", "ECONNREFUSED"].includes(String(error.code)))
+      throw new DaemonUnavailableError("Daemon is not running", { cause: error });
     throw error;
   }
   return {

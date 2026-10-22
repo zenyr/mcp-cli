@@ -8,7 +8,7 @@ import { startDaemon } from "../src/daemon/server";
 import { daemonRequest, daemonStatus } from "../src/daemon/client";
 import { request } from "node:http";
 import { daemonSocket } from "../src/daemon/endpoint";
-import type { ToolSession, ToolResult } from "@mcp-cli/core";
+import { UsageError, type ToolSession, type ToolResult } from "@mcp-cli/core";
 
 const session = (close: () => Promise<void>): ToolSession => ({
   listTools: async () => [],
@@ -120,7 +120,7 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
     XDG_STATE_HOME: directory,
     MCP_CLI_CONFIG: "",
     MCP_CLI_DAEMON_DIR: directory,
-    MCP_CLI_DAEMON: "1",
+    MCP_CLI_DAEMON: "",
   };
   const run = async (...args: string[]) => {
     const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
@@ -235,4 +235,77 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
     await rm(directory, { recursive: true, force: true });
   }
   await expect(daemonRequest("callTool", context, directory)).rejects.toThrow();
+});
+
+test("daemon mode defaults on and requires an explicit zero to bypass", async () => {
+  const { usesDaemon } = await import("../src/daemon/client");
+  expect(usesDaemon({})).toBe(true);
+  expect(usesDaemon({ MCP_CLI_DAEMON: "" })).toBe(true);
+  expect(usesDaemon({ MCP_CLI_DAEMON: "1" })).toBe(true);
+  expect(usesDaemon({ MCP_CLI_DAEMON: "0" })).toBe(false);
+  expect(() => usesDaemon({ MCP_CLI_DAEMON: "false" })).toThrow(UsageError);
+});
+
+test("CLI does not switch to direct execution after a daemon tool request fails", async () => {
+  const { createServer } = await import("node:http");
+  const { writeFile } = await import("node:fs/promises");
+  const directory = await mkdtemp(join(tmpdir(), "mcp-daemon-failure-"));
+  await writeFile(join(directory, "token"), "fixture-ipc-token", { mode: 0o600 });
+  const operations: string[] = [];
+  const server = createServer(async (req, res) => {
+    let body = "";
+    for await (const chunk of req) body += String(chunk);
+    const value: unknown = JSON.parse(body);
+    const operation =
+      typeof value === "object" && value !== null && "operation" in value
+        ? String(value.operation)
+        : "";
+    operations.push(operation);
+    res.setHeader("content-type", "application/json");
+    if (operation === "ensure") res.end(JSON.stringify({ result: null }));
+    else
+      res.writeHead(500).end(JSON.stringify({ code: "Error", message: "write outcome unknown" }));
+  });
+  await new Promise<void>((resolve) => server.listen(daemonSocket(directory), resolve));
+  try {
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        "apps/cli/src/main.ts",
+        "demo",
+        "message",
+        "echo",
+        "--text",
+        "must-not-run-directly",
+      ],
+      {
+        cwd: fileURLToPath(new URL("../../../", import.meta.url)),
+        env: {
+          ...process.env,
+          MCP_CLI_DAEMON: "",
+          MCP_CLI_DAEMON_DIR: directory,
+          XDG_CONFIG_HOME: directory,
+          XDG_STATE_HOME: directory,
+          XDG_CACHE_HOME: directory,
+          MCP_CLI_CONFIG: "",
+        },
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+    const [stdout, stderr, code] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited,
+    ]);
+    expect(code).toBe(1);
+    expect(stdout).toBe("");
+    expect(stderr).toContain("write outcome unknown");
+    expect(operations).toEqual(["ensure", "callTool"]);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+    await rm(directory, { recursive: true, force: true });
+  }
 });

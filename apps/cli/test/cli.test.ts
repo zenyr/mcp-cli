@@ -18,6 +18,7 @@ const isolatedEnv = {
   XDG_CACHE_HOME: join(sandbox, "cache"),
   XDG_STATE_HOME: join(sandbox, "state"),
   MCP_CLI_CONFIG: "",
+  MCP_CLI_DAEMON: "0",
 };
 const runWith = async (env: Record<string, string>, ...args: string[]) => {
   const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
@@ -101,4 +102,21 @@ test("a repeated identical call exits 3 until --allow-repeat or a zero window", 
   expect((await run(...args, "--allow-repeat")).code).toBe(0);
   expect((await runWith({ MCP_CLI_REPEAT_WINDOW: "0" }, ...args)).code).toBe(0);
   expect((await runWith({ MCP_CLI_REPEAT_WINDOW: "-1" }, ...args)).code).toBe(EXIT.usage);
+});
+
+test("default daemon falls back before dispatch and explicit zero runs directly", async () => {
+  const daemonEnv = {
+    MCP_CLI_DAEMON: "",
+    MCP_CLI_DAEMON_DIR: join(sandbox, "missing-daemon"),
+    MCP_CLI_REPEAT_WINDOW: "0",
+  };
+  const args = ["demo", "message", "echo", "--text", "daemon-default-check"];
+  const expected = { stdout: "daemon-default-check\n", stderr: "", code: EXIT.ok };
+  expect(await runWith(daemonEnv, ...args)).toEqual(expected);
+  expect(await runWith({ ...daemonEnv, MCP_CLI_DAEMON: "1" }, ...args)).toEqual(expected);
+  expect(await runWith({ ...daemonEnv, MCP_CLI_DAEMON: "0" }, ...args)).toEqual(expected);
+  expect((await runWith({ ...daemonEnv, MCP_CLI_DAEMON: "invalid" }, ...args)).code).toBe(
+    EXIT.usage,
+  );
+  expect((await runWith(daemonEnv, "demo", "--help")).code).toBe(EXIT.ok);
 });

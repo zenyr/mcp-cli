@@ -13,7 +13,7 @@
 | `bun run --filter @mcp-cli/desktop native:build`                    | 통과                                               |
 | `codesign --verify --deep --strict 'apps/desktop/dist/MCP CLI.app'` | 통과: ad-hoc 서명                                  |
 | 빌드한 CLI의 methods JSON·schema·dry-run JSON                       | 통과: 임시 설정 디렉터리 사용                      |
-| 빌드한 CLI의 꺼진 대몬 선택                                         | 실패 반환 확인: 직접 연결 우회 없음                |
+| 빌드한 CLI의 꺼진 대몬 선택                                         | 요청 전 직접 연결 전환 확인                        |
 | `git diff --check`                                                  | 통과                                               |
 
 ## 테스트 근거
@@ -25,7 +25,7 @@
 - Slack 플러그인 테스트 합계: 56개 통과, 0개 실패.
 - `packages/mcp/test/web-api.test.ts`: 429, 실제 HTTP 타임아웃, 쓰기 재시도 금지, 다운로드 호스트·리다이렉트·크기·권한.
 - `apps/cli/test/auth.test.ts`: 임시 인증 저장소와 환경 변수 우선순위, 명시적 사용자 토큰 선택.
-- `apps/cli/test/daemon.test.ts`: 모의 HTTP 서버에서 직접·대몬 결과 일치, 토큰별 연결 격리, 대몬 종료 후 거부.
+- `apps/cli/test/daemon.test.ts`: 모의 HTTP 서버에서 직접·대몬 결과 일치, 토큰별 연결 격리, 대몬 세션의 종료 후 오류 보존. 대몬이 없으면 CLI는 요청 전에 직접 연결로 전환합니다.
 - 기존 runtime 테스트는 쓰기 중복 방지와 불명확한 전송 상태 보존을 확인합니다.
 
 ## 권한 때문에 발생하는 제한

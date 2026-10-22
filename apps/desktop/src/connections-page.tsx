@@ -85,7 +85,7 @@ export const ConnectionsPage = () => {
             </Text>
             <details>
               <summary>터미널에서 연결 유지 사용하기</summary>
-              <Code>MCP_CLI_DAEMON=1 mcp-cli demo message echo --text hello</Code>
+              <Code>mcp-cli demo message echo --text hello</Code>
             </details>
             <Button component={Link} to="/services" variant="subtle">
               서비스 인증 확인

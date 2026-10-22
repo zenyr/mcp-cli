@@ -5,6 +5,7 @@ const root = fileURLToPath(new URL("../../../", import.meta.url));
 const run = async (...args: string[]) => {
   const child = Bun.spawn(["bun", "apps/cli/src/main.ts", "demo", ...args], {
     cwd: root,
+    env: { ...process.env, MCP_CLI_DAEMON: "0" },
     stdout: "pipe",
     stderr: "pipe",
   });
