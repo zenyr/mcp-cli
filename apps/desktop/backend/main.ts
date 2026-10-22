@@ -1,3 +1,5 @@
+import { createDrainController } from "../shared/drain-controller";
+import { registerUpdateLifecycle } from "./update-lifecycle";
 import { createLoginController } from "../shared/login-controller";
 import { isSoundKind, type SoundKind } from "../shared/ui-sounds";
 import { observeDaemonSound, playUiSound, setSoundsEnabled } from "./ui-sounds";
@@ -5,7 +7,10 @@ import { prepareTrayIcons } from "./tray-icon";
 import { cliCommand } from "./command";
 
 const logins = createLoginController();
-const run = async (app: DesktopApp, args: string[], input?: unknown, signal?: AbortSignal) => {
+const operations = createDrainController();
+const run = (app: DesktopApp, args: string[], input?: unknown, signal?: AbortSignal) =>
+  operations.run(() => runCli(app, args, input, signal));
+const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?: AbortSignal) => {
   const decoder = new TextDecoder();
   const command = await cliCommand(app);
   signal?.throwIfAborted();
@@ -106,48 +111,49 @@ let starting = false;
 export const api = {
   status: (_params: unknown, app: DesktopApp) => checkDaemonStatus(app),
   services: (_params: unknown, app: DesktopApp) => run(app, ["desktop", "services"]),
-  start: async (_params: unknown, app: DesktopApp) => {
-    if (starting) throw new Error("대몬 시작을 기다려 주세요.");
-    starting = true;
-    try {
-      const child = app.spawnHidden([...(await cliCommand(app)), "daemon", "start"], {
-        stdin: "ignore",
-        stdout: "pipe",
-        stderr: "pipe",
-      });
-      const errors = child.stderr?.text();
-      const reader = child.stdout?.getReader();
-      const deadline = setTimeout(() => {
-        try {
-          child.kill("SIGTERM");
-        } catch {
-          /* The process already exited. */
-        }
-      }, 10_000);
+  start: (_params: unknown, app: DesktopApp) =>
+    operations.run(async () => {
+      if (starting) throw new Error("대몬 시작을 기다려 주세요.");
+      starting = true;
       try {
-        const chunk = await reader?.read();
-        if (!chunk || chunk.done) {
-          await child.wait();
-          throw new Error((await errors)?.trim() || "대몬을 시작하지 못했습니다.");
+        const child = app.spawnHidden([...(await cliCommand(app)), "daemon", "start"], {
+          stdin: "ignore",
+          stdout: "pipe",
+          stderr: "pipe",
+        });
+        const errors = child.stderr?.text();
+        const reader = child.stdout?.getReader();
+        const deadline = setTimeout(() => {
+          try {
+            child.kill("SIGTERM");
+          } catch {
+            /* The process already exited. */
+          }
+        }, 10_000);
+        try {
+          const chunk = await reader?.read();
+          if (!chunk || chunk.done) {
+            await child.wait();
+            throw new Error((await errors)?.trim() || "대몬을 시작하지 못했습니다.");
+          }
+          const value: unknown = JSON.parse(new TextDecoder().decode(chunk.value));
+          if (
+            typeof value !== "object" ||
+            value === null ||
+            !("event" in value) ||
+            value.event !== "ready"
+          )
+            throw new Error("대몬 시작 응답을 확인하지 못했습니다.");
+          await reader?.cancel();
+          await checkDaemonStatus(app);
+        } finally {
+          clearTimeout(deadline);
         }
-        const value: unknown = JSON.parse(new TextDecoder().decode(chunk.value));
-        if (
-          typeof value !== "object" ||
-          value === null ||
-          !("event" in value) ||
-          value.event !== "ready"
-        )
-          throw new Error("대몬 시작 응답을 확인하지 못했습니다.");
-        await reader?.cancel();
-        await checkDaemonStatus(app);
       } finally {
-        clearTimeout(deadline);
+        starting = false;
       }
-    } finally {
-      starting = false;
-    }
-    return null;
-  },
+      return null;
+    }),
   reset: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "reset"]),
   stop: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "stop"]),
   login: (params: unknown, app: DesktopApp) =>
@@ -166,32 +172,36 @@ export const api = {
     if (!isSoundKind(params?.kind)) throw new Error("Unknown UI sound");
     return playUiSound(app, params.kind);
   },
-  setSoundsEnabled: async (params: { enabled: boolean }, app: DesktopApp) => {
-    if (typeof params?.enabled !== "boolean") throw new Error("Invalid sound setting");
-    await setSoundsEnabled(app, params.enabled);
-    return null;
-  },
-  saveSettings: async (
-    params: { cliCommand?: string[] | null; autoStart: boolean },
-    app: DesktopApp,
-  ) => {
-    if (typeof params.autoStart !== "boolean") throw new Error("자동 시작 설정을 확인해 주세요.");
-    const command = params.cliCommand;
-    if (command !== undefined) {
-      if (
-        command !== null &&
-        (!Array.isArray(command) ||
-          !command.length ||
-          command.some((item) => typeof item !== "string" || !item.trim()))
-      )
-        throw new Error("CLI 명령을 입력해 주세요.");
-      await app.store.set("cliCommand", command);
-    }
-    await app.store.set("autoStart", params.autoStart);
-    return null;
-  },
+  setSoundsEnabled: (params: { enabled: boolean }, app: DesktopApp) =>
+    operations.run(async () => {
+      if (typeof params?.enabled !== "boolean") throw new Error("Invalid sound setting");
+      await setSoundsEnabled(app, params.enabled);
+      return null;
+    }),
+  saveSettings: (params: { cliCommand?: string[] | null; autoStart: boolean }, app: DesktopApp) =>
+    operations.run(async () => {
+      if (typeof params.autoStart !== "boolean") throw new Error("자동 시작 설정을 확인해 주세요.");
+      const command = params.cliCommand;
+      if (command !== undefined) {
+        if (
+          command !== null &&
+          (!Array.isArray(command) ||
+            !command.length ||
+            command.some((item) => typeof item !== "string" || !item.trim()))
+        )
+          throw new Error("CLI 명령을 입력해 주세요.");
+        await app.store.set("cliCommand", command);
+      }
+      await app.store.set("autoStart", params.autoStart);
+      return null;
+    }),
 };
 export const init = async (app: DesktopApp) => {
+  const ready = await registerUpdateLifecycle(app, async () => {
+    await operations.drain(() => logins.cancel());
+    const state = await runCli(app, ["daemon", "status"]).catch(() => null);
+    if (state !== null) await runCli(app, ["daemon", "stop"]);
+  });
   app.setHideOnClose(true);
   const trayIcons = await prepareTrayIcons(app);
   const refresh = async () => {
@@ -214,7 +224,7 @@ export const init = async (app: DesktopApp) => {
   }
   await refresh();
   setInterval(() => {
-    void refresh();
+    if (operations.accepting()) void refresh();
   }, 5000);
   if ((await app.store.get("autoStart")) === true) {
     const state = await api.status(undefined, app);
@@ -226,6 +236,7 @@ export const init = async (app: DesktopApp) => {
       }
     }
   }
+  await ready();
 };
 export const onTray = (id: string, app: DesktopApp) => {
   if (id === "show") app.show();

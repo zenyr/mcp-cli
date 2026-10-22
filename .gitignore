@@ -6,3 +6,6 @@ dist/
 !.env.example
 
 apps/desktop/.build/
+
+apps/.desktop-build-*/
+apps/desktop/.native-build.lock/
