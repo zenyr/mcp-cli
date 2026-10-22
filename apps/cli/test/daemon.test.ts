@@ -8,7 +8,7 @@ import { startDaemon } from "../src/daemon/server";
 import { daemonRequest, daemonStatus } from "../src/daemon/client";
 import { request } from "node:http";
 import { daemonSocket } from "../src/daemon/endpoint";
-import type { ToolSession } from "@mcp-cli/core";
+import type { ToolSession, ToolResult } from "@mcp-cli/core";
 
 const session = (close: () => Promise<void>): ToolSession => ({
   listTools: async () => [],
@@ -171,3 +171,68 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
   }
   await expect(readFile(`${directory}/token`)).rejects.toThrow();
 }, 20_000);
+
+test("Web API direct and daemon calls share auth, isolate tokens, and never require MCP", async () => {
+  const { writeFile, mkdir } = await import("node:fs/promises");
+  const { connect } = await import("@mcp-cli/mcp");
+  const { webTools } = await import("../../../plugins/slack/src/web-methods");
+  const directory = await mkdtemp(join(tmpdir(), "mcp-web-daemon-"));
+  const root = fileURLToPath(new URL("../../../", import.meta.url));
+  const seen: string[] = [];
+  const api = Bun.serve({
+    port: 0,
+    fetch: async (req) => {
+      seen.push(req.headers.get("authorization") ?? "");
+      return Response.json({ ok: true, user_id: "U0123456789" });
+    },
+  });
+  const pluginDir = join(directory, "plugin");
+  await mkdir(pluginDir);
+  await writeFile(
+    join(pluginDir, "package.json"),
+    JSON.stringify({
+      name: "slack-test",
+      type: "module",
+      exports: "./index.ts",
+      "mcp-cli": { plugin: true, service: "slack-test" },
+    }),
+  );
+  await writeFile(
+    join(pluginDir, "index.ts"),
+    `import slack from ${JSON.stringify(join(root, "plugins/slack/src/index.ts"))};\nexport default {...slack,name:"slack-test",connection:async(env)=>{const config=await slack.connection(env);return {...config,url:"http://127.0.0.1:1/mcp",webApi:{...config.webApi,url:${JSON.stringify(String(api.url))}}}}};\n`,
+  );
+  const configFile = join(directory, "config.json");
+  await writeFile(configFile, JSON.stringify({ plugins: [pluginDir] }));
+  const daemon = await startDaemon(directory);
+  const context = {
+    service: "slack-test",
+    cwd: directory,
+    name: "web.auth.test",
+    input: {},
+    env: {
+      MCP_CLI_CONFIG: configFile,
+      XDG_CONFIG_HOME: directory,
+      SLACK_MCP_TOKEN: "xoxp-fixture",
+      SLACK_MCP_BOT_TOKEN: "xoxb-fixture",
+    },
+  };
+  const direct = await connect({
+    type: "http",
+    url: "http://127.0.0.1:1/mcp",
+    headers: { Authorization: "Bearer xoxp-fixture" },
+    webApi: { url: String(api.url), tools: webTools },
+  });
+  try {
+    const expected = await direct.callTool("web.auth.test", {});
+    expect(await daemonRequest<ToolResult>("callTool", context, directory)).toEqual(expected);
+    await daemonRequest("callTool", { ...context, credential: "xoxb" }, directory);
+    expect(seen).toEqual(["Bearer xoxp-fixture", "Bearer xoxp-fixture", "Bearer xoxb-fixture"]);
+    expect(daemon.status()).toHaveLength(2);
+  } finally {
+    await direct.close();
+    await daemon.stop();
+    api.stop(true);
+    await rm(directory, { recursive: true, force: true });
+  }
+  await expect(daemonRequest("callTool", context, directory)).rejects.toThrow();
+});

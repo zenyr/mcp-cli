@@ -164,3 +164,26 @@ test("browser launch is skipped for SSH, missing displays and MCP_CLI_NO_BROWSER
   expect(canOpenBrowser({}, "linux")).toBe(false);
   expect(canOpenBrowser({ DISPLAY: ":0" }, "linux")).toBe(true);
 });
+
+test("Slack explicit user selection uses the base credential and environment bypasses broken storage", async () => {
+  const { default: slack } = await import("../../../plugins/slack/src");
+  await store.write("slack", { accessToken: "xoxp-stored-fixture" });
+  await store.write("slack--xoxb", { accessToken: "xoxb-stored-fixture" });
+  const user = await resolveConnection(slack, {}, store, "xoxp");
+  const bot = await resolveConnection(slack, {}, store, "xoxb");
+  expect(user.type === "http" && user.headers?.Authorization).toBe("Bearer xoxp-stored-fixture");
+  expect(bot.type === "http" && bot.headers?.Authorization).toBe("Bearer xoxb-stored-fixture");
+  const broken = {
+    ...store,
+    read: async () => {
+      throw new Error("Corrupt storage");
+    },
+  };
+  const env = await resolveConnection(
+    slack,
+    { SLACK_MCP_TOKEN: "xoxp-env-fixture" },
+    broken,
+    "xoxp",
+  );
+  expect(env.type === "http" && env.headers?.Authorization).toBe("Bearer xoxp-env-fixture");
+});
