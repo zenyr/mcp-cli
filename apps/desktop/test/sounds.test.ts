@@ -2,66 +2,51 @@ import { expect, test } from "bun:test";
 import { createSoundController } from "../shared/sound-controller";
 import { soundDescriptions, soundKinds } from "../shared/ui-sounds";
 
-test("mute blocks every sound and rejects queued sounds after re-enabling", async () => {
-  let now = 0;
+test("mute blocks every sound and invalidates pending playback", async () => {
   const played: string[] = [];
-  let release = () => {};
-  let waiting = () => {};
-  const waitingStarted = new Promise<void>((resolve) => {
-    waiting = resolve;
-  });
+  let release = (_played: boolean) => {};
   const control = createSoundController({
-    play: async (kind) => {
+    play: (kind) => {
       played.push(kind);
-      return true;
-    },
-    now: () => now,
-    wait: async (ms) => {
-      waiting();
-      await new Promise<void>((resolve) => {
+      return new Promise<boolean>((resolve) => {
         release = resolve;
       });
-      now += ms;
     },
   });
   control.setEnabled(false);
   for (const kind of soundKinds) expect(await control.play(kind)).toBe(false);
   expect(played).toEqual([]);
   control.setEnabled(true);
-  expect(await control.play("click")).toBe(true);
-  const pending = control.play("success");
-  await waitingStarted;
+  const pending = control.play("click");
   control.setEnabled(false);
   control.setEnabled(true);
-  release();
+  release(true);
   expect(await pending).toBe(false);
-  expect(played).toEqual(["click"]);
 });
 
-test("hover is limited to 180ms and feedback waits until the previous clip ends", async () => {
+test("click and feedback start immediately even while another sound is playing", async () => {
   let now = 0;
   const played: { kind: string; at: number }[] = [];
   const control = createSoundController({
     now: () => now,
-    wait: async (ms) => {
-      now += ms;
-    },
     play: async (kind) => {
       played.push({ kind, at: now });
       return true;
     },
   });
   expect(await control.play("hover")).toBe(true);
-  now = 100;
+  now = 20;
+  expect(await control.play("click")).toBe(true);
+  now = 30;
+  expect(await control.play("success")).toBe(true);
   expect(await control.play("hover")).toBe(false);
-  now = 180;
+  now = 240;
   expect(await control.play("hover")).toBe(true);
-  const success = control.play("success");
-  expect(await success).toBe(true);
   expect(played).toEqual([
     { kind: "hover", at: 0 },
-    { kind: "hover", at: 180 },
-    { kind: "success", at: 255 },
+    { kind: "click", at: 20 },
+    { kind: "success", at: 30 },
+    { kind: "hover", at: 240 },
   ]);
 });
 
@@ -70,9 +55,6 @@ test("start plays once for a new daemon and stays silent on the initial running 
   let now = 0;
   const control = createSoundController({
     now: () => now,
-    wait: async (ms) => {
-      now += ms;
-    },
     play: async (kind) => {
       played.push(kind);
       return true;

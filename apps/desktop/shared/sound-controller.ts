@@ -3,16 +3,13 @@ import { soundDescriptions, type SoundKind } from "./ui-sounds";
 type SoundPorts = {
   play(kind: SoundKind): Promise<boolean>;
   now?: () => number;
-  wait?: (ms: number) => Promise<void>;
 };
 
 export const createSoundController = (ports: SoundPorts, enabled = true) => {
-  const now = ports.now ?? Date.now;
-  const wait = ports.wait ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const now = ports.now ?? (() => performance.now());
   let revision = 0;
   let activeUntil = 0;
   let lastHover: number | undefined;
-  let queue = Promise.resolve(false);
   let daemonObserved = false;
   let daemonPid: number | null = null;
   const play = (kind: SoundKind): Promise<boolean> => {
@@ -24,19 +21,11 @@ export const createSoundController = (ports: SoundPorts, enabled = true) => {
         return Promise.resolve(false);
       lastHover = requestedAt;
     }
-    queue = queue
-      .then(async () => {
-        if (!enabled || requestedRevision !== revision) return false;
-        const remaining = activeUntil - now();
-        if (kind === "hover" && remaining > 0) return false;
-        if (remaining > 0) await wait(remaining);
-        if (!enabled || requestedRevision !== revision) return false;
-        const played = await ports.play(kind).catch(() => false);
-        if (played) activeUntil = now() + soundDescriptions[kind].durationMs;
-        return played;
-      })
-      .catch(() => false);
-    return queue;
+    activeUntil = Math.max(activeUntil, requestedAt + soundDescriptions[kind].durationMs);
+    return ports
+      .play(kind)
+      .catch(() => false)
+      .then((played) => enabled && requestedRevision === revision && played);
   };
   return {
     play,
