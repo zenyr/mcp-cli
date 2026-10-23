@@ -1,9 +1,9 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { Socket } from "node:net";
 import { isAbsolute } from "node:path";
-import { canonicalize, isRecord, UsageError, type ToolSession } from "@mcp-cli/core";
+import { credentialSwitches, isRecord, UsageError, type ToolSession } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
 import { defaultStore, resolveConnection } from "../auth";
 import { extensionCacheScope } from "../cache-scope";
@@ -11,6 +11,7 @@ import { discover, findPlugin, loadPlugin } from "../discovery";
 import { defaultContext } from "../paths";
 import { daemonDirectory, daemonSocket } from "./endpoint";
 import { prepareOwnership } from "./ownership";
+import { connectionKey } from "./connection-key";
 import { createPool } from "./pool";
 import { decodeSessionRequest, type SessionRequest } from "./protocol";
 
@@ -79,21 +80,9 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
     const store = defaultStore(request.env);
     const config = await resolveConnection(plugin, request.env, store, request.credential);
     const identity = await extensionCacheScope(plugin, request.env, store, request.credential);
-    const key = createHash("sha256")
-      .update(
-        JSON.stringify(
-          canonicalize({
-            service: request.service,
-            credential: request.credential,
-            cwd: request.cwd,
-            env: request.env,
-            config: { ...config, authorize: undefined },
-            identity,
-            plugin: found,
-          }),
-        ),
-      )
-      .digest("hex");
+    const key = connectionKey(request, config, identity, found);
+    const credential =
+      request.credential ?? credentialSwitches(plugin.auth).find((item) => item.base)?.flag;
     const connection =
       config.type === "stdio"
         ? { ...config, cwd: config.cwd ?? request.cwd, env: { ...request.env, ...config.env } }
@@ -109,7 +98,7 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
         }
         return execute(session, request);
       },
-      request.credential,
+      credential,
     );
   };
   const handle = async (req: IncomingMessage, res: ServerResponse) => {

@@ -64,6 +64,9 @@ test("desktop API key operations share CLI storage without printing secrets", as
     expect(listed.code).toBe(0);
     expect(listed.stdout).toContain('"flag":"bot","summary":"Bot","stored":true');
     expect(listed.stdout).not.toContain("fixture-private-key");
+    expect(listed.stdout).toContain(
+      '"name":"desktop-test","summary":"Test","auth":"apiKey","credentials":[{"flag":"user"',
+    );
     expect(listed.stdout).toContain('"flag":"user","summary":"User","stored":true');
     expect((await run("logout", { service: "desktop-test", credential: "user" })).code).toBe(0);
     const afterUserLogout = await run("services");

@@ -16,7 +16,8 @@ slack channels list --json
 MCP_CLI_DAEMON=0 slack channels list --json
 ```
 
-- 기본 인증과 `--xoxp`는 같은 사용자 자격 증명을 선택합니다.
+- 기본 인증과 `--xoxp`는 같은 사용자 자격 증명과 연결을 사용합니다.
+- 앱에는 중복된 기본 항목 없이 `xoxp`와 `xoxb`를 표시합니다.
 - `--xoxb`는 별도로 저장한 봇 자격 증명을 선택합니다.
 - 두 옵션을 함께 지정하면 사용 오류가 발생합니다.
 - `SLACK_MCP_TOKEN`과 `SLACK_MCP_BOT_TOKEN`은 각각 저장된 인증보다 우선합니다.

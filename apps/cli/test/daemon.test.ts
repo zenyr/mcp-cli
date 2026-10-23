@@ -225,8 +225,27 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
   try {
     const expected = await direct.callTool("web.auth.test", {});
     expect(await daemonRequest<ToolResult>("callTool", context, directory)).toEqual(expected);
+    const first = daemon.status()[0];
+    await daemonRequest(
+      "callTool",
+      {
+        ...context,
+        credential: "xoxp",
+        cwd: root,
+        env: { ...context.env, TERM: "different-shell" },
+      },
+      directory,
+    );
+    expect(daemon.status()).toHaveLength(1);
+    expect(daemon.status()[0]?.id).toBe(first?.id);
+    expect(daemon.status()[0]?.credential).toBe("xoxp");
     await daemonRequest("callTool", { ...context, credential: "xoxb" }, directory);
-    expect(seen).toEqual(["Bearer xoxp-fixture", "Bearer xoxp-fixture", "Bearer xoxb-fixture"]);
+    expect(seen).toEqual([
+      "Bearer xoxp-fixture",
+      "Bearer xoxp-fixture",
+      "Bearer xoxp-fixture",
+      "Bearer xoxb-fixture",
+    ]);
     expect(daemon.status()).toHaveLength(2);
   } finally {
     await direct.close();

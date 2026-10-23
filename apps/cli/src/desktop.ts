@@ -35,10 +35,10 @@ export const desktopCommand = async (args: string[]) => {
     const services = await Promise.all(
       registry.plugins.map(async (found) => {
         const plugin = await loadPlugin(found);
-        const credentials = [
-          { flag: "", summary: "기본 인증" },
-          ...credentialSwitches(plugin.auth),
-        ];
+        const switches = credentialSwitches(plugin.auth);
+        const credentials = switches.some((credential) => credential.base)
+          ? switches
+          : [{ flag: "", summary: "기본 인증" }, ...switches];
         return {
           name: plugin.name,
           summary: plugin.summary,
