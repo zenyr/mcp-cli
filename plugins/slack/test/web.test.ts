@@ -43,9 +43,25 @@ const fixture = () => {
   const server = Bun.serve({
     port: 0,
     fetch: async (request) => {
-      const value: unknown = await request.json();
-      const input = isRecord(value) ? value : {};
       const method = new URL(request.url).pathname.slice(1);
+      if (
+        method === "search.messages" &&
+        request.headers.get("content-type") !== "application/x-www-form-urlencoded"
+      )
+        return Response.json({
+          ok: false,
+          error: "invalid_arguments",
+          response_metadata: { messages: ["[ERROR] missing required field: query"] },
+        });
+      const value: unknown =
+        method === "search.messages"
+          ? Object.fromEntries(new URLSearchParams(await request.text()))
+          : await request.json();
+      const input = isRecord(value) ? value : {};
+      if (method === "search.messages") {
+        for (const key of ["count", "page"])
+          if (typeof input[key] === "string") input[key] = Number(input[key]);
+      }
       seen.push({ method, input, auth: request.headers.get("authorization") });
       return Response.json(respond(method, input));
     },
@@ -96,6 +112,27 @@ const fixture = () => {
     },
   };
 };
+test("search query survives positional, structured, raw API and batch inputs", async () => {
+  const f = fixture();
+  const query = 'in:general "배포 완료" & + # = %';
+  try {
+    for (const args of [
+      ["messages", "search", query],
+      ["messages", "search", "--args", JSON.stringify([query])],
+      ["messages", "search", "--input", JSON.stringify({ args: [query] })],
+      ["call", "web.search.messages", "--query", query],
+      ["call", "web.search.messages", "--input", JSON.stringify({ query })],
+      ["batch", `messages search '${query}'`],
+    ]) {
+      expect((await f.run(args)).code).toBe(0);
+      expect(f.seen.at(-1)).toMatchObject({ method: "search.messages", input: { query } });
+    }
+    expect(f.seen).toHaveLength(6);
+  } finally {
+    f.stop();
+  }
+});
+
 const routes: Array<[string[], string]> = [
   [["channels", "list"], "conversations.list"],
   [["channels", "me"], "users.conversations"],

@@ -58,6 +58,7 @@ export type WebApiConfig = {
   tools: Array<
     ToolDefinition & {
       method: string;
+      bodyEncoding?: "json" | "form";
       requiredTokenPrefix?: string;
       credentialError?: string;
       credentialKinds?: Record<string, string>;

@@ -98,6 +98,7 @@ slack users status set :house: '재택근무' --expiration today --timezone Asia
 - 채널명 해석은 최대 10,000개를 순회합니다. 제한 도달과 일치 없음은 서로 다른 오류입니다.
 - `users get`은 중복 ID를 제거합니다. 일부 실패는 각 항목에 보존합니다.
 - 메시지 검색은 `--limit` 최대 100과 `--page`를 사용합니다. `--cursor`는 받지 않습니다.
+- `messages search`와 `call web.search.messages`는 검색 인수를 폼 인코딩으로 전송합니다.
 - `--im <conversation>`은 해당 DM 대화를 `in:` 검색 조건으로 전달합니다.
 - 검색 조건 값은 인용·이스케이프합니다. 사용자가 입력한 기본 쿼리는 Slack 검색 문법을 유지합니다.
 - `--after`, `--before`, `--on`은 `YYYY-MM-DD`, `1d`, `1w`, `30d` 형식을 지원합니다.

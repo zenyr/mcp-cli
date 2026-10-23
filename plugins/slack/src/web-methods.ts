@@ -40,6 +40,7 @@ export const webName = (method: string): string => `web.${method}`;
 export const webTools: WebApiConfig["tools"] = [...reads, ...writes, "download"].map((method) => ({
   name: webName(method),
   method,
+  bodyEncoding: method === "search.messages" ? "form" : "json",
   description: `Slack Web API ${method}`,
   inputSchema: methodSchema(method),
   annotations: {

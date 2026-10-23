@@ -179,10 +179,13 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
   const directory = await mkdtemp(join(tmpdir(), "mcp-web-daemon-"));
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   const seen: string[] = [];
+  const searches: Array<{ contentType: string | null; body: string }> = [];
   const api = Bun.serve({
     port: 0,
     fetch: async (req) => {
       seen.push(req.headers.get("authorization") ?? "");
+      if (new URL(req.url).pathname === "/search.messages")
+        searches.push({ contentType: req.headers.get("content-type"), body: await req.text() });
       return Response.json({ ok: true, user_id: "U0123456789" });
     },
   });
@@ -247,6 +250,24 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
       "Bearer xoxb-fixture",
     ]);
     expect(daemon.status()).toHaveLength(2);
+    const input = { query: 'in:general "배포 완료" & +', count: 1, page: 2 };
+    const search = await direct.callTool("web.search.messages", input);
+    expect(
+      await daemonRequest<ToolResult>(
+        "callTool",
+        { ...context, name: "web.search.messages", input },
+        directory,
+      ),
+    ).toEqual(search);
+    expect(searches).toHaveLength(2);
+    for (const request of searches) {
+      expect(request.contentType).toBe("application/x-www-form-urlencoded");
+      expect(Object.fromEntries(new URLSearchParams(request.body))).toEqual({
+        query: input.query,
+        count: "1",
+        page: "2",
+      });
+    }
   } finally {
     await direct.close();
     await daemon.stop();

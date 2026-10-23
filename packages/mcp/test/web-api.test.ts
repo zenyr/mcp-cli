@@ -21,6 +21,58 @@ const noMcp = async (): Promise<never> => {
   throw new Error("MCP must not open");
 };
 
+test("per-tool form encoding preserves values and leaves JSON requests unchanged", async () => {
+  const input = {
+    query: 'in:general "배포 완료" & + # = %',
+    count: 1,
+    enabled: false,
+    profile: { text: "hello" },
+    blocks: ["one", "two"],
+    empty: "",
+    omitted: undefined,
+  };
+  const seen: Request[] = [];
+  const request: typeof fetch = Object.assign(
+    async (url: string | URL | Request, options?: RequestInit) => {
+      seen.push(new Request(url, options));
+      return Response.json({ ok: true });
+    },
+    { preconnect: fetch.preconnect },
+  );
+  const session = connectWebApi(
+    {
+      ...config,
+      webApi: {
+        url: "https://slack.com/api/",
+        tools: [
+          { name: "form", method: "search.messages", inputSchema: {}, bodyEncoding: "form" },
+          { name: "json", method: "chat.postMessage", inputSchema: {} },
+        ],
+      },
+    },
+    noMcp,
+    100,
+    request,
+  );
+  for (const name of ["form", "json"]) await session.callTool(name, input);
+  const [form, json] = seen;
+  if (!form || !json) throw new Error("Missing requests");
+  expect(form.method).toBe("POST");
+  expect(form.url).toBe("https://slack.com/api/search.messages");
+  expect(form.headers.get("authorization")).toBe("Bearer xoxp-fixture");
+  expect(form.headers.get("content-type")).toBe("application/x-www-form-urlencoded");
+  expect(Object.fromEntries(new URLSearchParams(await form.text()))).toEqual({
+    query: input.query,
+    count: "1",
+    enabled: "false",
+    profile: '{"text":"hello"}',
+    blocks: '["one","two"]',
+    empty: "",
+  });
+  expect(json.headers.get("content-type")).toBe("application/json; charset=utf-8");
+  expect(await json.json()).toEqual(JSON.parse(JSON.stringify(input)));
+});
+
 test("429 preserves Retry-After; writes are not retried; read zero-delay retries once", async () => {
   let calls = 0;
   const request: typeof fetch = Object.assign(

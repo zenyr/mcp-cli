@@ -115,11 +115,27 @@ export const connectWebApi = (
           tool.maxDownloadBytes ?? 5 * 1024 * 1024,
         );
       const url = new URL(tool.method, config.webApi?.url);
+      const form = tool.bodyEncoding === "form";
+      const body = form
+        ? new URLSearchParams(
+            Object.entries(input)
+              .filter(([, value]) => value !== undefined)
+              .map(([key, value]) => [
+                key,
+                typeof value === "string" ? value : JSON.stringify(value),
+              ]),
+          ).toString()
+        : JSON.stringify(input);
       for (let attempt = 0; attempt < 2; attempt++) {
         const response = await request(url, {
           method: "POST",
-          headers: { ...config.headers, "content-type": "application/json; charset=utf-8" },
-          body: JSON.stringify(input),
+          headers: {
+            ...config.headers,
+            "content-type": form
+              ? "application/x-www-form-urlencoded"
+              : "application/json; charset=utf-8",
+          },
+          body,
           redirect: "error",
           signal: AbortSignal.timeout(timeout),
         });
