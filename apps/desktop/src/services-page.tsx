@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
-  Code,
   Group,
   Loader,
+  Menu,
   Modal,
   Paper,
   PasswordInput,
@@ -14,6 +15,8 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { IconDotsVertical, IconKey, IconLogout } from "@tabler/icons-react";
+import { ServiceIcon } from "./service-icon";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useAction, useServices } from "./queries";
@@ -129,12 +132,17 @@ export const ServicesPage = () => {
                     return (
                       <Table.Tr key={`${service.name}:${credential.flag}`}>
                         <Table.Td>
-                          <Stack gap={2}>
-                            <Code>{service.name}</Code>
-                            <Text size="xs" c="dimmed">
-                              {service.summary}
-                            </Text>
-                          </Stack>
+                          <Group wrap="nowrap" gap="sm">
+                            <ServiceIcon service={service.name} credential={credential.flag} />
+                            <Stack gap={2}>
+                              <Text size="sm" fw={500}>
+                                {service.name}
+                              </Text>
+                              <Text size="xs" c="dimmed">
+                                {service.summary}
+                              </Text>
+                            </Stack>
+                          </Group>
                         </Table.Td>
                         <Table.Td>
                           {credential.flag || (service.auth === "oauth" ? "OAuth" : "기본")}
@@ -145,21 +153,46 @@ export const ServicesPage = () => {
                         <Table.Td>
                           {service.auth !== "none" && (
                             <Group justify="flex-end" gap={4} wrap="nowrap">
-                              <Button
-                                variant="default"
-                                disabled={login.isPending || cancel.isPending || logout.isPending}
-                                onClick={() => begin(item)}
-                              >
-                                {service.auth === "apiKey" ? "키 저장" : "로그인"}
-                              </Button>
-                              {credential.stored && (
+                              {credential.stored || credential.fromEnv ? (
+                                <Menu position="bottom-end" withinPortal>
+                                  <Menu.Target>
+                                    <ActionIcon
+                                      variant="subtle"
+                                      color="gray"
+                                      size="lg"
+                                      aria-label={`${service.name} ${credential.flag || "기본"} 더보기`}
+                                      disabled={
+                                        login.isPending || cancel.isPending || logout.isPending
+                                      }
+                                    >
+                                      <IconDotsVertical size={18} />
+                                    </ActionIcon>
+                                  </Menu.Target>
+                                  <Menu.Dropdown>
+                                    <Menu.Item
+                                      leftSection={<IconKey size={16} />}
+                                      onClick={() => begin(item)}
+                                    >
+                                      {service.auth === "apiKey" ? "키 변경" : "다시 로그인"}
+                                    </Menu.Item>
+                                    {credential.stored && (
+                                      <Menu.Item
+                                        color="red"
+                                        leftSection={<IconLogout size={16} />}
+                                        onClick={() => remove(item)}
+                                      >
+                                        로그아웃
+                                      </Menu.Item>
+                                    )}
+                                  </Menu.Dropdown>
+                                </Menu>
+                              ) : (
                                 <Button
-                                  variant="subtle"
-                                  color="red"
+                                  variant="default"
                                   disabled={login.isPending || cancel.isPending || logout.isPending}
-                                  onClick={() => remove(item)}
+                                  onClick={() => begin(item)}
                                 >
-                                  로그아웃
+                                  {service.auth === "apiKey" ? "키 저장" : "로그인"}
                                 </Button>
                               )}
                             </Group>
@@ -174,9 +207,6 @@ export const ServicesPage = () => {
           </Table.ScrollContainer>
         </Paper>
       )}
-      <Text size="xs" c="dimmed">
-        환경 변수 상태는 앱이 실행한 CLI 기준입니다. 터미널의 환경 변수는 명령마다 우선 적용됩니다.
-      </Text>
       <Modal
         opened={Boolean(selection)}
         onClose={close}

@@ -170,3 +170,16 @@ MCP 심볼은 [공식 저장소의 favicon](https://github.com/modelcontextproto
 
 네이티브 효과음 검증은 `test/sound-smoke.html`을 `TINYJS_HTML`로 지정해 실행합니다.
 검증은 기존 효과음 설정을 읽고, 완료 후 같은 값으로 복원합니다.
+
+### 서비스 아이콘
+
+서비스 목록은 앱에 포함한 SVG를 사용합니다. Slack의 `xoxp`와 `xoxb`는 개인·봇 배지를 표시합니다.
+
+- Fish Audio: [공식 홈페이지](https://fish.audio)의 내비게이션 SVG
+- Linear: [공식 favicon](https://linear.app/static/favicon.svg)
+- Notion: [공식 개발자 문서](https://developers.notion.com)의 [로고](https://mintcdn.com/notion-demo/5YdhSbldE14t5Rna/logo/light.svg)에서 심볼 추출
+- Slack: [공식 심볼](https://a.slack-edge.com/9cc0056/marketing/img/nav/logo.svg)
+- demo: 기존 MCP CLI 앱 아이콘
+
+인증이 있으면 더보기 메뉴에서 키 변경, 다시 로그인, 로그아웃을 선택합니다.
+환경 변수만 사용하는 자격 증명에는 로그아웃을 표시하지 않습니다.
