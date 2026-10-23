@@ -10,6 +10,7 @@ import { extensionCacheScope } from "../cache-scope";
 import { discover, findPlugin, loadPlugin } from "../discovery";
 import { defaultContext } from "../paths";
 import { daemonDirectory, daemonSocket } from "./endpoint";
+import { prepareOwnership } from "./ownership";
 import { createPool } from "./pool";
 import { decodeSessionRequest, type SessionRequest } from "./protocol";
 
@@ -42,8 +43,7 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await chmod(directory, 0o700);
   const ownership = `${directory}/owner`;
-  // Exclusive ownership refuses stale state instead of unlinking another daemon's socket.
-  await writeFile(ownership, String(process.pid), { flag: "wx", mode: 0o600 });
+  await prepareOwnership(directory, true);
   const token = randomBytes(32).toString("hex");
   const pool = createPool(idleMs);
   const startedAt = Date.now();

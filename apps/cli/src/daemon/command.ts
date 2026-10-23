@@ -1,11 +1,17 @@
 import { UsageError } from "@mcp-cli/core";
 import { daemonRequest, daemonStatus } from "./client";
+import { prepareOwnership } from "./ownership";
+import { daemonDirectory } from "./endpoint";
 import { startDaemon } from "./server";
 
 export const daemonCommand = async (args: string[]) => {
   const [action, ...rest] = args;
-  if (rest.length || !action || !["start", "status", "reset", "stop"].includes(action))
-    throw new UsageError("Usage: mcp-cli daemon <start|status|reset|stop>");
+  if (rest.length || !action || !["start", "status", "reset", "stop", "recover"].includes(action))
+    throw new UsageError("Usage: mcp-cli daemon <start|status|reset|stop|recover>");
+  if (action === "recover") {
+    await prepareOwnership(daemonDirectory());
+    return;
+  }
   if (action === "start") {
     const daemon = await startDaemon();
     const stop = () => {

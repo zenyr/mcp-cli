@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { cp, mkdtemp, rm } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { replaceArtifacts, type Replacement } from "./replace-artifacts";
@@ -79,16 +80,22 @@ const stopDaemons = async (binary: string, daemons: Daemon[]) => {
 const restoreDaemons = async (binary: string, daemons: Daemon[]) => {
   for (const daemon of daemons) {
     if (await daemonState(binary, daemon.directory)) continue;
-    const child = Bun.spawn([binary, "daemon", "start"], {
+    const child = spawn(binary, ["daemon", "start"], {
       env: { ...process.env, ...(daemon.directory && { MCP_CLI_DAEMON_DIR: daemon.directory }) },
-      stdin: "ignore",
-      stdout: "ignore",
-      stderr: "ignore",
+      detached: true,
+      stdio: "ignore",
+    });
+    let failure: Error | undefined;
+    child.once("error", (error) => {
+      failure = error;
     });
     child.unref();
     await waitFor(
       "대몬 재시작",
-      async () => (await daemonState(binary, daemon.directory).catch(() => null)) !== null,
+      async () => {
+        if (failure) throw failure;
+        return (await daemonState(binary, daemon.directory).catch(() => null)) !== null;
+      },
       30_000,
     );
   }

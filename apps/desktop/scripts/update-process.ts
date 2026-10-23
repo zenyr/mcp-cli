@@ -70,8 +70,10 @@ export const runningApps = async () => {
       "-c",
       "Print :CFBundleIdentifier",
       join(path, "Contents/Info.plist"),
-    ]).catch(() => "");
-    if (id === "app.mcp-cli.desktop") found.push({ path, pid: process.pid });
+    ]);
+    if (id !== "app.mcp-cli.desktop")
+      throw new Error(`앱 식별자를 확인하지 못해 교체를 중단합니다: ${path}`);
+    found.push({ path, pid: process.pid });
   }
   return found;
 };
@@ -88,9 +90,16 @@ export const daemonState = async (binary: string, directory?: string) => {
     child.exited,
   ]);
   if (code !== 0) {
-    const base = directory ?? process.env.MCP_CLI_DAEMON_DIR ?? join(homedir(), ".mcp-cli/daemon");
-    if (await Bun.file(join(base, "owner")).exists())
-      throw new Error("대몬 상태를 확인하지 못했습니다. 기존 앱을 유지합니다.");
+    const recovery = Bun.spawn([binary, "daemon", "recover"], {
+      env: { ...process.env, ...(directory && { MCP_CLI_DAEMON_DIR: directory }) },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const [error, recovered] = await Promise.all([
+      new Response(recovery.stderr).text(),
+      recovery.exited,
+    ]);
+    if (recovered !== 0) throw new Error(`대몬 복구를 중단합니다: ${error.trim()}`);
     return null;
   }
   const value: unknown = JSON.parse(output);
