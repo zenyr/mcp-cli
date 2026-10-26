@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { link, open, readFile, rename, rm, stat, utimes } from "node:fs/promises";
+import { mkdir, open, readFile, rm, rmdir, stat } from "node:fs/promises";
 import { flock, type Flock } from "./flock";
 
 export type LockOptions = {
   /** Maximum time to wait for another holder before failing. */
   timeoutMs: number;
-  /** Lock-file fallback only: a lock not touched for this long belongs to a dead holder. */
+  /** Minimum age before recovering a fallback lock whose owner is confirmed dead. */
   staleMs: number;
   pollMs: number;
 };
@@ -30,6 +30,9 @@ const tryCreate = async (path: string, token: string): Promise<boolean> => {
     const handle = await open(path, "wx", 0o600);
     try {
       await handle.writeFile(token);
+    } catch (error) {
+      await rm(path, { force: true });
+      throw error;
     } finally {
       await handle.close();
     }
@@ -40,24 +43,53 @@ const tryCreate = async (path: string, token: string): Promise<boolean> => {
   }
 };
 
-/** Moves aside the lock last seen holding `observed`, restoring it if another waiter replaced it. */
-export const takeStale = async (path: string, observed: string): Promise<void> => {
-  const aside = `${path}.${randomUUID()}.stale`;
-  const moved = await rename(path, aside).then(() => true, ignoreMissing);
-  if (!moved) return;
-  const taken = await readFile(aside, "utf8").catch(ignoreMissing);
-  if (taken !== observed)
-    await link(aside, path).catch((error: unknown) => {
-      if (!hasCode(error, "EEXIST")) throw error;
-    });
-  await rm(aside, { force: true });
+/** Serializes every fallback lock transition without ever reclaiming a possibly live guard. */
+const withGuard = async <T>(
+  path: string,
+  options: LockOptions,
+  deadline: number,
+  run: () => Promise<T>,
+): Promise<T> => {
+  const guard = `${path}.guard`;
+  for (;;) {
+    const acquired = await mkdir(guard, { mode: 0o700 }).then(
+      () => true,
+      (error: unknown) => {
+        if (hasCode(error, "EEXIST")) return false;
+        throw error;
+      },
+    );
+    if (acquired) break;
+    if (Date.now() >= deadline)
+      throw new LockTimeoutError(
+        `Timed out waiting for lock guard ${guard}; verify that no process uses it before manual recovery`,
+      );
+    await Bun.sleep(options.pollMs);
+  }
+  try {
+    return await run();
+  } finally {
+    await rmdir(guard);
+  }
 };
 
-const clearStale = async (path: string, staleMs: number): Promise<void> => {
+const ownerIsDead = (contents: string): boolean => {
+  const match = /^(\d+) \S+$/.exec(contents);
+  const pid = Number(match?.[1]);
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (error) {
+    return hasCode(error, "ESRCH");
+  }
+};
+
+const clearStaleLocked = async (path: string, staleMs: number): Promise<void> => {
   const info = await stat(path).catch(ignoreMissing);
   if (!info || Date.now() - info.mtimeMs < staleMs) return;
   const observed = await readFile(path, "utf8").catch(ignoreMissing);
-  if (observed !== undefined) await takeStale(path, observed);
+  if (observed !== undefined && ownerIsDead(observed)) await rm(path);
 };
 
 const release = async (path: string, token: string): Promise<void> => {
@@ -65,7 +97,7 @@ const release = async (path: string, token: string): Promise<void> => {
   if (current === token) await rm(path, { force: true });
 };
 
-/** Lock-file fallback for platforms without `flock`; liveness comes from a heartbeat. */
+/** Uses a transition guard and local PID liveness when kernel locking is unavailable. */
 export const withLockFile = async <T>(
   path: string,
   options: LockOptions,
@@ -73,23 +105,20 @@ export const withLockFile = async <T>(
 ): Promise<T> => {
   const token = `${process.pid} ${randomUUID()}`;
   const deadline = Date.now() + options.timeoutMs;
-  while (!(await tryCreate(path, token))) {
-    await clearStale(path, options.staleMs);
+  for (;;) {
+    const acquired = await withGuard(path, options, deadline, async () => {
+      if (await tryCreate(path, token)) return true;
+      await clearStaleLocked(path, options.staleMs);
+      return tryCreate(path, token);
+    });
+    if (acquired) break;
     if (Date.now() >= deadline) throw new LockTimeoutError(`Timed out waiting for lock ${path}`);
     await Bun.sleep(options.pollMs);
   }
-  const heartbeat = setInterval(
-    () => {
-      const now = new Date();
-      utimes(path, now, now).catch(() => undefined);
-    },
-    Math.max(options.staleMs / 3, 10),
-  );
   try {
     return await fn();
   } finally {
-    clearInterval(heartbeat);
-    await release(path, token);
+    await withGuard(path, options, Date.now() + options.timeoutMs, () => release(path, token));
   }
 };
 

@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CredentialsFormatError, credentialsDir, fileTokenStore, LockTimeoutError } from "../src";
-import { takeStale, withLockFile } from "../src/lock";
+import { withLockFile } from "../src/lock";
 
 let root = "";
 let dir = "";
@@ -109,7 +109,7 @@ test("waiting for a live holder is bounded", async () => {
 });
 
 const child = (mode: string) =>
-  Bun.spawn(["bun", join(import.meta.dir, "fixtures", "lock-child.ts"), dir, mode], {
+  Bun.spawn([process.execPath, join(import.meta.dir, "fixtures", "lock-child.ts"), dir, mode], {
     stdout: "pipe",
     stderr: "inherit",
   });
@@ -158,12 +158,89 @@ test("the lock-file fallback keeps one holder when waiters race to clear a stale
   }
 });
 
-test("clearing a stale lock restores a fresh lock that replaced it after it was observed", async () => {
+test("the fallback never steals an old lock from a live process", async () => {
+  await mkdir(dir, { recursive: true });
+  const path = join(dir, "live.lock");
+  const owner = `${process.pid} live-holder`;
+  await writeFile(path, owner);
+  const old = new Date(Date.now() - 5000);
+  await utimes(path, old, old);
+  let entered = false;
+  await expect(
+    withLockFile(path, { staleMs: 1, timeoutMs: 50, pollMs: 1 }, async () => {
+      entered = true;
+    }),
+  ).rejects.toThrow(LockTimeoutError);
+  expect(entered).toBe(false);
+  expect(await readFile(path, "utf8")).toBe(owner);
+});
+
+test("a held transition guard prevents stale cleanup and acquisition", async () => {
   await mkdir(dir, { recursive: true });
   const path = join(dir, "svc.lock");
-  await writeFile(path, "fresh holder");
-  await takeStale(path, "dead holder");
-  expect(await readFile(path, "utf8")).toBe("fresh holder");
-  await takeStale(path, "fresh holder");
+  await mkdir(`${path}.guard`);
+  await writeFile(path, "999999 dead");
+  const old = new Date(Date.now() - 5000);
+  await utimes(path, old, old);
+  let entered = false;
+  const options = { staleMs: 1, timeoutMs: 30, pollMs: 1 };
+  await expect(
+    withLockFile(path, options, async () => {
+      entered = true;
+    }),
+  ).rejects.toThrow(LockTimeoutError);
+  expect(entered).toBe(false);
+  expect(await readFile(path, "utf8")).toBe("999999 dead");
+  await rm(`${path}.guard`, { recursive: true });
+  expect(await withLockFile(path, options, async () => "recovered")).toBe("recovered");
   expect(await readdir(dir)).toEqual([]);
+});
+
+test("unknown fallback owners are retained instead of being guessed dead", async () => {
+  await mkdir(dir, { recursive: true });
+  const path = join(dir, "unknown.lock");
+  for (const owner of ["", "broken", "0 owner", "-1 owner"]) {
+    await writeFile(path, owner);
+    const old = new Date(Date.now() - 5000);
+    await utimes(path, old, old);
+    await expect(
+      withLockFile(path, { staleMs: 1, timeoutMs: 15, pollMs: 1 }, async () => {}),
+    ).rejects.toThrow(LockTimeoutError);
+    expect(await readFile(path, "utf8")).toBe(owner);
+  }
+});
+
+test("fallback critical sections do not overlap across independent processes", async () => {
+  const children = Array.from({ length: 8 }, () => child("file-increment"));
+  expect(await Promise.all(children.map((process) => process.exited))).toEqual(Array(8).fill(0));
+  expect(await readFile(join(dir, "counter"), "utf8")).toBe("8");
+  expect(await readdir(dir)).toEqual(["counter"]);
+});
+
+test("fallback recovers an exited owner after its transition guard is released", async () => {
+  const holder = child("file-hold");
+  const reader = holder.stdout.getReader();
+  await reader.read();
+  holder.kill("SIGKILL");
+  await holder.exited;
+  const path = join(dir, "svc.lock");
+  const old = new Date(Date.now() - 5000);
+  await utimes(path, old, old);
+  expect(
+    await withLockFile(path, { staleMs: 1, timeoutMs: 1000, pollMs: 1 }, async () => "recovered"),
+  ).toBe("recovered");
+  expect(await readdir(dir)).toEqual([]);
+});
+
+test("fallback releases both the lock and guard when the protected operation throws", async () => {
+  await mkdir(dir, { recursive: true });
+  const path = join(dir, "error.lock");
+  const options = { staleMs: 1000, timeoutMs: 1000, pollMs: 1 };
+  await expect(
+    withLockFile(path, options, async () => {
+      throw new Error("operation failed");
+    }),
+  ).rejects.toThrow("operation failed");
+  expect(await readdir(dir)).toEqual([]);
+  expect(await withLockFile(path, options, async () => "next")).toBe("next");
 });
