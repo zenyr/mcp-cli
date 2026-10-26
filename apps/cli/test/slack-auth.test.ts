@@ -46,7 +46,7 @@ test("CLI and desktop share Slack settings and token storage without silent brow
       },
     };
     expect((await invoke(["auth", "configure", "slack"], configuration)).code).toBe(0);
-    const cli = await invoke(["auth", "status", "slack"]);
+    const cli = await invoke(["auth", "status", "slack", "--json"]);
     expect(cli.code).toBe(0);
     const desktop = await invoke(["desktop", "services"]);
     expect(desktop.code).toBe(0);

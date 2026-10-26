@@ -1,3 +1,4 @@
+import { formatOutput, formatText } from "./output";
 import { UsageError, type PromptDefinition, type PromptResult } from "@mcp-cli/core";
 import {
   operands,
@@ -42,8 +43,8 @@ const messageText = (result: PromptResult): string =>
     .map(({ role, content }) => {
       const body =
         content.type === "text" && typeof content.text === "string"
-          ? content.text
-          : JSON.stringify(content);
+          ? formatText(content.text)
+          : formatOutput(content);
       return `${role}:\n${body}`;
     })
     .join("\n\n");

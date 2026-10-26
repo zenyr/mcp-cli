@@ -1,3 +1,4 @@
+import { formatOutput } from "@mcp-cli/runtime";
 import { UsageError, type ServicePlugin } from "@mcp-cli/core";
 import { defaultSettings, defaultStore } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
@@ -24,7 +25,9 @@ export const configureAuthentication = async (plugin: ServicePlugin, value: unkn
   await plugin.authSupport.configure(authenticationContext(process.env, plugin), value);
   await resetDaemonIfRunning();
 };
-export const authSettingsCommand = async (args: string[]) => {
+export const authSettingsCommand = async (argv: string[]) => {
+  const json = argv.includes("--json");
+  const args = argv.filter((arg) => arg !== "--json");
   const [action, service, flag, ...rest] = args;
   if (
     !service ||
@@ -47,5 +50,5 @@ export const authSettingsCommand = async (args: string[]) => {
     }
     await configureAuthentication(plugin, value);
   }
-  console.log(JSON.stringify(await authenticationDetails(plugin, flag === "--check")));
+  console.log(formatOutput(await authenticationDetails(plugin, flag === "--check"), json));
 };

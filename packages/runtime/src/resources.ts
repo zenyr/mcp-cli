@@ -1,3 +1,4 @@
+import { formatText } from "./output";
 import type {
   ResourceContent,
   ResourceDefinition,
@@ -19,7 +20,7 @@ const line = (key: string, item: ResourceDefinition | ResourceTemplateDefinition
     .join("  ");
 const contentText = (content: ResourceContent): string =>
   "text" in content
-    ? content.text
+    ? formatText(content.text)
     : `[binary ${content.mimeType ?? "application/octet-stream"} ${content.uri}; use --json for base64]`;
 const listText = (lines: string[], empty: string): string =>
   lines.length ? lines.join("\n") : empty;

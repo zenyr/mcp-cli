@@ -96,7 +96,7 @@ test("installed binary activates independent plugin packages without Bun or the 
       await Bun.file(join(directory, "cache/mcp-cli", cache ?? "", "generated.ts")).exists(),
     ).toBe(true);
     expect(await run("plugins")).toContain("enabled");
-    const daemon = Bun.spawn([installed, "daemon", "start"], {
+    const daemon = Bun.spawn([installed, "daemon", "start", "--json"], {
       cwd: directory,
       env,
       stdout: "pipe",
@@ -104,7 +104,7 @@ test("installed binary activates independent plugin packages without Bun or the 
     });
     try {
       const ready = await daemon.stdout.getReader().read();
-      expect(new TextDecoder().decode(ready.value)).toContain('"event":"ready"');
+      expect(JSON.parse(new TextDecoder().decode(ready.value))).toHaveProperty("event", "ready");
       env.MCP_CLI_DAEMON = "";
       expect(await run("demo", "message", "echo", "--text", "백그라운드 연결")).toBe(
         "백그라운드 연결\n",

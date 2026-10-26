@@ -120,3 +120,26 @@ test("default daemon falls back before dispatch and explicit zero runs directly"
   );
   expect((await runWith(daemonEnv, "demo", "--help")).code).toBe(EXIT.ok);
 });
+
+test("CLI defaults JSON tool text and schemas to YAML with a global JSON override", async () => {
+  const text = '{"message":"first\\nsecond","ok":true}';
+  const yaml = await run("demo", "message", "echo", "--text", text);
+  expect(yaml).toEqual({
+    stdout: "message: |-\n  first\n  second\nok: true\n",
+    stderr: "",
+    code: 0,
+  });
+  for (const args of [
+    ["--json", "demo", "message", "echo", "--text", text],
+    ["demo", "message", "echo", "--text", text, "--json"],
+  ]) {
+    const result = await run(...args, "--allow-repeat");
+    expect(result.code).toBe(0);
+    expect(JSON.parse(result.stdout)).toHaveProperty("content.0.text", text);
+  }
+  const schema = await run("demo", "schema", "message", "echo");
+  expect(schema.code).toBe(0);
+  expect(schema.stdout).toStartWith("path:\n");
+  const jsonSchema = await run("demo", "schema", "message", "echo", "--json");
+  expect(JSON.parse(jsonSchema.stdout)).toHaveProperty("inputSchema");
+});

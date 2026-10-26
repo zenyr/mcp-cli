@@ -1,3 +1,4 @@
+import { formatOutput } from "@mcp-cli/runtime";
 import { Cause, Effect, Exit } from "effect";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -51,15 +52,16 @@ const usage = `Usage: mcp-cli plugins [list [--json]]
        mcp-cli plugins commands [directory]`;
 
 export const pluginsCommand = async (args: string[]): Promise<void> => {
-  const [action, ...rest] = args;
+  const json = args.includes("--json");
+  const [action, ...rest] = args.filter((arg) => arg !== "--json");
   if (action === "--help" || action === "-h") {
     console.log(usage);
     return;
   }
   if (!action || action === "list") {
-    if (rest.length && (rest.length !== 1 || rest[0] !== "--json")) throw new UsageError(usage);
+    if (rest.length) throw new UsageError(usage);
     const view = await marketplaceView();
-    if (rest[0] === "--json") {
+    if (json) {
       console.log(JSON.stringify(view));
       return;
     }
@@ -97,7 +99,7 @@ export const pluginsCommand = async (args: string[]): Promise<void> => {
     await mkdir(dirname(resolve(output)), { recursive: true });
     await writeFile(resolve(output), bytes, { flag: "wx" });
     console.log(
-      JSON.stringify(
+      formatOutput(
         {
           id: manifest.id,
           service: manifest.service,
@@ -114,8 +116,7 @@ export const pluginsCommand = async (args: string[]): Promise<void> => {
             },
           ],
         },
-        null,
-        2,
+        json,
       ),
     );
     return;

@@ -1,3 +1,5 @@
+import { formatOutput, formatResult } from "./output";
+export { formatOutput } from "./output";
 import {
   UsageError,
   CallNotStartedError,
@@ -5,7 +7,6 @@ import {
   type RepeatGuard,
   type GeneratedManifest,
   type ServicePlugin,
-  type ToolResult,
   type ToolSession,
 } from "@mcp-cli/core";
 import { findCommand, help } from "./help";
@@ -18,17 +19,6 @@ import { createExecutor } from "./executor";
 import { findExtension } from "./extensions";
 import { compactDescription } from "./descriptions";
 export { help } from "./help";
-
-const formatResult = (result: ToolResult, json: boolean): string =>
-  json
-    ? JSON.stringify(result, null, 2)
-    : result.content
-        .map((block) =>
-          block.type === "text" && typeof block.text === "string"
-            ? block.text
-            : JSON.stringify(block),
-        )
-        .join("\n");
 
 export type RuntimeIO = {
   write(text: string): void;
@@ -98,15 +88,14 @@ export const runService = async (
       manifest.commands.find((item) => item.name === requested.join(" "));
     if (!command) throw new UsageError(`Unknown schema: ${requested.join(" ")}`);
     dependencies.io.write(
-      JSON.stringify(
+      formatOutput(
         {
           path: command.path,
           summary: command.summary,
           details: command.details,
           inputSchema: command.inputSchema,
         },
-        null,
-        2,
+        json,
       ),
     );
     return 0;

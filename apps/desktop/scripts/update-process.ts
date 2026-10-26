@@ -79,7 +79,7 @@ export const runningApps = async () => {
 };
 
 export const daemonState = async (binary: string, directory?: string) => {
-  const child = Bun.spawn([binary, "daemon", "status"], {
+  const child = Bun.spawn([binary, "daemon", "status", "--json"], {
     env: { ...process.env, ...(directory && { MCP_CLI_DAEMON_DIR: directory }) },
     stdout: "pipe",
     stderr: "pipe",
@@ -114,7 +114,7 @@ export const daemonState = async (binary: string, directory?: string) => {
 };
 
 export const stopDaemon = async (binary: string, directory?: string) => {
-  const child = Bun.spawn([binary, "daemon", "stop"], {
+  const child = Bun.spawn([binary, "daemon", "stop", "--json"], {
     env: { ...process.env, ...(directory && { MCP_CLI_DAEMON_DIR: directory }) },
     stdout: "pipe",
     stderr: "pipe",

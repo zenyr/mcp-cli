@@ -105,7 +105,7 @@ const checkDaemonStatus = async (app: DesktopApp) => {
     await observeDaemonSound(app, status);
   };
   try {
-    const status = await run(app, ["daemon", "status"]);
+    const status = await run(app, ["daemon", "status", "--json"]);
     await observe(status);
     return { online: true, status };
   } catch (error) {
@@ -125,7 +125,7 @@ export const api = {
       if (starting) throw new Error("대몬 시작을 기다려 주세요.");
       starting = true;
       try {
-        const child = app.spawnHidden([...(await cliCommand(app)), "daemon", "start"], {
+        const child = app.spawnHidden([...(await cliCommand(app)), "daemon", "start", "--json"], {
           stdin: "ignore",
           stdout: "pipe",
           stderr: "pipe",
@@ -163,8 +163,8 @@ export const api = {
       }
       return null;
     }),
-  reset: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "reset"]),
-  stop: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "stop"]),
+  reset: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "reset", "--json"]),
+  stop: (_params: unknown, app: DesktopApp) => run(app, ["daemon", "stop", "--json"]),
   login: (params: unknown, app: DesktopApp) =>
     logins.start((signal) => run(app, ["desktop", "login"], params, signal)),
   logout: (params: unknown, app: DesktopApp) => run(app, ["desktop", "logout"], params),
@@ -210,8 +210,8 @@ export const api = {
 export const init = async (app: DesktopApp) => {
   const ready = await registerUpdateLifecycle(app, async () => {
     await operations.drain(() => logins.cancel());
-    const state = await runCli(app, ["daemon", "status"]).catch(() => null);
-    if (state !== null) await runCli(app, ["daemon", "stop"]);
+    const state = await runCli(app, ["daemon", "status", "--json"]).catch(() => null);
+    if (state !== null) await runCli(app, ["daemon", "stop", "--json"]);
   });
   app.setHideOnClose(true);
   const trayIcons = await prepareTrayIcons(app);

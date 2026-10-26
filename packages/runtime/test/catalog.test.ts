@@ -130,7 +130,7 @@ test("prompts list shows arguments and get renders messages", async () => {
     "greet  Greet someone\n  --who (required) - Name\n  --tone-hint (optional)",
   );
   expect(f.output[1]).toBe(
-    'user:\nhi Ada\n\nassistant:\n{"type":"image","data":"AA","mimeType":"image/png"}',
+    "user:\nhi Ada\n\nassistant:\ntype: image\ndata: AA\nmimeType: image/png",
   );
   expect(JSON.parse(f.output[2] ?? "")).toHaveProperty("messages.0.content.text", "hi json");
   expect(f.gets).toEqual([

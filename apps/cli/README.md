@@ -83,7 +83,7 @@ Help labels these properties `set via --input only`. The comparison replaces `_`
 Use `--input` for complex `$ref` or combined schemas. The entire input is validated against JSON Schema.
 Schemas without `$schema`, or with a 2020-12 declaration, use 2020-12 rules. Draft-07 declarations and draft-07-only schemas use draft-07 validation.
 
-Default output consists of MCP text blocks. `--json` preserves the complete MCP result.
+Default output renders JSON data from MCP text blocks as compact YAML. Multiline strings use literal blocks (`|`, `|-`, or `|+`) to preserve line breaks. Plain text stays unchanged. `schema` also defaults to YAML. `--json` preserves the complete MCP result as JSON and works before the service name or among command flags.
 When a tool returns `isError`, the CLI writes text results to stderr and exits with code `1`. stdout remains empty.
 With `--json`, it writes even `isError` results to stdout as JSON. The exit code is `1`.
 CLI usage errors (`UsageError`) exit with code `2`. Connection and execution errors exit with code `1`.

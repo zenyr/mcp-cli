@@ -1,10 +1,13 @@
+import { formatOutput } from "@mcp-cli/runtime";
 import { UsageError } from "@mcp-cli/core";
 import { daemonRequest, daemonStatus } from "./client";
 import { prepareOwnership } from "./ownership";
 import { daemonDirectory } from "./endpoint";
 import { startDaemon } from "./server";
 
-export const daemonCommand = async (args: string[]) => {
+export const daemonCommand = async (argv: string[]) => {
+  const json = argv.includes("--json");
+  const args = argv.filter((arg) => arg !== "--json");
   const [action, ...rest] = args;
   if (rest.length || !action || !["start", "status", "reset", "stop", "recover"].includes(action))
     throw new UsageError("Usage: mcp-cli daemon <start|status|reset|stop|recover>");
@@ -22,10 +25,10 @@ export const daemonCommand = async (args: string[]) => {
     };
     process.once("SIGTERM", stop);
     process.once("SIGINT", stop);
-    console.log(JSON.stringify({ event: "ready", pid: process.pid }));
+    console.log(formatOutput({ event: "ready", pid: process.pid }, json));
     return;
   }
   console.log(
-    JSON.stringify(action === "status" ? await daemonStatus() : await daemonRequest(action)),
+    formatOutput(action === "status" ? await daemonStatus() : await daemonRequest(action), json),
   );
 };

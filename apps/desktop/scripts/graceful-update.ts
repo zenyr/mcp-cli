@@ -80,7 +80,7 @@ const stopDaemons = async (binary: string, daemons: Daemon[]) => {
 const restoreDaemons = async (binary: string, daemons: Daemon[]) => {
   for (const daemon of daemons) {
     if (await daemonState(binary, daemon.directory)) continue;
-    const child = spawn(binary, ["daemon", "start"], {
+    const child = spawn(binary, ["daemon", "start", "--json"], {
       env: { ...process.env, ...(daemon.directory && { MCP_CLI_DAEMON_DIR: daemon.directory }) },
       detached: true,
       stdio: "ignore",
