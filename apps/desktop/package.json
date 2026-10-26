@@ -10,6 +10,7 @@
     "typecheck": "bun scripts/default-command.ts && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p backend/tsconfig.json && tsc --noEmit -p tsconfig.tools.json",
     "desktop": "bun scripts/default-command.ts && tinyjs dev",
     "native:build": "bun scripts/native-build.ts",
+    "dist:dmg": "bun scripts/distribution-build.ts",
     "test": "bun test test"
   },
   "dependencies": {

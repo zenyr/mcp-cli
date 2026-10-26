@@ -1,10 +1,13 @@
 import { chmod, copyFile, cp, mkdir, mkdtemp, rm, symlink } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { installBuild } from "./graceful-update";
 
 const desktop = fileURLToPath(new URL("../", import.meta.url));
 const cli = fileURLToPath(new URL("../../cli/", import.meta.url));
+const { values } = parseArgs({ options: { output: { type: "string" } }, strict: true });
+const output = values.output ? resolve(values.output) : undefined;
 const lock = join(desktop, ".native-build.lock");
 await mkdir(lock).catch(() => {
   throw new Error("다른 네이티브 빌드가 실행 중이거나 빌드 잠금이 남아 있습니다.");
@@ -40,7 +43,12 @@ try {
     await run(["codesign", "--force", "--deep", "--sign", "-", app]);
     await run(["codesign", "--verify", "--deep", "--strict", app]);
   }
-  await installBuild(join(directory, "dist"), join(desktop, "dist"));
+  if (output) {
+    await mkdir(output);
+    await cp(join(directory, "dist"), output, { recursive: true });
+  } else {
+    await installBuild(join(directory, "dist"), join(desktop, "dist"));
+  }
 } finally {
   if (directory) await rm(directory, { recursive: true, force: true });
   await rm(lock, { recursive: true, force: true });

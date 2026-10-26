@@ -15,7 +15,27 @@ Use the tray's open management window action to reopen the window.
 You do not need to set a CLI executable path. Use advanced settings only when you need a separate CLI.
 The use default command action clears a custom executable command.
 
-Local macOS builds currently use ad hoc signing. Public downloads require separate developer signing and notarization.
+Local macOS builds use ad hoc signing. Downloads are not notarized and require an explicit macOS security exception.
+
+### macOS disk image
+
+```sh
+bun run --cwd apps/desktop dist:dmg
+```
+
+This builds `dist/MCP-CLI-0.1.0-macos-<arch>.dmg` with the app, an Applications shortcut,
+installation instructions, and an optional `Allow MCP CLI.command` helper.
+The app includes the CLI runtime and built-in plugins. No separate runtime installation is needed.
+The image targets the build host's architecture (`arm64` or `x64`). Build each architecture on its own host.
+The distribution build does not replace or restart an installed or running app.
+
+Drag the app into Applications, then launch it from there.
+If macOS blocks it, follow [Apple's instructions](https://support.apple.com/en-us/102445)
+to select **Open Anyway** in System Settings > Privacy & Security.
+The optional helper checks the installed app's identifier and signature, then requires `ALLOW` before
+removing its quarantine attribute. Ad hoc signing does not authenticate the publisher.
+The helper uses no administrator privileges and does not change global Gatekeeper settings.
+See the disk image's `READ ME.txt` if macOS also blocks the helper or the app is installed in `~/Applications`.
 
 ## Development
 
@@ -88,6 +108,7 @@ bun run native:build
 ```
 
 `bun run native:build` builds in a separate working directory, then replaces the artifacts.
+`bun run native:build --output /absolute/new-directory` exports to a new directory without installing or restarting the app.
 On macOS, it preserves the existing `dist` and running app until signature verification finishes.
 If an `.app` with the same app ID is running, it also updates that installation path.
 
@@ -107,7 +128,7 @@ If a forcibly interrupted build leaves `.native-build.lock`, verify that no buil
 
 `tinyjs build` builds an app for the host OS.
 The macOS artifact is `dist/MCP CLI.app`.
-Distribution signing and notarization require separate configuration.
+Developer ID signing and notarization require separate configuration.
 Build and verify Windows and Linux versions on their respective operating systems.
 
 Run the native smoke check from the repository root.

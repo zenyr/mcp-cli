@@ -1,0 +1,33 @@
+MCP CLI for macOS
+
+1. Drag MCP CLI.app onto the Applications shortcut.
+2. Open MCP CLI from Applications. Its menu bar icon opens the management window.
+3. Eject this disk image after installation.
+
+No Bun, Node, tinyjs, or source checkout is required.
+Use the download for your Mac's architecture: arm64 for Apple silicon, x64 for Intel.
+
+This build has an ad hoc signature and is not notarized by Apple.
+The signature does not authenticate the publisher. Only install a trusted download.
+
+If macOS blocks the app:
+1. Try opening the installed app once and dismiss the warning.
+2. Open System Settings > Privacy & Security.
+3. Select Open Anyway for MCP CLI and confirm the macOS prompt.
+Apple's instructions: https://support.apple.com/en-us/102445
+
+Optional explicit-consent helper:
+Open Allow MCP CLI.command after copying the app to Applications.
+The helper verifies the bundle identifier and signature, explains its change,
+and requires you to type ALLOW before removing this app's quarantine attribute.
+It does not disable Gatekeeper globally, use sudo, or launch the app.
+If permissions prevent the change, use the System Settings steps above.
+
+If macOS blocks the helper too, use the System Settings steps above, or open
+Terminal, type /bin/bash followed by a space, drag Allow MCP CLI.command into
+Terminal, and press Return. Read the prompt before typing ALLOW.
+For a user-only installation, create ~/Applications and copy the app there.
+Pass "$HOME/Applications/MCP CLI.app" as the helper's first argument in Terminal.
+
+The app stores service credentials locally. Ejecting this disk image does not
+remove configuration or credentials. Use the app's logout actions to remove them.
