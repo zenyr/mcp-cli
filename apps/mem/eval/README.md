@@ -1,6 +1,6 @@
-# 메모리 압축 평가
+# Memory compression evaluation
 
-이 평가기는 합성 한국어 기록으로 실제 `summarize` 트리를 생성합니다. 기본 실행은 fixture manifest를 파일에 저장합니다. `--live`를 지정하면 모델을 호출합니다.
+This evaluator builds real `summarize` trees from synthetic Korean records. By default, it writes a fixture manifest to a file. Specify `--live` to call the model.
 
 ```sh
 bun apps/mem/eval/main.ts --records 32 --model deepseek-v4.1-flash
@@ -8,33 +8,33 @@ bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --thin
 bun test apps/mem/test/evaluation.test.ts
 ```
 
-- 기본 모드는 `range-only`입니다. `system`과 `isolated`는 dry-run과 live 모두 거부합니다.
-- 리프 요청은 해당 메시지만 전달합니다. 부모 요청은 두 자식만 전달합니다.
-- 재시도는 같은 원본 입력과 `retry: true`를 전달합니다. 이전 모델 응답과 외부 선행 기록은 전달하지 않습니다.
-- 보고서의 `inputPolicy`는 `range-only-v1`입니다. `externalContextBytes`는 항상 0입니다.
-- 각 시도는 실제 `sourceBytes`와 `outputBytes`를 기록합니다. 실패한 응답의 `outputBytes`는 null입니다.
-- `--records`는 32부터 256까지 지원합니다. 기본값은 32입니다.
-- `--model`을 생략하면 기존 설정 로더의 기본값과 `MEM_MODEL`을 사용합니다.
-- 기본 API 주소는 기존 설정의 CPA 주소입니다. `MEM_BASE_URL`로 바꿀 수 있습니다.
-- `MEM_API_KEY`는 요청 헤더에만 사용합니다. 보고서는 환경변수나 API 주소를 저장하지 않습니다.
-- `--thinking enabled|disabled|default`는 지원하는 공급자의 추론 설정을 선택합니다. 기본값은 기존 설정을 유지합니다.
+- The default mode is `range-only`. Both dry runs and live runs reject `system` and `isolated`.
+- Leaf requests contain only their own message. Parent requests contain only their two children.
+- Retries send the same original input and `retry: true`. They exclude previous model responses and earlier records outside the node's range.
+- The report's `inputPolicy` is `range-only-v1`. `externalContextBytes` is always 0.
+- Each attempt records actual `sourceBytes` and `outputBytes`. Failed responses have null `outputBytes`.
+- `--records` supports 32 through 256. The default is 32.
+- Omitting `--model` uses the existing configuration loader's defaults and `MEM_MODEL`.
+- The default API address is the CPA address in the existing configuration. Override it with `MEM_BASE_URL`.
+- `MEM_API_KEY` is used only in request headers. Reports do not store environment variables or the API address.
+- `--thinking enabled|disabled|default` selects reasoning settings for supported providers. The default preserves existing settings.
 
-32개 기록의 최대 구조 깊이는 5입니다. 평가기는 깊이 0, 1, 2, 4, 5의 실제 노드를 보고합니다. 기록 수가 달라도 평가 깊이는 `floor(log2(records))`를 넘지 않습니다. 무관 기록은 기본 512바이트보다 짧습니다. 중요 기록 4개는 512바이트보다 길어서 기본 설정에서 리프 압축을 호출합니다. 짧은 부모는 두 자식의 텍스트를 그대로 유지합니다.
+For 32 records, the maximum structural depth is 5. The evaluator reports actual nodes at depths 0, 1, 2, 4, and 5. Evaluation depth never exceeds `floor(log2(records))`, even with a different record count. Irrelevant records are shorter than the default 512-byte target. Four important records exceed 512 bytes and trigger leaf compression with the default settings. Short parents preserve both children's text verbatim.
 
-fixture는 production 취소와 staging 제한, E731의 만료 토큰 원인, 미확인 배포 상태, 사용자와 도구의 출처를 구분합니다. 각 사실은 기록 인덱스와 Unicode scalar 구간 `[from, to)`을 근거 주소로 보관합니다. 보고서는 원문 fixture와 노드 요약을 보관하므로 수동 검토자가 수정 관계를 확인할 수 있습니다.
+The fixture distinguishes production cancellation, staging restrictions, the expired token that caused E731, unconfirmed deployment status, and user versus tool sources. Each fact retains its record index and Unicode scalar range `[from, to)` as an evidence address. Reports retain the original fixture and node summaries so manual reviewers can trace corrections.
 
-호출 계측은 모든 압축 시도와 축약 재시도를 누적합니다. 예산 검사는 다음 압축 호출 전에 실행합니다. 예산 소진은 `budget-stopped`와 종료 코드 1로 보고합니다. 모델 오류는 `failed`로 보고합니다. 실패한 호출과 사용량이 불완전한 응답은 `unknownUsage`로 집계합니다. 토큰 합계는 사용량을 확인한 호출만 포함합니다. 알 수 없는 사용량을 무료 호출로 해석하지 마십시오. 지연 시간은 호출별 시간과 전체 실행 시간을 구분합니다.
+Call instrumentation accumulates every compression attempt and retry. Budget checks run before the next compression call. Budget exhaustion reports `budget-stopped` and exit code 1. Model errors report `failed`. Failed calls and responses with incomplete usage are counted in `unknownUsage`. Token totals include only calls with known usage. Do not interpret unknown usage as free calls. Latency distinguishes per-call time from total runtime.
 
-`proxyChecks`는 기대 단어의 존재와 누락, 모순 후보 문구만 검사합니다. 이 검사는 의미 정확도나 오류율을 측정하지 않습니다. 부정문에도 모순 후보 문구가 나타날 수 있습니다. 원문과 `quotedText`를 함께 수동 검토하십시오. 기대 단어가 모두 있어도 취소 관계나 출처가 올바른지는 보증하지 않습니다.
+`proxyChecks` only checks for expected words, missing words, and possible contradiction phrases. It does not measure semantic accuracy or error rates. Possible contradiction phrases can also occur in negative statements. Manually review the original text together with `quotedText`. Even the presence of every expected word does not guarantee correct cancellation relationships or attribution.
 
-이 버전은 검색 성능이나 에이전트 발견 능력을 평가하지 않습니다. 근거 주소를 이용한 oracle 접근성도 측정하지 않습니다. 모델 비교, 가격표 기반 비용 계산, 장기 품질 검증은 후속 평가 범위입니다. 같은 fixture와 설정으로 모델별 보고서를 만든 뒤 수동 검토와 사용량 비교가 필요합니다.
+This version does not evaluate search performance or an agent's ability to discover records. It also does not measure oracle accessibility through evidence addresses. Model comparisons, price-based cost calculations, and long-term quality verification are deferred. These require per-model reports using identical fixtures and settings, followed by manual review and usage comparisons.
 
-평가기는 사용자 XDG 경로와 분리된 임시 SQLite DB를 사용합니다. 종료 시 DB를 정리합니다.
-보고서는 `--output` 경로에 저장합니다. 경로를 생략하면 임시 디렉터리에 고유 파일을 만듭니다.
-stdout은 짧은 상태·사용량·파일 경로만 반환합니다. fixture와 전체 보고서는 파일에서 조회합니다.
+The evaluator uses a temporary SQLite database separate from the user's XDG paths. It removes the database on exit.
+Reports are saved to `--output`. If omitted, a unique file is created in a temporary directory.
+stdout returns only a short status, usage summary, and file path. Read the fixture and full report from the file.
 
-호출의 `success`는 모델 응답의 정상 파싱을 뜻합니다. 크기 조건을 만족한 요약 노드의 게시 성공과 구분합니다.
-전체 트리의 성공 여부는 보고서의 `status`와 `failure`로 확인합니다.
+A call's `success` means that the model response was parsed successfully. It does not mean a summary node satisfying the size constraints was published successfully.
+Use the report's `status` and `failure` to determine whether the entire tree succeeded.
 
-[과거 실행 결과](RESULTS.md)는 generation v2의 완료 실행과 실패 실행을 보존합니다.
-[range-only 검증](RANGE_ONLY.md)은 현재 정책의 자동 경계 검사와 실제 모델 관측을 구분합니다.
+[Historical results](RESULTS.md) preserve completed and failed generation v2 runs.
+[Range-only verification](RANGE_ONLY.md) distinguishes automated input-boundary checks from live model observations under the current policy.

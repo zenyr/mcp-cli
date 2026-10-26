@@ -1,73 +1,75 @@
-# mem 첫 마일스톤 검증
+# mem first milestone verification
 
-검증일은 2026년 10월 9일입니다.
-T3 서브에이전트는 트리, 경로, CLI, 장애 테스트를 나눠 구현했습니다.
-별도 리뷰는 2회 수행했습니다.
-2차 리뷰는 검토 범위에서 새로운 P1/P2 결함을 발견하지 못했습니다.
+Verification date: October 9, 2026.
+T3 subagents split implementation across the tree, paths, CLI, and failure tests.
+Two separate reviews were performed.
+The second review found no new P1/P2 defects within its scope.
 
-## 자동 테스트
+## Automated tests
 
 ```sh
 bun test apps/mem
 bun run check
 ```
 
-mem 테스트는 37개가 통과했습니다.
-검증은 다음 경계를 포함합니다.
+All 37 mem tests passed.
+Verification covered these boundaries:
 
-- SQLite 재시작, 원문 보존, receipt 충돌과 재전달.
-- 자식 저장 후 부모 생성, 노드 불변, lease 경쟁과 만료.
-- 홀수 메시지 수와 메시지 48개의 전체 구간 덮기.
-- 요약 크기 초과, 입력 초과, 실패 후 재개.
-- Git worktree의 프로젝트 ID 공유와 저장소 이동.
-- XDG 경로, 설정 오류, API 키의 오류 응답 제외.
-- Unicode 원문 페이지, 검색 커서, JSON 응답 전체의 바이트 제한.
-- root script와 직접 CLI의 도움말 일치.
+- SQLite restarts, original text preservation, receipt conflicts, and redelivery.
+- Parent creation after child storage, node immutability, lease contention, and expiration.
+- Odd message counts and complete range coverage for 48 messages.
+- Oversized summaries, oversized input, and resuming after failure.
+- Shared project IDs across Git worktrees and repository relocation.
+- XDG paths, configuration errors, and excluding API keys from error responses.
+- Unicode text pagination, search cursors, and byte limits for entire JSON responses.
+- Matching help output between the root script and direct CLI invocation.
 
-## 실제 OpenCode GO 연결
+## Live OpenCode GO connection
 
-기존 CPA의 `/v1/chat/completions`에 `deepseek-v4.1-flash`로 요청했습니다.
-테스트 데이터는 다음 사건을 한국어로 기록한 원문 4개입니다.
+Requests used `deepseek-v4.1-flash` at the existing CPA's `/v1/chat/completions` endpoint.
+The test data contained four original Korean records describing these events:
 
-1. 사용자가 production 배포를 계획했지만 실행하지 않았습니다.
-2. 사용자가 해당 계획을 취소하고 staging 배포만 허용했습니다.
-3. staging에서 토큰 만료로 E731 오류가 발생했습니다.
-4. 사용자가 staging 제한과 production 취소를 유지했습니다.
+1. The user planned a production deployment but did not execute it.
+2. The user canceled that plan and authorized only a staging deployment.
+3. Staging encountered error E731 because of an expired token.
+4. The user retained the staging restriction and production cancellation.
 
-요약 목표는 256 UTF-8 바이트입니다.
-초기 출력 상한 1,024토큰에서 마지막 작업이 중단됐습니다.
-CLI는 원문 4개와 재개 정보를 유지했습니다.
-상한을 4,096토큰으로 높인 뒤 같은 generation에서 재개했습니다.
+The summary target was 256 UTF-8 bytes.
+The final operation stopped at the initial output limit of 1,024 tokens.
+The CLI retained all four original records and recovery information.
+After raising the limit to 4,096 tokens, work resumed in the same generation.
 
-결과는 메시지 4개, 요약 노드 7개, 미완료 잎 0개입니다.
-`mem start --max-bytes 768`의 실제 응답은 줄바꿈을 포함해 689바이트입니다.
-다음 내용은 반환한 최상위 요약입니다.
+The result contained 4 messages, 7 summary nodes, and 0 incomplete leaves.
+The actual response to `mem start --max-bytes 768` was 689 bytes, including the newline.
+The returned top-level summary is preserved below in its original Korean:
 
 > 사용자는 production 배포를 계획했으나 실행하지 않았고 이후 해당 계획을 취소해 production 배포는 금지되고 staging에만 배포해야 하며, staging에서 E731 오류(원인: 토큰 만료)를 확인했고 배포 성공은 확인하지 않았으며 이 결정을 유지했다.
 
-정상 파싱한 요약 응답은 7개입니다.
-해당 응답의 사용량 합계는 입력 3,047토큰과 출력 1,732토큰입니다.
-이 수치에는 앞서 잘린 응답의 사용량이 포함되지 않습니다.
-금액이나 구독 한도의 소모량은 측정하지 않았습니다.
+English translation: The user planned a production deployment but did not execute it, then canceled the plan. Production deployment was prohibited, and deployment was restricted to staging. E731 occurred in staging because of an expired token. Deployment success was not confirmed, and the user retained this decision.
 
-## 검증 한계
+Seven summary responses were parsed successfully.
+Their total reported usage was 3,047 input tokens and 1,732 output tokens.
+These totals exclude usage from the earlier truncated response.
+Monetary cost and subscription quota consumption were not measured.
 
-이 검증은 합성 사례 1개입니다.
-장기 대화의 기억 정확도와 메모리 부식 개선률은 측정하지 않았습니다.
-장시간 heartbeat, 여러 프로세스의 장애 주입, 실제 디스크 장애도 검증하지 않았습니다.
-요약 모델별 품질 비교와 모델별 엄격한 토큰 계산은 다음 마일스톤입니다.
+## Verification limits
 
-## 후속 구현 검증
+This verification used one synthetic case.
+Long-conversation memory accuracy and improvement in memory degradation were not measured.
+Long-running heartbeats, multiprocess fault injection, and real disk failures were not verified.
+Comparisons between summarization models and strict model-specific token accounting belong to the next milestone.
 
-트리 탐색, 원문 고정, 평가기를 추가한 뒤 테스트 67개가 통과했습니다.
-독립 리뷰는 검토 범위에서 새로운 P1/P2 결함을 발견하지 못했습니다.
-리뷰가 권고한 마이그레이션 rollback, 최대 식별자의 512바이트 응답, 원문 없는 고정의 해제도 검사했습니다.
-실제 32개 합성 기록의 완료·실패 결과는 [평가 기록](eval/RESULTS.md)에 있습니다.
-이 기록은 의미 정확도를 인증하지 않습니다.
+## Follow-up implementation verification
 
-## 담당 구간으로 입력 제한
+After adding tree navigation, verbatim pins, and the evaluator, all 67 tests passed.
+An independent review found no new P1/P2 defects within its scope.
+Checks also covered the review's recommendations: migration rollback, a 512-byte response with maximum-length identifiers, and removing a pin with a missing source.
+Completed and failed live runs with 32 synthetic records are documented in the [evaluation record](eval/RESULTS.md).
+This record does not certify semantic accuracy.
 
-외부 선행 기록을 제거한 뒤 테스트 81개와 전체 검사가 통과했습니다.
-재시도는 이전 응답을 다시 전달하지 않습니다.
-새 generation은 기존 요약과 분리됩니다.
-실제 32개 기록의 재실행과 모호한 취소 요청은 [range-only 검증](eval/RANGE_ONLY.md)에 있습니다.
+## Restricting input to the assigned range
+
+After removing earlier records outside the assigned range, all 81 tests and the full check passed.
+Retries do not resend previous responses.
+The new generation is separate from existing summaries.
+The live 32-record rerun and ambiguous cancellation request are documented in the [range-only verification](eval/RANGE_ONLY.md).

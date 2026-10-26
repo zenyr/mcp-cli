@@ -1,30 +1,30 @@
 # mcp-cli
 
-MCP 서버의 도구를 정적 명령으로 탐색하고 실행하는 CLI입니다.
-서버의 도구 정의를 코드로 생성하고, 서비스별 플러그인이 명령 경로와 사용 지침을 제공합니다.
+A CLI for discovering and running MCP server tools as static commands.
+It generates code from server tool definitions. Service plugins provide command paths and usage guidance.
 
-## 주요 특징
+## Features
 
-- 필요한 범위만 탐색합니다. 서비스, 명령 그룹, 개별 도구 순서로 도움말을 확인할 수 있습니다.
-- 도움말과 도구 목록은 서버 연결 없이 읽습니다. 도구 실행 시 연결하고 입력을 검증합니다.
-- 서버의 도구 이름을 그대로 호출하거나, 플러그인이 지정한 명령 경로를 사용합니다.
-- stdio와 Streamable HTTP 연결, OAuth와 API 키 인증을 지원합니다.
-- Notion, Linear, Slack, Fish Audio 플러그인과 외부 계정 없이 실행할 수 있는 데모를 포함합니다.
+- Explore only what you need, with help at the service, command group, and individual tool levels.
+- Read help and tool lists without connecting to a server. Connections and input validation happen when you run tools.
+- Call tools by their original server names or use command paths defined by plugins.
+- Use stdio and Streamable HTTP connections with OAuth or API key authentication.
+- Includes Notion, Linear, Slack, and Fish Audio plugins, plus a demo that requires no external account.
 
-## 저장소의 도구
+## Tools in this repository
 
-이 저장소의 주 도구는 `mcp-cli`입니다. 서비스별 명령은 플러그인으로 확장합니다.
-데스크톱 앱은 MCP CLI의 연결과 인증을 관리하는 트레이 앱입니다.
-CLI와 기본 플러그인을 포함하므로 별도 개발 도구를 설치하지 않고 실행할 수 있습니다.
+The main tool is `mcp-cli`. Plugins extend it with service-specific commands.
+The desktop tray app manages MCP CLI connections and authentication.
+It bundles the CLI and built-in plugins, so users do not need separate development tools.
 
-`mem`은 같은 저장소에서 개발하는 별도 기억 관리 CLI입니다.
-원문과 요약 트리를 로컬 SQLite에 저장하고, 프로젝트별 기억을 검색하고 조회합니다.
-`mcp-cli`의 하위 명령이나 MCP 플러그인이 아니며, 별도 설정과 저장소를 사용합니다.
+`mem` is a separate memory management CLI developed in this repository.
+It stores original text and summary trees in local SQLite and supports project-scoped memory search and retrieval.
+It has its own configuration and storage and is neither an `mcp-cli` subcommand nor an MCP plugin.
 
-## 문서
+## Documentation
 
-- [MCP CLI 사용 안내](apps/cli/README.md): 설치, 명령 탐색, 입력과 출력, 인증, 연결 대몬
-- [서비스별 플러그인 안내](plugins/README.md): 플러그인 목록, 작성법과 정적 생성
-- [데스크톱 앱 안내](apps/desktop/README.md): 실행, 네이티브 빌드와 대몬 관리
-- [mem 안내](apps/mem/README.md): 기억 저장, 검색, 요약과 복구
-- [개발 안내](docs/development.md): 패키지 구성, 워크트리와 품질 검사
+- [MCP CLI guide](apps/cli/README.md): installation, command discovery, input and output, authentication, and the connection daemon
+- [Plugin guide](plugins/README.md): available plugins, authoring, and static generation
+- [Desktop app guide](apps/desktop/README.md): running the app, native builds, and daemon management
+- [mem guide](apps/mem/README.md): storing, searching, summarizing, and recovering memory
+- [Development guide](docs/development.md): package layout, worktrees, and quality checks

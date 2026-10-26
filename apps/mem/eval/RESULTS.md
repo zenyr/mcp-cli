@@ -1,68 +1,68 @@
-# 32개 합성 기록의 요약 평가
+# Summary evaluation with 32 synthetic records
 
-> 이 문서와 보관한 JSON은 commit `da2151a`의 generation v2 스키마와 과거 문맥 정책을 기록합니다.
-> 현재 generation v3은 `range-only-v1`을 사용하며 외부 선행 기록과 이전 모델 응답을 전달하지 않습니다.
-> 아래 관측값은 현재 정책의 품질 검증 결과가 아닙니다. 아래 재현 명령은 `da2151a` checkout에서 실행하십시오.
+> This document and its archived JSON record the generation v2 schema and historical context policy at commit `da2151a`.
+> The current generation v3 uses `range-only-v1` and excludes earlier records outside the node's range and previous model responses.
+> The observations below do not validate the current policy's quality. Run the reproduction commands from a `da2151a` checkout.
 
-2026년 10월 9일에 OpenCode GO의 `deepseek-v4.1-flash`를 기존 CPA로 호출했습니다.
-두 실행은 같은 기록 32개와 요약 목표 512바이트를 사용했습니다.
-출력 상한은 4,096토큰이며 추론은 명시적으로 껐습니다.
-각 실행의 호출 상한은 80회입니다.
-각 조건은 한 번만 실행했습니다.
+On October 9, 2026, OpenCode GO's `deepseek-v4.1-flash` was called through the existing CPA.
+Both runs used the same 32 records and a 512-byte summary target.
+The output limit was 4,096 tokens, with reasoning explicitly disabled.
+Each run had a limit of 80 calls.
+Each condition was run only once.
 
-## 완료한 실행
+## Completed runs
 
-- 실제 선행 문맥: 호출 12회, 입력 7,826토큰, 출력 1,114토큰, 약 21.6초.
-- 문맥 격리: 호출 9회, 입력 3,426토큰, 출력 528토큰, 약 13.2초.
-- 두 실행은 구조적 깊이 5까지 완료했습니다.
-- 두 실행의 완료 호출에서 사용량 미확인 응답과 크기 축소 재시도는 없었습니다.
+- Actual preceding context: 12 calls, 7,826 input tokens, 1,114 output tokens, approximately 21.6 seconds.
+- Isolated context: 9 calls, 3,426 input tokens, 528 output tokens, approximately 13.2 seconds.
+- Both runs completed through structural depth 5.
+- Neither run's completed calls had unknown usage or size-reduction retries.
 
-토큰은 응답이 보고한 사용량입니다.
-금액과 구독 한도의 소모량은 측정하지 않았습니다.
-위 수치는 관측값이며 일반적인 개선률이나 최적 설정을 뜻하지 않습니다.
+Token counts are usage reported by responses.
+Monetary cost and subscription quota consumption were not measured.
+These figures are observations, not general improvement rates or optimal settings.
 
-## 수동 검토
+## Manual review
 
-두 최상위 요약에서 다음 내용을 확인했습니다.
+Both top-level summaries preserved the following:
 
-1. production 계획은 실행 전 취소했습니다.
-2. staging 검증만 허용하고 production을 금지했습니다.
-3. E731의 원인은 네트워크가 아닌 만료된 토큰입니다.
-4. 요청 접수는 배포 성공이나 승인으로 확정하지 않습니다.
+1. The production plan was canceled before execution.
+2. Only staging verification was authorized, and production was prohibited.
+3. E731 was caused by an expired token, not the network.
+4. Acceptance of a request does not establish deployment success or approval.
 
-문자열 검사에는 오탐이 있습니다.
-실제 문맥 실행은 `확인`이라는 단어를 생략했지만 완료 로그가 없다고 기록했습니다.
-두 실행의 `배포 성공`은 성공 확정을 금지하는 문장에 포함됩니다.
-따라서 누락 단어나 모순 후보의 개수는 의미 오류율로 사용하지 않습니다.
+String checks produce false positives.
+The actual-context run omitted the Korean word `확인` (confirmation) but stated that no completion log existed.
+Both runs included `배포 성공` (deployment success) in sentences prohibiting a conclusion of success.
+Counts of missing words or possible contradictions are therefore not semantic error rates.
 
-실제 문맥 실행의 깊이 4, index 1 노드는 구간 `[16,32)`을 담당합니다.
-그 요약에는 구간 밖인 index 2의 취소와 index 9의 E731 사실도 포함됐습니다.
-선행 문맥의 사실이 담당 구간 요약에 다시 들어온 사례입니다.
-이 현상은 원문을 탐색할 위치와 날짜의 해석을 혼동시킬 수 있습니다.
-이 사례만으로 문맥 격리가 항상 우수하다고 결론 내리지 않습니다.
+In the actual-context run, the node at depth 4, index 1 covered `[16,32)`.
+Its summary also included the cancellation at index 2 and E731 facts at index 9, both outside that range.
+This is an example of preceding context facts reappearing in a summary for a different range.
+The behavior can confuse where to find original text and how to interpret dates.
+This case alone does not establish that context isolation is always better.
 
-## 실패로 확인한 경계
+## Boundaries revealed by failures
 
-초기 구현은 작은 부모에도 LLM 축소를 강제했습니다.
-목표 크기보다 짧은 입력도 세 번의 축소 뒤 실패했습니다.
-구현은 짧은 부모의 두 자식을 그대로 보존하도록 수정했습니다.
+The initial implementation forced LLM compression even for small parents.
+Input shorter than the target still failed after three compression attempts.
+The implementation was changed to preserve both children's text verbatim for short parents.
 
-공급자 기본 추론으로 실행하면 두 조건 모두 출력 토큰 상한에서 중단됐습니다.
-이 실패 호출의 사용량은 알 수 없습니다.
-실패 실행의 알려진 토큰 합계를 완료 실행의 전체 비용과 비교하지 않습니다.
-제품의 기본 추론 설정은 변경하지 않았습니다.
+With provider-default reasoning, both conditions stopped at the output token limit.
+Usage for those failed calls is unknown.
+Known token totals from failed runs are not compared with the total cost of completed runs.
+The product's default reasoning setting was not changed.
 
-## 재현
+## Reproduction
 
 ```sh
 bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --thinking disabled --mode system --max-calls 80 --node-bytes 512 --output /tmp/mem-eval-system.json
 bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --thinking disabled --mode isolated --max-calls 80 --node-bytes 512 --output /tmp/mem-eval-isolated.json
 ```
 
-- [실제 문맥 보고서](results/deepseek-disabled-system-32.json).
-- [격리 보고서](results/deepseek-disabled-isolated-32.json).
-- [실제 문맥의 실패 기록](results/failures-system.json).
-- [격리의 실패 기록](results/failures-isolated.json).
+- [Actual-context report](results/deepseek-disabled-system-32.json).
+- [Isolation report](results/deepseek-disabled-isolated-32.json).
+- [Actual-context failure record](results/failures-system.json).
+- [Isolation failure record](results/failures-isolated.json).
 
-모델 간 비교, 에이전트의 탐색 성공률, 반복 실행의 분산은 측정하지 않았습니다.
-256개 이상의 기록과 실제 사용자 대화도 평가하지 않았습니다.
+Model comparisons, agent retrieval success rates, and variation across repeated runs were not measured.
+Neither datasets with 256 or more records nor real user conversations were evaluated.

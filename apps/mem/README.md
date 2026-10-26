@@ -1,17 +1,17 @@
 # mem
 
-`mem`은 이 저장소에서 함께 개발하는 독립 CLI입니다. `mcp-cli`의 하위 명령이나 MCP 플러그인이 아닙니다.
-MCP 서버 연결 없이 별도 설정과 SQLite 저장소를 사용합니다.
-명령은 저장소 루트에서 실행합니다. 설치와 개발 환경은 [개발 안내](../../docs/development.md)를 참고하십시오.
+`mem` is an independent CLI developed in this repository. It is neither an `mcp-cli` subcommand nor an MCP plugin.
+It uses its own configuration and SQLite storage without connecting to an MCP server.
+Run commands from the repository root. See the [development guide](../../docs/development.md) for installation and environment setup.
 
-`mem`은 원문과 요약 트리를 로컬 SQLite에 저장합니다. 기본 모델은 로컬 CPA의 OpenCode GO `deepseek-v4.1-flash`입니다.
+`mem` stores original text and summary trees in local SQLite. The default model is OpenCode GO's `deepseek-v4.1-flash` through the local CPA.
 
 ```sh
 bun run mem start
-bun run mem save '프로젝트 결정 사항'
+bun run mem save 'Project decisions'
 bun run mem save --stdin --kind talk < transcript.txt
 bun run mem save --file notes.txt --receipt 550e8400-e29b-41d4-a716-446655440000
-bun run mem recall '결정' --max-bytes 1024
+bun run mem recall 'decision' --max-bytes 1024
 bun run mem read '<scopeId>/0' --cursor 0
 bun run mem zoom '<scopeId>/0' --count 4 --generation '<generation>'
 bun run mem pin '<scopeId>/0' --key deploy-target --from 0 --to 20 --expected-revision 0 --receipt 550e8400-e29b-41d4-a716-446655440000
@@ -22,28 +22,28 @@ bun run mem status
 bun run mem config
 ```
 
-직접 실행하려면 `bun apps/mem/src/main.ts` 뒤에 같은 인수를 사용합니다.
+To run the CLI directly, pass the same arguments after `bun apps/mem/src/main.ts`.
 
-- `save`는 현재 Git 프로젝트에 저장합니다. Git 프로젝트 밖에서는 `--global`을 지정합니다.
-- `start`, `recall`, `status`, `summarize`는 기본으로 전역과 현재 프로젝트를 선택합니다.
-- `--global`과 `--project`는 함께 사용할 수 없습니다.
-- `start`는 모델을 호출하지 않습니다. 미완료 요약이 있으면 `mem summarize`를 안내합니다.
-- 저장 후 요약이 실패해도 원문은 남습니다. 오류의 `recordId`, `receipt`, `recoveryCommand`를 사용합니다.
-- 같은 receipt와 같은 원문은 같은 레코드를 반환합니다. 다른 원문은 충돌 오류를 반환합니다.
-- `recall`은 NFC 정규화와 소문자 변환으로 검색합니다. 결과는 최신순입니다.
-- `recall`의 `cursor`는 같은 검색어와 범위에서 사용합니다. 새 저장은 기존 페이지에 들어오지 않습니다.
-- `read`의 `cursor`는 원문의 Unicode scalar 위치입니다. 다음 페이지에 응답의 cursor를 전달합니다.
-- JSON 응답 전체와 마지막 줄바꿈은 `--max-bytes`에 포함됩니다. 기본값은 8192바이트입니다.
-- 성공과 오류는 stdout에 JSON 객체 하나를 출력합니다. 도움말은 일반 텍스트입니다.
-- 종료 코드는 성공 0, 실행 실패 1, 옵션 오류 2입니다.
+- `save` stores text in the current Git project. Outside a Git project, specify `--global`.
+- `start`, `recall`, `status`, and `summarize` select the global scope and current project by default.
+- `--global` and `--project` are mutually exclusive.
+- `start` does not call the model. If summaries are incomplete, it recommends `mem summarize`.
+- Original text remains stored even if summarization fails after saving. Use the error's `recordId`, `receipt`, and `recoveryCommand`.
+- The same receipt and original text return the same record. Different text with the same receipt produces a conflict error.
+- `recall` searches with NFC normalization and lowercase conversion. Results are ordered newest first.
+- Use a `recall` cursor with the same query and scope. Newly saved records do not enter existing pagination.
+- A `read` cursor is a Unicode scalar position in the original text. Pass the response cursor to read the next page.
+- `--max-bytes` includes the entire JSON response and its final newline. The default is 8192 bytes.
+- Successes and errors each print one JSON object to stdout. Help uses plain text.
+- Exit codes are 0 for success, 1 for execution failure, and 2 for option errors.
 
-`--model`과 `--base-url`로 연결 설정을 덮어쓸 수 있습니다. 연결은 `/chat/completions`를 제공하는 HTTP 서버를 사용합니다. `MEM_API_KEY`가 있으면 Authorization 헤더로 전달합니다.
+Override connection settings with `--model` and `--base-url`. The connection uses an HTTP server that provides `/chat/completions`. If set, `MEM_API_KEY` is sent in the Authorization header.
 
-## 설정과 저장 위치
+## Configuration and storage
 
-설정 파일은 `$XDG_CONFIG_HOME/mem/config.json`입니다. 변수가 없거나 상대 경로이면 `~/.config`를 사용합니다.
-원문과 요약은 `$XDG_DATA_HOME/mem/memory.sqlite`에 저장합니다. 변수가 없거나 상대 경로이면 `~/.local/share`를 사용합니다.
-SQLite는 WAL과 FULL 동기화를 사용합니다. 프로젝트별 원문과 글로벌 원문은 같은 파일에서 scope로 분리합니다.
+The configuration file is `$XDG_CONFIG_HOME/mem/config.json`. If the variable is missing or relative, the base directory is `~/.config`.
+Original text and summaries are stored in `$XDG_DATA_HOME/mem/memory.sqlite`. If the variable is missing or relative, the base directory is `~/.local/share`.
+SQLite uses WAL and FULL synchronization. Project and global records share one file, separated by scope.
 
 ```json
 {
@@ -57,74 +57,74 @@ SQLite는 WAL과 FULL 동기화를 사용합니다. 프로젝트별 원문과 �
 }
 ```
 
-`MEM_BASE_URL`, `MEM_MODEL`, `MEM_NODE_BYTES`는 파일 설정보다 우선합니다. `mem config`는 적용한 설정을 보여줍니다.
-`MEM_MAX_OUTPUT_TOKENS`는 모델의 출력 상한을 변경합니다. 추론 토큰도 해당 상한을 사용할 수 있습니다.
-`MEM_THINKING=enabled` 또는 `disabled`는 지원하는 공급자에 추론 모드를 명시합니다. 미지정 또는 `default`는 공급자 기본값을 사용합니다.
-이 설정은 공급자별 옵션입니다. 지원하지 않는 서버는 요청을 거부할 수 있습니다.
-출력 상한과 timeout 변경은 기존 generation을 유지하므로 중단된 작업을 재개할 수 있습니다.
-API 키는 `MEM_API_KEY`로만 받습니다. CLI는 API 키를 설정 출력에 포함하지 않습니다.
-이 버전은 임의 명령을 실행하는 요약 어댑터를 제공하지 않습니다.
+`MEM_BASE_URL`, `MEM_MODEL`, and `MEM_NODE_BYTES` override file settings. `mem config` shows the effective configuration.
+`MEM_MAX_OUTPUT_TOKENS` changes the model's output limit. Reasoning tokens may also consume this limit.
+`MEM_THINKING=enabled` or `disabled` explicitly sets reasoning mode for supported providers. An unset value or `default` uses the provider default.
+This option is provider-specific. Unsupported servers may reject the request.
+Changing the output limit or timeout preserves the generation, allowing interrupted work to resume.
+API keys are accepted only through `MEM_API_KEY`. The CLI excludes API keys from configuration output.
+This version does not provide a summarization adapter that runs arbitrary commands.
 
-프로젝트 ID는 Git 공통 디렉터리의 `mem-project-id` 파일에 저장합니다.
-`mem.project-id` Git 설정이 있으면 그 값을 우선합니다.
-연결된 worktree는 같은 프로젝트 기억을 사용합니다.
-별도 clone은 자동 연결하지 않습니다.
+The project ID is stored in `mem-project-id` in the Git common directory.
+The `mem.project-id` Git setting takes precedence when present.
+Linked worktrees share project memory.
+Separate clones are not linked automatically.
 
-## 요약과 복구
+## Summarization and recovery
 
-`save`는 원문을 먼저 기록합니다. 요약기는 긴 메시지를 압축하고 인접한 형제 요약을 부모로 병합합니다.
-짧은 잎은 출처를 포함한 원문을 유지합니다. 짧은 부모도 두 자식의 텍스트를 그대로 합칩니다.
-목표 크기를 넘는 입력에만 LLM을 사용합니다.
+`save` records the original text first. The summarizer compresses long messages and merges adjacent sibling summaries into parents.
+Short leaves retain the original text and its source. Short parents also concatenate both children's text without modification.
+Only input exceeding the target size uses the LLM.
 
-요약기는 사용자 결정, 정정, 금지, 실패 원인을 보존하도록 지시합니다.
-리프의 모델 입력은 해당 메시지뿐입니다. 부모의 모델 입력은 두 자식뿐입니다.
-재시도는 원본 입력과 축약 지시를 전달합니다. 이전 모델 응답과 외부 선행 기록은 전달하지 않습니다.
+The summarizer is instructed to preserve user decisions, corrections, prohibitions, and failure causes.
+A leaf's model input contains only its own message. A parent's input contains only its two children.
+Retries send the original input and compression instructions. They exclude previous model responses and earlier records outside the node's range.
 
-입력에서 대상이 불명확하면 요약기는 미확인 상태를 보존하도록 지시합니다.
-이 정책은 모델의 환각 부재를 보장하지 않습니다. 합성 기록의 관측은 [현재 정책의 검증](eval/RANGE_ONLY.md)에 기록합니다.
+When the input's referent is unclear, the summarizer is instructed to preserve that uncertainty.
+This policy does not guarantee freedom from hallucinations. Observations on synthetic records are documented in the [current policy verification](eval/RANGE_ONLY.md).
 
-노드의 목표는 기본 512 UTF-8 바이트입니다. 요약기는 목표의 1.25배 이하면서 입력보다 작은 응답을 수락합니다.
-길이 축소 요청은 최대 3회입니다. 재시도의 목표는 기본 목표의 75%, 50%로 줄입니다.
-최소 목표는 1바이트입니다.
-원래 source는 유지하며 이전 응답은 다시 전달하지 않습니다. 계속 초과하면 원문을 유지하고 오류를 반환합니다.
-현재 generation v3은 `range-only-v1` 정책을 사용합니다. 기존 캐시는 `mem summarize`로 새 트리를 만드십시오.
-요약의 설정을 바꾸면 새 generation에서 트리를 생성합니다. 기존 generation의 완성 노드는 변경하지 않습니다.
+The default node target is 512 UTF-8 bytes. The summarizer accepts responses at most 1.25 times the target and smaller than the input.
+There are at most three compression attempts. Retry targets decrease to 75% and 50% of the base target.
+The minimum target is 1 byte.
+The original source is preserved, and previous responses are not sent again. If the response remains oversized, the CLI preserves the original text and returns an error.
+The current generation v3 uses the `range-only-v1` policy. Rebuild trees from existing caches with `mem summarize`.
+Changing summarization settings creates a tree in a new generation. Completed nodes in earlier generations remain unchanged.
 
-`start`는 모든 원문 구간을 덮는 요약을 출력합니다. 선택기는 응답 전체가 예산에 들어갈 때까지 형제 요약을 병합합니다.
-예산을 충족하지 못하면 CLI는 `MEMORY_OVERFLOW`를 반환합니다. 일부 과거 구간을 조용히 제외하지 않습니다.
-`contextBytes`는 이전 설정과의 호환을 위해 받습니다. 요약기는 이 값을 모델 입력이나 generation 해시에 사용하지 않습니다.
+`start` outputs summaries covering every original text range. The selector merges sibling summaries until the entire response fits the budget.
+If the budget cannot be met, the CLI returns `MEMORY_OVERFLOW`. It does not silently omit older ranges.
+`contextBytes` is accepted for backward compatibility. The summarizer does not use it in model input or the generation hash.
 
-원문 한 건의 최대 크기는 1 MiB입니다. 모델 요청은 JSON과 지침을 포함해 `inputBytes`를 검사합니다.
-이 바이트 검사는 모델별 토큰 상한의 보장이 아닙니다.
-`usage`는 정상 파싱한 요약 응답의 사용량을 집계합니다. 실패하거나 잘린 응답의 과금량은 알 수 없습니다.
-`unmeasuredCalls`는 응답에 유효한 토큰 집계가 없었던 호출 수입니다.
+The maximum size of one original record is 1 MiB. Model requests are checked against `inputBytes`, including JSON and instructions.
+This byte check does not guarantee compliance with model-specific token limits.
+`usage` aggregates usage from successfully parsed summary responses. Charges for failed or truncated responses are unknown.
+`unmeasuredCalls` counts calls whose responses lacked valid token usage totals.
 
-세션 시작 지침이나 호스트 hook에서 `mem start`의 stdout을 문맥에 넣어야 시작 주입이 동작합니다.
-이 CLI는 호스트 지침과 hook을 자동 수정하지 않습니다.
+Startup injection requires session startup instructions or a host hook to insert `mem start` stdout into context.
+This CLI does not modify host instructions or hooks automatically.
 
-## 트리 탐색과 원문 고정
+## Tree navigation and verbatim pins
 
-`zoom`은 `start`가 반환한 generation과 주소를 사용합니다. `--count`는 2의 거듭제곱이어야 합니다.
-메시지 번호는 count의 배수여야 합니다. count가 1보다 크면 두 자식 요약을 반환합니다.
-count가 1이면 원문의 첫 페이지를 반환합니다. 후속 페이지에는 같은 generation과 반환 cursor를 사용합니다.
-조회는 모델을 호출하거나 미완료 노드를 생성하지 않습니다. 이전 generation의 노드도 조회할 수 있습니다.
+`zoom` uses the generation and address returned by `start`. `--count` must be a power of two.
+The message index must be a multiple of count. When count exceeds 1, the command returns two child summaries.
+When count is 1, it returns the first page of original text. Use the same generation and returned cursor for subsequent pages.
+Reads do not call the model or create incomplete nodes. Nodes from older generations remain readable.
 
-`pin`은 선택한 원문 구간을 시작 패킷에 그대로 포함합니다. `--from`과 `--to`는 Unicode scalar 기준의 `[from, to)`입니다.
-새 key는 `--expected-revision 0`을 사용합니다. 기존 key의 교체는 `pins`가 반환한 revision을 사용합니다.
-같은 receipt와 같은 요청은 과거의 처리 결과를 반환합니다. 후속 변경이 있으면 현재 상태는 `pins`로 다시 확인하십시오.
-`pins`는 revision과 원문 주소 및 범위를 반환합니다. 큰 원문을 다시 출력하지 않으며 본문은 `read`로 조회합니다.
-`unpin`은 고정을 해제합니다. 원문의 지시를 철회하거나 작업을 완료한다는 뜻은 아닙니다.
+`pin` includes the selected original text range verbatim in the startup packet. `--from` and `--to` define a Unicode scalar range `[from, to)`.
+For a new key, use `--expected-revision 0`. To replace an existing key, use the revision returned by `pins`.
+The same receipt and request return the previous operation's result. If later changes exist, query `pins` again for the current state.
+`pins` returns revisions, original text addresses, and ranges. It does not repeat large text bodies. Retrieve those with `read`.
+`unpin` removes a pin. It does not revoke instructions in the original text or mark a task complete.
 
-고정 변경의 기본 범위는 현재 프로젝트입니다. 글로벌 원문에는 `--global`을 지정합니다.
-한 scope는 활성 고정 8개까지 허용합니다. 선택한 scope 전체의 고정 블록 상한은 JSON 기준 2,048바이트입니다.
-모든 활성 고정은 필수입니다. 상한 초과는 `PIN_OVERFLOW`, 전체 패킷 초과는 `MEMORY_OVERFLOW`로 반환합니다.
-CLI는 고정을 조용히 제외하지 않습니다. 원문이 없어진 고정은 `SOURCE_UNAVAILABLE`로 표시하고 해제를 허용합니다.
+Pin changes default to the current project. Specify `--global` for global records.
+Each scope allows up to 8 active pins. The pin block across selected scopes is limited to 2,048 bytes of JSON.
+All active pins are mandatory. Exceeding the pin limit returns `PIN_OVERFLOW`. Exceeding the entire packet limit returns `MEMORY_OVERFLOW`.
+The CLI does not silently omit pins. Pins whose source text is missing are marked `SOURCE_UNAVAILABLE` and can be removed.
 
-고정의 kind는 호출자가 저장할 때 지정한 출처 표시입니다. 인증한 사용자 승인이나 사실 검증을 뜻하지 않습니다.
-요약 정책 변경은 원문 고정에 영향을 주지 않습니다. 기존 기억에서 `SUMMARY_PENDING`이 나오면 `mem summarize`로 새 트리를 만드십시오.
+A pin's kind is the source label supplied by the caller when saving. It does not indicate authenticated user approval or fact verification.
+Changes to summarization policy do not affect verbatim pins. If existing memory returns `SUMMARY_PENDING`, build a new tree with `mem summarize`.
 
-현재 버전은 자동 세션 hook, 엄격한 모델 token context 제한, 요약의 의미 품질 보장과 V2 전체 기능을 구현하지 않습니다.
+The current version does not implement automatic session hooks, strict model token context limits, semantic summary quality guarantees, or the full V2 feature set.
 
-[검증 기록](VERIFICATION.md)은 자동 테스트와 실제 OpenCode GO 요약의 결과를 구분합니다.
-[32개 기록의 과거 평가](eval/RESULTS.md)는 generation v2의 문맥 사용과 격리 실행, 실패 사례를 기록합니다.
-[현재 range-only 평가](eval/RANGE_ONLY.md)는 입력 경계와 같은 fixture의 재실행을 기록합니다.
+The [verification record](VERIFICATION.md) distinguishes automated tests from live OpenCode GO summarization results.
+The [historical 32-record evaluation](eval/RESULTS.md) records generation v2 runs with context, isolated runs, and failures.
+The [current range-only evaluation](eval/RANGE_ONLY.md) records input boundaries and a rerun using the same fixture.

@@ -1,77 +1,79 @@
-# 담당 구간만 전달하는 요약의 검증
+# Verification of range-only summarization
 
-2026년 10월 9일에 `range-only-v1` 정책을 검증했습니다.
-코드 기준은 `032d7bb`입니다.
-요약기는 외부 선행 기록을 전달하지 않습니다.
-리프는 자체 메시지, 부모는 두 자식 요약, 재시도는 같은 source와 축소 조건만 전달합니다.
+The `range-only-v1` policy was verified on October 9, 2026.
+The code baseline was `032d7bb`.
+The summarizer does not send earlier records outside the node's range.
+Leaves receive only their own message, parents receive their two child summaries, and retries receive the same source with compression constraints.
 
-## 자동 경계 검사
+## Automated boundary checks
 
-mem 테스트 81개와 타입 검사, 전체 검사가 통과했습니다.
-독립 리뷰는 검토 범위에서 P1/P2 결함을 발견하지 못했습니다.
-경계 테스트는 다음 경로를 검사했습니다.
+All 81 mem tests, type checking, and the full check passed.
+An independent review found no P1/P2 defects within its scope.
+Boundary tests checked the following paths:
 
-- 앞선 메시지와 다른 scope의 기억이 뒤쪽 리프에 섞이지 않습니다.
-- 부모는 해당 두 자식만 받습니다.
-- 호출자가 남긴 context, history, pin 속성은 HTTP 요청에서 제외합니다.
-- 거부한 모델 응답과 assistant 메시지는 재시도에 포함하지 않습니다.
-- 기존 generation v2의 노드는 새 generation v3에서 재사용하지 않습니다.
-- legacy contextBytes 설정은 요약 입력과 generation에 영향을 주지 않습니다.
+- Earlier messages and memory from other scopes do not enter later leaves.
+- Parents receive only their own two children.
+- Caller-supplied context, history, and pin properties are excluded from HTTP requests.
+- Rejected model responses and assistant messages are excluded from retries.
+- Generation v2 nodes are not reused in the new generation v3.
+- The legacy contextBytes setting does not affect summary input or generation.
 
-이 검사는 전달 자료의 경계를 확인합니다.
-모델의 사전지식과 환각을 제거했다는 뜻은 아닙니다.
+These checks verify the boundaries of supplied data.
+They do not establish that model prior knowledge or hallucinations have been eliminated.
 
-## 실제 32개 기록 평가
+## Live evaluation with 32 records
 
-OpenCode GO의 `deepseek-v4.1-flash`를 기존 CPA로 호출했습니다.
-과거 평가와 같은 합성 기록 32개를 사용했습니다.
-요약 목표는 512바이트, 출력 상한은 4,096토큰이며 추론은 명시적으로 껐습니다.
-실행은 한 번 완료했습니다.
+OpenCode GO's `deepseek-v4.1-flash` was called through the existing CPA.
+The run used the same 32 synthetic records as the historical evaluation.
+The summary target was 512 bytes, the output limit was 4,096 tokens, and reasoning was explicitly disabled.
+One run completed.
 
-- 구조 깊이 5까지 완료했습니다.
-- 모델 호출은 10회이며 축소 재시도는 1회입니다.
-- 알려진 입력은 4,566토큰, 출력은 809토큰입니다.
-- 전체 실행 시간은 약 17.8초입니다.
-- 완료 실행에는 사용량 미확인 응답이 없었습니다.
+- It completed through structural depth 5.
+- It made 10 model calls, including one compression retry.
+- Known usage was 4,566 input tokens and 809 output tokens.
+- Total runtime was approximately 17.8 seconds.
+- The completed run had no responses with unknown usage.
 
-문제였던 깊이 4, index 1의 구간은 `[16,32)`입니다.
-이번 요약은 요청 접수·완료 미확인과 사용자·도구 보고의 구분을 기록했습니다.
-구간 밖인 index 2의 production 취소와 index 9의 E731 사실은 이 요약에 나타나지 않았습니다.
-최상위 `[0,32)` 요약에서는 취소, staging 제한, E731 원인, 배포 성공 미확인을 확인했습니다.
+The previously problematic range at depth 4, index 1 was `[16,32)`.
+This summary recorded that request acceptance and completion were unconfirmed, and distinguished user reports from tool reports.
+It did not include the production cancellation at index 2 or E731 facts at index 9, both outside the range.
+The top-level `[0,32)` summary preserved the cancellation, staging restriction, E731 cause, and unconfirmed deployment success.
 
-요약은 일부 회의실 기록의 번호를 `16–23`으로 묶어 표현했습니다.
-이 범위에는 중요 기록 18도 있으므로 정밀한 번호 구분은 원문 대조가 필요합니다.
-입력 경계를 제한해도 범위 안의 사실을 부정확하게 묶는 문제는 남습니다.
+The summary grouped some meeting-room record numbers as `16–23`.
+That range also contains important record 18, so precise record distinctions require comparison with the original text.
+Restricting input boundaries does not eliminate inaccurate grouping of facts within a range.
 
-## 모호한 참조
+## Ambiguous references
 
-별도 요청은 “아까 그 계획 취소해 주세요.”를 반복한 단일 메시지만 전달했습니다.
-모델은 다음 66바이트 요약을 반환했습니다.
+A separate request supplied only one message repeating “아까 그 계획 취소해 주세요.” (Please cancel that earlier plan.)
+The model returned the following 66-byte summary in Korean:
 
 > 사용자가 "아까 그 계획"을 취소해 달라고 요청함.
 
-모델은 특정 계획의 이름이나 대상을 채우지 않았습니다.
-이 관측은 합성 사례 1개의 결과입니다.
+English translation: The user requested cancellation of “that earlier plan.”
 
-## 실패 후 보완
+The model did not invent a specific plan name or target.
+This observation comes from one synthetic case.
 
-첫 range-only 실행은 축소 재시도 3회에서 같은 길이의 응답을 반복해 중단됐습니다.
-구현은 이전 응답을 다시 주지 않고 목표 바이트만 75%, 50%로 낮추도록 보완했습니다.
-반복 문장은 한 번으로 압축하라는 지침도 추가했습니다.
-수락 상한과 원문 보존 정책은 유지했습니다.
-완료 결과를 얻기 위해 원문이나 구간을 잘라내지 않았습니다.
+## Changes after failure
 
-## 재현과 한계
+The first range-only run stopped after three compression attempts returned responses of the same length.
+The implementation was changed to reduce only the target bytes to 75% and 50%, without resending the previous response.
+An instruction to condense repeated sentences to a single occurrence was also added.
+The acceptance limit and original text preservation policy remained unchanged.
+Neither the original text nor its range was truncated to obtain a completed result.
+
+## Reproduction and limits
 
 ```sh
 bun apps/mem/eval/main.ts --live --records 32 --model deepseek-v4.1-flash --thinking disabled --mode range-only --max-calls 80 --node-bytes 512 --output /tmp/mem-eval-range-only32.json
 ```
 
-- [완료 보고서](results/deepseek-disabled-range-only-32.json).
-- [초기 길이 축소 실패](results/range-only-initial-size-failure.json).
-- [모호한 취소 요청](results/range-only-ambiguity.json).
+- [Completed report](results/deepseek-disabled-range-only-32.json).
+- [Initial size-reduction failure](results/range-only-initial-size-failure.json).
+- [Ambiguous cancellation request](results/range-only-ambiguity.json).
 
-과거 평가와는 프롬프트, 재시도 조건, generation 정책도 다릅니다.
-토큰 차이를 외부 문맥 제거만의 효과로 해석하지 않습니다.
-금액, 모델 간 비교, 반복 실행의 분산, 에이전트의 검색 성공률은 측정하지 않았습니다.
-문자열 검사는 의미 정확도나 환각 부재의 보장이 아닙니다.
+Prompts, retry conditions, and generation policy also differ from the historical evaluation.
+Token differences cannot be attributed solely to removing external context.
+Monetary cost, model comparisons, variation across repeated runs, and agent retrieval success rates were not measured.
+String checks do not guarantee semantic accuracy or freedom from hallucinations.

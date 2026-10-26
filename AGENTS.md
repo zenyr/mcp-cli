@@ -1,29 +1,29 @@
 # Working rules
 
-- 한국어 응답은 존댓말로 짧은 결론부터 작성합니다.
-- GitHub 작업에는 `gh`만 사용합니다.
-- 같은 저장소의 Git 쓰기 작업은 직렬로 실행합니다.
-- 코드 작성과 커밋 전에 `coding-rules` 스킬의 여섯 항목을 점검합니다.
-- 함수 구현은 arrow function을 사용합니다. 생성 코드는 예외입니다.
-- `any`, `as any`, `as unknown`, non-null assertion을 사용하지 않습니다. 생성 코드는 예외입니다.
-- 타입가드는 작은 유틸 함수 또는 테스트에서 제한적으로 사용합니다.
-- 파일은 350라인을 소프트캡으로 유지합니다. 생성 코드·fixture·테스트는 예외입니다.
-- SDK 의존성은 연결 구현에 둡니다. 서비스 설정과 정책은 플러그인에 둡니다.
-- 코드 주석은 한 문장 이내로 유지합니다.
+- Write Korean responses in polite language, starting with a short conclusion.
+- Use only `gh` for GitHub operations.
+- Serialize Git write operations within the same repository.
+- Check all six gates in the `coding-rules` skill before writing code and before committing.
+- Implement functions as arrow functions. Generated code is exempt.
+- Do not use `any`, `as any`, `as unknown`, or non-null assertions. Generated code is exempt.
+- Limit type guards to small utility functions or tests.
+- Keep files within a soft cap of 350 lines. Generated code, fixtures, and tests are exempt.
+- Keep SDK dependencies in connection implementations. Keep service configuration and policies in plugins.
+- Limit each code comment to one sentence.
 
 # Verification and commits
 
-- `bun run check`: oxlint, 코드 규칙, 타입 검사, 테스트
-- `bun run format`: oxfmt 자동 포맷
-- Lefthook은 커밋 전 staged 파일을 자동 포맷하고 재스테이지합니다.
-- 포맷 후 lint 실패는 수정합니다. 훅을 우회하지 않습니다.
-- 커밋 메시지는 `feat(scope): description`처럼 scope가 있는 Conventional Commit을 사용합니다.
-- 안정화된 변경을 검증한 뒤 슬라이스별로 커밋합니다.
-- 변경이 안정화되면 별도 요청 없이 메인 워크트리에 반영하고, 검증·빌드 후 커밋을 원격 `main`에 푸시합니다.
-- 기본 검증은 `bun run check`, CLI 빌드, macOS에서는 `bun run --cwd apps/desktop native:build`와 앱 서명 검증입니다.
-- 실행 중인 앱은 기본 빌드의 정상 종료·교체·재실행 절차를 사용합니다. 실행 경로에 직접 덮어쓰거나 강제 종료하지 않습니다.
-- 사용자 중단 지시, 검증 실패, 해결되지 않은 충돌, 권한·환경 제약 등으로 진행할 수 없으면 자동 반영·빌드·푸시를 멈추고 구체적인 이유와 남은 작업을 보고합니다.
-- 사용자의 미커밋 변경을 임의로 포함하거나 덮어쓰지 않고, 원격 이력을 강제 푸시하지 않습니다.
+- `bun run check`: oxlint, code rules, type checking, and tests.
+- `bun run format`: automatic formatting with oxfmt.
+- Lefthook automatically formats staged files and stages them again before commits.
+- Fix lint failures after formatting. Do not bypass hooks.
+- Use scoped Conventional Commit messages, such as `feat(scope): description`.
+- Verify stable changes and commit them in slices.
+- Once changes are stable, apply them to the main worktree without a separate request, then verify, build, and push the commits to remote `main`.
+- Default verification includes `bun run check`, a CLI build, and, on macOS, `bun run --cwd apps/desktop native:build` and app signature verification.
+- For a running app, use the standard build process to shut down, replace, and relaunch it gracefully. Do not overwrite the running executable or force-terminate the app.
+- Stop automatic integration, builds, and pushes if the user asks you to stop, verification fails, conflicts remain unresolved, or permissions or environment constraints prevent progress. Report the specific reason and remaining work.
+- Do not include or overwrite the user's uncommitted changes without authorization. Do not force-push remote history.
 
 <!-- BEGIN:turborepo-agent-rules -->
 

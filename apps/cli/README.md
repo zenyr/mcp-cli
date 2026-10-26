@@ -1,24 +1,24 @@
-# MCP CLI 사용 안내
+# MCP CLI guide
 
-MCP 서버의 도구를 정적 명령으로 탐색하고 실행하는 `mcp-cli`의 사용법입니다.
-명령은 저장소 루트에서 실행합니다. `mem`은 별도 CLI이며 [자체 안내](../mem/README.md)를 따릅니다.
+Use `mcp-cli` to discover and run MCP server tools as static commands.
+Run commands from the repository root. `mem` is a separate CLI with its [own guide](../mem/README.md).
 
-## 독립 실행 파일
+## Standalone executable
 
-`bun run --cwd apps/cli build`로 `apps/cli/dist/mcp-cli`를 만듭니다.
-이 명령은 개발자가 빌드할 때 사용합니다. 만들어진 실행 파일의 사용자는 Bun이나 소스 저장소가 필요하지 않습니다.
-기본 플러그인과 도구 정의는 실행 파일에 포함됩니다. 새 도구 정의는 사용자 캐시에 저장합니다.
-현재 빌드를 실행한 운영체제와 CPU용 실행 파일을 만듭니다.
+Run `bun run --cwd apps/cli build` to create `apps/cli/dist/mcp-cli`.
+Developers use this command to build the binary. Users of the resulting executable do not need Bun or the source repository.
+The executable bundles built-in plugins and tool definitions. New tool definitions are stored in the user cache.
+The build targets the operating system and CPU running the build command.
 
-## 시작
+## Getting started
 
-대몬을 사용하려면 데스크톱 앱에서 연결을 준비하거나 별도 터미널에서 `mcp-cli daemon start`를 실행하십시오.
-대몬이 꺼져 있으면 CLI가 직접 연결로 실행합니다.
-직접 연결이 필요하면 `MCP_CLI_DAEMON=0`을 지정하십시오.
+To use the daemon, prepare connections in the desktop app or run `mcp-cli daemon start` in a separate terminal.
+If the daemon is not running, the CLI connects directly.
+Set `MCP_CLI_DAEMON=0` to require a direct connection.
 
-최초 실행 시 설정 폴더를 자동으로 만듭니다. 기본 위치는 `~/.config/mcp-cli`입니다.
-`XDG_CONFIG_HOME`이나 `MCP_CLI_CONFIG`를 지정하면 해당 설정 파일의 상위 폴더를 만듭니다.
-기존 설정 파일은 변경하지 않습니다.
+The CLI creates the configuration directory on first use. The default location is `~/.config/mcp-cli`.
+If you set `XDG_CONFIG_HOME` or `MCP_CLI_CONFIG`, it creates the parent directory of the corresponding configuration file.
+It does not change existing configuration files.
 
 ```bash
 bun install
@@ -33,25 +33,25 @@ bun run cli demo call demo-echo --input '{"text":"hello"}'
 bun run check
 ```
 
-`demo`는 저장소 안의 로컬 stdio MCP 서버입니다. 외부 계정 없이 생성과 실행을 확인할 수 있습니다.
+`demo` is a local stdio MCP server in this repository. Use it to verify generation and execution without an external account.
 
-## 점진적 도움말
+## Progressive help
 
-- `demo --help`: 추천 명령(`Start here`), 명령 그룹, 발견 명령을 한 줄 설명과 함께 표시합니다.
-- `demo message --help`: 해당 그룹의 하위 명령을 한 줄 설명과 함께 표시합니다.
-- `demo message echo --help`: 해당 도구의 인자·타입·필수 여부·예시를 표시합니다.
-- `demo message echo --help=full`: 서버 설명 원문과 중첩된 입력·출력 JSON Schema까지 표시합니다.
-- `demo methods message --json`: 해당 그룹의 도구 이름과 명령 경로만 표시합니다.
-- `demo call --help`: 모든 도구의 MCP 이름과 첫 문장 요약을 표시합니다.
-- `demo call demo-echo --help`: 같은 도구의 help를 원래 MCP 이름으로 찾습니다.
-- `demo skill`: 플러그인의 서비스 사용 지침을 표시합니다.
+- `demo --help`: recommended commands (`Start here`), command groups, and discovery commands, each with a one-line description.
+- `demo message --help`: subcommands in the group, each with a one-line description.
+- `demo message echo --help`: tool arguments, types, required fields, and examples.
+- `demo message echo --help=full`: the original server description and nested input/output JSON Schemas.
+- `demo methods message --json`: only tool names and command paths in the group.
+- `demo call --help`: MCP names and first-sentence summaries for all tools.
+- `demo call demo-echo --help`: help for the same tool using its original MCP name.
+- `demo skill`: service usage guidance from the plugin.
 
-루트와 그룹 help는 하위 명령과 한 줄 요약만 표시합니다.
-개별 명령의 기본 help는 서버 설명 원문을 생략하고 인자 설명을 첫 문장, 최대 160자로 줄입니다.
-`methods`는 도구 이름·경로와 help와 같은 최대 80자 요약을 표시합니다.
-전체 스키마와 서버 원문은 `--help=full`에서 확인합니다. 이 명령도 서버에 연결하지 않습니다.
+Root and group help show only subcommands and one-line summaries.
+Default help for individual commands omits the original server description and limits argument descriptions to their first sentence, up to 160 characters.
+`methods` shows tool names, paths, and the same summaries as help, up to 80 characters.
+Use `--help=full` for complete schemas and original server descriptions. This command also works without a server connection.
 
-## 입력과 출력
+## Input and output
 
 ```bash
 bun run cli demo message echo --text '001' --uppercase
@@ -63,29 +63,29 @@ printf '{"text":"hello"}' | bun run cli demo message echo --input -
 bun run cli demo message echo --text=hello --count=2
 ```
 
-문자열 필드는 숫자처럼 보여도 문자열로 유지합니다. `--page-id`는 스키마의 `page_id`로 대응합니다.
-객체와 배열은 JSON 값을 받습니다. 중복 플래그는 거부합니다. 배열은 JSON 배열로 지정합니다.
-`--key=value`는 `--key value`와 같습니다. 값이 `--`로 시작하면 `=` 형식을 사용하십시오.
-nullable 필드는 `--x null`로 `null`을 지정합니다. 문자열 필드는 `null`을 문자열로 유지합니다.
-`--input-file -`은 `--input -`처럼 stdin을 읽습니다. 파일을 읽지 못하면 사용 오류를 반환합니다.
-JSON 입력, 파일 입력, 개별 플래그는 혼합할 수 없습니다. `--input`을 반복하면 사용 오류를 반환합니다.
-옵션 종료 표시 `--`는 지원하지 않습니다.
-기본 `call <tool-name>` 경로는 도구 이름을 그대로 씁니다. 그래서 `.`나 `/`가 든 이름도 매핑 없이 동작합니다.
-플러그인이 지정한 `path` 구간은 `[A-Za-z0-9_-]+` 형식이어야 합니다.
-생성 코드가 없거나 오래되었으면 CLI는 상태 1로 끝나고 `mcp-cli generate <service>` 실행을 안내합니다.
-플래그 형식이 전역 플래그(`--json`, `--help`, `--input`, `--input-file`)와 같은 속성은 `--input`으로만 지정합니다.
-help는 이 속성을 `set via --input only`로 표시합니다. `_`는 `-`로 바꿔 비교합니다.
-복잡한 `$ref`·조합 스키마의 입력은 `--input`을 사용하십시오. 전체 입력은 JSON Schema로 검증합니다.
-`$schema`가 없거나 2020-12이면 2020-12 규칙을 사용합니다. draft-07 선언과 draft-07 전용 스키마는 draft-07로 검증합니다.
+String fields remain strings even when they look like numbers. `--page-id` maps to `page_id` in the schema.
+Objects and arrays accept JSON values. Duplicate flags are rejected. Specify arrays as JSON arrays.
+`--key=value` is equivalent to `--key value`. Use the `=` form when a value starts with `--`.
+For nullable fields, `--x null` sets `null`. String fields keep `null` as a string.
+`--input-file -` reads stdin like `--input -`. Unreadable files produce a usage error.
+Do not mix JSON input, file input, and individual flags. Repeating `--input` produces a usage error.
+The `--` end-of-options marker is not supported.
+The default `call <tool-name>` path uses the tool name unchanged, so names containing `.` or `/` work without mappings.
+Plugin-defined `path` segments must match `[A-Za-z0-9_-]+`.
+If generated code is missing or outdated, the CLI exits with status 1 and asks you to run `mcp-cli generate <service>`.
+Properties whose flag form conflicts with global flags (`--json`, `--help`, `--input`, `--input-file`) can only be set through `--input`.
+Help labels these properties `set via --input only`. The comparison replaces `_` with `-`.
+Use `--input` for complex `$ref` or combined schemas. The entire input is validated against JSON Schema.
+Schemas without `$schema`, or with a 2020-12 declaration, use 2020-12 rules. Draft-07 declarations and draft-07-only schemas use draft-07 validation.
 
-기본 출력은 MCP의 텍스트 블록입니다. `--json`은 MCP 결과 전체를 보존합니다.
-도구가 `isError`를 반환하면 텍스트 결과를 stderr에 출력하고 종료 코드 `1`을 반환합니다. stdout은 비어 있습니다.
-`--json`을 지정하면 `isError` 결과도 stdout에 JSON으로 출력합니다. 종료 코드는 `1`입니다.
-CLI 사용 오류(`UsageError`)는 종료 코드 `2`, 연결·실행 오류는 `1`을 반환합니다.
-알 수 없는 명령, 잘못된 플래그·값, 입력 출처 혼합, 입력 스키마 검증 실패는 사용 오류입니다.
-입력 검증과 플러그인 정책이 통과한 뒤 서버에 연결합니다. 호출 종료 시 연결을 닫습니다.
+Default output consists of MCP text blocks. `--json` preserves the complete MCP result.
+When a tool returns `isError`, the CLI writes text results to stderr and exits with code `1`. stdout remains empty.
+With `--json`, it writes even `isError` results to stdout as JSON. The exit code is `1`.
+CLI usage errors (`UsageError`) exit with code `2`. Connection and execution errors exit with code `1`.
+Unknown commands, invalid flags or values, mixed input sources, and input schema validation failures are usage errors.
+The CLI connects to the server after input validation and plugin policies pass. It closes the connection after the call.
 
-## 리소스와 프롬프트
+## Resources and prompts
 
 ```bash
 bun run cli demo resources list
@@ -96,124 +96,124 @@ bun run cli demo prompts get summarize --text hello --style short
 bun run cli demo prompts get summarize --input '{"text":"hello"}' --json
 ```
 
-`resources`와 `prompts`는 실행할 때 서버에서 목록과 내용을 가져옵니다. 생성 코드에는 넣지 않습니다.
-두 명령은 서버에 연결합니다. `--help`와 `help resources`는 연결하지 않습니다.
-목록은 서버의 `nextCursor`를 끝까지 따라가서 모든 페이지를 합칩니다.
-서버가 해당 capability를 알리지 않으면 `MissingResourcesCapabilityError` 또는
-`MissingPromptsCapabilityError`로 실패합니다. 빈 목록으로 대체하지 않습니다. 종료 코드는 `1`입니다.
+`resources` and `prompts` fetch lists and content from the server at runtime. They are not included in generated code.
+Both commands connect to the server. `--help` and `help resources` do not connect.
+Lists follow the server's `nextCursor` to completion and combine all pages.
+If the server does not advertise the capability, the command fails with `MissingResourcesCapabilityError` or
+`MissingPromptsCapabilityError`. It does not substitute an empty list. The exit code is `1`.
 
-- `resources read <uri>`: 텍스트는 그대로 출력합니다. 바이너리는 안내 문구를 출력합니다. `--json`으로 base64를 받으십시오.
-- `prompts get <name>`: 먼저 `prompts/list`에서 프롬프트의 `arguments`를 읽습니다.
-  인자는 `--<name> value` 또는 `--input` JSON 객체로 지정합니다. 값은 모두 문자열입니다.
-- 알 수 없는 프롬프트, 알 수 없는 인자, 누락된 필수 인자는 사용 오류(종료 코드 `2`)입니다.
-- `--json`은 `resources`·`prompts` 결과를 구조화된 JSON으로 출력합니다.
+- `resources read <uri>`: prints text unchanged or a notice for binary content. Use `--json` to get base64.
+- `prompts get <name>`: first reads the prompt's `arguments` from `prompts/list`.
+  Supply arguments as `--<name> value` or an `--input` JSON object. All values are strings.
+- Unknown prompts, unknown arguments, and missing required arguments are usage errors (exit code `2`).
+- `--json` outputs structured JSON for `resources` and `prompts` results.
 
-플러그인 명령 경로는 `resources`나 `prompts`로 시작할 수 없습니다.
+Plugin command paths cannot start with `resources` or `prompts`.
 
-## 전역 명령
+## Global commands
 
-루트에서 `bun link`를 한 번 실행하면 `mcp-cli`와 서비스별 명령이 `~/.bun/bin`에 연결됩니다.
-서비스 명령은 `mcp-cli <service>`와 같습니다. 예: `notion page get --help`.
-링크된 명령도 기본으로 대몬을 우선 사용합니다. 대몬이 꺼져 있으면 직접 연결로 실행합니다.
-`MCP_CLI_DAEMON=0`을 지정하면 대몬을 확인하지 않고 직접 연결합니다.
-도움말은 대몬 없이 확인할 수 있습니다. `mem`은 별도 CLI이므로 이 설정을 사용하지 않습니다.
+Run `bun link` once at the root to link `mcp-cli` and service commands into `~/.bun/bin`.
+Service commands are equivalent to `mcp-cli <service>`. Example: `notion page get --help`.
+Linked commands also prefer the daemon by default. If it is not running, they connect directly.
+Set `MCP_CLI_DAEMON=0` to connect directly without checking for the daemon.
+Help works without the daemon. `mem` is a separate CLI and does not use this setting.
 
-플러그인 `package.json`의 `"mcp-cli"` 표식에 `"bin": "<name>"`을 넣으면 서비스 명령이 생깁니다.
-`bun run bins`가 루트 `bin` 필드와 `bin/<name>.ts` shim을 다시 씁니다. `bun run lint`는 둘이 맞는지 검사합니다.
-bin을 추가하거나 지운 뒤에는 `bun link`를 다시 실행하십시오.
+Add `"bin": "<name>"` to the `"mcp-cli"` marker in a plugin's `package.json` to create a service command.
+`bun run bins` rewrites the root `bin` field and `bin/<name>.ts` shims. `bun run lint` checks that they match.
+Run `bun link` again after adding or removing a binary.
 
-## 중복 실행 방지
+## Repeat protection
 
-`readOnlyHint`나 `idempotentHint`가 `true`가 아닌 도구는 같은 입력으로 다시 호출하면 거부합니다.
-annotation이 없는 도구도 거부 대상입니다. 거부는 서버에 연결하기 전에 일어나고 종료 코드는 `3`입니다.
+Tools without `readOnlyHint: true` or `idempotentHint: true` reject repeated calls with the same input.
+Tools without annotations are also protected. Rejection happens before connecting to the server and exits with code `3`.
 
-- 판정 키는 서비스, 도구 이름, 정규화한 입력의 SHA-256입니다.
-- 이전 호출이 성공했거나 결과를 모르는 상태(타임아웃, 강제 종료)면 거부합니다. 서버가 오류를 반환했으면 허용합니다.
-- 기본 기간은 5분입니다. `MCP_CLI_REPEAT_WINDOW`(초)로 바꾸고 `0`이면 끕니다.
-- `--allow-repeat`는 한 번만 검사를 건너뜁니다.
-- 기록은 `$XDG_STATE_HOME/mcp-cli/calls/<service>.json`(기본 `~/.local/state/...`)에 둡니다.
+- The key combines the service, tool name, and SHA-256 of normalized input.
+- A previous successful call or unknown outcome (timeout or forced termination) blocks repetition. A server error allows repetition.
+- The default window is 5 minutes. Set `MCP_CLI_REPEAT_WINDOW` in seconds to change it, or use `0` to disable it.
+- `--allow-repeat` skips the check once.
+- Records are stored in `$XDG_STATE_HOME/mcp-cli/calls/<service>.json` (default: `~/.local/state/...`).
 
-## 인증
+## Authentication
 
-플러그인은 `auth`로 인증 방식을 선언합니다. CLI가 실행 시에 자격 증명을 연결에 넣습니다.
+Plugins declare authentication through `auth`. The CLI supplies credentials to connections at runtime.
 
-| `auth`                                    | 동작                                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------- |
-| `{ type: "oauth" }`                       | `mcp-cli login <service>`로 받은 토큰을 요청마다 `Authorization`에 넣습니다         |
-| `{ type: "apiKey", env: "FISH_API_KEY" }` | 환경변수나 `mcp-cli login`으로 저장한 키를 `Authorization: Bearer <key>`로 보냅니다 |
-| `{ type: "none" }` 또는 생략              | 자격 증명을 넣지 않습니다                                                           |
+| `auth`                                    | Behavior                                                                                        |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `{ type: "oauth" }`                       | Adds the token obtained with `mcp-cli login <service>` to `Authorization` on each request       |
+| `{ type: "apiKey", env: "FISH_API_KEY" }` | Sends the environment variable or key saved by `mcp-cli login` as `Authorization: Bearer <key>` |
+| `{ type: "none" }` or omitted             | Supplies no credentials                                                                         |
 
 ```bash
-mcp-cli login notion    # 브라우저 로그인 후 토큰 저장
-mcp-cli logout notion   # 저장한 토큰 삭제
+mcp-cli login notion    # Log in through the browser and save the token.
+mcp-cli logout notion   # Delete the saved token.
 ```
 
-- `login`은 MCP 인증 사양의 순서를 따릅니다.
-  protected resource metadata, authorization server metadata, 동적 클라이언트 등록, PKCE 순서입니다.
-- redirect URI는 `http://127.0.0.1:<임의 포트>/callback`입니다. CLI는 인증 URL을 stderr에 출력하고 브라우저를 엽니다.
-- 브라우저를 열 수 없는 환경에서는 `mcp-cli login <service> --no-browser`를 실행하십시오.
-  CLI는 URL만 출력합니다. 다른 기기에서 URL을 열어 승인하십시오.
-  승인 후 이동한 `127.0.0.1` 주소가 열리지 않아도 됩니다. 그 주소 전체를 터미널에 붙여 넣으면 로그인이 끝납니다.
-- `MCP_CLI_NO_BROWSER=1`, SSH 세션, `DISPLAY`가 없는 Linux에서는 브라우저를 자동으로 열지 않습니다.
-- `login`은 `state`를 검사합니다. 5분 안에 응답이 없으면 실패합니다.
-- `oauth`의 `clientId`를 지정하면 동적 등록을 건너뜁니다. `scopes`, `clientName`, `redirectPort`도 지정할 수 있습니다.
-- `apiKey`의 `header`를 지정하면 scheme 없이 키만 보냅니다. `scheme`으로 접두어를 지정할 수 있습니다.
-- `apiKey` 서비스의 `mcp-cli login <service>`는 키를 숨김 입력으로 받거나 파이프의 표준 입력에서 읽어 저장합니다.
-  환경변수가 있으면 저장한 키보다 우선합니다. `mcp-cli logout <service>`가 저장한 키를 지웁니다.
-- `apiKey.alternates`는 같은 서비스의 다른 키를 선언합니다. 실행할 때 `--<flag>`로 고르고,
-  로그인과 로그아웃에도 같은 플래그를 붙입니다. 예: Slack의 `--xoxb`(`SLACK_MCP_BOT_TOKEN`).
-  stdio 연결에는 같은 이름의 환경변수로 키를 전달합니다.
-- 토큰은 `$XDG_CONFIG_HOME/mcp-cli/credentials/<service>.json`에 저장합니다. `XDG_CONFIG_HOME`이 없으면 `~/.config`를 씁니다.
-  디렉터리 권한은 `0700`, 파일 권한은 `0600`입니다. 임시 파일에 쓴 뒤 rename으로 교체합니다.
-- 만료 60초 전부터 또는 서버가 401을 반환하면 refresh token으로 갱신합니다.
-  갱신은 `<service>.lock`에 건 커널 `flock` 안에서 실행합니다. 여러 프로세스가 동시에 실행해도 갱신 요청은 한 번입니다.
-  잠금을 잡은 프로세스가 비정상 종료하면 커널이 잠금을 바로 해제합니다. lock 파일은 지우지 않고 남겨 둡니다.
-  `flock`이 없는 플랫폼은 heartbeat lock 파일을 씁니다. 15초 동안 갱신되지 않은 lock을 회수합니다.
-- 자격 증명이 없거나 refresh token이 거부되면 CLI는 `mcp-cli login <service>` 실행을 안내하고 상태 1로 끝납니다.
-- 다른 서버 URL에서 발급한 토큰은 보내지 않습니다. URL을 바꾸면 다시 로그인하십시오.
-- 연결이 `authorize`를 직접 제공하면 CLI는 저장한 토큰을 쓰지 않습니다.
-  Notion은 `NOTION_MCP_TOKEN`이 있으면 이 값을 우선합니다.
-- `logout`은 로컬 파일만 삭제합니다. 서버의 토큰 폐기(revocation)는 요청하지 않습니다.
+- `login` follows the MCP authentication sequence:
+  protected resource metadata, authorization server metadata, dynamic client registration, and PKCE.
+- The redirect URI is `http://127.0.0.1:<random port>/callback`. The CLI prints the authentication URL to stderr and opens the browser.
+- If a browser cannot open, run `mcp-cli login <service> --no-browser`.
+  The CLI only prints the URL. Open it on another device and approve access.
+  The redirected `127.0.0.1` address does not need to load. Paste the full address into the terminal to finish login.
+- The CLI does not automatically open a browser with `MCP_CLI_NO_BROWSER=1`, in SSH sessions, or on Linux without `DISPLAY`.
+- `login` validates `state` and fails if no response arrives within 5 minutes.
+- Setting OAuth `clientId` skips dynamic registration. You can also set `scopes`, `clientName`, and `redirectPort`.
+- Setting API key `header` sends only the key without a scheme. Use `scheme` to set a prefix.
+- For API key services, `mcp-cli login <service>` reads hidden input or piped stdin and saves the key.
+  The environment variable takes precedence over the saved key. `mcp-cli logout <service>` deletes the saved key.
+- `apiKey.alternates` declares other keys for the same service. Select one with `--<flag>` at runtime
+  and use the same flag for login and logout. Example: Slack's `--xoxb` (`SLACK_MCP_BOT_TOKEN`).
+  stdio connections receive keys through environment variables with the same names.
+- Tokens are stored in `$XDG_CONFIG_HOME/mcp-cli/credentials/<service>.json`. Without `XDG_CONFIG_HOME`, the CLI uses `~/.config`.
+  Directory permissions are `0700` and file permissions are `0600`. Writes use a temporary file followed by rename.
+- Tokens refresh starting 60 seconds before expiry, or after a server returns 401.
+  Refresh runs inside a kernel `flock` on `<service>.lock`, so concurrent processes make only one refresh request.
+  The kernel releases the lock immediately if its owner terminates unexpectedly. The lock file remains in place.
+  Platforms without `flock` use a heartbeat lock file and reclaim locks that have not refreshed for 15 seconds.
+- If credentials are missing or the refresh token is rejected, the CLI asks you to run `mcp-cli login <service>` and exits with status 1.
+- Tokens issued for another server URL are never sent. Log in again after changing the URL.
+- If a connection provides `authorize` directly, the CLI does not use saved tokens.
+  Notion gives `NOTION_MCP_TOKEN` precedence when set.
+- `logout` deletes local files only. It does not request server-side token revocation.
 
-MCP SDK의 OAuth 함수는 `packages/mcp`만 사용합니다. 저장소는 `packages/auth`가, 계약 타입은 `packages/core`가 제공합니다.
+Only `packages/mcp` uses the MCP SDK's OAuth functions. `packages/auth` provides storage, and `packages/core` provides contract types.
 
-## 연결 대몬
+## Connection daemon
 
 ```sh
 bun run cli daemon start
-# 다른 터미널에서 실행합니다.
+# Run in another terminal.
 bun run cli demo message echo --text hello
 bun run cli daemon status
 bun run cli daemon reset
 bun run cli daemon stop
 ```
 
-CLI는 기본으로 대몬 연결을 사용합니다. 출력과 종료 코드는 직접 연결과 같습니다.
-`MCP_CLI_DAEMON=0`을 지정하면 해당 명령만 직접 연결합니다.
-대몬이 꺼져 있으면 도구 요청을 보내기 전에 직접 연결로 전환합니다.
-도구 요청을 보낸 뒤 발생한 오류는 직접 연결로 재실행하지 않습니다.
-대몬은 최대 32개 연결을 유지하고, 요청이 없는 연결은 60초 뒤 닫습니다.
-초기화와 종료는 진행 중인 요청을 기다립니다. 실패한 도구 호출은 재시도하지 않습니다.
-대몬은 인증된 로컬 IPC를 사용합니다. `MCP_CLI_DAEMON_DIR`로 절대 경로를 지정할 수 있습니다.
-현재 시제품은 비정상 종료 후 남은 소유권 파일을 자동으로 복구하지 않습니다.
-트레이 앱은 [데스크톱 안내](../desktop/README.md)를 참고하십시오.
+The CLI uses daemon connections by default, with the same output and exit codes as direct connections.
+Set `MCP_CLI_DAEMON=0` to connect directly for a single command.
+If the daemon is not running, the CLI falls back to a direct connection before sending a tool request.
+Errors after sending a tool request do not trigger a retry through a direct connection.
+The daemon maintains up to 32 connections and closes idle connections after 60 seconds.
+Reset and shutdown wait for active requests. Failed tool calls are not retried.
+The daemon uses authenticated local IPC. Set `MCP_CLI_DAEMON_DIR` to an absolute path to customize its directory.
+The current prototype does not automatically recover ownership files left after abnormal termination.
+See the [desktop guide](../desktop/README.md) for the tray app.
 
-## 현재 지원 범위
+## Current support
 
-생성, 탐색, 입력 검증, 호출과 종료는 로컬 `demo`로 통합 검증합니다.
-stdio와 Streamable HTTP 연결을 제공하지만, 실제 연결 테스트는 stdio에 한정합니다.
-Notion, Linear, Slack과 Fish Audio는 실제 서버에서 생성한 정의와 명사·동사 명령 매핑을 포함합니다.
-Notion, Linear와 Fish Audio는 `mcp-cli login <service>`로 저장한 OAuth 토큰을 사용합니다.
-서비스별 인증 조건은 각 플러그인 안내를 참고하십시오.
+Generation, discovery, input validation, invocation, and shutdown are integration-tested with the local `demo`.
+Both stdio and Streamable HTTP connections are available, but live connection tests cover only stdio.
+Notion, Linear, Slack, and Fish Audio include definitions generated from real servers and noun–verb command mappings.
+Notion, Linear, and Fish Audio use OAuth tokens saved by `mcp-cli login <service>`.
+See each plugin's guide for its authentication requirements.
 
-기존 Notion CLI의 마크다운 명세 검사, 수정 보호와 위젯 기능은 아직 이전하지 않았습니다.
-SSE 연결과 리소스·프롬프트의 CLI 코드 생성은 지원하지 않습니다.
-리소스와 프롬프트는 실행 시 서버에서 조회합니다.
+Markdown specification checks, edit protection, and widgets from the previous Notion CLI have not been migrated.
+SSE connections and CLI code generation for resources and prompts are not supported.
+Resources and prompts are fetched from the server at runtime.
 
-`NOTION_MCP_TOKEN`과 `LINEAR_MCP_TOKEN`은 저장한 토큰보다 우선합니다.
-`*_MCP_URL`로 서버 URL을 바꿀 수 있습니다.
-HTTP 연결은 요청마다 `authorize`에서 헤더를 받습니다.
-서버가 401을 반환하면 `authorize({ refresh: true })`를 한 번 호출한 뒤 한 번만 재시도합니다.
+`NOTION_MCP_TOKEN` and `LINEAR_MCP_TOKEN` take precedence over saved tokens.
+Use `*_MCP_URL` to override server URLs.
+HTTP connections obtain headers from `authorize` on each request.
+If the server returns 401, the connection calls `authorize({ refresh: true })` once and retries only once.
 
 ```sh
 bun run cli login notion
@@ -221,7 +221,7 @@ bun run generate notion
 bun run cli notion page get --help
 ```
 
-## 관련 문서
+## Related documentation
 
-- [플러그인 작성과 정적 생성](../../plugins/README.md)
-- [개발 환경과 패키지 구성](../../docs/development.md)
+- [Plugin authoring and static generation](../../plugins/README.md)
+- [Development environment and package layout](../../docs/development.md)
