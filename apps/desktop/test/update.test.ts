@@ -2,50 +2,7 @@ import { expect, test } from "bun:test";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createDrainController } from "../shared/drain-controller";
 import { replaceArtifacts } from "../scripts/replace-artifacts";
-
-const deferred = () => {
-  let resolve = () => {};
-  const promise = new Promise<void>((finish) => {
-    resolve = finish;
-  });
-  return { promise, resolve };
-};
-
-test("update refuses new operations and waits for existing writes before shutdown", async () => {
-  const operations = createDrainController();
-  const write = deferred();
-  const events: string[] = [];
-  const pending = operations.run(async () => {
-    await write.promise;
-    events.push("saved");
-  });
-  const drain = operations
-    .drain(async () => {
-      events.push("cancel-login");
-    })
-    .then(() => {
-      events.push("quit");
-    });
-  expect(operations.accepting()).toBe(false);
-  await expect(operations.run(async () => {})).rejects.toThrow();
-  expect(events).toEqual(["cancel-login"]);
-  write.resolve();
-  await pending;
-  await drain;
-  expect(events).toEqual(["cancel-login", "saved", "quit"]);
-});
-
-test("failed requests also release the shutdown barrier", async () => {
-  const operations = createDrainController();
-  const pending = operations.run(async () => {
-    throw new Error("request failed");
-  });
-  const drain = operations.drain(async () => {});
-  await expect(pending).rejects.toThrow("request failed");
-  await drain;
-});
 
 const fixture = async (
   run: (directory: string, target: string, prepared: string) => Promise<void>,

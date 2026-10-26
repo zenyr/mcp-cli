@@ -92,6 +92,28 @@ test("limits comments to one sentence", async () => {
   expect((await run("scripts/check-code-rules.ts", file)).exitCode).toBe(0);
 });
 
+test("allows only synchronous generator callbacks on imported Effect.gen", async () => {
+  const file = join(directory, "effect.ts");
+  for (const code of [
+    'import { Effect } from "effect"; Effect.gen(function* () { yield* Effect.succeed(1); });',
+    'import { Effect as Fx } from "effect"; Fx.gen(function* () { yield* Fx.succeed(1); });',
+    'import * as Effect from "effect/Effect"; Effect.gen(function* () { yield* Effect.succeed(1); });',
+  ]) {
+    await writeFile(file, code);
+    expect((await run("scripts/check-code-rules.ts", file)).exitCode).toBe(0);
+  }
+  for (const code of [
+    "Effect.gen(function* () {});",
+    'import { Effect } from "other"; Effect.gen(function* () {});',
+    'import { Effect } from "effect"; Effect.gen(async function* () {});',
+    'import { Effect } from "effect"; Effect.gen(function () {});',
+    'import { Effect } from "effect"; const helper = function* () {};',
+  ]) {
+    await writeFile(file, code);
+    expect((await run("scripts/check-code-rules.ts", file)).exitCode).toBe(1);
+  }
+});
+
 test("exempts only files with the generated marker", async () => {
   const file = join(directory, "generated.ts");
   const code = "function generated(value: any) { return value! as unknown; }";

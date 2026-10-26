@@ -108,6 +108,8 @@ bun run native:build
 ```
 
 `bun run native:build` builds in a separate working directory, then replaces the artifacts.
+Before building, it compiles and runs the shared runtime tests with the detected TxikiJS executable.
+Test failure stops the build before any running app or existing artifacts are replaced.
 `bun run native:build --output /absolute/new-directory` exports to a new directory without installing or restarting the app.
 On macOS, it preserves the existing `dist` and running app until signature verification finishes.
 If an `.app` with the same app ID is running, it also updates that installation path.
@@ -125,6 +127,24 @@ If an `.app` with the same app ID is running, it also updates that installation 
 Older versions without update shutdown support wait for running CLI requests, stop the daemon, then use a normal macOS quit request.
 A second concurrent build is rejected.
 If a forcibly interrupted build leaves `.native-build.lock`, verify that no build is running before deleting the lock directory.
+
+### Shared runtime tests
+
+Normal development uses `bun test` and `bun run check`.
+The same portable tests also run under TxikiJS during every native build, including `dist:dmg`.
+Run them separately with `bun run --cwd apps/desktop test:txiki`.
+
+The suite covers shared login, shutdown, and sound controllers plus Effect typed errors,
+defects, Layers, resource finalization, interruption, Schema, and scheduling.
+It does not claim to run Bun-specific CLI, filesystem, native UI, or OS locking tests under TxikiJS.
+Add portable behavior to `runtime-tests/suite.ts` as new backend features are introduced.
+The Bun wrapper and compiled TxikiJS executable execute the same case functions.
+
+The runner uses `TJS_BIN` when explicitly set, then `tjs` on PATH, then the runtime next to the
+resolved tinyjs installation. It checks existence and reports the executable path, hash, and version.
+Missing runtimes fail the native build; they do not silently skip tests.
+An explicit `TJS_BIN` should identify the same runtime used for the application build.
+Runtime compatibility is established by these tests, not assumed from the engine name.
 
 `tinyjs build` builds an app for the host OS.
 The macOS artifact is `dist/MCP CLI.app`.

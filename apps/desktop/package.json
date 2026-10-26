@@ -11,7 +11,8 @@
     "desktop": "bun scripts/default-command.ts && tinyjs dev",
     "native:build": "bun scripts/native-build.ts",
     "dist:dmg": "bun scripts/distribution-build.ts",
-    "test": "bun test test"
+    "test": "bun test test",
+    "test:txiki": "bun scripts/test-txiki.ts"
   },
   "dependencies": {
     "@mantine/core": "^9.7.1",
@@ -32,6 +33,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "effect": "4.0.6",
     "typescript": "^5.9.3",
     "vite": "^8.3.0"
   }

@@ -59,6 +59,39 @@ for (const file of files) {
   const firstLine = content.split("\n", 1)[0] ?? "";
   if (firstLine === GENERATED_MARKER || firstLine.startsWith(`${GENERATED_MARKER} `)) continue;
   const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
+  const effectNames = new Set<string>();
+  for (const statement of source.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
+      continue;
+    const bindings = statement.importClause?.namedBindings;
+    if (statement.moduleSpecifier.text === "effect" && bindings && ts.isNamedImports(bindings))
+      for (const binding of bindings.elements)
+        if ((binding.propertyName?.text ?? binding.name.text) === "Effect")
+          effectNames.add(binding.name.text);
+    if (
+      statement.moduleSpecifier.text === "effect/Effect" &&
+      bindings &&
+      ts.isNamespaceImport(bindings)
+    )
+      effectNames.add(bindings.name.text);
+  }
+  const effectGenerator = (node: ts.Node): boolean => {
+    if (
+      !ts.isFunctionExpression(node) ||
+      !node.asteriskToken ||
+      node.modifiers?.some((item) => item.kind === ts.SyntaxKind.AsyncKeyword)
+    )
+      return false;
+    const call = node.parent;
+    return (
+      ts.isCallExpression(call) &&
+      call.arguments.includes(node) &&
+      ts.isPropertyAccessExpression(call.expression) &&
+      call.expression.name.text === "gen" &&
+      ts.isIdentifier(call.expression.expression) &&
+      effectNames.has(call.expression.expression.text)
+    );
+  };
   const reportAt = (position: number, message: string) => {
     const { line, character } = source.getLineAndCharacterOfPosition(position);
     console.error(`${file}:${line + 1}:${character + 1}: ${message}`);
@@ -66,7 +99,8 @@ for (const file of files) {
   };
   const report = (node: ts.Node, message: string) => reportAt(node.getStart(source), message);
   const visit = (node: ts.Node): void => {
-    if (ts.isFunctionExpression(node) || hasBody(node)) report(node, "Use an arrow function.");
+    if ((ts.isFunctionExpression(node) && !effectGenerator(node)) || hasBody(node))
+      report(node, "Use an arrow function.");
     if (ts.isNonNullExpression(node)) report(node, "Non-null assertions are prohibited.");
     if ((ts.isVariableDeclaration(node) || ts.isPropertyDeclaration(node)) && node.exclamationToken)
       report(node, "Definite assignment assertions are prohibited.");

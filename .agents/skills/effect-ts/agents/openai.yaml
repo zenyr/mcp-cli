@@ -1,0 +1,4 @@
+interface:
+  display_name: "Effect-TS Principles"
+  short_description: "Typed effects and deep modules for this repository"
+  default_prompt: "Use $effect-ts to apply this repository’s Effect principles."

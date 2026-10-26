@@ -3,11 +3,19 @@
 - Korean replies: polite, brief conclusion first.
 - GitHub: `gh` only. Serialize Git writes per repository.
 - Before coding and committing: check all six `coding-rules` gates.
-- Functions: arrows only. No `any`, `as any`, `as unknown`, or non-null assertions. Generated code exempt.
+- Functions: arrows only, except synchronous generator callbacks passed directly to imported `Effect.gen`. No `any`, `as any`, `as unknown`, or non-null assertions. Generated code exempt.
 - Type guards: limited to small utilities or tests.
 - File soft cap: 350 lines. Generated code, fixtures, tests exempt.
 - SDK dependencies: connection implementations. Service config/policies: plugins.
 - Code comments: one sentence maximum each.
+
+# Effect-TS
+
+- Read and apply [.agents/skills/effect-ts/SKILL.md](.agents/skills/effect-ts/SKILL.md) when designing or changing TypeScript application flows.
+- Prefer Effect for new asynchronous orchestration, typed failures, dependency injection, resource ownership, and concurrency.
+- Preserve pure functions and external contracts; migrate by complete module or use case rather than wrapping every function.
+- Treat tinyjs/TxikiJS compatibility as unverified until tested; do not assume incompatibility.
+- Keep development tests on Bun. Put portable backend tests in the shared runtime suite and run them under TxikiJS during every native build.
 
 # Verification and commits
 

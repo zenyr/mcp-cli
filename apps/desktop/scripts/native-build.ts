@@ -18,6 +18,7 @@ const run = async (args: string[], cwd = desktop) => {
   if ((await child.exited) !== 0) throw new Error(`빌드 명령에 실패했습니다: ${args[0]}`);
 };
 try {
+  await run([process.execPath, "scripts/test-txiki.ts"]);
   directory = await mkdtemp(join(dirname(desktop), ".desktop-build-"));
   await cp(desktop, directory, {
     recursive: true,
