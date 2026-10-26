@@ -18,6 +18,8 @@
     "@mcp-cli/codegen": "workspace:*",
     "@mcp-cli/core": "workspace:*",
     "@mcp-cli/mcp": "workspace:*",
-    "@mcp-cli/runtime": "workspace:*"
+    "@mcp-cli/runtime": "workspace:*",
+    "effect": "4.0.6",
+    "isomorphic-git": "1.37.4"
   }
 }

@@ -33,7 +33,7 @@ const readExisting = async (path: string): Promise<string | undefined> => {
 export const generate = async (args: string[], registry: Registry): Promise<void> => {
   const config = options(args);
   const discovered = findPlugin(registry, config.name);
-  const plugin = await loadPlugin(discovered);
+  const plugin = await loadPlugin(discovered, registry.context);
   const tools = config.snapshot
     ? decodeSnapshot(await Bun.file(config.snapshot).json())
     : await (async () => {

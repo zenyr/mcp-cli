@@ -1,4 +1,16 @@
+import { errorBrand, hasErrorBrand } from "./error-brand";
+
+const usageBrand = errorBrand("UsageError");
+const repeatedBrand = errorBrand("RepeatedCallError");
+const notGeneratedBrand = errorBrand("NotGeneratedError");
+
 export type JsonSchema = Record<string, unknown>;
+export type {
+  PluginPermissions,
+  MarketplaceAction,
+  MarketplacePlugin,
+  MarketplaceView,
+} from "./marketplace";
 /** MCP behavior hints; servers may omit them, and they are advisory rather than guarantees. */
 export type ToolAnnotations = {
   title?: string;
@@ -72,7 +84,14 @@ export type WebApiConfig = {
   downloadHosts?: string[];
 };
 export type Connection =
-  | { type: "stdio"; command: string; args?: string[]; cwd?: string; env?: Record<string, string> }
+  | {
+      type: "stdio";
+      command: string;
+      args?: string[];
+      cwd?: string;
+      env?: Record<string, string>;
+      isolatedEnv?: boolean;
+    }
   | {
       type: "http";
       url: string;
@@ -81,6 +100,7 @@ export type Connection =
       webApi?: WebApiConfig;
     };
 export type ServicePlugin = {
+  credentialNamespace?: string;
   authSupport?: import("./auth-support").AuthSupport;
   name: string;
   summary: string;
@@ -160,14 +180,21 @@ export type RepeatGuard = {
 /** An identical non-idempotent call already ran inside the repeat window; the CLI exits with status 3. */
 export class RepeatedCallError extends Error {
   override name = "RepeatedCallError";
+  readonly [repeatedBrand] = true;
+  static [Symbol.hasInstance] = (value: unknown): boolean => hasErrorBrand(value, repeatedBrand);
 }
 /** Invalid command-line usage; the CLI exits with status 2. */
 export class UsageError extends Error {
   override name = "UsageError";
+  readonly [usageBrand] = true;
+  static [Symbol.hasInstance] = (value: unknown): boolean => hasErrorBrand(value, usageBrand);
 }
 /** Generated code for a service is missing or outdated; the CLI exits with status 1. */
 export class NotGeneratedError extends Error {
   override name = "NotGeneratedError";
+  readonly [notGeneratedBrand] = true;
+  static [Symbol.hasInstance] = (value: unknown): boolean =>
+    hasErrorBrand(value, notGeneratedBrand);
 }
 export const COMMANDS = {
   help: "help",

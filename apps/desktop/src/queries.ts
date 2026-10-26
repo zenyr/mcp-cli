@@ -18,6 +18,13 @@ export const useServices = () =>
     staleTime: 30_000,
     retry: false,
   });
+export const usePlugins = () =>
+  useQuery({
+    queryKey: ["plugins"],
+    queryFn: () => call("plugins"),
+    staleTime: 10_000,
+    retry: false,
+  });
 const feedbackActions = new Set<keyof Api>([
   "start",
   "stop",
@@ -26,6 +33,7 @@ const feedbackActions = new Set<keyof Api>([
   "logout",
   "authConfig",
   "saveSettings",
+  "pluginAction",
 ]);
 
 export const useAction = <K extends keyof Api>(method: K, message?: string) => {
@@ -40,6 +48,7 @@ export const useAction = <K extends keyof Api>(method: K, message?: string) => {
       await Promise.all([
         client.invalidateQueries({ queryKey: ["status"] }),
         client.invalidateQueries({ queryKey: ["services"] }),
+        client.invalidateQueries({ queryKey: ["plugins"] }),
       ]);
     },
     onError: (error) => {

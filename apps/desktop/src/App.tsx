@@ -1,5 +1,5 @@
 import { AppShell, Badge, NavLink, Stack, Text } from "@mantine/core";
-import { IconKey, IconPlugConnected, IconSettings } from "@tabler/icons-react";
+import { IconKey, IconPlugConnected, IconSettings, IconPackage } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useHotkeys } from "@mantine/hooks";
 import { useStatus } from "./queries";
@@ -43,6 +43,13 @@ export const App = () => {
           MCP CLI
         </Text>
         <Stack gap={4}>
+          <NavLink
+            component={Link}
+            to="/plugins"
+            label="플러그인"
+            leftSection={<IconPackage size={16} />}
+            active={location.pathname === "/plugins"}
+          />
           <NavLink
             component={Link}
             to="/connections"

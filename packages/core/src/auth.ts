@@ -1,3 +1,7 @@
+import { errorBrand, hasErrorBrand } from "./error-brand";
+
+const authRequiredBrand = errorBrand("AuthRequiredError");
+
 /** How a service authenticates; plugins declare it and the CLI wires credentials at run time. */
 export type AuthSpec =
   | {
@@ -47,6 +51,9 @@ export type TokenStore = {
 /** Credentials are missing, expired without refresh, or rejected; the CLI exits with status 1. */
 export class AuthRequiredError extends Error {
   override name = "AuthRequiredError";
+  readonly [authRequiredBrand] = true;
+  static [Symbol.hasInstance] = (value: unknown): boolean =>
+    hasErrorBrand(value, authRequiredBrand);
 }
 
 export const loginRequired = (service: string, reason: string): AuthRequiredError =>

@@ -5,6 +5,10 @@ import { bundledPlugins, type BundledPlugin } from "./bundled";
 import { readConfig, type PluginReference, type UserConfig } from "./config";
 import { nodeModulePackages, readPackage, workspacePackages, type PackageInfo } from "./packages";
 import { configPath, type DiscoveryContext } from "./paths";
+import { readState, objectPath } from "./marketplace/storage";
+import { loadManagedPlugin } from "./marketplace/runtime";
+import type { Installed } from "./marketplace/schema";
+import { builtins } from "./marketplace/builtins";
 
 /** Top-level CLI commands that a service name may not shadow. */
 export const TOP_LEVEL_COMMANDS: readonly string[] = [
@@ -13,8 +17,18 @@ export const TOP_LEVEL_COMMANDS: readonly string[] = [
   "plugins",
   "login",
   "logout",
+  "auth",
+  "desktop",
+  "daemon",
+  "mcp-cli",
 ];
-export type PluginSource = "workspace" | "node_modules" | "config" | "bundled";
+export type PluginSource =
+  | "workspace"
+  | "node_modules"
+  | "config"
+  | "bundled"
+  | "installed"
+  | "development";
 export type DiscoveredPlugin = {
   service: string;
   packageName: string;
@@ -24,6 +38,8 @@ export type DiscoveredPlugin = {
   /** Where discovery found the package, for listings and duplicate errors. */
   origin: string;
   bundled?: BundledPlugin;
+  installed?: Installed;
+  runtimeDirectory?: string;
 };
 export type Registry = { context: DiscoveryContext; plugins: DiscoveredPlugin[] };
 type Candidate = { info: PackageInfo; source: PluginSource; origin: string };
@@ -101,6 +117,8 @@ const serviceOf = async ({ info, origin }: Candidate): Promise<string> => {
 
 // The same package reached through several roots (workspace links, config) counts once.
 export const discover = async (context: DiscoveryContext): Promise<Registry> => {
+  const state = await readState(context);
+  const builtin = await builtins();
   const seen = new Set<string>();
   const unique = (await candidates(context)).filter(({ info }) => {
     if (seen.has(info.dir)) return false;
@@ -119,7 +137,31 @@ export const discover = async (context: DiscoveryContext): Promise<Registry> => 
     origin: "bundled executable",
     bundled,
   }));
+  for (const installed of state.installed) {
+    const source =
+      installed.sourceId === "builtin"
+        ? builtin
+        : state.sources.find((item) => item.id === installed.sourceId);
+    const revoked = source?.catalog.revoked?.some(
+      (item) => item.id === installed.metadata.id && item.sha256 === installed.artifact.sha256,
+    );
+    if (!installed.enabled || revoked) continue;
+    const dir = installed.developmentPath ?? objectPath(context, installed.artifact.sha256);
+    plugins.push({
+      service: installed.metadata.service,
+      packageName: installed.metadata.id,
+      dir,
+      entry: "",
+      source: installed.developmentPath ? "development" : "installed",
+      origin: installed.sourceId,
+      installed,
+      runtimeDirectory: installed.runtime
+        ? objectPath(context, installed.runtime.sha256)
+        : undefined,
+    });
+  }
   for (const { info, source, origin, service } of resolved) {
+    if (state.installed.some((item) => item.metadata.service === service)) continue;
     const other = plugins.find((plugin) => plugin.service === service);
     if (other)
       throw new Error(
@@ -143,7 +185,12 @@ export const findPlugin = (registry: Registry, name: string): DiscoveredPlugin =
   return found;
 };
 
-export const loadPlugin = async (plugin: DiscoveredPlugin): Promise<ServicePlugin> => {
+export const loadPlugin = async (
+  plugin: DiscoveredPlugin,
+  context?: DiscoveryContext,
+): Promise<ServicePlugin> => {
+  if (plugin.installed)
+    return loadManagedPlugin(plugin.installed, plugin.dir, context?.env, plugin.runtimeDirectory);
   const loaded = plugin.bundled?.plugin ?? (await importPlugin(plugin.entry));
   if (loaded.name !== plugin.service)
     throw new Error(

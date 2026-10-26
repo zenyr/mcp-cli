@@ -2,6 +2,8 @@
 
 Service-specific connection settings and command mappings live in `plugins/<service>`.
 See the [MCP CLI guide](../apps/cli/README.md) for common commands.
+See [catalogs and packages](MARKETPLACE.md) for installation, metadata-only Git catalogs,
+independent releases, managed runtimes, and local development.
 
 ## Service guides
 

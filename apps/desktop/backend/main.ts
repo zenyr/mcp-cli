@@ -38,7 +38,7 @@ const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?:
     },
     isLogin
       ? 300_000
-      : ["reset", "logout", "auth-config"].includes(args[1] ?? "")
+      : ["reset", "logout", "auth-config", "plugin-action"].includes(args[1] ?? "")
         ? 600_000
         : args[1] === "auth-status"
           ? 30000
@@ -115,6 +115,9 @@ const checkDaemonStatus = async (app: DesktopApp) => {
 };
 let starting = false;
 export const api = {
+  plugins: (_params: unknown, app: DesktopApp) => run(app, ["desktop", "plugins"]),
+  pluginAction: (params: unknown, app: DesktopApp) =>
+    run(app, ["desktop", "plugin-action"], params),
   status: (_params: unknown, app: DesktopApp) => checkDaemonStatus(app),
   services: (_params: unknown, app: DesktopApp) => run(app, ["desktop", "services"]),
   start: (_params: unknown, app: DesktopApp) =>

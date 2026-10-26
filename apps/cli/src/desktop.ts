@@ -1,10 +1,12 @@
 import { createInterface } from "node:readline";
-import { credentialSwitches, isRecord, UsageError } from "@mcp-cli/core";
-import { authCredentialName, defaultStore, loginCommand, logoutCommand } from "./auth";
+import { isRecord, UsageError } from "@mcp-cli/core";
+import { defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
 import { authenticationDetails, configureAuthentication } from "./auth-settings";
+import { marketplaceRequest, marketplaceView } from "./marketplace/entry";
+import { desktopService } from "./desktop-services";
 
 const readAuthInput = async (): Promise<string> => {
   const lines = createInterface({ input: process.stdin });
@@ -30,43 +32,32 @@ export const desktopCommand = async (args: string[]) => {
   const [action, ...rest] = args;
   if (
     rest.length ||
-    !["services", "login", "logout", "auth-config", "auth-status"].includes(action ?? "")
+    ![
+      "services",
+      "login",
+      "logout",
+      "auth-config",
+      "auth-status",
+      "plugins",
+      "plugin-action",
+    ].includes(action ?? "")
   )
     throw new UsageError("Usage: mcp-cli desktop <services|login|logout|auth-config|auth-status>");
+  if (action === "plugins") {
+    console.log(JSON.stringify({ result: await marketplaceView() }));
+    return;
+  }
+  if (action === "plugin-action") {
+    console.log(
+      JSON.stringify({ result: await marketplaceRequest(JSON.parse(await readAuthInput())) }),
+    );
+    return;
+  }
   const registry = await discover(await defaultContext());
   const store = defaultStore();
   if (action === "services") {
     const services = await Promise.all(
-      registry.plugins.map(async (found) => {
-        const plugin = await loadPlugin(found);
-        const switches = credentialSwitches(plugin.auth);
-        const credentials = switches.some((credential) => credential.base)
-          ? switches
-          : [{ flag: "", summary: "기본 인증" }, ...switches];
-        return {
-          name: plugin.name,
-          summary: plugin.summary,
-          auth: plugin.auth?.type ?? "none",
-          authentication: await authenticationDetails(plugin),
-          credentials: await Promise.all(
-            credentials.map(async ({ flag, summary }) => ({
-              flag,
-              summary,
-              stored:
-                (await store.read(authCredentialName(plugin, flag || undefined))) !== undefined,
-              fromEnv:
-                plugin.auth?.type === "apiKey" &&
-                Boolean(
-                  process.env[
-                    flag
-                      ? (plugin.auth.alternates?.find((item) => item.flag === flag)?.env ?? "")
-                      : plugin.auth.env
-                  ],
-                ),
-            })),
-          ),
-        };
-      }),
+      registry.plugins.map((found) => desktopService(found, registry, store)),
     );
     console.log(JSON.stringify({ result: services }));
     return;
@@ -79,7 +70,7 @@ export const desktopCommand = async (args: string[]) => {
   )
     throw new UsageError("Invalid desktop auth request");
   const service = value.service;
-  const plugin = await loadPlugin(findPlugin(registry, service));
+  const plugin = await loadPlugin(findPlugin(registry, service), registry.context);
   if (action === "auth-config" || action === "auth-status") {
     if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
     console.log(
@@ -92,9 +83,12 @@ export const desktopCommand = async (args: string[]) => {
   const flags = credential ? [`--${credential}`] : [];
   if (value.method === "browser") flags.push("--browser");
   if (value.target !== undefined) {
-    if (value.target !== "mcp" && value.target !== "web")
+    const details = await authenticationDetails(plugin);
+    if (
+      typeof value.target !== "string" ||
+      !details?.states.some((state) => state.target === value.target)
+    )
       throw new UsageError("Invalid authentication target");
-    flags.push(`--${value.target}`);
   }
   const run = action === "login" ? loginCommand : logoutCommand;
   const controller = new AbortController();
@@ -105,6 +99,7 @@ export const desktopCommand = async (args: string[]) => {
       env: process.env,
       store,
       signal: controller.signal,
+      target: typeof value.target === "string" ? value.target : undefined,
       plugin: async (name) => loadPlugin(findPlugin(registry, name)),
       writeError: () => undefined,
       open: (url) => {

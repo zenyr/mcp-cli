@@ -1,8 +1,16 @@
 import type { SoundKind } from "../shared/ui-sounds";
-import type { AuthStatus } from "@mcp-cli/core";
-import type { SlackConfiguration } from "../../../plugins/slack/src/auth-types";
+import type {
+  AuthStatus,
+  AuthSettingsField,
+  MarketplaceAction,
+  MarketplaceView,
+} from "@mcp-cli/core";
 
-export type Authentication = { configuration: SlackConfiguration; states: AuthStatus[] };
+export type Authentication = {
+  configuration: Record<string, unknown>;
+  fields: AuthSettingsField[];
+  states: AuthStatus[];
+};
 
 export type Connection = {
   id: string;
@@ -26,6 +34,7 @@ export type Status =
     }
   | { online: false; error: string };
 export type Service = {
+  error?: string;
   name: string;
   summary: string;
   auth: "none" | "oauth" | "apiKey";
@@ -38,9 +47,11 @@ export type AuthInput = {
   credential?: string;
   secret?: string;
   method?: "browser";
-  target?: "mcp" | "web";
+  target?: string;
 };
 export type Api = {
+  plugins: { input: undefined; output: MarketplaceView };
+  pluginAction: { input: MarketplaceAction; output: { message: string } };
   status: { input: undefined; output: Status };
   services: { input: undefined; output: Service[] };
   start: { input: undefined; output: null };
@@ -49,7 +60,7 @@ export type Api = {
   login: { input: AuthInput; output: null | { cancelled: true } };
   logout: { input: AuthInput; output: null };
   authConfig: {
-    input: { service: string; configuration: SlackConfiguration };
+    input: { service: string; configuration: Record<string, unknown> };
     output: Authentication;
   };
   authStatus: { input: { service: string }; output: Authentication };

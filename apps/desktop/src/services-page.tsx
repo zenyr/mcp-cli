@@ -21,7 +21,7 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useAction, useServices } from "./queries";
 import type { Service } from "./ipc";
-import { SlackAuthPanel } from "./slack-auth-panel";
+import { AuthSettingsPanel } from "./auth-settings-panel";
 
 type Selection = { service: Service; credential: Service["credentials"][number] };
 export const ServicesPage = () => {
@@ -112,18 +112,23 @@ export const ServicesPage = () => {
               </Table.Thead>
               <Table.Tbody>
                 {data.flatMap((service) =>
-                  service.credentials.map((credential) => {
+                  (service.credentials.length
+                    ? service.credentials
+                    : [{ flag: "", summary: "", stored: false, fromEnv: false }]
+                  ).map((credential) => {
                     const item = { service, credential };
-                    const state =
-                      service.auth === "none"
+                    const state = service.error
+                      ? "불러오기 실패"
+                      : service.auth === "none"
                         ? "인증 없음"
                         : credential.fromEnv
                           ? "환경 변수 사용"
                           : credential.stored
                             ? "저장됨"
                             : "로그인 필요";
-                    const color =
-                      service.auth === "none"
+                    const color = service.error
+                      ? "red"
+                      : service.auth === "none"
                         ? "gray"
                         : credential.fromEnv
                           ? "violet"
@@ -140,7 +145,7 @@ export const ServicesPage = () => {
                                 {service.name}
                               </Text>
                               <Text size="xs" c="dimmed">
-                                {service.summary}
+                                {service.error ?? service.summary}
                               </Text>
                             </Stack>
                           </Group>
@@ -209,17 +214,14 @@ export const ServicesPage = () => {
         </Paper>
       )}
       {data
-        ?.filter((service) => service.name === "slack" && service.authentication)
+        ?.filter((service) => service.authentication)
         .map(
           (service) =>
             service.authentication && (
-              <SlackAuthPanel
+              <AuthSettingsPanel
                 key={`${service.name}:${dataUpdatedAt}`}
+                service={service.name}
                 authentication={service.authentication}
-                onToken={(flag) => {
-                  const credential = service.credentials.find((item) => item.flag === flag);
-                  if (credential) begin({ service, credential });
-                }}
               />
             ),
         )}

@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { bundledPlugins } from "./bundled";
+import { standalone } from "./marketplace/commands";
 
 export type Env = Record<string, string | undefined>;
 
@@ -68,7 +69,7 @@ const hasWorkspaces = async (dir: string): Promise<boolean> => {
 
 // Follows Node resolution order: node_modules beside each ancestor of the CLI package.
 export const defaultContext = async (env: Env = process.env): Promise<DiscoveryContext> => {
-  if (bundledPlugins().length)
+  if (standalone() || bundledPlugins().length)
     return {
       env,
       home: env.HOME || homedir(),

@@ -5,6 +5,7 @@ import { definePlugin } from "@mcp-cli/core";
 import { commands, groups, quickstart, skill } from "./commands";
 import { sanitizeTools } from "./sanitize";
 import { createSlackAuth } from "./auth-support";
+import { authFields } from "./auth-fields";
 export default definePlugin({
   name: "slack",
   summary: "Slack channels, threads, messages and reactions",
@@ -20,7 +21,7 @@ export default definePlugin({
   quickstart,
   skill,
   sanitizeTools,
-  authSupport: createSlackAuth(),
+  authSupport: { ...createSlackAuth(), fields: authFields },
   // Keeps the existing token route while authSupport handles explicitly configured browser login.
   auth: {
     type: "apiKey",

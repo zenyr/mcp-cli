@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, rename, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-test("installed binary discovers bundled plugins and runs without Bun or the checkout", async () => {
+test("installed binary activates independent plugin packages without Bun or the checkout", async () => {
   const directory = await mkdtemp(join(tmpdir(), "mcp-cli-bundle-"));
   const name = process.platform === "win32" ? "mcp-cli.exe" : "mcp-cli";
   const built = join(directory, name);
@@ -20,6 +20,7 @@ test("installed binary discovers bundled plugins and runs without Bun or the che
     expect(await build.exited, errors).toBe(0);
     await mkdir(join(directory, "installed"));
     await rename(built, installed);
+    await cp(`${built}.plugins`, `${installed}.plugins`, { recursive: true });
     const env = {
       ...process.env,
       HOME: directory,
@@ -49,18 +50,47 @@ test("installed binary discovers bundled plugins and runs without Bun or the che
     const plugins = await run("plugins");
     for (const name of ["demo", "notion", "linear", "slack", "fish-audio"])
       expect(plugins).toContain(name);
-    expect(plugins).toContain("generated (bundled)");
+    expect(plugins).toContain("available");
     expect(plugins).not.toContain(root);
+    await run("plugins", "install", "builtin", "builtin.demo");
+    await run("plugins", "enable", "demo", "--allow-local-code");
+    await run("plugins", "install", "builtin", "builtin.notion");
+    await run("plugins", "enable", "notion", "--allow-local-code");
     expect(await run("demo", "message", "echo", "--text", "설치 없이 실행")).toBe(
       "설치 없이 실행\n",
     );
+    if (process.platform !== "win32") {
+      const direct = Bun.spawn(
+        [
+          join(directory, ".local/bin/demo"),
+          "message",
+          "echo",
+          "--text",
+          "한 인수 $HOME ; literal",
+        ],
+        {
+          env,
+          cwd: directory,
+          stdout: "pipe",
+          stderr: "pipe",
+        },
+      );
+      expect(await direct.exited, await new Response(direct.stderr).text()).toBe(0);
+      expect(await new Response(direct.stdout).text()).toBe("한 인수 $HOME ; literal\n");
+    }
     expect(await run("notion", "--help")).toContain("page");
     await run("generate", "demo");
     expect(await run("demo", "message", "echo", "--text", "캐시 정의 사용")).toBe(
       "캐시 정의 사용\n",
     );
-    expect(await Bun.file(join(directory, "cache/mcp-cli/demo/generated.ts")).exists()).toBe(true);
-    expect(await run("plugins")).toContain("generated (cache)");
+    const cache = (await readdir(join(directory, "cache/mcp-cli"))).find((name) =>
+      name.startsWith("demo-"),
+    );
+    expect(cache).toBeDefined();
+    expect(
+      await Bun.file(join(directory, "cache/mcp-cli", cache ?? "", "generated.ts")).exists(),
+    ).toBe(true);
+    expect(await run("plugins")).toContain("enabled");
     const daemon = Bun.spawn([installed, "daemon", "start"], {
       cwd: directory,
       env,

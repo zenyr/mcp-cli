@@ -10,7 +10,11 @@ You do not need Bun, Node, tinyjs, or the source repository.
 The services screen opens on first launch. Click the login button for the service you want to use.
 For API key services, enter a key issued by that service.
 
-The app bundles the CLI and tool definitions for the built-in plugins. It creates the configuration directory automatically.
+The app includes the CLI host and independent packages for the default plugins.
+Open **Plugins** to install, activate, update, or remove plugins and add metadata-only Git catalogs.
+The page also registers service commands in PATH. Open **Services** to configure active plugins.
+It creates the configuration directory automatically.
+See the [catalog and package guide](../../plugins/MARKETPLACE.md) for development and publishing.
 Use the tray's open management window action to reopen the window.
 You do not need to set a CLI executable path. Use advanced settings only when you need a separate CLI.
 The use default command action clears a custom executable command.

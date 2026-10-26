@@ -76,7 +76,7 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
     if (!isAbsolute(request.cwd)) throw new UsageError("Daemon cwd must be absolute");
     const registry = await discover(await defaultContext(request.env));
     const found = findPlugin(registry, request.service);
-    const plugin = await loadPlugin(found);
+    const plugin = await loadPlugin(found, registry.context);
     const store = defaultStore(request.env);
     const config = await resolveConnection(plugin, request.env, store, request.credential);
     const identity = await extensionCacheScope(plugin, request.env, store, request.credential);
@@ -85,7 +85,11 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
       request.credential ?? credentialSwitches(plugin.auth).find((item) => item.base)?.flag;
     const connection =
       config.type === "stdio"
-        ? { ...config, cwd: config.cwd ?? request.cwd, env: { ...request.env, ...config.env } }
+        ? {
+            ...config,
+            cwd: config.cwd ?? request.cwd,
+            env: config.isolatedEnv ? config.env : { ...request.env, ...config.env },
+          }
         : config;
     return pool.use(
       key,

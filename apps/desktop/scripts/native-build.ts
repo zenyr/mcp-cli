@@ -36,10 +36,14 @@ try {
   await run([process.execPath, "scripts/sounds.ts"], directory);
   await run(["tinyjs", "build"], directory);
   await copyFile(binary, join(directory, "dist", name));
+  await cp(`${binary}.plugins`, join(directory, "dist", `${name}.plugins`), { recursive: true });
   await chmod(join(directory, "dist", name), 0o755);
   if (process.platform === "darwin") {
     const app = join(directory, "dist/MCP CLI.app");
     await copyFile(binary, join(app, "Contents/MacOS", name));
+    await cp(`${binary}.plugins`, join(app, "Contents/Resources", `${name}.plugins`), {
+      recursive: true,
+    });
     await chmod(join(app, "Contents/MacOS", name), 0o755);
     await run(["codesign", "--force", "--deep", "--sign", "-", app]);
     await run(["codesign", "--verify", "--deep", "--strict", app]);

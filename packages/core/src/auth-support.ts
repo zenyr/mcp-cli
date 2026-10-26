@@ -25,7 +25,15 @@ export type AuthStatus = {
   state: "missing" | "configured" | "stored" | "connected" | "expired" | "reauth" | "failed";
   detail: string;
 };
+export type AuthSettingsField = {
+  path: string[];
+  label: string;
+  description?: string;
+  type: "text" | "boolean" | "strings" | "select";
+  options?: { value: string; label: string }[];
+};
 export type AuthSupport = {
+  fields?: AuthSettingsField[];
   configure(context: AuthSupportContext, value: unknown): Promise<void>;
   configuration(context: AuthSupportContext): Promise<Record<string, unknown>>;
   status(context: AuthSupportContext, check: boolean): Promise<AuthStatus[]>;

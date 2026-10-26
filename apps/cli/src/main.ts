@@ -22,7 +22,7 @@ import {
 } from "./auth";
 import { generate } from "./generate";
 import { discover, findPlugin, loadPlugin } from "./discovery";
-import { listPlugins } from "./list";
+import { pluginsCommand } from "./marketplace/entry";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
 import { defaultRepeatGuard } from "./repeat";
@@ -75,12 +75,12 @@ export const main = async (argv: string[]): Promise<number> => {
     return EXIT.ok;
   }
   if (command === "plugins") {
-    console.log(await listPlugins(await registry(), args));
+    await pluginsCommand(args);
     return EXIT.ok;
   }
   const discovered = await registry();
   const found = findPlugin(discovered, command);
-  const plugin = await loadPlugin(found);
+  const plugin = await loadPlugin(found, discovered.context);
   const manifest = await loadManifest(discovered, found);
   return runService(plugin, manifest, args, {
     open: async (credential) => {

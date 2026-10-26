@@ -15,7 +15,7 @@ It generates code from server tool definitions. Service plugins provide command 
 
 The main tool is `mcp-cli`. Plugins extend it with service-specific commands.
 The desktop tray app manages MCP CLI connections and authentication.
-It bundles the CLI and built-in plugins, so users do not need separate development tools.
+It includes the CLI host and independently installable default plugin packages, so users do not need separate development tools.
 
 `mem` is a separate memory management CLI developed in this repository.
 It stores original text and summary trees in local SQLite and supports project-scoped memory search and retrieval.
