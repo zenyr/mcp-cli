@@ -4,11 +4,13 @@ The desktop app manages catalogs, installation, activation, credentials, and ser
 The standalone host contains the runtime, not service implementations.
 Its adjacent `mcp-cli.plugins` directory contains the default catalog and independent packages.
 Ship that directory together with the executable; the desktop build does this automatically.
-Default packages start inactive. Installing or refreshing a catalog never imports plugin code.
+No catalog is registered automatically. The included catalog appears as a recommendation.
+Loading that recommendation saves the catalog; installing its packages remains a separate action.
+Installing or refreshing a catalog never imports plugin code.
 
 ## User workflow
 
-1. Open **Plugins** and install a default plugin, or add an HTTPS Git repository.
+1. Open **Plugins**, load a recommended catalog or add an HTTPS Git repository, and install a plugin.
 2. Review the plugin's permissions and activate it.
 3. Open **Services** to log in.
 4. Select **Register in PATH** on the Plugins page, then open a new terminal.
@@ -197,6 +199,8 @@ authentication implementation; it does not import service-specific source types.
 
 ```sh
 mcp-cli plugins list --json
+mcp-cli plugins catalog recommended
+mcp-cli plugins catalog add builtin
 mcp-cli plugins catalog add https://git.example.com/team/catalog.git
 mcp-cli plugins catalog refresh <catalog-id>
 mcp-cli plugins install <catalog-id> <plugin-id>

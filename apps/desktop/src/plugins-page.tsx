@@ -47,6 +47,39 @@ export const PluginsPage = () => {
       {action.error && <Alert color="red">{action.error.message}</Alert>}
       {action.data && <Alert color="teal">{action.data.message}</Alert>}
       {isPending && <Text>플러그인 목록을 확인합니다.</Text>}
+      {data && !data.sources.length && !data.plugins.length && (
+        <Alert color="gray">
+          등록한 카탈로그가 없습니다. 추천 목록에서 선택하거나 저장소 주소를 추가하세요.
+        </Alert>
+      )}
+      {data &&
+        data.recommendations.some(
+          (item) => !data.sources.some((source) => source.id === item.id),
+        ) && (
+          <Paper withBorder p="md">
+            <Stack gap="sm">
+              <Title order={4}>추천 카탈로그</Title>
+              {data.recommendations
+                .filter((item) => !data.sources.some((source) => source.id === item.id))
+                .map((item) => (
+                  <Group key={item.id} justify="space-between" align="flex-start">
+                    <Stack gap={3}>
+                      <Text fw={500}>{item.name}</Text>
+                      <Text size="sm" c="dimmed">
+                        {item.description}
+                      </Text>
+                    </Stack>
+                    <Button
+                      disabled={action.isPending}
+                      onClick={() => run({ type: "source.add", url: item.url })}
+                    >
+                      불러오기
+                    </Button>
+                  </Group>
+                ))}
+            </Stack>
+          </Paper>
+        )}
       {data && (
         <Paper withBorder p="md">
           <Stack gap="sm">
@@ -177,39 +210,38 @@ export const PluginsPage = () => {
               추가
             </Button>
           </Group>
-          {data?.sources
-            .filter((source) => source.id !== "builtin")
-            .map((source) => (
-              <Group key={source.id} justify="space-between">
-                <Stack gap={2}>
-                  <Text size="sm" fw={500}>
-                    {source.name}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    {source.url} · {source.commit.slice(0, 8)}
-                  </Text>
-                </Stack>
-                <Group gap="xs">
-                  <Button
-                    size="xs"
-                    variant="default"
-                    disabled={action.isPending}
-                    onClick={() => run({ type: "source.refresh", id: source.id })}
-                  >
-                    목록 갱신
-                  </Button>
-                  <Button
-                    size="xs"
-                    color="red"
-                    variant="subtle"
-                    disabled={action.isPending}
-                    onClick={() => run({ type: "source.remove", id: source.id })}
-                  >
-                    제거
-                  </Button>
-                </Group>
+          {data?.sources.map((source) => (
+            <Group key={source.id} justify="space-between">
+              <Stack gap={2}>
+                <Text size="sm" fw={500}>
+                  {source.name}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {source.url === "builtin" ? "앱에 포함된 카탈로그" : source.url} ·{" "}
+                  {source.commit.slice(0, 8)}
+                </Text>
+              </Stack>
+              <Group gap="xs">
+                <Button
+                  size="xs"
+                  variant="default"
+                  disabled={action.isPending}
+                  onClick={() => run({ type: "source.refresh", id: source.id })}
+                >
+                  목록 갱신
+                </Button>
+                <Button
+                  size="xs"
+                  color="red"
+                  variant="subtle"
+                  disabled={action.isPending}
+                  onClick={() => run({ type: "source.remove", id: source.id })}
+                >
+                  제거
+                </Button>
               </Group>
-            ))}
+            </Group>
+          ))}
         </Stack>
       </Paper>
       <details>

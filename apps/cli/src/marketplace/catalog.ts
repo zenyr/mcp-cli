@@ -2,13 +2,7 @@ import type { MarketplaceView } from "@mcp-cli/core";
 import { builtins } from "./builtins";
 import { pathStatus, userBin } from "./commands";
 import { attempt, pluginKey, readState, type MarketContext } from "./storage";
-import {
-  selectArtifact,
-  type CatalogPlugin,
-  type Installed,
-  type Source,
-  type State,
-} from "./schema";
+import { selectArtifact, type CatalogPlugin, type Installed, type Source } from "./schema";
 
 export type PluginView = {
   key: string;
@@ -26,15 +20,12 @@ export const revoked = (sources: readonly Source[], plugin: Installed): string |
     ?.catalog.revoked?.find(
       (entry) => entry.id === plugin.metadata.id && entry.sha256 === plugin.artifact.sha256,
     )?.reason;
-export const allSources = async (state: State): Promise<Source[]> => {
-  const builtin = await builtins();
-  return [...(builtin ? [builtin] : []), ...state.sources];
-};
 
 export const marketView = (context: MarketContext) =>
   attempt("list plugins", async (): Promise<MarketplaceView> => {
     const state = await readState(context);
-    const sources = await allSources(state);
+    const sources = state.sources;
+    const builtin = await builtins();
     const plugins = new Map<string, PluginView>();
     for (const source of sources)
       for (const metadata of source.catalog.plugins) {
@@ -74,6 +65,17 @@ export const marketView = (context: MarketContext) =>
         });
     const commandDirectory = state.commands?.directory ?? userBin(context);
     return {
+      recommendations: builtin
+        ? [
+            {
+              id: builtin.id,
+              url: builtin.url,
+              name: "MCP CLI 기본 카탈로그",
+              description:
+                "zenyr/mcp-cli의 플러그인입니다. 앱에 포함된 목록을 선택해서 불러옵니다.",
+            },
+          ]
+        : [],
       sources: sources.map((source) => ({
         id: source.id,
         url: source.url,

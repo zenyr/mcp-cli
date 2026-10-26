@@ -42,7 +42,7 @@ export const marketplaceRequest = async (input: unknown) => {
 export const marketplaceView = async () => runMarketplace(marketView(await defaultContext()));
 
 const usage = `Usage: mcp-cli plugins [list [--json]]
-       mcp-cli plugins catalog <add URL|refresh ID|remove ID>
+       mcp-cli plugins catalog <recommended|add URL|refresh ID|remove ID>
        mcp-cli plugins install <catalog-id> <plugin-id>
        mcp-cli plugins <enable|disable|remove> <service> [--allow-local-code]
        mcp-cli plugins link <directory>
@@ -129,6 +129,11 @@ export const pluginsCommand = async (args: string[]): Promise<void> => {
   }
   if (action === "catalog") {
     const [operation, value] = rest;
+    if (operation === "recommended" && rest.length === 1) {
+      const view = await marketplaceView();
+      for (const item of view.recommendations) console.log(`${item.name}\t${item.url}`);
+      return;
+    }
     if (rest.length !== 2 || !value) throw new UsageError(usage);
     if (operation === "add")
       request = { type: "source.add", url: value.startsWith(".") ? resolve(value) : value };

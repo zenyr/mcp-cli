@@ -3,7 +3,8 @@ import { isAbsolute, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { Schema } from "effect";
 import { decodeManifest, UsageError, type MarketplaceAction } from "@mcp-cli/core";
-import { allSources, revoked } from "./catalog";
+import { revoked } from "./catalog";
+import { builtins } from "./builtins";
 import { installPath, launcher, syncCommands, userBin } from "./commands";
 import { installPackage, packageManifest, prepareRuntime } from "./packages";
 import { safePath } from "./archive";
@@ -130,12 +131,16 @@ export const manage = (context: ManagerContext, input: unknown) =>
     const action = decode(Action, input, "plugin action");
     signal.throwIfAborted();
     const state = await readState(context);
-    const sources = await allSources(state);
+    const sources = state.sources;
     let next: State = state;
     let message = "완료했습니다.";
     switch (action.type) {
       case "source.add": {
-        const source = await loadSource(context, action.url, signal);
+        const source =
+          action.url === "builtin"
+            ? await builtins()
+            : await loadSource(context, action.url, signal);
+        if (!source) throw new UsageError("The recommended catalog is not included in this app.");
         if (state.sources.some((item) => item.id === source.id))
           throw new UsageError("Catalog is already registered.");
         next = { ...state, sources: [...state.sources, source] };
@@ -144,7 +149,11 @@ export const manage = (context: ManagerContext, input: unknown) =>
       case "source.refresh": {
         const source = state.sources.find((item) => item.id === action.id);
         if (!source) throw new UsageError("Catalog not found.");
-        const updated = await loadSource(context, source.url, signal);
+        const updated =
+          source.url === "builtin"
+            ? await builtins()
+            : await loadSource(context, source.url, signal);
+        if (!updated) throw new UsageError("The recommended catalog is not included in this app.");
         const updatedSources = state.sources.map((item) =>
           item.id === action.id ? updated : item,
         );

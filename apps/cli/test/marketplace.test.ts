@@ -14,8 +14,16 @@ import { defaultStore } from "../src/auth";
 import { gunzipSync } from "node:zlib";
 import { runMarketplace } from "../src/marketplace/entry";
 import { manage, type ManagerContext } from "../src/marketplace/manager";
+import { marketView } from "../src/marketplace/catalog";
 import { packDirectory, safePath, unpack } from "../src/marketplace/archive";
-import { digest, pluginKey, marketRoot, readState, transaction } from "../src/marketplace/storage";
+import {
+  digest,
+  pluginKey,
+  marketRoot,
+  readState,
+  writeState,
+  transaction,
+} from "../src/marketplace/storage";
 import {
   Catalog,
   decode,
@@ -389,4 +397,38 @@ test("package output normalizes tar timestamps for reproducible hashes", async (
   const tar = gunzipSync(first);
   expect(new TextDecoder().decode(tar.subarray(136, 148))).toBe("00000000000\0");
   expect(unpack(first).has("plugin.json")).toBe(true);
+});
+
+test("viewing recommendations does not register a catalog or create state", async () => {
+  const f = await fixture();
+  const context = {
+    ...f.context,
+    env: { ...f.context.env, MCP_CLI_CONFIG: join(f.root, "fresh/config.json") },
+  };
+  const stateFile = join(marketRoot(context), "state.json");
+  const view = await runMarketplace(marketView(context));
+  expect(view.sources).toEqual([]);
+  expect(view.plugins).toEqual([]);
+  expect(await Bun.file(stateFile).exists()).toBe(false);
+});
+
+test("legacy builtin installations remain enabled without forcing their catalog registration", async () => {
+  const f = await fixture();
+  await f.run({ type: "plugin.install", sourceId: f.sourceId, pluginId: f.plugin.id });
+  await f.run({ type: "plugin.enable", key: f.key, enabled: true, allowLocalCode: true });
+  const installed = (await readState(f.context)).installed[0];
+  if (!installed) throw new Error("Missing installed fixture");
+  const state = {
+    ...(await readState(f.context)),
+    sources: [],
+    installed: [{ ...installed, sourceId: "builtin" }],
+  };
+  await writeState(f.context, state);
+  const view = await runMarketplace(marketView(f.context));
+  expect(view.sources).toEqual([]);
+  expect(view.plugins).toHaveLength(1);
+  expect(view.plugins[0]?.enabled).toBe(true);
+  expect(await readState(f.context)).toEqual(state);
+  const registry = await discover({ ...f.context, nodeModules: [], writable: async () => false });
+  expect(findPlugin(registry, "hello").installed?.enabled).toBe(true);
 });

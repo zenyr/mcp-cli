@@ -9,8 +9,9 @@ Run `bun run --cwd apps/cli build` to create `apps/cli/dist/mcp-cli`.
 Developers use this command to build the binary. Users of the resulting executable do not need Bun or the source repository.
 The build creates the host executable and an adjacent `mcp-cli.plugins` directory.
 The directory contains the default catalog and independent plugin packages; distribute both together.
-Default plugins start inactive. Install and activate them in the desktop app or with
-`mcp-cli plugins install builtin builtin.<service>` and `mcp-cli plugins enable <service> --allow-local-code`.
+The included catalog is an optional recommendation and is not registered automatically.
+Load it in the desktop app or with `mcp-cli plugins catalog add builtin`, then install with
+`mcp-cli plugins install builtin builtin.<service>` and activate with `mcp-cli plugins enable <service> --allow-local-code`.
 New tool definitions are stored in the user cache.
 The build targets the operating system and CPU running the build command.
 

@@ -31,6 +31,7 @@ export type MarketplacePlugin = {
   revoked?: string;
 };
 export type MarketplaceView = {
+  recommendations: { id: string; url: string; name: string; description: string }[];
   sources: { id: string; url: string; commit: string; name: string }[];
   plugins: MarketplacePlugin[];
   commandDirectory: string;

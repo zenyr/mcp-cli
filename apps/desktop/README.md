@@ -12,6 +12,7 @@ For API key services, enter a key issued by that service.
 
 The app includes the CLI host and independent packages for the default plugins.
 Open **Plugins** to install, activate, update, or remove plugins and add metadata-only Git catalogs.
+Catalogs start empty; select **Load** under recommended catalogs to add the included catalog.
 The page also registers service commands in PATH. Open **Services** to configure active plugins.
 It creates the configuration directory automatically.
 See the [catalog and package guide](../../plugins/MARKETPLACE.md) for development and publishing.

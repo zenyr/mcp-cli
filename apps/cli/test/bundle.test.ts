@@ -47,6 +47,12 @@ test("installed binary activates independent plugin packages without Bun or the 
       expect(code, stderr).toBe(0);
       return stdout;
     };
+    const empty = JSON.parse(await run("plugins", "list", "--json"));
+    expect(empty.sources).toEqual([]);
+    expect(empty.plugins).toEqual([]);
+    expect(empty.recommendations.map((item: { id: string }) => item.id)).toEqual(["builtin"]);
+    expect(await run("plugins", "catalog", "recommended")).toContain("builtin");
+    await run("plugins", "catalog", "add", "builtin");
     const plugins = await run("plugins");
     for (const name of ["demo", "notion", "linear", "slack", "fish-audio"])
       expect(plugins).toContain(name);
@@ -111,6 +117,13 @@ test("installed binary activates independent plugin packages without Bun or the 
       expect(await run("demo", "message", "echo", "--text", "대몬 없이 실행")).toBe(
         "대몬 없이 실행\n",
       );
+      await run("plugins", "remove", "demo");
+      await run("plugins", "remove", "notion");
+      await run("plugins", "catalog", "remove", "builtin");
+      const removed = JSON.parse(await run("plugins", "list", "--json"));
+      expect(removed.sources).toEqual([]);
+      expect(removed.plugins).toEqual([]);
+      expect(removed.recommendations).toHaveLength(1);
     } finally {
       if (daemon.exitCode === null) daemon.kill();
       await daemon.exited;
