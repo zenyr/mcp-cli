@@ -7,6 +7,9 @@ Web API and MCP routes do not fall back to each other on failure.
 
 ## Authentication and execution
 
+See [Slack authentication](./AUTHENTICATION.md) for App-specific PKCE browser login,
+token input, separate MCP/Web API settings, refresh behavior, and verification limits.
+
 ```sh
 mcp-cli login slack
 mcp-cli login slack --xoxb

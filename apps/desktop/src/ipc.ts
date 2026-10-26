@@ -1,4 +1,8 @@
 import type { SoundKind } from "../shared/ui-sounds";
+import type { AuthStatus } from "@mcp-cli/core";
+import type { SlackConfiguration } from "../../../plugins/slack/src/auth-types";
+
+export type Authentication = { configuration: SlackConfiguration; states: AuthStatus[] };
 
 export type Connection = {
   id: string;
@@ -25,10 +29,17 @@ export type Service = {
   name: string;
   summary: string;
   auth: "none" | "oauth" | "apiKey";
+  authentication?: Authentication;
   credentials: { flag: string; summary: string; stored: boolean; fromEnv: boolean }[];
 };
 export type Settings = { cliCommand: string[]; autoStart: boolean; soundsEnabled: boolean };
-export type AuthInput = { service: string; credential?: string; secret?: string };
+export type AuthInput = {
+  service: string;
+  credential?: string;
+  secret?: string;
+  method?: "browser";
+  target?: "mcp" | "web";
+};
 export type Api = {
   status: { input: undefined; output: Status };
   services: { input: undefined; output: Service[] };
@@ -37,6 +48,11 @@ export type Api = {
   reset: { input: undefined; output: null };
   login: { input: AuthInput; output: null | { cancelled: true } };
   logout: { input: AuthInput; output: null };
+  authConfig: {
+    input: { service: string; configuration: SlackConfiguration };
+    output: Authentication;
+  };
+  authStatus: { input: { service: string }; output: Authentication };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };
   saveSettings: { input: { cliCommand?: string[] | null; autoStart: boolean }; output: null };

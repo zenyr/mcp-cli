@@ -4,6 +4,7 @@ import { postPolicy, requireAttachment } from "./web-payload";
 import { definePlugin } from "@mcp-cli/core";
 import { commands, groups, quickstart, skill } from "./commands";
 import { sanitizeTools } from "./sanitize";
+import { createSlackAuth } from "./auth-support";
 export default definePlugin({
   name: "slack",
   summary: "Slack channels, threads, messages and reactions",
@@ -19,7 +20,8 @@ export default definePlugin({
   quickstart,
   skill,
   sanitizeTools,
-  // Slack's MCP server has no dynamic client registration, so keys come from a registered internal app.
+  authSupport: createSlackAuth(),
+  // Keeps the existing token route while authSupport handles explicitly configured browser login.
   auth: {
     type: "apiKey",
     env: "SLACK_MCP_TOKEN",

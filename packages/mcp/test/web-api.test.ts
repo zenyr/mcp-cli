@@ -21,6 +21,53 @@ const noMcp = async (): Promise<never> => {
   throw new Error("MCP must not open");
 };
 
+test("late authentication failures share a refresh and writes are not replayed", async () => {
+  const original = crypto.randomUUID();
+  const next = crypto.randomUUID();
+  let current = original;
+  let refreshes = 0;
+  let oldReads = 0;
+  let writes = 0;
+  const release = Promise.withResolvers<void>();
+  const request: typeof fetch = Object.assign(
+    async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input).endsWith("chat.postMessage")) {
+        writes += 1;
+        return Response.json({ ok: false, error: "invalid_auth" });
+      }
+      if (new Headers(init?.headers).get("authorization") === `Bearer ${original}`) {
+        oldReads += 1;
+        if (oldReads === 2) await release.promise;
+        return Response.json({ ok: false, error: "invalid_auth" });
+      }
+      release.resolve();
+      return Response.json({ ok: true });
+    },
+    { preconnect: fetch.preconnect },
+  );
+  const session = connectWebApi(
+    {
+      ...config,
+      authorize: async ({ refresh }) => {
+        if (refresh) {
+          refreshes += 1;
+          current = next;
+        }
+        return { Authorization: `Bearer ${current}` };
+      },
+    },
+    noMcp,
+    1000,
+    request,
+  );
+  const results = await Promise.all([session.callTool("read", {}), session.callTool("read", {})]);
+  expect(results.every((value) => !value.isError)).toBe(true);
+  expect(refreshes).toBe(1);
+  await session.callTool("write", {});
+  expect(writes).toBe(1);
+  expect(refreshes).toBe(1);
+});
+
 test("per-tool form encoding preserves values and leaves JSON requests unchanged", async () => {
   const input = {
     query: 'in:general "배포 완료" & + # = %',

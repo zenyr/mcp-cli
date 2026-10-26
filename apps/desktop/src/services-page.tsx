@@ -21,10 +21,11 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useAction, useServices } from "./queries";
 import type { Service } from "./ipc";
+import { SlackAuthPanel } from "./slack-auth-panel";
 
 type Selection = { service: Service; credential: Service["credentials"][number] };
 export const ServicesPage = () => {
-  const { data, isPending, error } = useServices();
+  const { data, dataUpdatedAt, isPending, error } = useServices();
   const [selection, setSelection] = useState<Selection>();
   const [secret, setSecret] = useState("");
   const [url, setUrl] = useState("");
@@ -207,6 +208,17 @@ export const ServicesPage = () => {
           </Table.ScrollContainer>
         </Paper>
       )}
+      {data
+        ?.filter((service) => service.name === "slack" && service.authentication)
+        .map(
+          (service) =>
+            service.authentication && (
+              <SlackAuthPanel
+                key={`${service.name}:${dataUpdatedAt}`}
+                authentication={service.authentication}
+              />
+            ),
+        )}
       <Modal
         opened={Boolean(selection)}
         onClose={close}

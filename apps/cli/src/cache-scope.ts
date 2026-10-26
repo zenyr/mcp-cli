@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { credentialName, loginRequired, type ServicePlugin, type TokenStore } from "@mcp-cli/core";
+import { defaultSettings } from "./auth";
 
 export const extensionCacheScope = async (
   plugin: ServicePlugin,
@@ -16,7 +17,12 @@ export const extensionCacheScope = async (
   const name = credentialName(plugin.name, alternate?.base ? undefined : credential);
   const auth = plugin.auth;
   let identity: unknown = name;
-  if (connection.type === "http" && connection.authorize) {
+  if (plugin.authSupport) {
+    identity = await plugin.authSupport.identity(
+      { env, store, settings: defaultSettings(env) },
+      credential,
+    );
+  } else if (connection.type === "http" && connection.authorize) {
     identity = await connection.authorize({ refresh: false });
   } else if (auth?.type === "oauth") {
     identity = await store.withLock(name, async () => {

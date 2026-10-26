@@ -1,4 +1,5 @@
-import { fileTokenStore } from "@mcp-cli/auth";
+import { credentialsDir, fileSettingsStore, fileTokenStore } from "@mcp-cli/auth";
+import { dirname, join } from "node:path";
 import {
   AuthRequiredError,
   UsageError,
@@ -8,6 +9,7 @@ import {
   type Connection,
   type ServicePlugin,
   type TokenStore,
+  type SettingsStore,
 } from "@mcp-cli/core";
 import { createInterface } from "node:readline";
 import { login, oauthAuthorize } from "@mcp-cli/mcp";
@@ -16,6 +18,8 @@ type Env = Record<string, string | undefined>;
 export type AuthContext = {
   env: Env;
   store: TokenStore;
+  settings?: SettingsStore;
+  signal?: AbortSignal;
   plugin: (name: string) => Promise<ServicePlugin>;
   writeError: (text: string) => void;
   /** Shows the authorization URL; `browser` says whether a local browser may be launched. */
@@ -27,6 +31,8 @@ export type AuthContext = {
 };
 
 export const defaultStore = (env: Env = process.env): TokenStore => fileTokenStore({ env });
+export const defaultSettings = (env: Env = process.env): SettingsStore =>
+  fileSettingsStore(join(dirname(credentialsDir(env)), "settings"));
 
 type KeyChoice = { env: string; credential?: string };
 // Picks the base key or the alternate named by a credential switch such as `xoxb`.
@@ -73,12 +79,19 @@ export const resolveConnection = async (
   env: Env,
   store: TokenStore,
   credential?: string,
+  settings = defaultSettings(env),
 ): Promise<Connection> => {
   const connection = await plugin.connection(env);
   const auth = plugin.auth;
   if (credential && auth?.type !== "apiKey")
     throw new UsageError(`${plugin.name} has no --${credential} credential`);
   if (!auth || auth.type === "none") return connection;
+  const custom = await plugin.authSupport?.resolve(
+    { env, store, settings },
+    connection,
+    credential,
+  );
+  if (custom) return custom;
   if (connection.type === "stdio") {
     if (auth.type !== "apiKey") return connection;
     return {
@@ -151,8 +164,42 @@ const saveApiKey = async (
 export const loginCommand = async (args: string[], context: AuthContext): Promise<void> => {
   const parsed = serviceArguments("login [--no-browser]", args);
   const plugin = await context.plugin(parsed.service);
-  const credential = credentialFlag(plugin, parsed.flags, ["no-browser"]);
+  const credential = credentialFlag(plugin, parsed.flags, [
+    "no-browser",
+    ...(plugin.authSupport ? ["browser", "token", "mcp", "web"] : []),
+  ]);
+  if (parsed.flags.includes("browser") && parsed.flags.includes("token"))
+    throw new UsageError("Choose --browser or --token.");
+  if (parsed.flags.includes("mcp") && parsed.flags.includes("web"))
+    throw new UsageError("Choose --mcp or --web.");
   const browser = !parsed.flags.includes("no-browser") && canOpenBrowser(context.env);
+  if (plugin.authSupport && parsed.flags.includes("browser")) {
+    await plugin.authSupport.login(
+      {
+        env: context.env,
+        store: context.store,
+        settings: context.settings ?? defaultSettings(context.env),
+      },
+      {
+        credential,
+        target: parsed.flags.includes("mcp")
+          ? "mcp"
+          : parsed.flags.includes("web")
+            ? "web"
+            : undefined,
+        signal: context.signal,
+        ui: { open: (url) => context.open(url, browser), manual: context.manual },
+      },
+    );
+    context.writeError(
+      `Saved ${plugin.name} browser credentials. Connection has not been checked.`,
+    );
+    return;
+  }
+  if (parsed.flags.includes("mcp") || parsed.flags.includes("web"))
+    throw new UsageError(
+      "Use --browser with --mcp or --web, or paste a token without a target flag.",
+    );
   const auth = plugin.auth;
   if (auth?.type === "apiKey") return saveApiKey(plugin, auth, credential, context);
   if (auth?.type !== "oauth") throw new UsageError(`${plugin.name} does not use login`);
@@ -175,7 +222,23 @@ export const loginCommand = async (args: string[], context: AuthContext): Promis
 export const logoutCommand = async (args: string[], context: AuthContext): Promise<void> => {
   const parsed = serviceArguments("logout", args);
   const plugin = await context.plugin(parsed.service);
-  const name = authCredentialName(plugin, credentialFlag(plugin, parsed.flags, []));
+  const credential = credentialFlag(plugin, parsed.flags, plugin.authSupport ? ["mcp", "web"] : []);
+  if (parsed.flags.includes("mcp") && parsed.flags.includes("web"))
+    throw new UsageError("Choose --mcp or --web.");
+  if (plugin.authSupport && (parsed.flags.includes("mcp") || parsed.flags.includes("web"))) {
+    if (credential) throw new UsageError("A browser target cannot be combined with a token flag.");
+    await plugin.authSupport.logout(
+      {
+        env: context.env,
+        store: context.store,
+        settings: context.settings ?? defaultSettings(context.env),
+      },
+      { target: parsed.flags.includes("mcp") ? "mcp" : "web" },
+    );
+    context.writeError("Deleted local browser credentials. Slack authorization was not revoked.");
+    return;
+  }
+  const name = authCredentialName(plugin, credential);
   const { store } = context;
   const removed = await store.withLock(name, async () => {
     const existing = await store.read(name).catch(() => true);

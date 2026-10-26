@@ -6,7 +6,7 @@ import { authorizedFetch } from "./authorize";
 import { authFailure } from "./oauth";
 
 export { login, type LoginOptions, type LoginUi } from "./login";
-export { LoginError } from "./loopback";
+export { LoginError, startLoopback } from "./loopback";
 export { oauthAuthorize, type OAuthAuthorizeOptions } from "./oauth";
 
 export type ConnectOptions = {

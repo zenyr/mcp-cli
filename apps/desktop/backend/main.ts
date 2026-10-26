@@ -22,7 +22,7 @@ const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?:
   const isLogin = args[0] === "desktop" && args[1] === "login";
   const terminate = () => {
     try {
-      child.kill("SIGKILL");
+      child.kill("SIGTERM");
     } catch {
       /* The process already exited. */
     }
@@ -159,6 +159,8 @@ export const api = {
   login: (params: unknown, app: DesktopApp) =>
     logins.start((signal) => run(app, ["desktop", "login"], params, signal)),
   logout: (params: unknown, app: DesktopApp) => run(app, ["desktop", "logout"], params),
+  authConfig: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-config"], params),
+  authStatus: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-status"], params),
   cancelLogin: async () => {
     await logins.cancel();
     return null;

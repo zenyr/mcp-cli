@@ -2,6 +2,7 @@
 import { RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { ensureConfigDirectory } from "./config";
 import { desktopCommand } from "./desktop";
+import { authSettingsCommand } from "./auth-settings";
 import { daemonCommand } from "./daemon/command";
 import {
   resetDaemonIfRunning,
@@ -38,12 +39,16 @@ export const main = async (argv: string[]): Promise<number> => {
   if (!command || ["--help", "-h", "help"].includes(command)) {
     const serviceNames = (await registry()).plugins.map((plugin) => plugin.service);
     console.log(
-      `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n       mcp-cli plugins\n       mcp-cli daemon <start|status|reset|stop>\n       mcp-cli login <service> [--no-browser]\n       mcp-cli logout <service>\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
+      `Usage: mcp-cli <service> <command>\n       mcp-cli generate <service> [--snapshot <path>] [--check]\n       mcp-cli plugins\n       mcp-cli daemon <start|status|reset|stop>\n       mcp-cli login <service> [--no-browser]\n       mcp-cli logout <service>\n       mcp-cli auth <configure|status> <service> [--check]\n\nServices:\n${serviceNames.map((name) => `  ${name}`).join("\n")}\n\nNext: mcp-cli <service> --help`,
     );
     return EXIT.ok;
   }
   if (command === "desktop") {
     await desktopCommand(args);
+    return EXIT.ok;
+  }
+  if (command === "auth") {
+    await authSettingsCommand(args);
     return EXIT.ok;
   }
   if (command === "daemon") {

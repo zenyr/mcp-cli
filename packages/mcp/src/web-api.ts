@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   isRecord,
+  AuthRequiredError,
   UsageError,
   type Connection,
   type ToolResult,
@@ -93,22 +94,41 @@ export const connectWebApi = (
 ): ToolSession => {
   let pending: Promise<ToolSession> | undefined;
   const mcp = () => (pending ??= openMcp());
+  const authorize = config.webApi?.authorize ?? config.authorize;
+  let refreshGeneration = 0;
+  let refreshing: Promise<Record<string, string>> | undefined;
+  const refreshHeaders = async (generation: number) => {
+    if (generation !== refreshGeneration) return authorize?.({ refresh: false });
+    refreshing ??= Promise.resolve(authorize?.({ refresh: true }))
+      .then((headers) => {
+        refreshGeneration += 1;
+        return headers ?? {};
+      })
+      .finally(() => {
+        refreshing = undefined;
+      });
+    return refreshing;
+  };
   const callTool = async (name: string, input: Record<string, unknown>): Promise<ToolResult> => {
     const tool = config.webApi?.tools.find((item) => item.name === name);
     if (!tool) return (await mcp()).callTool(name, input);
+    const generation = refreshGeneration;
+    let headers = { ...config.headers, ...(await authorize?.({ refresh: false })) };
     const authorization =
-      Object.entries(config.headers ?? {}).find(
-        ([key]) => key.toLowerCase() === "authorization",
-      )?.[1] ?? "";
+      Object.entries(headers).find(([key]) => key.toLowerCase() === "authorization")?.[1] ?? "";
     const credential = authorization.replace(/^Bearer /, "");
-    if (tool.requiredTokenPrefix && !credential.startsWith(tool.requiredTokenPrefix))
+    if (
+      tool.requiredTokenPrefix &&
+      !credential.startsWith(tool.requiredTokenPrefix) &&
+      !(tool.requiredTokenPrefix === "xoxp-" && config.webApi?.tokenKind === "user")
+    )
       return failure("authentication", {
         error: tool.credentialError ?? "credential_type_required",
       });
     try {
       if (tool.download)
         return await download(
-          config,
+          { ...config, headers },
           input,
           timeout,
           request,
@@ -130,7 +150,7 @@ export const connectWebApi = (
         const response = await request(url, {
           method: "POST",
           headers: {
-            ...config.headers,
+            ...headers,
             "content-type": form
               ? "application/x-www-form-urlencoded"
               : "application/json; charset=utf-8",
@@ -166,6 +186,17 @@ export const connectWebApi = (
             outcome: tool.annotations?.readOnlyHint ? "read" : "unknown",
           });
         if (!response.ok || data.ok !== true) {
+          if (
+            attempt === 0 &&
+            authorize &&
+            tool.annotations?.readOnlyHint &&
+            (response.status === 401 ||
+              data.error === "token_expired" ||
+              data.error === "invalid_auth")
+          ) {
+            headers = { ...config.headers, ...(await refreshHeaders(generation)) };
+            continue;
+          }
           const category =
             response.status === 429
               ? "rate_limit"
@@ -179,14 +210,18 @@ export const connectWebApi = (
           });
         }
         const tokenKind = tool.credentialKinds
-          ? (Object.entries(tool.credentialKinds).find(([prefix]) =>
+          ? (config.webApi?.tokenKind ??
+            Object.entries(tool.credentialKinds).find(([prefix]) =>
               credential.startsWith(prefix),
-            )?.[1] ?? "unknown")
+            )?.[1] ??
+            "unknown")
           : undefined;
         return result(tokenKind ? { ...data, token_kind: tokenKind } : data);
       }
       return failure("rate_limit", { error: "ratelimited" });
     } catch (error) {
+      if (error instanceof AuthRequiredError)
+        return failure("authentication", { error: error.message });
       if (error instanceof UsageError) return failure("usage", { error: error.message });
       return failure("network", {
         error:

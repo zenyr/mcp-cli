@@ -24,6 +24,7 @@ const feedbackActions = new Set<keyof Api>([
   "reset",
   "login",
   "logout",
+  "authConfig",
   "saveSettings",
 ]);
 
@@ -32,6 +33,7 @@ export const useAction = <K extends keyof Api>(method: K, message?: string) => {
   return useMutation({
     mutationFn: (input: Api[K]["input"]) => call(method, input),
     onSuccess: async (result) => {
+      if (method === "authStatus") return;
       if (method === "login" && result !== null) return;
       if (feedbackActions.has(method) && method !== "start") playUiSound("success");
       if (message) notifications.show({ message, color: "teal" });

@@ -21,7 +21,12 @@ export type Loopback = {
 };
 
 /** Listens on 127.0.0.1 for exactly one OAuth redirect carrying the expected `state`. */
-export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopback => {
+export const startLoopback = (
+  state: string,
+  timeoutMs: number,
+  port = 0,
+  redirectUri?: string,
+): Loopback => {
   const settle = Promise.withResolvers<AuthorizationResponse>();
   const response = settle.promise;
   // The callback can settle while the browser step is still running, before anyone awaits it.
@@ -34,19 +39,14 @@ export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopb
     else settle.resolve(outcome);
   };
   const accept = (params: URLSearchParams): boolean => {
-    if (params.get("state") !== state) {
+    if (params.getAll("state").length !== 1 || params.get("state") !== state) {
       finish(new LoginError("Authorization response state does not match"));
       return false;
     }
     const error = params.get("error");
     const code = params.get("code");
-    if (error || !code) {
-      const detail = params.get("error_description");
-      finish(
-        new LoginError(
-          `Authorization failed: ${error ?? "missing code"}${detail ? ` (${detail})` : ""}`,
-        ),
-      );
+    if (error || !code || params.getAll("code").length !== 1) {
+      finish(new LoginError("Authorization was denied or returned an invalid code"));
       return false;
     }
     finish({ code, iss: params.get("iss") ?? undefined });
@@ -57,7 +57,13 @@ export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopb
     port,
     fetch: (request) => {
       const url = new URL(request.url);
-      if (url.pathname !== "/callback") return page("Not found", 404);
+      const expected = new URL(redirectUri ?? `http://127.0.0.1:${server.port}/callback`);
+      if (
+        request.method !== "GET" ||
+        url.origin !== expected.origin ||
+        url.pathname !== expected.pathname
+      )
+        return page("Not found", 404);
       if (done) return page("This login has already finished.", 409);
       return accept(url.searchParams)
         ? page("Login complete. You can close this window.", 200)
@@ -69,13 +75,26 @@ export const startLoopback = (state: string, timeoutMs: number, port = 0): Loopb
     timeoutMs,
   );
   return {
-    redirectUrl: `http://127.0.0.1:${server.port}/callback`,
+    redirectUrl: redirectUri ?? `http://127.0.0.1:${server.port}/callback`,
     response,
     submit: (input) => {
       const text = input.trim();
       if (!text || done) return;
-      const query = text.includes("?") ? text.slice(text.indexOf("?") + 1) : text;
-      accept(new URLSearchParams(query.split("#")[0]));
+      try {
+        const url = new URL(text);
+        const expected = new URL(redirectUri ?? `http://127.0.0.1:${server.port}/callback`);
+        if (
+          url.origin !== expected.origin ||
+          url.pathname !== expected.pathname ||
+          url.hash ||
+          url.username ||
+          url.password
+        )
+          throw new LoginError("Callback address does not match the login request");
+        accept(url.searchParams);
+      } catch {
+        finish(new LoginError("Callback address does not match the login request"));
+      }
     },
     stop: () => {
       clearTimeout(timer);

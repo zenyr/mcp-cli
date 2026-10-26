@@ -54,6 +54,8 @@ export type ToolSession = import("./session").CatalogSession & {
 export type AuthorizeRequest = { refresh: boolean };
 export type Authorize = (request: AuthorizeRequest) => Promise<Record<string, string>>;
 export type WebApiConfig = {
+  authorize?: Authorize;
+  tokenKind?: "user" | "bot";
   url: string;
   tools: Array<
     ToolDefinition & {
@@ -79,6 +81,7 @@ export type Connection =
       webApi?: WebApiConfig;
     };
 export type ServicePlugin = {
+  authSupport?: import("./auth-support").AuthSupport;
   name: string;
   summary: string;
   commands?: Record<string, CommandCustomization>;
@@ -134,6 +137,7 @@ export {
   type Tokens,
 } from "./auth";
 export type * from "./session";
+export type * from "./auth-support";
 export type CallStatus = "pending" | "ok" | "error";
 export type CallRecord = { tool: string; at: number; status: CallStatus; attempt: string };
 /** Remembers recent non-idempotent calls so an identical retry inside the window can be refused. */

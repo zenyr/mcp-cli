@@ -6,6 +6,7 @@ import { checked, ensurePrivateDir, writeAtomic } from "./files";
 import { DEFAULT_LOCK_OPTIONS, hasCode, withFileLock, type LockOptions } from "./lock";
 
 export { LockTimeoutError, type LockOptions } from "./lock";
+export { fileSettingsStore } from "./settings";
 export { fileRepeatGuard, repeatGuardDir, type FileRepeatGuardOptions } from "./repeat";
 
 type Env = Record<string, string | undefined>;

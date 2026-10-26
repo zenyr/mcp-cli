@@ -4,6 +4,7 @@ import { authCredentialName, defaultStore, loginCommand, logoutCommand } from ".
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
+import { authenticationDetails, configureAuthentication } from "./auth-settings";
 
 const readAuthInput = async (): Promise<string> => {
   const lines = createInterface({ input: process.stdin });
@@ -27,8 +28,11 @@ const readAuthInput = async (): Promise<string> => {
 
 export const desktopCommand = async (args: string[]) => {
   const [action, ...rest] = args;
-  if (rest.length || !["services", "login", "logout"].includes(action ?? ""))
-    throw new UsageError("Usage: mcp-cli desktop <services|login|logout>");
+  if (
+    rest.length ||
+    !["services", "login", "logout", "auth-config", "auth-status"].includes(action ?? "")
+  )
+    throw new UsageError("Usage: mcp-cli desktop <services|login|logout|auth-config|auth-status>");
   const registry = await discover(await defaultContext());
   const store = defaultStore();
   if (action === "services") {
@@ -43,6 +47,7 @@ export const desktopCommand = async (args: string[]) => {
           name: plugin.name,
           summary: plugin.summary,
           auth: plugin.auth?.type ?? "none",
+          authentication: await authenticationDetails(plugin),
           credentials: await Promise.all(
             credentials.map(async ({ flag, summary }) => ({
               flag,
@@ -74,23 +79,45 @@ export const desktopCommand = async (args: string[]) => {
   )
     throw new UsageError("Invalid desktop auth request");
   const service = value.service;
+  const plugin = await loadPlugin(findPlugin(registry, service));
+  if (action === "auth-config" || action === "auth-status") {
+    if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
+    console.log(
+      JSON.stringify({ result: await authenticationDetails(plugin, action === "auth-status") }),
+    );
+    return;
+  }
   const credential =
     typeof value.credential === "string" && value.credential ? value.credential : undefined;
   const flags = credential ? [`--${credential}`] : [];
+  if (value.method === "browser") flags.push("--browser");
+  if (value.target !== undefined) {
+    if (value.target !== "mcp" && value.target !== "web")
+      throw new UsageError("Invalid authentication target");
+    flags.push(`--${value.target}`);
+  }
   const run = action === "login" ? loginCommand : logoutCommand;
-  await run([service, ...flags], {
-    env: process.env,
-    store,
-    plugin: async (name) => loadPlugin(findPlugin(registry, name)),
-    writeError: () => undefined,
-    open: (url) => {
-      console.log(JSON.stringify({ event: "open-url", url }));
-    },
-    readSecret: async () => {
-      if (typeof value.secret !== "string") throw new UsageError("API key is required");
-      return value.secret;
-    },
-  });
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  process.once("SIGTERM", abort);
+  try {
+    await run([service, ...flags], {
+      env: process.env,
+      store,
+      signal: controller.signal,
+      plugin: async (name) => loadPlugin(findPlugin(registry, name)),
+      writeError: () => undefined,
+      open: (url) => {
+        console.log(JSON.stringify({ event: "open-url", url }));
+      },
+      readSecret: async () => {
+        if (typeof value.secret !== "string") throw new UsageError("API key is required");
+        return value.secret;
+      },
+    });
+  } finally {
+    process.removeListener("SIGTERM", abort);
+  }
   await resetDaemonIfRunning();
   console.log(JSON.stringify({ result: null }));
 };

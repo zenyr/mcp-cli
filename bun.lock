@@ -36,6 +36,7 @@
         "@mantine/hooks": "^9.7.1",
         "@mantine/modals": "9.7.1",
         "@mantine/notifications": "9.7.1",
+        "@mcp-cli/core": "workspace:*",
         "@tabler/icons-react": "^3.0.0",
         "@tanstack/react-query": "^5.0.0",
         "@tanstack/react-router": "^1.0.0",
@@ -138,6 +139,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@mcp-cli/core": "workspace:*",
+        "@mcp-cli/mcp": "workspace:*",
       },
     },
   },
