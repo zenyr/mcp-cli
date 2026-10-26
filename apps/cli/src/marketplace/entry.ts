@@ -43,7 +43,7 @@ export const marketplaceView = async () => runMarketplace(marketView(await defau
 
 const usage = `Usage: mcp-cli plugins [list [--json]]
        mcp-cli plugins catalog <recommended|add URL|refresh ID|remove ID>
-       mcp-cli plugins install <catalog-id> <plugin-id>
+       mcp-cli plugins install <catalog-id> <plugin-id> [--allow-local-code]
        mcp-cli plugins <enable|disable|remove> <service> [--allow-local-code]
        mcp-cli plugins link <directory>
        mcp-cli plugins init <service> <directory>
@@ -141,8 +141,21 @@ export const pluginsCommand = async (args: string[]): Promise<void> => {
       request = { type: `source.${operation}`, id: value };
     else throw new UsageError(usage);
   } else if (action === "install") {
-    if (rest.length !== 2 || !rest[0] || !rest[1]) throw new UsageError(usage);
-    request = { type: "plugin.install", sourceId: rest[0], pluginId: rest[1] };
+    if (
+      !rest[0] ||
+      !rest[1] ||
+      rest.length < 2 ||
+      rest.length > 3 ||
+      (rest[2] !== undefined && rest[2] !== "--allow-local-code")
+    )
+      throw new UsageError(usage);
+    request = {
+      type: "plugin.install",
+      sourceId: rest[0],
+      pluginId: rest[1],
+      enable: rest[2] === "--allow-local-code",
+      allowLocalCode: rest[2] === "--allow-local-code",
+    };
   } else if (["enable", "disable", "remove"].includes(action)) {
     if (
       !rest[0] ||

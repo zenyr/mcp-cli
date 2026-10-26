@@ -148,6 +148,94 @@ test("catalog and installation never execute plugin code; only enabled discovery
   expect(await Bun.file(join(f.root, ".local/bin/hello")).exists()).toBe(false);
 });
 
+test("installation with consent activates and creates commands without importing code", async () => {
+  const f = await fixture();
+  let resets = 0;
+  const result = await runMarketplace(
+    manage(
+      {
+        ...f.context,
+        reset: async () => {
+          resets += 1;
+        },
+      },
+      {
+        type: "plugin.install",
+        sourceId: f.sourceId,
+        pluginId: f.plugin.id,
+        enable: true,
+        allowLocalCode: true,
+      },
+    ),
+  );
+  expect(result.message).toBe("설치하고 활성화했습니다.");
+  expect((await readState(f.context)).installed[0]?.enabled).toBe(true);
+  expect(await Bun.file(join(f.root, ".local/bin/hello")).exists()).toBe(true);
+  expect(await Bun.file(f.sideEffect).exists()).toBe(false);
+  expect(resets).toBe(1);
+  const context = { ...f.context, writable: async () => false, nodeModules: [] };
+  expect(findPlugin(await discover(context), "hello").installed?.enabled).toBe(true);
+});
+
+test("installation activation requires consent and preserves state when command creation fails", async () => {
+  const f = await fixture();
+  const install = {
+    type: "plugin.install",
+    sourceId: f.sourceId,
+    pluginId: f.plugin.id,
+    enable: true,
+  };
+  await expect(f.run(install)).rejects.toThrow("explicit approval");
+  expect((await readState(f.context)).installed).toHaveLength(0);
+  const command = join(f.root, ".local/bin/hello");
+  await mkdir(join(command, ".."), { recursive: true });
+  await writeFile(command, "user command");
+  await expect(f.run({ ...install, allowLocalCode: true })).rejects.toThrow("not owned");
+  expect((await readState(f.context)).installed).toHaveLength(0);
+  expect(await Bun.file(command).text()).toBe("user command");
+  expect(await Bun.file(f.sideEffect).exists()).toBe(false);
+  expect(await Bun.file(join(marketRoot(f.context), "operation.lock")).exists()).toBe(false);
+});
+
+test("an update with consent remains enabled without a separate activation", async () => {
+  const f = await fixture();
+  const install = {
+    type: "plugin.install",
+    sourceId: f.sourceId,
+    pluginId: f.plugin.id,
+    enable: true,
+    allowLocalCode: true,
+  };
+  await f.run(install);
+  await writeFile(
+    join(f.source, "plugin.json"),
+    JSON.stringify({ ...f.manifest, version: "2.0.0" }),
+  );
+  const bytes = await packDirectory(f.source);
+  const archive = join(f.root, "hello-v2.tar.gz");
+  await writeFile(archive, bytes);
+  await f.commit({
+    ...f.catalog,
+    plugins: [
+      {
+        ...f.plugin,
+        version: "2.0.0",
+        artifacts: [
+          { ...f.plugin.artifacts[0], url: pathToFileURL(archive).href, sha256: digest(bytes) },
+        ],
+      },
+    ],
+  });
+  await f.run({ type: "source.refresh", id: f.sourceId });
+  await f.run(install);
+  const installed = (await readState(f.context)).installed[0];
+  expect(installed?.enabled).toBe(true);
+  expect(installed?.manifest.version).toBe("2.0.0");
+  expect(installed?.artifact.sha256).toBe(digest(bytes));
+  expect(await Bun.file(join(f.root, ".local/bin/hello")).exists()).toBe(true);
+  expect(await Bun.file(f.sideEffect).exists()).toBe(false);
+});
+
 test("hash mismatches and identity changes leave installation state intact and release the lock", async () => {
   const f = await fixture();
   const changed: Catalog = {

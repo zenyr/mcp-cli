@@ -6,7 +6,13 @@ export type PluginPermissions = {
 export type MarketplaceAction =
   | { type: "source.add"; url: string }
   | { type: "source.refresh" | "source.remove"; id: string }
-  | { type: "plugin.install"; sourceId: string; pluginId: string }
+  | {
+      type: "plugin.install";
+      sourceId: string;
+      pluginId: string;
+      enable?: boolean;
+      allowLocalCode?: boolean;
+    }
   | { type: "plugin.enable"; key: string; enabled: boolean; allowLocalCode?: boolean }
   | { type: "plugin.remove"; key: string }
   | { type: "plugin.link"; directory: string }

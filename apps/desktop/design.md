@@ -421,7 +421,7 @@ Tooltip: `mcp-cli · Daemon running · 3 connections`.
 
 | OS      | Left click             | Right click | Notes                                     |
 | ------- | ---------------------- | ----------- | ----------------------------------------- |
-| macOS   | Open menu              | Open menu   | No Dock icon (accessory app)              |
+| macOS   | Open menu              | Open menu   | Dock icon and Cmd+Tab app switching       |
 | Windows | Open management window | Open menu   |                                           |
 | Linux   | Open menu              | Open menu   | AppIndicator may not provide click events |
 

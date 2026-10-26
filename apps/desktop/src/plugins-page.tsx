@@ -3,7 +3,6 @@ import {
   Alert,
   Badge,
   Button,
-  Checkbox,
   Code,
   Group,
   Modal,
@@ -25,10 +24,8 @@ export const PluginsPage = () => {
     plugin: MarketplacePlugin;
     operation: "install" | "enable";
   }>();
-  const [allowCode, setAllowCode] = useState(false);
   const run = (request: MarketplaceAction) => action.mutate(request);
   const select = (plugin: MarketplacePlugin, operation: "install" | "enable") => {
-    setAllowCode(false);
     setSelection({ plugin, operation });
   };
   const permissions =
@@ -291,21 +288,11 @@ export const PluginsPage = () => {
                 파일과 네트워크 접근을 운영체제 샌드박스로 제한하지 않습니다.
               </Alert>
             )}
-            {selection.operation === "enable" && permissions.localCode && (
-              <Checkbox
-                label="이 출처의 플러그인을 이 컴퓨터에서 실행하도록 허용합니다"
-                checked={allowCode}
-                onChange={(event) => setAllowCode(event.currentTarget.checked)}
-              />
-            )}
             {selection.operation === "install" && (
-              <Text size="sm">
-                설치 후 비활성 상태로 유지합니다. 업데이트도 다시 활성화해야 실행합니다.
-              </Text>
+              <Text size="sm">동의하면 플러그인을 다운로드하고 검증한 뒤 바로 활성화합니다.</Text>
             )}
             <Button
               loading={action.isPending}
-              disabled={selection.operation === "enable" && permissions.localCode && !allowCode}
               onClick={() => {
                 const request: MarketplaceAction =
                   selection.operation === "install"
@@ -313,17 +300,19 @@ export const PluginsPage = () => {
                         type: "plugin.install",
                         sourceId: selection.plugin.sourceId,
                         pluginId: selection.plugin.id,
+                        enable: true,
+                        allowLocalCode: permissions.localCode,
                       }
                     : {
                         type: "plugin.enable",
                         key: selection.plugin.key,
                         enabled: true,
-                        allowLocalCode: allowCode,
+                        allowLocalCode: permissions.localCode,
                       };
                 action.mutate(request, { onSuccess: () => setSelection(undefined) });
               }}
             >
-              {selection.operation === "install" ? "다운로드하고 검증" : "활성화"}
+              {selection.operation === "install" ? "동의하고 설치" : "동의하고 활성화"}
             </Button>
           </Stack>
         )}

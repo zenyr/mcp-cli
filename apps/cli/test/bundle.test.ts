@@ -58,8 +58,7 @@ test("installed binary activates independent plugin packages without Bun or the 
       expect(plugins).toContain(name);
     expect(plugins).toContain("available");
     expect(plugins).not.toContain(root);
-    await run("plugins", "install", "builtin", "builtin.demo");
-    await run("plugins", "enable", "demo", "--allow-local-code");
+    await run("plugins", "install", "builtin", "builtin.demo", "--allow-local-code");
     await run("plugins", "install", "builtin", "builtin.notion");
     await run("plugins", "enable", "notion", "--allow-local-code");
     expect(await run("demo", "message", "echo", "--text", "설치 없이 실행")).toBe(

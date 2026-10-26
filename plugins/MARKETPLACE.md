@@ -10,8 +10,8 @@ Installing or refreshing a catalog never imports plugin code.
 
 ## User workflow
 
-1. Open **Plugins**, load a recommended catalog or add an HTTPS Git repository, and install a plugin.
-2. Review the plugin's permissions and activate it.
+1. Open **Plugins**, load a recommended catalog or add an HTTPS Git repository, and select a plugin.
+2. Review its permissions and select **Agree and install** to install and activate it together.
 3. Open **Services** to log in.
 4. Select **Register in PATH** on the Plugins page, then open a new terminal.
 5. Run the service command, such as `linear issue list`.
@@ -78,7 +78,8 @@ Local catalogs may reference `file:` artifacts for offline testing.
 Catalog changes only update the available list. Installation verifies the archive's
 SHA-256 and its identity and permissions against the selected catalog entry.
 The app stores the repository URL, commit, package identity, and artifact hash.
-Updates are installed inactive and require activation again.
+The app combines consent, installation, and activation for both installs and updates.
+CLI installation stays inactive unless `--allow-local-code` grants execution and activates it.
 One installed plugin owns each service command; competing catalogs cannot replace it.
 
 No signing keys are pinned. The catalog repository's write access is the trust boundary.
@@ -204,6 +205,7 @@ mcp-cli plugins catalog add builtin
 mcp-cli plugins catalog add https://git.example.com/team/catalog.git
 mcp-cli plugins catalog refresh <catalog-id>
 mcp-cli plugins install <catalog-id> <plugin-id>
+mcp-cli plugins install <catalog-id> <plugin-id> --allow-local-code
 mcp-cli plugins enable <service> --allow-local-code
 mcp-cli plugins disable <service>
 mcp-cli plugins remove <service>

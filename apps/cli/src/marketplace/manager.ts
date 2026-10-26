@@ -27,6 +27,8 @@ export const Action = Schema.Union([
     type: Schema.Literal("plugin.install"),
     sourceId: Schema.String,
     pluginId: Schema.String,
+    enable: Schema.optional(Schema.Boolean),
+    allowLocalCode: Schema.optional(Schema.Boolean),
   }),
   Schema.Struct({
     type: Schema.Literal("plugin.enable"),
@@ -175,6 +177,10 @@ export const manage = (context: ManagerContext, input: unknown) =>
         const source = sources.find((item) => item.id === action.sourceId);
         const plugin = source?.catalog.plugins.find((item) => item.id === action.pluginId);
         if (!source || !plugin) throw new UsageError("Catalog plugin not found.");
+        if (action.enable && plugin.permissions.localCode && !action.allowLocalCode)
+          throw new UsageError(
+            "This plugin executes code with your user permissions; explicit approval is required.",
+          );
         const key = pluginKey(source.id, plugin.id);
         assertService(state, plugin.service, key);
         const artifact = selectArtifact(plugin.artifacts);
@@ -196,13 +202,15 @@ export const manage = (context: ManagerContext, input: unknown) =>
           sourceId: source.id,
           commit: source.commit,
           metadata: plugin,
-          enabled: false,
+          enabled: action.enable === true,
         };
         next = {
           ...state,
           installed: [...state.installed.filter((item) => item.key !== key), record],
         };
-        message = "설치했습니다. 권한을 확인하고 활성화해 주세요.";
+        message = action.enable
+          ? "설치하고 활성화했습니다."
+          : "설치했습니다. 권한을 확인하고 활성화해 주세요.";
         break;
       }
       case "plugin.link": {

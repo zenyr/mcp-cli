@@ -13,10 +13,12 @@ For API key services, enter a key issued by that service.
 The app includes the CLI host and independent packages for the default plugins.
 Open **Plugins** to install, activate, update, or remove plugins and add metadata-only Git catalogs.
 Catalogs start empty; select **Load** under recommended catalogs to add the included catalog.
+The installation dialog shows permissions and activates the verified plugin with one consent.
 The page also registers service commands in PATH. Open **Services** to configure active plugins.
 It creates the configuration directory automatically.
 See the [catalog and package guide](../../plugins/MARKETPLACE.md) for development and publishing.
 Use the tray's open management window action to reopen the window.
+On macOS, the app appears in the Dock and the Cmd+Tab app switcher.
 You do not need to set a CLI executable path. Use advanced settings only when you need a separate CLI.
 The use default command action clears a custom executable command.
 
