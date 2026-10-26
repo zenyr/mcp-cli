@@ -15,11 +15,15 @@ This implementation runs inside the bundled CLI. It does not start a Python serv
 | Internal or Marketplace app with MCP access enabled      | MCP browser login can be attempted                                      |
 | Unlisted distributed app or MCP access disabled          | MCP browser login is blocked locally                                    |
 
-The optional **auto** mode reads Slack App settings with `apps.manifest.export`.
-It needs an App configuration token with `app_configurations:read` and access to that App.
-Ordinary user/bot tokens cannot perform this inspection. The application never changes Slack settings.
-Checkboxes in manual browser mode record the operator's confirmation, not verification by Slack.
+The application does not query or change Slack App settings automatically.
+Checkboxes record the operator's confirmation, not verification by Slack.
 Successful credential storage is shown as **stored**, never as a successful connection.
+The UI always offers user-token and bot-token storage alongside the browser-login controls.
+The selected method determines which credential a target uses; storing a token does not silently switch methods.
+
+Previous `auto` settings now require an explicit selection of token input or browser login.
+Previously stored inspection credentials and snapshots are no longer read or used; they are not deleted automatically.
+OAuth refresh still follows the actual token response and does not require an inspection credential.
 
 ## Configure Slack first
 
@@ -56,39 +60,6 @@ Consult each method's scope documentation before enabling additional actions.
    are read-only checks. Their success does not guarantee access to every method or channel.
 6. For bot access, save the bot token in the existing `xoxb` row.
    To use a manually supplied user token for a target, select token input and save settings.
-
-### Detect settings and choose authentication automatically
-
-1. Select **auto**, enter the App ID and other login fields, and save settings.
-2. Enter an App configuration token in the separate password field and select **Detect**.
-   The UI also keeps user-token and bot-token save buttons available.
-3. The client reads `oauth_config.pkce_enabled`, `settings.token_rotation_enabled`,
-   MCP availability, redirect URLs, and user scopes from the exported manifest.
-4. PKCE enabled selects browser credentials. PKCE disabled selects the existing user token.
-   Missing fields, missing permissions, and failed requests remain **unknown** and block automatic selection.
-5. Before auto-mode browser login, the client reads the manifest again and checks the selected redirect and scopes.
-   Runtime connections use the last successful inspection; the UI displays its timestamp.
-
-The token rotation setting and the current credential's refresh capability are displayed separately.
-Token responses remain authoritative for storing and refreshing credentials, whether rotation is enabled or disabled.
-A failed inspection invalidates cached evidence; it does not change Slack settings or delete user credentials.
-The inspection token is stored under an App-specific name in the existing 0600 credential store.
-Only selected public settings are retained from the manifest, not the full manifest or credential.
-The lookup is bound to App ID; copy Client ID from the same App because the manifest does not provide it.
-The token is never sent in a URL. Deleting it clears detection evidence, but preserves login tokens.
-
-CLI equivalents:
-
-```sh
-mcp-cli auth detect slack --web --save-token
-mcp-cli auth detect slack --web
-mcp-cli auth detect slack --web --forget
-```
-
-`--save-token` reads a hidden prompt. Do not pass the token as a command argument.
-Use `"method": "auto"` in the settings JSON to select detected behavior.
-See the [export API](https://docs.slack.dev/reference/methods/apps.manifest.export/)
-and [manifest fields](https://docs.slack.dev/reference/app-manifest/).
 
 No Client Secret is requested, stored in configuration, or embedded in the application.
 Apps that require confidential OAuth must use token input in this client.

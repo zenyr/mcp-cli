@@ -376,3 +376,42 @@ test("transport failure and malformed rotation retain credentials without retryi
   await expect(slackOAuthHeaders(context, "web", false, request)).rejects.toThrow("omitted");
   expect((await context.store.read(slackSlot("web")))?.refreshToken).toBe(previous.refreshToken);
 });
+
+test("retired auto settings require a manual choice without deleting tokens or inspecting the app", async () => {
+  const retained = { accessToken: secret() };
+  await context.store.write(slackSlot("mcp"), retained);
+  await context.settings.write("slack", {
+    configuration: { mcp: { ...configuration.mcp, method: "auto" }, web: { method: "token" } },
+    revision: secret(),
+  });
+  const support = createSlackAuth(request);
+  expect((await support.configuration(context)).mcp).toMatchObject({ method: "choose" });
+  await expect(currentProfile(context, "mcp")).rejects.toThrow("Choose token input");
+  expect(
+    (await support.status(context, false)).find((value) => value.target === "mcp")?.state,
+  ).toBe("reauth");
+  await expect(support.configure(context, { mcp: { method: "auto" } })).rejects.toThrow();
+  await support.configure(context, { mcp: { method: "token" }, web: { method: "token" } });
+  expect(await context.store.read(slackSlot("mcp"))).toEqual(retained);
+  expect(requests).toHaveLength(0);
+});
+
+test("manual-choice requirements do not block explicitly supplied environment or bot credentials", async () => {
+  await context.settings.write("slack", {
+    configuration: { mcp: { method: "auto" }, web: { method: "auto" } },
+  });
+  const token = secret();
+  await context.store.write("slack--xoxb", { accessToken: token });
+  const support = createSlackAuth(request);
+  const connection = await slack.connection({});
+  const bot = await support.resolve(context, connection, "xoxb");
+  expect(bot?.type === "http" && (await bot.authorize?.({ refresh: false }))).toEqual({
+    Authorization: `Bearer ${token}`,
+  });
+  context.env.SLACK_MCP_TOKEN = token;
+  const user = await support.resolve(context, connection, "xoxp");
+  expect(user?.type === "http" && (await user.authorize?.({ refresh: false }))).toEqual({
+    Authorization: `Bearer ${token}`,
+  });
+  expect(requests).toHaveLength(0);
+});

@@ -26,11 +26,6 @@ export type AuthStatus = {
   detail: string;
 };
 export type AuthSupport = {
-  diagnostics?: (context: AuthSupportContext) => Promise<Record<string, unknown>>;
-  inspect?: (
-    context: AuthSupportContext,
-    input: { target: string; secret?: string; forget?: boolean },
-  ) => Promise<Record<string, unknown>>;
   configure(context: AuthSupportContext, value: unknown): Promise<void>;
   configuration(context: AuthSupportContext): Promise<Record<string, unknown>>;
   status(context: AuthSupportContext, check: boolean): Promise<AuthStatus[]>;

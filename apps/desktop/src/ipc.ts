@@ -1,12 +1,8 @@
 import type { SoundKind } from "../shared/ui-sounds";
 import type { AuthStatus } from "@mcp-cli/core";
-import type { SlackConfiguration, SlackDetection } from "../../../plugins/slack/src/auth-types";
+import type { SlackConfiguration } from "../../../plugins/slack/src/auth-types";
 
-export type Authentication = {
-  configuration: SlackConfiguration;
-  states: AuthStatus[];
-  diagnostics?: Record<string, SlackDetection & { rotatingCredential: boolean }>;
-};
+export type Authentication = { configuration: SlackConfiguration; states: AuthStatus[] };
 
 export type Connection = {
   id: string;
@@ -57,10 +53,6 @@ export type Api = {
     output: Authentication;
   };
   authStatus: { input: { service: string }; output: Authentication };
-  authDetect: {
-    input: { service: string; target: "mcp" | "web"; secret?: string; forget?: boolean };
-    output: Authentication;
-  };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };
   saveSettings: { input: { cliCommand?: string[] | null; autoStart: boolean }; output: null };

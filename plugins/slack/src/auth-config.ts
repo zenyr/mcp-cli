@@ -14,15 +14,16 @@ const fields = [
   "mcpEnabled",
   "distribution",
 ];
-const profile = (value: unknown): SlackProfile => {
+const profile = (value: unknown, legacy: boolean): SlackProfile => {
   if (value === undefined) return { method: "token" };
   if (!isRecord(value) || Object.keys(value).some((key) => !fields.includes(key)))
     throw new UsageError(
       "Slack settings contain unsupported fields. Never put secrets in settings.",
     );
-  if (value.method !== "token" && value.method !== "pkce" && value.method !== "auto")
-    throw new UsageError("Choose auto, token or pkce authentication.");
-  const result: SlackProfile = { method: value.method };
+  const method = legacy && value.method === "auto" ? "choose" : value.method;
+  if (method !== "token" && method !== "pkce" && !(legacy && method === "choose"))
+    throw new UsageError("Choose token or pkce authentication.");
+  const result: SlackProfile = { method };
   for (const key of ["clientId", "appId", "teamId", "redirectUri"] as const) {
     const text = value[key];
     if (text !== undefined && (typeof text !== "string" || !text.trim()))
@@ -53,15 +54,15 @@ const profile = (value: unknown): SlackProfile => {
   }
   return result;
 };
-export const decodeSlackConfiguration = (value: unknown): SlackConfiguration => {
+export const decodeSlackConfiguration = (value: unknown, legacy = false): SlackConfiguration => {
   if (!isRecord(value) || Object.keys(value).some((key) => !["mcp", "web"].includes(key)))
     throw new UsageError("Slack settings require mcp and web profiles only.");
-  return { mcp: profile(value.mcp), web: profile(value.web) };
+  return { mcp: profile(value.mcp, legacy), web: profile(value.web, legacy) };
 };
 export const readSlackSettings = async (context: AuthSupportContext) => {
   const saved = await context.settings.read("slack");
   return {
-    configuration: decodeSlackConfiguration(saved?.configuration ?? {}),
+    configuration: decodeSlackConfiguration(saved?.configuration ?? {}, true),
     revision: saved?.revision,
   };
 };

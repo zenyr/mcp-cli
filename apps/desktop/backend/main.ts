@@ -38,7 +38,7 @@ const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?:
     },
     isLogin
       ? 300_000
-      : ["reset", "logout", "auth-config", "auth-detect"].includes(args[1] ?? "")
+      : ["reset", "logout", "auth-config"].includes(args[1] ?? "")
         ? 600_000
         : args[1] === "auth-status"
           ? 30000
@@ -167,7 +167,6 @@ export const api = {
   logout: (params: unknown, app: DesktopApp) => run(app, ["desktop", "logout"], params),
   authConfig: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-config"], params),
   authStatus: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-status"], params),
-  authDetect: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-detect"], params),
   cancelLogin: async () => {
     await logins.cancel();
     return null;

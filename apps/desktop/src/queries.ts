@@ -25,7 +25,6 @@ const feedbackActions = new Set<keyof Api>([
   "login",
   "logout",
   "authConfig",
-  "authDetect",
   "saveSettings",
 ]);
 
