@@ -287,13 +287,13 @@ export const PluginsPage = () => {
             <Text size="sm">파일 접근: {permissions.filesystem.join(", ") || "선언 없음"}</Text>
             {permissions.localCode && (
               <Alert color="yellow">
-                이 플러그인은 사용자 계정 권한으로 로컬 코드를 실행합니다. 파일과 네트워크 접근을
-                운영체제 샌드박스로 제한하지 않습니다.
+                활성화하면 다운로드한 플러그인을 이 컴퓨터에서 사용자 계정 권한으로 실행합니다.
+                파일과 네트워크 접근을 운영체제 샌드박스로 제한하지 않습니다.
               </Alert>
             )}
             {selection.operation === "enable" && permissions.localCode && (
               <Checkbox
-                label="이 출처의 로컬 코드 실행을 허용합니다"
+                label="이 출처의 플러그인을 이 컴퓨터에서 실행하도록 허용합니다"
                 checked={allowCode}
                 onChange={(event) => setAllowCode(event.currentTarget.checked)}
               />
