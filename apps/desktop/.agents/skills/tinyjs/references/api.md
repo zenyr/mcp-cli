@@ -1,9 +1,6 @@
-# The tiny.* / app API — full tour (current as of tinyjs 0.34.0)
+# tiny.* / app API — tinyjs 0.34.0
 
-The `tiny` global is injected into every page automatically (no script tag);
-TypeScript definitions ship in types/tiny.d.ts. Backend handlers receive the
-`app` object with a mirrored surface (`app.window(id).*`, `app.audio.*`,
-`app.clipboard.*` …).
+`tiny`: auto-injected global in every page, no script tag. TypeScript: types/tiny.d.ts. Backend handlers receive mirrored `app` (`app.window(id).*`, `app.audio.*`, `app.clipboard.*` …).
 
 ## Bridge basics
 
@@ -137,13 +134,7 @@ tiny.menu.update('mute', { checked: false, label: 'Unmuted' });
 await tiny.menu.get('mute');   // { exists, label, checked, enabled }
 ```
 
-`menu.set` is the APP menu: every window shows it (including windows opened
-later — macOS has one bar, win/linux draw a copy per window), and
-`menu.update` patches every copy at once. Per-window: `tiny.win.menu.set/
-update/reset` (a window that says something else). Whether a bar SHOWS is
-chrome: `setChrome({ menu: false })` — accelerators keep firing, macOS
-ignores it. An app menu (About + Quit) and Edit menu always exist. Same item
-shape + update/get work for tray and context menus.
+`menu.set`: app-wide, including future windows; macOS one bar, win/linux one copy/window. `menu.update` patches all copies. Per-window override: `tiny.win.menu.set/update/reset`. Visibility: `setChrome({ menu: false })`; accelerators still fire, macOS ignores visibility. App menu (About + Quit) and Edit always exist. Tray/context menus share item shape and update/get.
 
 ```js
 tiny.menu.setContext([{ id, label }, { separator: true }]);  // right-click
@@ -172,10 +163,7 @@ await tiny.dialog.prompt(message, { default, ok, cancel });   // string | null
 
 ## Site wrappers: navigation / downloads / popups / find
 
-Only interesting when the main frame is a third-party site (`"url"` in
-tinyjs.json — see recipes.md, and gate the origin with `"api"`). All three
-platforms; `capabilities()` reports `jsDialogs`, `downloads`, `navigation`,
-`popups`, `findInPage`.
+For third-party main-frame sites: tinyjs.json `"url"` (recipes.md); gate origin with `"api"`. All platforms; `capabilities()` reports `jsDialogs`, `downloads`, `navigation`, `popups`, `findInPage`.
 
 ```js
 // PAGE side
@@ -212,9 +200,7 @@ export function onWindowOpen(info, app) {
 export const api = { save: async (p, app, meta) => meta.origin };
 ```
 
-Per-engine caveats live in platforms.md; they matter if you promise a
-behaviour to a user (e.g. a denied navigation has still made its request on
-Linux).
+Read platforms.md before promising behavior: e.g. Linux denied navigation already sent its request.
 
 ## Tray
 
@@ -467,18 +453,10 @@ await tiny.app.permissions.request("accessibility"); // prompts / opens Settings
 //        automation[:<bundle-id>]
 ```
 
-- Off macOS, `granted` usually means "not gated here", not "consent given".
-- mic/camera: `getUserMedia()` works in the page; PACKAGED apps must declare
-  `"permissions": { "microphone": "why", "camera": "why" }` (Info.plist
-  usage strings — required or macOS kills the app; hardened-runtime
-  entitlements when signing). Linux: the manifest IS the gate — the launcher
-  answers WebKit's permission request from it, undeclared = NotAllowedError,
-  and there's no OS prompt underneath.
-- speech-to-text: the page's `webkitSpeechRecognition` (WebKit AND WebView2
-  have it) needs BOTH `microphone` and `speechRecognition` usage strings in
-  a built app — missing the second = `service-not-allowed` with no prompt.
-- dev-mode: TCC grants attach to the SHARED dev launcher binary — all dev
-  apps share them; packaged apps get their own.
+- Off macOS, `granted` usually means ungated, not consent.
+- Page mic/camera: `getUserMedia()`. PACKAGED apps require `"permissions": { "microphone": "why", "camera": "why" }`: Info.plist usage strings (missing → macOS kills app), hardened-runtime signing entitlements. Linux manifest IS gate: launcher answers WebKit from it; undeclared → NotAllowedError, no underlying OS prompt.
+- Page speech-to-text: `webkitSpeechRecognition` on WebKit AND WebView2. Built apps need BOTH `microphone` and `speechRecognition` usage strings; missing latter → `service-not-allowed`, no prompt.
+- Dev TCC grants belong to SHARED launcher binary: shared across dev apps, separate for packaged apps.
 
 ## Deep links, files, single instance
 
@@ -506,29 +484,13 @@ Full packaging/manifests: references/release.md.
 
 ## macOS-only: tiny.macos.*
 
-`quickLook(path|paths)`, `applescript(src)` ('automation' TCC, in-process),
-`ocr(png)` (Vision; normalises lookalike glyphs — never string-equal test;
-give edge margin), `recorder.start/stop` (display → H.264 mp4),
-`selectedText()`, `otherWindows()`, `moveWindow(pid, rect)` (Accessibility),
-`ai.availability()/generate()` (on-device FoundationModels; needs macOS 26 +
-Apple Intelligence ON — ALWAYS guard on availability(); tool calling is
-backend-only and you must read `calls`, not the prose, to know what ran).
+`quickLook(path|paths)`; `applescript(src)` (in-process, 'automation' TCC); `ocr(png)` (Vision, normalizes lookalike glyphs: never string-equal test, give edge margin); `recorder.start/stop` (display → H.264 mp4); `selectedText()`; `otherWindows()`; `moveWindow(pid, rect)` (Accessibility); `ai.availability()/generate()` (on-device FoundationModels, macOS 26 + Apple Intelligence ON). ALWAYS guard AI availability(); tool calling backend-only; inspect `calls`, not prose, for executed tools.
 
-**Off macOS every `tiny.macos.*` call REJECTS with the reason** (not null —
-an `if (!result)` branch must become a try/catch). If it's on `tiny.app`
-instead, it does something on at least one other OS.
+**Off macOS, all `tiny.macos.*` calls REJECT with reason**, never null: replace `if (!result)` with try/catch. `tiny.app` methods work on at least one other OS.
 
 ## Backend runtime (txiki.js)
 
-`tjs.readFile/writeFile/readDir/stat`, `tjs.spawn`, `tjs.watch`,
-`tjs.listen/connect`, `fetch` (bridge-wrapped: redirects + TLS1.2 hosts
-handled), `WebSocket`, `tjs:sqlite`, WebCrypto, FFI. Docs: txikijs.org.
-Gotchas: every `tjs.*` fs call is async (await it — an unawaited `makeDir`
-before `new Database(...)` is a race) while `tjs:sqlite` is fully sync;
-streams need `getReader()` (no `for await`); `tjs.cwd` is a
-property; spawn stdio silencer is `'ignore'`; NO Intl (format in the page,
-`system.locale()` for backend branching); no Node builtins ever — see
-references/electron-migration.md.
+`tjs.readFile/writeFile/readDir/stat`, `tjs.spawn`, `tjs.watch`, `tjs.listen/connect`, `fetch` (bridge-wrapped, handles redirects/TLS1.2 hosts), `WebSocket`, `tjs:sqlite`, WebCrypto, FFI. Docs: txikijs.org. All `tjs.*` fs calls async: await (`makeDir` before `new Database(...)` otherwise races). `tjs:sqlite` fully sync. Streams: `getReader()`, no `for await`. `tjs.cwd`: property. Spawn stdio silencer: `'ignore'`. NO Intl: page formats, backend branches with `system.locale()`. No Node builtins (references/electron-migration.md).
 
 Backend exports the scaffold wires: `api`, `init(app)`, `onMenu`, `onTray`,
 `onContextMenu`, `onHotkey`, `onSystem`, `onWindowState`, `onWindowClosed`,

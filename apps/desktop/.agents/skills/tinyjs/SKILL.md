@@ -1,32 +1,22 @@
 ---
 name: tinyjs
-description: Build and modify tinyjs desktop apps — tiny macOS (and beta Windows/Linux) apps with a txiki.js JavaScript backend and a native webview window. Use when working in a project with a tinyjs.json, when the user mentions tinyjs, tiny.api, or tinyjs dev/build, or when porting an Electron app to tinyjs.
+description: "Build/modify tinyjs desktop apps: txiki.js backend + native webview, macOS and beta Windows/Linux. Use for tinyjs.json projects, tinyjs/tiny.api/dev/build requests, or Electron-to-tinyjs ports."
 ---
 
 # Building tinyjs apps
 
-tinyjs (https://tinyjs.app, repo tarwin/tinyjsapp) makes ~6 MB desktop apps:
-a **txiki.js backend** (full system access: files, sockets, processes, FFI)
+tinyjs (https://tinyjs.app, repo tarwin/tinyjsapp): ~6 MB apps, **txiki.js backend** with full file/socket/process/FFI access + **native webview**: WKWebView/macOS, WebView2/Windows, WebKitGTK 4.1/Linux (last two beta). Private socket, no HTTP server/ports. Page has NO system access; privileged operations cross `tiny.api`. Escape all `innerHTML` interpolations.
 
-- a **native webview window** — WKWebView on macOS, WebView2 on Windows,
-  WebKitGTK 4.1 on Linux (both beta). They talk over a private socket — no
-  HTTP server, no ports. The page NEVER has system access; everything
-  privileged crosses `tiny.api`, which is why anything interpolated into
-  `innerHTML` must be escaped.
-
-Current release: 0.34.0. App floors: macOS 14+ (universal), Windows 10/11
-(WebView2), Linux glibc 2.35+ (Ubuntu 22.04 / Debian 12 / Mint 21 and up).
+Release 0.34.0. Minimums: macOS 14+ universal; Windows 10/11 + WebView2; Linux glibc 2.35+ (Ubuntu 22.04 / Debian 12 / Mint 21+).
 
 ## Read the reference for the job at hand
 
-| doing                                                                                          | read                             |
-| ---------------------------------------------------------------------------------------------- | -------------------------------- |
-| any API beyond the basics below (windows, menus, tray, clipboard, audio, permissions, system…) | references/api.md                |
-| per-OS support, Windows/Linux quirks, capability gating                                        | references/platforms.md          |
-| starting a tray app, desktop pet/overlay, media app, document app, site wrapper, agent app     | references/recipes.md            |
-| shipping: build/sign/notarize, per-OS packaging, auto-update manifests                         | references/release.md            |
-| porting from Electron (API map, what won't work)                                               | references/electron-migration.md |
-| deciding where code runs, wire/binary payloads, throttling, memory                             | references/performance.md        |
+- doing: any API beyond the basics below (windows, menus, tray, clipboard, audio, permissions, system…); read: references/api.md
+- doing: per-OS support, Windows/Linux quirks, capability gating; read: references/platforms.md
+- doing: starting a tray app, desktop pet/overlay, media app, document app, site wrapper, agent app; read: references/recipes.md
+- doing: shipping: build/sign/notarize, per-OS packaging, auto-update manifests; read: references/release.md
+- doing: porting from Electron (API map, what won't work); read: references/electron-migration.md
+- doing: deciding where code runs, wire/binary payloads, throttling, memory; read: references/performance.md
 
 ## Commands
 
@@ -103,14 +93,7 @@ export function init(app) {
 // onClipboardChange — each (info, app)
 ```
 
-Runtime is txiki.js (`tjs` global): `tjs.readFile/writeFile/readDir/stat`,
-`tjs.spawn`, `tjs.watch`, `fetch`, `WebSocket`, `tjs:sqlite`, FFI. It is
-NOT Node (no require, no Node builtins, no native npm modules) and it has
-no JIT — compute-heavy work belongs in the page
-(references/performance.md). Streams need `getReader()` (no `for await`);
-`tjs.cwd` is a property; no Intl (format in the page). Every `tjs.*` fs
-call is async — await it — while `tjs:sqlite` is fully sync (never await;
-statements have run/all/finalize only, no get(), run() returns void).
+Backend: txiki.js (`tjs` global), `tjs.readFile/writeFile/readDir/stat`, `tjs.spawn`, `tjs.watch`, `fetch`, `WebSocket`, `tjs:sqlite`, FFI. NOT Node: no require/Node builtins/native npm modules/JIT. Compute in page (references/performance.md). Streams: `getReader()`, no `for await`. `tjs.cwd`: property. No Intl; format in page. All `tjs.*` fs calls: async, await. `tjs:sqlite`: synchronous, never await; statements only run/all/finalize, no get(); run() returns void.
 
 ## Frontend essentials
 
@@ -125,22 +108,12 @@ tiny.win.open("settings", { page: "settings.html", size: "420x300", chrome: { fr
 // BEFORE first paint — a late setChrome flashes the default window.
 ```
 
-Everything else — windows/chrome/state events, menus (in every window),
-dialogs, tray, notifications, clipboard, hotkeys, audio (sampler / filters /
-audioTap / proxyURL), store/secrets, permissions, deep links, auto-update,
-`tiny.macos.*` — is in references/api.md with signatures and gotchas.
+Signatures/caveats in references/api.md: windows/chrome/state events, menus (every window), dialogs, tray, notifications, clipboard, hotkeys, audio (sampler/filters/audioTap/proxyURL), store/secrets, permissions, deep links, auto-update, `tiny.macos.*`.
 
 ## Cross-platform rules
 
-- Gate features, don't fork code. `capabilities()` lists only the
-  EXCEPTIONS: test `caps.x !== false`, never `if (caps.x)` (the truthy form
-  reports "unsupported" on the OS that has it). Query calls resolve `null`
-  where unsupported, capability calls reject with the reason,
-  fire-and-forget ones no-op — but `tiny.macos.*` off macOS REJECTS.
-  `caps.sampler` is a string ('native'|'page') — informational, don't
-  branch.
-- Use `app.paths` / `tiny.app.paths()` — never hardcode `~/Library` or
-  `%APPDATA%`; join with '/' (works everywhere).
+- Gate features, not OS forks. `capabilities()` lists EXCEPTIONS only: `caps.x !== false`, NEVER `if (caps.x)` (misreports supported OSes). Unsupported queries → `null`; capability calls reject with reason; fire-and-forget → no-op. Exception: `tiny.macos.*` off macOS REJECTS. `caps.sampler`: informational string ('native'|'page'), do not branch.
+- Use `app.paths` / `tiny.app.paths()`, never hardcoded `~/Library` / `%APPDATA%`. Join with '/' on all OSes.
 - `tiny.system.os()/isMacOS()/isWindows()/isLinux()` are synchronous;
   `architecture()` must be awaited (navigator lies on Apple Silicon).
 - Missing system pieces (codecs, speech, tray…) →
@@ -148,20 +121,11 @@ audioTap / proxyURL), store/secrets, permissions, deep links, auto-update,
 
 ## Rules of thumb
 
-- Backend capabilities go in `api` methods; keep the frontend thin — but
-  keep COMPUTE in the page and bytes off the wire (pass paths, not
-  ArrayBuffers; references/performance.md).
+- System capabilities: backend `api` methods; thin frontend except COMPUTE. Pass paths, not ArrayBuffers (references/performance.md).
 - Escape anything interpolated into `innerHTML` — the page holds an RPC
   channel to full system access.
-- Never declare a top-level `chrome` identifier in frontend code:
-  `window.chrome` is a non-configurable global on WebView2, so a top-level
-  `const chrome` is a PARSE-time SyntaxError that kills the whole script.
-- Linux audio: never route Web Audio to `ctx.destination` (it crackles —
-  measured, unfixable page-side). SFX → `tiny.audio.sampler`; EQ →
-  `tiny.audio.filters`; details in references/platforms.md.
-- Occluded/hidden windows are throttled (rAF stops) — continuous work lives
-  in a visible window or the backend.
-- Verify changes with the smoke pattern:
-  `TINYJS_HTML=<tinyjs-install>/test/smoke.html tinyjs dev` — expect a
-  `[web] SMOKE RESULTS {...}` line with no FAIL entries and a clean exit.
+- No frontend top-level `chrome`: WebView2's non-configurable `window.chrome` makes `const chrome` a script-killing PARSE-time SyntaxError.
+- Linux: NEVER Web Audio → `ctx.destination` (measured crackle, no page-side fix). SFX → `tiny.audio.sampler`; EQ → `tiny.audio.filters` (references/platforms.md).
+- Occluded/hidden windows throttle (rAF stops). Continuous work: visible window or backend.
+- Smoke check: `TINYJS_HTML=<tinyjs-install>/test/smoke.html tinyjs dev`; expect `[web] SMOKE RESULTS {...}`, no FAIL entries, clean exit.
 - `dist/<Name>.app` is the distributable; bare `dist/<name>` is local-only.

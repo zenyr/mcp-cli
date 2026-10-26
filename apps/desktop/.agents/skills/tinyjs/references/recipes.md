@@ -1,7 +1,4 @@
-# Recipes — proven shapes for common app kinds
-
-Each of these is distilled from a shipped example app. Steal the shape;
-the gotchas listed are the ones that actually bit.
+# Recipes — shipped app patterns and observed pitfalls
 
 ## Tray / menu-bar app
 
@@ -24,61 +21,38 @@ export function onTray(id, app) {
 }
 ```
 
-- `tray.position()` anchors a dropdown window under the icon (null on Linux
-  — AppIndicator hides geometry; center the window instead).
-- Icons without assets: `'sf:<symbol>'` on macOS, `'emoji:<glyph>'` on
-  Windows (drawn as a mono silhouette) — branch per OS.
-- On win/linux `setHideOnClose` only holds while something can bring the app
-  back (tray icon counts) — with a tray you're fine.
+- `tray.position()`: dropdown anchor below icon; Linux null (AppIndicator hides geometry), center instead.
+- Asset-free icons: macOS `'sf:<symbol>'`; Windows `'emoji:<glyph>'` (mono silhouette). Branch by OS.
+- win/linux `setHideOnClose` requires a way to reopen app; tray qualifies.
 - `primaryAction: true` = left-click fires `onClick`, menu on right-click.
 
 ## Desktop pet / overlay / HUD
 
-The coo3d/kraa3d shape: one backend brain ticking at ~25fps, many frameless
-transparent windows, everything driven by `app.window(id).*`.
+coo3d/kraa3d: one ~25fps backend tick drives many frameless/transparent windows via `app.window(id).*`.
 
-- **Pass `chrome` (and `x`, `y`) IN `win.open` itself** — applied before
-  first paint. Calling `setChrome` from the new window's boot is too late: a
-  frameless transparent pet flashes in as a white default window.
-- `setClickThrough(true)` for anything that must never trap the mouse;
-  `setLevel('desktop')` puts windows behind everything (wallpaper pets),
-  `'overlay'` above fullscreen apps. `show({ activate: false })` surfaces a
-  HUD without stealing focus.
-- Occluded/hidden windows are THROTTLED (rAF stops) — run the simulation in
-  the backend (never throttled) and push per-tick state; windows just render.
-- Pool windows: hide/move/reuse instead of create/destroy in a loop (the
-  ninth poop splat recycles the oldest window, nobody blinks).
+- **Pass `chrome`, `x`, `y` IN `win.open`**: applied before first paint. Boot-time `setChrome` is late: white default window flashes before transparent/frameless pet.
+- `setClickThrough(true)`: never trap mouse. `setLevel('desktop')`: behind everything (wallpaper pets); `'overlay'`: above fullscreen. `show({ activate: false })`: HUD without focus theft.
+- Occluded/hidden windows THROTTLED (rAF stops). Simulate in unthrottled backend; push tick state; windows only render.
+- Pool via hide/move/reuse, not create/destroy loops (ninth poop splat reuses oldest window invisibly).
 - Pseudo-depth: re-`show()` windows back-to-front as sprites cross.
-- Frameless windows on Linux get WM resize grips — declare `minSize` on
-  satellites or content gets resized out of view.
+- Linux frameless windows have WM resize grips; declare satellite `minSize` to keep content in view.
 - `data-tiny-drag` on a header = native window drag; `acceptsFirstMouse:
 true` lets the focusing click also reach the page (palettes).
 
 ## Media / audio app
 
-Decision table first — audio routing is the most platform-divergent area:
+Audio routing varies most by platform:
 
-| need                                      | use                                                                                                                                |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| play music / long streams                 | `<audio>` element (streams from disk/net; never decode whole songs)                                                                |
-| game/UI sound effects, pitch/pan per shot | `tiny.audio.sampler` (native mixer on Linux, Web Audio host elsewhere — same API)                                                  |
-| EQ / DSP on the app's whole output        | `tiny.audio.filters` (native: Linux + macOS 14.2+); Windows: `capabilities().audioFilters === false` → `tiny.audio.pageChain(ctx)` |
-| VU meter / visualizer of what's playing   | `tiny.audioTap` (PCM chunks at meter rate; post-filter where a chain is active)                                                    |
-| cross-origin stream INTO Web Audio        | `audio.crossOrigin='anonymous'; audio.src = tiny.proxyURL(url)` (macOS)                                                            |
+- need: play music / long streams; use: `<audio>` element (streams from disk/net; never decode whole songs)
+- need: game/UI sound effects, pitch/pan per shot; use: `tiny.audio.sampler` (native mixer on Linux, Web Audio host elsewhere — same API)
+- need: EQ / DSP on the app's whole output; use: `tiny.audio.filters` (native: Linux + macOS 14.2+); Windows: `capabilities().audioFilters === false` → `tiny.audio.pageChain(ctx)`
+- need: VU meter / visualizer of what's playing; use: `tiny.audioTap` (PCM chunks at meter rate; post-filter where a chain is active)
+- need: cross-origin stream INTO Web Audio; use: `audio.crossOrigin='anonymous'; audio.src = tiny.proxyURL(url)` (macOS)
 
-- **Linux hard rule: no Web Audio graph into `ctx.destination`** — WebKitGTK
-  renders the graph on a normal-priority thread and it crackles on an idle
-  machine at any latencyHint. Play elements directly; SFX through the
-  sampler (that's why it exists); EQ through the native filters. Never
-  `pageChain` on Linux.
-- Linux double-play: an element routed into a Web Audio graph ALSO plays
-  natively on WebKitGTK — set the element's own volume to 0 on Linux if you
-  must route one.
-- WebKitGTK has no native HLS (vendor hls.js) and codec support depends on
-  the user's GStreamer plugins — `tiny.system.requirements(['codecs'])` can
-  prompt what to install.
-- Chromium taps `MediaElementSource` post-volume, WebKit pre — don't use the
-  element volume as a mixer knob if you analyze the tap.
+- **Linux: NEVER Web Audio graph → `ctx.destination`**. WebKitGTK normal-priority rendering crackles even idle, any latencyHint. Elements play directly; SFX → sampler; EQ → native filters. NEVER Linux `pageChain`.
+- Linux graph-routed elements ALSO play natively (WebKitGTK double-play). If routing necessary, set element volume 0.
+- WebKitGTK: no native HLS (vendor hls.js); codecs depend on installed GStreamer plugins. `tiny.system.requirements(['codecs'])` prompts installation.
+- `MediaElementSource`: Chromium post-volume, WebKit pre-volume. Do not mix with element volume when analyzing tap.
 
 ## Document app
 
@@ -86,20 +60,12 @@ Decision table first — audio routing is the most platform-divergent area:
 { "fileExtensions": ["md", "txt"], "openFolders": true, "readAccess": true }
 ```
 
-- Files arrive via `onOpenFiles(paths, app)` from every route: double-click,
-  drag onto the icon, `open -a`, argv (`myapp notes.md`), and a second
-  launch forwards to the running instance. Buffer-safe on cold start.
-- `readAccess` widens what `file://` media/img tags may load (default: only
-  under the frontend dir); `tiny.fileURL(path)` ALWAYS (never `'file://' +
-path` — breaks on Windows drive letters).
+- `onOpenFiles(paths, app)` receives double-click, icon drop, `open -a`, argv (`myapp notes.md`), and second-launch forwarding to running instance. Cold-start buffered.
+- `readAccess` expands `file://` media/img scope (default: frontend dir only). ALWAYS `tiny.fileURL(path)`, never `'file://' + path` (Windows drive letters break).
 - `tiny.win.onDrop` gives real paths for files dropped onto the window;
   `startDrag({ files })` drags them out (call during mousedown).
-- Claiming default-handler status: `app.setAsDefaultHandler(ext)` when the
-  user asks — never on first run (competing with their editor uninvited is
-  how apps get uninstalled).
-- Multi-window documents: `win.open` per doc, `api` handlers get
-  `meta.window` to know which window called; `win.print()`/`printToPDF`
-  route to the calling window.
+- `app.setAsDefaultHandler(ext)` only on user request, NEVER first run or uninvited competition with their editor.
+- Multi-document: `win.open` per doc; `api` handler `meta.window` identifies caller. `win.print()`/`printToPDF` target calling window.
 
 ## Wrapping a hosted web app
 
@@ -120,21 +86,9 @@ path` — breaks on Windows drive letters).
 } // optional document-start shim
 ```
 
-**`"url"`, not `frontend.devUrl`** — devUrl is dev-only by construction, so a
-packaged app built that way has no page at all. No local frontend is needed
-with `"url"`.
+**Use `"url"`, NOT `frontend.devUrl`**: devUrl is dev-only; packaged app otherwise has no page. `"url"` needs no local frontend.
 
-**Gate the origin.** `tiny` is injected into EVERY origin, so without `"api"`
-the site's own JavaScript holds an RPC channel to a backend with full
-filesystem and process access — strictly worse than what Electron gives you.
-`"api"` is enforced in the backend (the page-side object is attacker-editable
-on a hostile origin, so page-side gating is decoration). Shapes:
-`"api": "wrapper"` (a sane preset), `{ "disable": ["*"], "enable": [...] }`
-(**enable wins over disable**), or per-origin keyholes as above — keyed off
-the calling frame's origin as the ENGINE reports it, not as the page claims.
-With `origins` present, an origin matching no key gets nothing, so a redirect
-to an unlisted domain inherits no access. Denied calls reject with a readable
-reason, and `capabilities().api.denied` lets the page hide UI it can't use.
+**Gate origins.** `tiny` injects into EVERY origin; without `"api"`, site JS gets full filesystem/process RPC, worse than Electron. Backend enforces `"api"`; hostile page can edit page-side objects, so page gating cannot protect. Shapes: `"api": "wrapper"` (sane preset), `{ "disable": ["*"], "enable": [...] }` (**enable wins**), or per-origin mapping above. Origin is ENGINE-attested calling-frame origin, not page-claimed. With `origins`, unmatched origins get nothing, including redirects to unlisted domains. Denials reject with readable reason; `capabilities().api.denied` supports hiding unusable UI.
 
 What a wrapped site gets that a local-page app never needed:
 
@@ -143,37 +97,19 @@ What a wrapped site gets that a local-page app never needed:
   writes to the OS Downloads dir with de-duplicated names.
 - `window.open` / `target=_blank` per `"popups"`; `window` mode keeps
   `window.opener` and the return value alive (OAuth popups check them).
-- Navigation events + a veto — see `onNavigate` in api.md; return `'deny'`
-  or `'external'` (hand to the real browser) from the `kind: 'policy'` call.
-  This is how you keep app URLs in-window and send marketing/support/OAuth-
-  provider links out.
+- Navigation events/veto: api.md `onNavigate`, `kind: 'policy'`; return `'deny'` or `'external'` (real browser). Keep app URLs in-window; send marketing/support/OAuth-provider links out.
 - `tiny.win.find(term)` for ⌘F.
 
 Other notes:
 
-- The default webview UA lacks `Version/x Safari/x`; UA-sniffing sites
-  reject it — set a real one. Some SaaS apps feature-detect embedded
-  webviews and refuse regardless; nothing to do about that.
+- Default UA lacks `Version/x Safari/x`: UA-sniffing sites reject; set real UA. Some SaaS detects/refuses embedded webviews regardless; no workaround.
 - Cookies/logins persist in the webview's default store per app id.
-- Per-engine caveats worth knowing before you promise a behaviour (a denied
-  navigation has already made its request on Linux; an asked POST re-issues
-  as a GET on Windows): platforms.md.
+- Read platforms.md before promising behavior: Linux denial occurs after request; Windows asked POST reissues as GET.
 
 ## Windowless / agent app
 
-`{ "activation": "accessory" }` — the main window EXISTS (it always does;
-it can be hidden but never closed) and quietly hosts anything page-side the
-app needs (the sampler's Web Audio host on mac/win lives there). Backend
-does the work; `tiny.win.show()` only when there's something to show.
-Hidden windows cost ~nothing: not composited (no GPU), audio render threads
-unaffected by visibility.
+`{ "activation": "accessory" }`: main window always EXISTS, can hide but never close. Hosts required page work (mac/win sampler Web Audio). Backend works; `tiny.win.show()` only when needed. Hidden windows cost ~nothing: no compositing/GPU; visibility does not affect audio render threads.
 
 ## Self-driving test page (headless-ish verification)
 
-`TINYJS_HTML=/abs/path/page.html tinyjs dev` from any app dir points the
-main window at a test page. The page waits for `tiny` (~poll 100ms), drives
-the API, writes results with `tiny.store.set('results', {...})`; read them
-from the app id's store.json in the platform data dir
-(`~/Library/Application Support/<id>/` on macOS, `~/.local/share/<id>/` on
-Linux). Reload-survival tests: write a phase marker to the store, call
-`location.reload()`, branch on the marker at boot.
+From any app dir, `TINYJS_HTML=/abs/path/page.html tinyjs dev` opens test page. Poll ~100ms for `tiny`, drive API, write `tiny.store.set('results', {...})`; read app-id store.json in platform data dir (`~/Library/Application Support/<id>/` macOS, `~/.local/share/<id>/` Linux). Reload-survival test: store phase marker, `location.reload()`, branch on marker at boot.

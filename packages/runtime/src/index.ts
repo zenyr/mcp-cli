@@ -146,7 +146,7 @@ export const runService = async (
     if (tokens.length) throw new UsageError("Skill does not accept input flags");
     dependencies.io.write(
       plugin.skill ??
-        `Start with ${plugin.name} --help, then <group> --help, then <group> <action> --help.\nUse --help=full for server instructions and full JSON schemas.\nUse methods --json for the baked-in tool map.\nUse --input for complex schemas.\nHelp and discovery never connect to the server.\nresources and prompts commands fetch from the server at run time.`,
+        `Discovery: ${plugin.name} --help → <group> --help → <group> <action> --help.\n--help=full: server instructions, full JSON schemas.\nmethods --json: baked-in tool map.\nComplex schemas: --input.\nHelp/discovery: no server connection.\nresources, prompts: fetch from server at runtime.`,
     );
     return 0;
   }

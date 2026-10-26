@@ -1,79 +1,40 @@
-# Where code should run — page vs backend, and what crosses the wire
+# Execution placement and wire costs
 
-The single most consequential architecture decision in a tinyjs app. Get it
-backwards and the app is sluggish in ways no amount of tuning fixes.
+Incorrect page/backend placement causes sluggishness that tuning cannot fix.
 
 ## The engines are not equal
 
-- **The page** runs in the OS webview: JavaScriptCore (macOS/Linux) or
-  V8/Chromium (Windows). Full JIT, real WebAssembly (compiled, near-native),
-  Web Workers, WebGL (WebGPU where the webview has it — WebView2 yes,
-  WKWebView yes on recent macOS, WebKitGTK no), OffscreenCanvas, SIMD.
-- **The backend** runs txiki.js on QuickJS: an _interpreter_, no JIT. A hot
-  numeric loop that takes 50ms in the page can take a second-plus in the
-  backend. There is no usable WASM story in the backend; FFI calls into a C
-  library run at C speed, but the JS around them stays interpreted.
+- **Page**: OS webview, JavaScriptCore (macOS/Linux), V8/Chromium (Windows). JIT, compiled near-native WebAssembly, Web Workers, WebGL, OffscreenCanvas, SIMD. WebGPU: WebView2 yes, recent macOS WKWebView yes, WebKitGTK no.
+- **Backend**: txiki.js/QuickJS interpreter, no JIT or usable WASM. A 50ms page numeric loop can take >1 second. FFI C calls run at C speed; surrounding JS stays interpreted.
 
-**Rule: the page computes, the backend touches the system.** Parsing a big
-JSON, diffing text, image manipulation on a canvas, layout math, audio
-analysis, WASM codecs — page. Files, sockets, processes, sqlite, FFI,
-watching, spawning, OS APIs — backend. When a job needs both (index a
-directory of files), let the backend read bytes and the page crunch them —
-or better, keep the crunching backend-side ONLY if it's I/O-bound (sqlite
-queries are C-fast; `tjs:sqlite` beats shipping rows to the page to filter).
+**Page computes; backend accesses system.** Page: large JSON parsing, text diffs, canvas image manipulation, layout math, audio analysis, WASM codecs. Backend: files, sockets, processes, sqlite, FFI, watching, spawning, OS APIs. Mixed jobs (directory indexing): backend reads, page computes. Keep computation backend-side ONLY when I/O-bound: C-fast `tjs:sqlite` queries beat sending rows to the page for filtering.
 
 ## The wire is text — keep bytes off it
 
-Backend and page talk newline-delimited text over a socket. Binary payloads
-must be base64'd: +33% size, an encode, a decode, and a full copy at each
-end, all on the main thread of both sides.
+Socket wire: newline-delimited text. Binary requires base64: +33% size, encode/decode, full copy at each end, all on both main threads.
 
-- **Pass paths, not bytes.** The backend writes a file and hands the page a
-  path (`tiny.fileURL(path)` for media/src use, `readAccess` if it's outside
-  the frontend dir). This is how the runtime itself does it —
-  `tiny.audio.sampler.load(name, path)` never streams the sound over the
-  wire, and byte inputs are spilled to the app cache dir once and loaded
-  from disk.
-- **Batch small messages.** One `api.call` returning 500 rows beats 500
-  calls. Push events (`app.push`) are cheap but not free — coalesce
-  per-frame state into one message per tick (coo3d drives 20+ windows from
-  one 25fps backend tick, one message per window per tick).
-- **Never stream media over the bridge.** Continuous PCM/frames at audio or
-  video rate through base64 text will burn CPU on both sides. The sanctioned
-  exception is `tiny.audioTap` at meter intervals (~80ms chunks for VU/viz),
-  which is designed for exactly that rate and no more.
-- Big state that both sides need: sqlite (backend queries, page renders) or
-  a file the page reads once, not a giant object replayed over pushes.
+- **Pass paths, not bytes.** Backend writes file, returns path; page uses `tiny.fileURL(path)` for media/src and `readAccess` outside frontend dir. Runtime follows this: `tiny.audio.sampler.load(name, path)` never streams sound over the wire; byte inputs spill once to app cache, then load from disk.
+- **Batch.** One `api.call` returning 500 rows beats 500 calls. `app.push` is cheap, not free: coalesce frame state into one message/tick (coo3d: 20+ windows, 25fps backend tick, one message/window/tick).
+- **Never stream media over bridge.** Audio/video-rate base64 PCM/frames burn CPU on both sides. Only sanctioned exception: `tiny.audioTap` at meter rate (~80ms VU/viz chunks), never faster.
+- Shared large state: sqlite (backend queries, page renders) or a file read once by page; never repeatedly push giant objects.
 
 ## Webview throttling — hidden windows do less
 
-WebKit throttles occluded/hidden windows: rAF stops, timers stretch. A
-hidden window cannot drive a visible one, run a game loop, or keep time.
-Continuous work lives in a _visible_ window or in the backend (whose timers
-are never throttled). Audio is the exception that proves the rule: the
-sampler/Web-Audio host in a hidden main window keeps rendering because
-audible pages are exempt — but don't generalize that to your own timers.
+WebKit occluded/hidden windows: rAF stops, timers stretch. Hidden windows cannot drive visible windows, game loops, or timekeeping. Continuous work: visible window or backend (timers never throttled). Exception: hidden main-window sampler/Web-Audio host renders because audible pages are exempt; own timers are not.
 
 ## Memory shape
 
-- Every window is a real webview. Windows are cheap to _hide_ and expensive
-  to churn — pool and reuse (show/move/hide) instead of create/destroy in a
-  loop; coo3d recycles its splat windows this way.
-- Decoded audio is huge: 48kHz stereo float is ~375KB per second. That's why
-  `tiny.audio.sampler` is for short SFX banks; music plays from an `<audio>`
-  element, which streams from disk.
-- The backend process is small and stays small if you don't accumulate—
-  stream file reads (`getReader()`) rather than buffering whole large files.
+- Each window is a real webview: cheap to hide, expensive to churn. Pool/reuse (show/move/hide), not create/destroy loops; coo3d recycles splat windows.
+- Decoded 48kHz stereo float: ~375KB/second. Use `tiny.audio.sampler` for short SFX banks; music via disk-streaming `<audio>`.
+- Keep backend memory small: stream large files with `getReader()`, never buffer them whole.
 
 ## Quick table
 
-| job                                | where                               | why                                                               |
-| ---------------------------------- | ----------------------------------- | ----------------------------------------------------------------- |
-| tight numeric loop, parser, differ | page                                | JIT                                                               |
-| WASM (codecs, sqlite-wasm, etc.)   | page                                | real compiled WASM                                                |
-| audio DSP/mixing                   | `tiny.audio.sampler` / `tiny.audio` | native/RT-scheduled paths exist; page Web Audio crackles on Linux |
-| file I/O, watching, spawn          | backend                             | that's what it's for                                              |
-| sqlite queries                     | backend (`tjs:sqlite`)              | C-speed, no rows over the wire                                    |
-| per-frame animation state          | visible page (rAF) or backend tick  | hidden pages are throttled                                        |
-| calling a C library                | backend FFI                         | the call is native; keep the JS loop around it thin               |
-| big blob page→backend or back      | write a file, pass the path         | wire is base64 text                                               |
+- job: tight numeric loop, parser, differ; where: page; why: JIT
+- job: WASM (codecs, sqlite-wasm, etc.); where: page; why: real compiled WASM
+- job: audio DSP/mixing; where: `tiny.audio.sampler` / `tiny.audio`; why: native/RT-scheduled paths exist; page Web Audio crackles on Linux
+- job: file I/O, watching, spawn; where: backend; why: that's what it's for
+- job: sqlite queries; where: backend (`tjs:sqlite`); why: C-speed, no rows over the wire
+- job: per-frame animation state; where: visible page (rAF) or backend tick; why: hidden pages are throttled
+- job: calling a C library; where: backend FFI; why: the call is native; keep the JS loop around it thin
+- job: big blob page→backend or back; where: write a file, pass the path; why: wire is base64 text
