@@ -19,10 +19,11 @@ export const buildArtifacts = async (
   plugin: ServicePlugin,
   tools: ToolDefinition[],
 ): Promise<Artifacts> => {
-  if (!tools.length) throw new Error(`${plugin.name} returned no tools; nothing to generate`);
+  const sanitized = plugin.sanitizeTools?.(tools) ?? tools;
+  if (!sanitized.length) throw new Error(`${plugin.name} returned no tools; nothing to generate`);
   return {
-    snapshot: snapshotText(tools),
-    module: await generateModule(createManifest(plugin, tools)),
+    snapshot: snapshotText(sanitized),
+    module: await generateModule(createManifest(plugin, sanitized)),
   };
 };
 

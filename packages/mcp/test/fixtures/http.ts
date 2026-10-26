@@ -34,12 +34,16 @@ const reply = (id: unknown, method: unknown, params: unknown): Response => {
 export const startHttpFixture = (
   headerNames: string[],
   accept: (headers: Headers) => boolean,
+  redirect?: { status: 307 | 308; target?: string },
 ): HttpFixture => {
   const seen: HttpFixture["seen"] = [];
-  const server = Bun.serve({
+  const server: Bun.Server<undefined> = Bun.serve({
+    hostname: "127.0.0.1",
     port: 0,
     fetch: async (request) => {
       seen.push(Object.fromEntries(headerNames.map((name) => [name, request.headers.get(name)])));
+      if (redirect && new URL(request.url).pathname === "/redirect")
+        return Response.redirect(redirect.target ?? server.url.href, redirect.status);
       if (!accept(request.headers)) return new Response("unauthorized", { status: 401 });
       if (request.method !== "POST") return new Response(null, { status: 405 });
       const message: unknown = await request.json();

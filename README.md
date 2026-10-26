@@ -28,3 +28,8 @@ It has its own configuration and storage and is neither an `mcp-cli` subcommand 
 - [Desktop app guide](apps/desktop/README.md): running the app, native builds, and daemon management
 - [mem guide](apps/mem/README.md): storing, searching, summarizing, and recovering memory
 - [Development guide](docs/development.md): package layout, worktrees, and quality checks
+
+## License
+
+Original project work is licensed under the [MIT License](LICENSE).
+Third-party materials retain their respective licenses.

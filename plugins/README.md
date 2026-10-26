@@ -100,6 +100,7 @@ When that tool is absent, the mapping and its related `groups` and `quickstart` 
 Use `beforeCall(command, input)` for service-specific pre-call checks.
 Mapped commands and `call` commands undergo the same checks.
 `connection(env)` reads environment variables at runtime and may return a `Promise`. Credentials never enter generated output.
+`sanitizeTools(tools)` removes account-specific metadata before writing snapshots and generated modules, for both live and snapshot-based generation.
 
 ## Local file uploads
 

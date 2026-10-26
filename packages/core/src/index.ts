@@ -90,6 +90,8 @@ export type ServicePlugin = {
   extensions?: import("./extensions").ServiceExtensions;
   auth?: import("./auth").AuthSpec;
   connection(env: Record<string, string | undefined>): Connection | Promise<Connection>;
+  /** Removes service-specific account data before tool definitions are persisted. */
+  sanitizeTools?: (tools: ToolDefinition[]) => ToolDefinition[];
   beforeCall?: (command: CommandSpec, input: Record<string, unknown>) => Promise<void>;
   /** Uploads one local file through the given ports and returns the URL the tool should receive. */
   uploadFile?: (file: LocalFile, context: UploadContext) => Promise<string>;

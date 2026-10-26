@@ -17,6 +17,25 @@ test("artifacts do not depend on tool order", async () => {
 test("an empty tool list fails", async () => {
   await expect(buildArtifacts(plugin, [])).rejects.toThrow("fixture returned no tools");
 });
+test("plugin sanitization precedes snapshot and module generation", async () => {
+  const source = [
+    { name: "example", description: "Account-specific metadata", inputSchema: { type: "object" } },
+  ];
+  const built = await buildArtifacts(
+    {
+      ...plugin,
+      commands: {},
+      sanitizeTools: (definitions) =>
+        definitions.map((tool) => ({ ...tool, description: "Public description" })),
+    },
+    source,
+  );
+  expect(decodeSnapshot(JSON.parse(built.snapshot))[0]?.description).toBe("Public description");
+  expect(built.module).toContain("Public description");
+  expect(built.snapshot).not.toContain("Account-specific metadata");
+  expect(built.module).not.toContain("Account-specific metadata");
+  expect(source[0]?.description).toBe("Account-specific metadata");
+});
 test("snapshots without a tools array fail to decode", () => {
   expect(() => decodeSnapshot({})).toThrow("Snapshot must contain a tools array");
   expect(() => decodeSnapshot([])).toThrow("Snapshot must contain a tools array");

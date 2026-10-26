@@ -3,6 +3,7 @@ import { webExtensions } from "./web";
 import { postPolicy, requireAttachment } from "./web-payload";
 import { definePlugin } from "@mcp-cli/core";
 import { commands, groups, quickstart, skill } from "./commands";
+import { sanitizeTools } from "./sanitize";
 export default definePlugin({
   name: "slack",
   summary: "Slack channels, threads, messages and reactions",
@@ -17,6 +18,7 @@ export default definePlugin({
   groups,
   quickstart,
   skill,
+  sanitizeTools,
   // Slack's MCP server has no dynamic client registration, so keys come from a registered internal app.
   auth: {
     type: "apiKey",
