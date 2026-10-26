@@ -22,6 +22,7 @@ import type {
 } from "../../../plugins/slack/src/auth-types";
 import type { Authentication } from "./ipc";
 import { useAction } from "./queries";
+import { SlackAuthDetection } from "./slack-auth-detection";
 
 const labels = {
   missing: "로그인 필요",
@@ -32,7 +33,13 @@ const labels = {
   reauth: "재로그인 필요",
   failed: "확인 실패",
 };
-export const SlackAuthPanel = ({ authentication }: { authentication: Authentication }) => {
+export const SlackAuthPanel = ({
+  authentication,
+  onToken,
+}: {
+  authentication: Authentication;
+  onToken: (credential: "xoxp" | "xoxb") => void;
+}) => {
   const [configuration, setConfiguration] = useState<SlackConfiguration>(
     authentication.configuration,
   );
@@ -98,8 +105,7 @@ export const SlackAuthPanel = ({ authentication }: { authentication: Authenticat
           </Button>
         </Group>
         <Text size="sm">
-          Slack App 관리 화면에서 확인한 값을 입력해 주세요. 앱은 원격 설정을 자동 감지하지
-          않습니다.
+          App ID를 등록하면 설정 조회용 토큰으로 PKCE와 토큰 회전 설정을 감지할 수 있습니다.
         </Text>
         <Text size="xs" c="dimmed">
           환경 변수는 항상 우선합니다. 사용자 토큰과 봇 토큰은 위 목록에서 입력합니다. MCP와 Web
@@ -134,14 +140,15 @@ export const SlackAuthPanel = ({ authentication }: { authentication: Authenticat
           value={profile.method}
           disabled={busy}
           data={[
+            { value: "auto", label: "감지한 설정에 따라 선택" },
             { value: "token", label: "토큰 직접 입력" },
             { value: "pkce", label: "브라우저 로그인" },
           ]}
           onChange={(value) => {
-            if (value === "token" || value === "pkce") edit({ method: value });
+            if (value === "token" || value === "pkce" || value === "auto") edit({ method: value });
           }}
         />
-        {profile.method === "pkce" ? (
+        {profile.method !== "token" ? (
           <>
             <Alert color="yellow">
               Slack에서 PKCE를 켜면 지원팀 없이 되돌릴 수 없습니다. 먼저 App 관리자와 설정을 확인해
@@ -236,11 +243,20 @@ export const SlackAuthPanel = ({ authentication }: { authentication: Authenticat
           >
             설정 저장
           </Button>
-          {profile.method === "pkce" && (
-            <Button variant="default" disabled={dirty || busy} onClick={begin}>
-              {target === "mcp" ? "MCP" : "Web API"} 로그인 / 재로그인
+          {
+            <Button
+              variant="default"
+              disabled={
+                dirty ||
+                busy ||
+                profile.method === "token" ||
+                (profile.method === "auto" && authentication.diagnostics?.[target]?.pkce !== true)
+              }
+              onClick={begin}
+            >
+              {target === "mcp" ? "MCP" : "Web API"} PKCE 로그인 / 재로그인
             </Button>
-          )}
+          }
           <Button
             color="red"
             variant="subtle"
@@ -253,6 +269,13 @@ export const SlackAuthPanel = ({ authentication }: { authentication: Authenticat
             이 대상의 브라우저 인증 삭제
           </Button>
         </Group>
+        <SlackAuthDetection
+          target={target}
+          detection={authentication.diagnostics?.[target]}
+          disabled={dirty || busy}
+          tokenDisabled={busy}
+          onToken={onToken}
+        />
         <Text size="xs" c="dimmed">
           설정 저장은 기존 토큰을 삭제하지 않습니다. App·워크스페이스·권한·주소·로그인 방법이 바뀌면
           다시 로그인합니다. 로그아웃은 로컬 삭제이며 Slack의 원격 승인을 취소하지 않습니다.

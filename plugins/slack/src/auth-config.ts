@@ -20,8 +20,8 @@ const profile = (value: unknown): SlackProfile => {
     throw new UsageError(
       "Slack settings contain unsupported fields. Never put secrets in settings.",
     );
-  if (value.method !== "token" && value.method !== "pkce")
-    throw new UsageError("Choose token or pkce authentication.");
+  if (value.method !== "token" && value.method !== "pkce" && value.method !== "auto")
+    throw new UsageError("Choose auto, token or pkce authentication.");
   const result: SlackProfile = { method: value.method };
   for (const key of ["clientId", "appId", "teamId", "redirectUri"] as const) {
     const text = value[key];

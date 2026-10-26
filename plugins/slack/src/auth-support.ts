@@ -17,6 +17,7 @@ import {
   type SlackTarget,
 } from "./auth-config";
 import { currentProfile, loginSlack, requireMatching, slackOAuthHeaders } from "./auth-oauth";
+import { detectedSettings, inspectSlackApp } from "./auth-detection";
 
 export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
   const headers = async (
@@ -29,8 +30,7 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
     const variable = bot ? "SLACK_MCP_BOT_TOKEN" : "SLACK_MCP_TOKEN";
     const environment = context.env[variable];
     if (environment) return { Authorization: `Bearer ${environment}` };
-    const { config } = await currentProfile(context, target);
-    if (!bot && config.method === "pkce")
+    if (!bot && (await currentProfile(context, target)).config.method === "pkce")
       return slackOAuthHeaders(context, target, refresh, request);
     const token = await context.store.read(bot ? "slack--xoxb" : "slack");
     if (!token)
@@ -40,6 +40,32 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
     return { Authorization: `Bearer ${token.accessToken}` };
   };
   return {
+    inspect: async (context, input) => ({
+      ...(await inspectSlackApp(context, slackTarget(input.target), input, request)),
+    }),
+    diagnostics: async (context) => {
+      const { configuration } = await readSlackSettings(context);
+      const entries = await Promise.all(
+        (["mcp", "web"] as const).map(async (target) => {
+          const detection = await detectedSettings(context, configuration[target].appId ?? "");
+          const tokens = await context.store.read(slackSlot(target));
+          const current = await currentProfile(context, target).catch(() => undefined);
+          return [
+            target,
+            {
+              ...detection,
+              rotatingCredential: Boolean(
+                current &&
+                tokens?.client?.fingerprint === current.fingerprint &&
+                tokens?.refreshToken &&
+                tokens.expiresAt,
+              ),
+            },
+          ];
+        }),
+      );
+      return Object.fromEntries(entries);
+    },
     configuration: async (context) => ({ ...(await readSlackSettings(context)).configuration }),
     configure: async (context, value) => {
       const configuration = decodeSlackConfiguration(value);
@@ -63,7 +89,10 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
         throw new AuthRequiredError(
           "Configured Slack authentication requires the official Slack MCP endpoint. Remove the custom endpoint or use legacy token settings.",
         );
-      const web = await currentProfile(context, "web");
+      const web = (await readSlackSettings(context)).configuration.web;
+      const webPkce =
+        web.method === "pkce" ||
+        (web.method === "auto" && (await detectedSettings(context, web.appId ?? "")).pkce === true);
       return {
         ...connection,
         authorize: ({ refresh }) => headers(context, "mcp", credential, refresh),
@@ -73,7 +102,7 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
             authorize: ({ refresh }) => headers(context, "web", credential, refresh),
             ...(credential !== "xoxb" &&
               !context.env.SLACK_MCP_TOKEN &&
-              web.config.method === "pkce" && { tokenKind: "user" as const }),
+              webPkce && { tokenKind: "user" as const }),
           },
         }),
       };
@@ -87,8 +116,14 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
         ? ["slack--xoxb"]
         : [
             ...new Set(
-              (["mcp", "web"] as const).map((target) =>
-                settings.configuration[target].method === "pkce" ? slackSlot(target) : "slack",
+              (["mcp", "web"] as const).flatMap((target) =>
+                settings.configuration[target].method === "auto"
+                  ? [slackSlot(target), "slack"]
+                  : [
+                      settings.configuration[target].method === "pkce"
+                        ? slackSlot(target)
+                        : "slack",
+                    ],
               ),
             ),
           ];
@@ -102,14 +137,29 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
         settings,
         credential: bot ? "xoxb" : "xoxp",
         identities,
+        detection: bot
+          ? undefined
+          : await Promise.all(
+              (["mcp", "web"] as const).map(async (target) => {
+                const config = settings.configuration[target];
+                return config.method === "auto"
+                  ? detectedSettings(context, config.appId ?? "")
+                  : undefined;
+              }),
+            ),
       };
     },
     status: async (context, check) =>
       Promise.all(
         (["mcp", "web"] as const).map(async (target): Promise<AuthStatus> => {
           try {
-            const { config, fingerprint } = await currentProfile(context, target);
             const environment = Boolean(context.env.SLACK_MCP_TOKEN);
+            const { config, fingerprint } = environment
+              ? {
+                  config: (await readSlackSettings(context)).configuration[target],
+                  fingerprint: "",
+                }
+              : await currentProfile(context, target);
             let status: AuthStatus;
             if (environment)
               status = {

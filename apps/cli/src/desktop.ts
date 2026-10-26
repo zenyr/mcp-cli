@@ -4,7 +4,11 @@ import { authCredentialName, defaultStore, loginCommand, logoutCommand } from ".
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
-import { authenticationDetails, configureAuthentication } from "./auth-settings";
+import {
+  authenticationContext,
+  authenticationDetails,
+  configureAuthentication,
+} from "./auth-settings";
 
 const readAuthInput = async (): Promise<string> => {
   const lines = createInterface({ input: process.stdin });
@@ -30,7 +34,9 @@ export const desktopCommand = async (args: string[]) => {
   const [action, ...rest] = args;
   if (
     rest.length ||
-    !["services", "login", "logout", "auth-config", "auth-status"].includes(action ?? "")
+    !["services", "login", "logout", "auth-config", "auth-status", "auth-detect"].includes(
+      action ?? "",
+    )
   )
     throw new UsageError("Usage: mcp-cli desktop <services|login|logout|auth-config|auth-status>");
   const registry = await discover(await defaultContext());
@@ -80,6 +86,22 @@ export const desktopCommand = async (args: string[]) => {
     throw new UsageError("Invalid desktop auth request");
   const service = value.service;
   const plugin = await loadPlugin(findPlugin(registry, service));
+  if (action === "auth-detect") {
+    if (
+      !plugin.authSupport?.inspect ||
+      (value.target !== "mcp" && value.target !== "web") ||
+      (value.secret !== undefined && typeof value.secret !== "string")
+    )
+      throw new UsageError("Invalid App detection request");
+    await plugin.authSupport.inspect(authenticationContext(), {
+      target: value.target,
+      secret: typeof value.secret === "string" ? value.secret : undefined,
+      forget: value.forget === true,
+    });
+    await resetDaemonIfRunning();
+    console.log(JSON.stringify({ result: await authenticationDetails(plugin) }));
+    return;
+  }
   if (action === "auth-config" || action === "auth-status") {
     if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
     console.log(

@@ -216,6 +216,10 @@ export const ServicesPage = () => {
               <SlackAuthPanel
                 key={`${service.name}:${dataUpdatedAt}`}
                 authentication={service.authentication}
+                onToken={(flag) => {
+                  const credential = service.credentials.find((item) => item.flag === flag);
+                  if (credential) begin({ service, credential });
+                }}
               />
             ),
         )}

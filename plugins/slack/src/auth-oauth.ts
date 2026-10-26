@@ -8,6 +8,7 @@ import {
   type Tokens,
 } from "@mcp-cli/core";
 import { startLoopback } from "@mcp-cli/mcp";
+import { effectiveProfile, inspectSlackApp } from "./auth-detection";
 import {
   readSlackSettings,
   readiness,
@@ -128,7 +129,7 @@ export const issuedTokens = (
 };
 export const currentProfile = async (context: AuthSupportContext, target: SlackTarget) => {
   const { configuration, revision } = await readSlackSettings(context);
-  const config = configuration[target];
+  const config = await effectiveProfile(context, configuration[target], target);
   return { config, fingerprint: slackFingerprint(config, revision, target) };
 };
 export const requireMatching = (tokens: Tokens | undefined, fingerprint: string): Tokens => {
@@ -156,6 +157,8 @@ export const loginSlack = async (
   active.add(target);
   try {
     await context.store.withLock(`slack-login-${target}`, async () => {
+      if ((await readSlackSettings(context)).configuration[target].method === "auto")
+        await inspectSlackApp(context, target, {}, request);
       const { config, fingerprint } = await currentProfile(context, target);
       const reason = readiness(config, target);
       if (reason) throw new UsageError(reason);
