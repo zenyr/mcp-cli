@@ -8,6 +8,7 @@ import { startDaemon } from "./server";
 export const daemonCommand = async (argv: string[]) => {
   const json = argv.includes("--json");
   const args = argv.filter((arg) => arg !== "--json");
+  const write = (value: unknown) => console.log(json ? JSON.stringify(value) : formatOutput(value));
   const [action, ...rest] = args;
   if (rest.length || !action || !["start", "status", "reset", "stop", "recover"].includes(action))
     throw new UsageError("Usage: mcp-cli daemon <start|status|reset|stop|recover>");
@@ -25,10 +26,8 @@ export const daemonCommand = async (argv: string[]) => {
     };
     process.once("SIGTERM", stop);
     process.once("SIGINT", stop);
-    console.log(formatOutput({ event: "ready", pid: process.pid }, json));
+    write({ event: "ready", pid: process.pid });
     return;
   }
-  console.log(
-    formatOutput(action === "status" ? await daemonStatus() : await daemonRequest(action), json),
-  );
+  write(action === "status" ? await daemonStatus() : await daemonRequest(action));
 };
