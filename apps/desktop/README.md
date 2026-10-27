@@ -18,7 +18,8 @@ The page also registers service commands in PATH. Open **Services** to configure
 It creates the configuration directory automatically.
 See the [catalog and package guide](../../plugins/MARKETPLACE.md) for development and publishing.
 Use the tray's open management window action to reopen the window.
-On macOS, the app appears in the Dock and the Cmd+Tab app switcher.
+While the management window is open or minimized, the app appears in the Dock and app switcher.
+Closing the window or pressing Cmd/Ctrl+W hides it in the tray and removes its Dock and app-switcher entry.
 You do not need to set a CLI executable path. Use advanced settings only when you need a separate CLI.
 The use default command action clears a custom executable command.
 

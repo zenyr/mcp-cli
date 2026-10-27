@@ -31,7 +31,7 @@ export const App = () => {
         void navigate({ to: "/settings" });
       },
     ],
-    ["mod+w", () => window.tiny?.win.hide()],
+    ["mod+w", () => window.tiny?.win.hide({ app: false })],
   ]);
   return (
     <AppShell header={{ height: 58 }} navbar={{ width: 168, breakpoint: 0 }} padding="lg">

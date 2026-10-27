@@ -11,7 +11,7 @@
     "dev": "bun run dev",
     "devUrl": "http://127.0.0.1:5173"
   },
-  "activation": "regular",
+  "activation": "accessory",
   "minTinyjsVersion": "0.40.0",
   "icon": "assets/mcp-cli.png"
 }

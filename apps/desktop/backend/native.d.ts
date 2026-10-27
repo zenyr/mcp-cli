@@ -4,6 +4,8 @@ declare interface DesktopApp {
   playSound(path: string): Promise<boolean>;
   push(event: string, data?: unknown): void;
   show(): void;
+  presence(mode: "normal" | "menubar"): void;
+  getWinState(): Promise<{ visible: boolean; minimized: boolean }>;
   quit(): void;
   setHideOnClose(enabled: boolean): void;
   tray: {

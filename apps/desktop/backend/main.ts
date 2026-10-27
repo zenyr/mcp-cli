@@ -5,6 +5,7 @@ import { isSoundKind, type SoundKind } from "../shared/ui-sounds";
 import { observeDaemonSound, playUiSound, setSoundsEnabled } from "./ui-sounds";
 import { prepareTrayIcons } from "./tray-icon";
 import { cliCommand } from "./command";
+import { showManagementWindow, syncWindowPresence } from "./window-presence";
 
 const logins = createLoginController();
 const operations = createDrainController();
@@ -232,9 +233,11 @@ export const init = async (app: DesktopApp) => {
   };
   const firstLaunch = (await app.store.get("initialized")) !== true;
   if (firstLaunch) {
-    app.show();
+    showManagementWindow(app);
     await app.store.set("initialized", true);
   }
+  await syncWindowPresence(app);
+  setInterval(() => void syncWindowPresence(app), 250);
   await refresh();
   setInterval(() => {
     if (operations.accepting()) void refresh();
@@ -252,6 +255,6 @@ export const init = async (app: DesktopApp) => {
   await ready();
 };
 export const onTray = (id: string, app: DesktopApp) => {
-  if (id === "show") app.show();
+  if (id === "show") showManagementWindow(app);
   if (id === "quit") app.quit();
 };

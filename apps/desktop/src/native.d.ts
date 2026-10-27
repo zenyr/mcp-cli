@@ -9,6 +9,6 @@ interface Window {
       launchAtLogin: { get(): Promise<string>; set(enabled: boolean): Promise<string> };
     };
     clipboard: { write(data: { text: string }): Promise<unknown> };
-    win: { hide(): void };
+    win: { hide(options?: { app: boolean }): void };
   };
 }
