@@ -14,6 +14,7 @@ export const connectionKey = (
       JSON.stringify(
         canonicalize({
           service: request.service,
+          workspace: request.workspace,
           identity,
           plugin,
           config: { ...config, authorize: undefined },

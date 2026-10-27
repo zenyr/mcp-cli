@@ -12,6 +12,7 @@ export type ExtensionContext = {
   io: ExtensionIO;
   json: boolean;
   credential?: string;
+  workspace?: import("./workspaces").Workspace;
   runCommand?: (argv: string[]) => Promise<{ exitCode: number; output: string[] }>;
   cacheScope?: string;
 };

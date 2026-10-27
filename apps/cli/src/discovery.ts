@@ -15,6 +15,7 @@ export const TOP_LEVEL_COMMANDS: readonly string[] = [
   "help",
   "generate",
   "plugins",
+  "workspaces",
   "login",
   "logout",
   "auth",

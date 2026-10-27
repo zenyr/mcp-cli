@@ -10,10 +10,18 @@ export const callKey = (
   tool: string,
   input: Record<string, unknown>,
   credential?: string,
+  workspace?: string,
 ): string =>
   createHash("sha256")
     .update(
-      JSON.stringify(canonicalize(credential ? { tool, input, credential } : { tool, input })),
+      JSON.stringify(
+        canonicalize({
+          tool,
+          input,
+          ...(credential && { credential }),
+          ...(workspace && { workspace }),
+        }),
+      ),
     )
     .digest("hex");
 

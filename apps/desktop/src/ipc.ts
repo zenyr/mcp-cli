@@ -1,5 +1,8 @@
 import type { SoundKind } from "../shared/ui-sounds";
 import type {
+  Workspace,
+  WorkspaceAction,
+  WorkspaceRegistry,
   AuthStatus,
   AuthSettingsField,
   MarketplaceAction,
@@ -16,6 +19,7 @@ export type Connection = {
   id: string;
   service: string;
   credential?: string;
+  workspace?: string;
   openedAt: number;
   active: number;
   leases: number;
@@ -34,6 +38,10 @@ export type Status =
     }
   | { online: false; error: string };
 export type Service = {
+  workspace?: Workspace;
+  supportsWorkspaces?: boolean;
+  defaultWorkspaceId?: string;
+  workspaces?: Service[];
   error?: string;
   name: string;
   summary: string;
@@ -44,12 +52,14 @@ export type Service = {
 export type Settings = { cliCommand: string[]; autoStart: boolean; soundsEnabled: boolean };
 export type AuthInput = {
   service: string;
+  workspace?: string;
   credential?: string;
   secret?: string;
   method?: "browser";
   target?: string;
 };
 export type Api = {
+  workspaceAction: { input: WorkspaceAction; output: WorkspaceRegistry };
   plugins: { input: undefined; output: MarketplaceView };
   pluginAction: { input: MarketplaceAction; output: { message: string } };
   status: { input: undefined; output: Status };
@@ -60,10 +70,10 @@ export type Api = {
   login: { input: AuthInput; output: null | { cancelled: true } };
   logout: { input: AuthInput; output: null };
   authConfig: {
-    input: { service: string; configuration: Record<string, unknown> };
+    input: { service: string; workspace?: string; configuration: Record<string, unknown> };
     output: Authentication;
   };
-  authStatus: { input: { service: string }; output: Authentication };
+  authStatus: { input: { service: string; workspace?: string }; output: Authentication };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };
   saveSettings: { input: { cliCommand?: string[] | null; autoStart: boolean }; output: null };
@@ -77,3 +87,12 @@ export const call = <K extends keyof Api>(
   if (!window.tiny) return Promise.reject(new Error("tinyjs에서 앱을 실행해 주세요."));
   return window.tiny.api.call(method, input) as Promise<Api[K]["output"]>;
 };
+
+export const workspaceRows = (services: Service[] | undefined): Service[] =>
+  services?.flatMap(
+    (service) =>
+      service.workspaces?.map((workspace) => ({
+        ...workspace,
+        defaultWorkspaceId: service.defaultWorkspaceId,
+      })) ?? [service],
+  ) ?? [];

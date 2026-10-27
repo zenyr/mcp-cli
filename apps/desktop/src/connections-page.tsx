@@ -37,6 +37,7 @@ export const ConnectionsPage = () => {
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>서비스</Table.Th>
+                  <Table.Th>워크스페이스</Table.Th>
                   <Table.Th>자격 증명</Table.Th>
                   <Table.Th>상태</Table.Th>
                   <Table.Th>요청</Table.Th>
@@ -52,6 +53,7 @@ export const ConnectionsPage = () => {
                       <Table.Td>
                         <Code>{connection.service}</Code>
                       </Table.Td>
+                      <Table.Td>{connection.workspace || "default"}</Table.Td>
                       <Table.Td>{connection.credential || "기본"}</Table.Td>
                       <Table.Td>
                         <Badge color={connection.active ? "teal" : "gray"}>

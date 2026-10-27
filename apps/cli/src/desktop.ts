@@ -1,3 +1,4 @@
+import { decodeWorkspaceAction, selectWorkspace, updateWorkspace } from "./workspaces";
 import { createInterface } from "node:readline";
 import { isRecord, UsageError } from "@mcp-cli/core";
 import { defaultStore, loginCommand, logoutCommand } from "./auth";
@@ -40,6 +41,7 @@ export const desktopCommand = async (args: string[]) => {
       "auth-status",
       "plugins",
       "plugin-action",
+      "workspace-action",
     ].includes(action ?? "")
   )
     throw new UsageError("Usage: mcp-cli desktop <services|login|logout|auth-config|auth-status>");
@@ -54,6 +56,12 @@ export const desktopCommand = async (args: string[]) => {
     return;
   }
   const registry = await discover(await defaultContext());
+  if (action === "workspace-action") {
+    const request = decodeWorkspaceAction(JSON.parse(await readAuthInput()));
+    const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
+    console.log(JSON.stringify({ result: await updateWorkspace(plugin, request) }));
+    return;
+  }
   const store = defaultStore();
   if (action === "services") {
     const services = await Promise.all(
@@ -66,11 +74,15 @@ export const desktopCommand = async (args: string[]) => {
   if (
     !isRecord(value) ||
     typeof value.service !== "string" ||
-    (value.credential !== undefined && typeof value.credential !== "string")
+    (value.credential !== undefined && typeof value.credential !== "string") ||
+    (value.workspace !== undefined && typeof value.workspace !== "string")
   )
     throw new UsageError("Invalid desktop auth request");
   const service = value.service;
-  const plugin = await loadPlugin(findPlugin(registry, service), registry.context);
+  const plugin = await selectWorkspace(
+    await loadPlugin(findPlugin(registry, service), registry.context),
+    typeof value.workspace === "string" ? value.workspace : undefined,
+  );
   if (action === "auth-config" || action === "auth-status") {
     if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
     console.log(
@@ -81,6 +93,7 @@ export const desktopCommand = async (args: string[]) => {
   const credential =
     typeof value.credential === "string" && value.credential ? value.credential : undefined;
   const flags = credential ? [`--${credential}`] : [];
+  if (plugin.workspace) flags.push("--workspace", plugin.workspace.id);
   if (value.method === "browser") flags.push("--browser");
   if (value.target !== undefined) {
     const details = await authenticationDetails(plugin);

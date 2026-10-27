@@ -3,10 +3,23 @@ import type { ServicePlugin, SettingsStore, TokenStore } from "@mcp-cli/core";
 export const pluginEnvironment = (
   plugin: ServicePlugin,
   env: Record<string, string | undefined>,
-) => (plugin.credentialNamespace ? {} : env);
+) => {
+  if (plugin.credentialNamespace) return {};
+  if (!plugin.workspace || plugin.workspace.legacy) return env;
+  const secrets = new Set(plugin.workspaces?.credentialEnv ?? []);
+  return Object.fromEntries(Object.entries(env).filter(([key]) => !secrets.has(key)));
+};
+
+const namespace = (plugin: ServicePlugin): string | undefined =>
+  [
+    plugin.credentialNamespace,
+    plugin.workspace && !plugin.workspace.legacy ? `workspace-${plugin.workspace.id}` : undefined,
+  ]
+    .filter(Boolean)
+    .join("-") || undefined;
 
 export const pluginStore = (plugin: ServicePlugin, store: TokenStore): TokenStore => {
-  const prefix = plugin.credentialNamespace;
+  const prefix = namespace(plugin);
   if (!prefix) return store;
   const name = (value: string) => `${prefix}-${value}`;
   return {
@@ -18,7 +31,7 @@ export const pluginStore = (plugin: ServicePlugin, store: TokenStore): TokenStor
 };
 
 export const pluginSettings = (plugin: ServicePlugin, store: SettingsStore): SettingsStore => {
-  const prefix = plugin.credentialNamespace;
+  const prefix = namespace(plugin);
   if (!prefix) return store;
   const name = (value: string) => `${prefix}-${value}`;
   return {

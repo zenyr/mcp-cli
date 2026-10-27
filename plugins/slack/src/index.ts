@@ -8,6 +8,7 @@ import { createSlackAuth } from "./auth-support";
 import { authFields } from "./auth-fields";
 export default definePlugin({
   name: "slack",
+  workspaces: { credentialEnv: ["SLACK_MCP_TOKEN", "SLACK_MCP_BOT_TOKEN"] },
   summary: "Slack channels, threads, messages and reactions",
   commands,
   apiCommands,

@@ -1,3 +1,5 @@
+import { selectWorkspace } from "./workspaces";
+import { extractWorkspace } from "./workspace-arguments";
 import { formatOutput } from "@mcp-cli/runtime";
 import { UsageError, type ServicePlugin } from "@mcp-cli/core";
 import { defaultSettings, defaultStore } from "./auth";
@@ -26,8 +28,9 @@ export const configureAuthentication = async (plugin: ServicePlugin, value: unkn
   await resetDaemonIfRunning();
 };
 export const authSettingsCommand = async (argv: string[]) => {
-  const json = argv.includes("--json");
-  const args = argv.filter((arg) => arg !== "--json");
+  const selected = extractWorkspace(argv);
+  const json = selected.args.includes("--json");
+  const args = selected.args.filter((arg) => arg !== "--json");
   const [action, service, flag, ...rest] = args;
   if (
     !service ||
@@ -39,7 +42,10 @@ export const authSettingsCommand = async (argv: string[]) => {
       "Usage: mcp-cli auth configure <service> < settings.json | mcp-cli auth status <service> [--check]",
     );
   const registry = await discover(await defaultContext());
-  const plugin = await loadPlugin(findPlugin(registry, service));
+  const plugin = await selectWorkspace(
+    await loadPlugin(findPlugin(registry, service)),
+    selected.workspace,
+  );
   if (!plugin.authSupport) throw new UsageError("This service has no authentication settings.");
   if (action === "configure") {
     let value: unknown;

@@ -170,6 +170,7 @@ export const help = (
       "  --input-file <path>    Read JSON object from file",
       "  --<obj>.<field> value  Nested input flag",
       "  --json                Preserve the MCP result as JSON",
+      "  -w, --workspace NAME  Select a workspace",
       "  -h, --help            Show concise command help",
       "  --help=full           Show server description and full JSON schemas",
     );

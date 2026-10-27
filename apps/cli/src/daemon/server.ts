@@ -1,3 +1,4 @@
+import { selectWorkspace } from "../workspaces";
 import { randomBytes } from "node:crypto";
 import { chmod, mkdir, rm, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
@@ -5,7 +6,7 @@ import type { Socket } from "node:net";
 import { isAbsolute } from "node:path";
 import { credentialSwitches, isRecord, UsageError, type ToolSession } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
-import { defaultStore, resolveConnection } from "../auth";
+import { defaultSettings, defaultStore, resolveConnection } from "../auth";
 import { extensionCacheScope } from "../cache-scope";
 import { discover, findPlugin, loadPlugin } from "../discovery";
 import { defaultContext } from "../paths";
@@ -76,11 +77,20 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
     if (!isAbsolute(request.cwd)) throw new UsageError("Daemon cwd must be absolute");
     const registry = await discover(await defaultContext(request.env));
     const found = findPlugin(registry, request.service);
-    const plugin = await loadPlugin(found, registry.context);
+    const plugin = await selectWorkspace(
+      await loadPlugin(found, registry.context),
+      request.workspace,
+      defaultSettings(request.env),
+    );
     const store = defaultStore(request.env);
     const config = await resolveConnection(plugin, request.env, store, request.credential);
     const identity = await extensionCacheScope(plugin, request.env, store, request.credential);
-    const key = connectionKey(request, config, identity, found);
+    const key = connectionKey(
+      { ...request, workspace: plugin.workspace?.id },
+      config,
+      identity,
+      found,
+    );
     const credential =
       request.credential ?? credentialSwitches(plugin.auth).find((item) => item.base)?.flag;
     const connection =
@@ -103,6 +113,7 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
         return execute(session, request);
       },
       credential,
+      plugin.workspace?.name,
     );
   };
   const handle = async (req: IncomingMessage, res: ServerResponse) => {

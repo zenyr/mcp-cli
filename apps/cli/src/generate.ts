@@ -1,3 +1,5 @@
+import { extractWorkspace } from "./workspace-arguments";
+import { selectWorkspace } from "./workspaces";
 import { mkdir, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 import { buildArtifacts, decodeSnapshot, isCurrent } from "@mcp-cli/codegen";
@@ -31,13 +33,15 @@ const readExisting = async (path: string): Promise<string | undefined> => {
 };
 
 export const generate = async (args: string[], registry: Registry): Promise<void> => {
-  const config = options(args);
+  const selected = extractWorkspace(args);
+  const config = options(selected.args);
   const discovered = findPlugin(registry, config.name);
   const plugin = await loadPlugin(discovered, registry.context);
   const tools = config.snapshot
     ? decodeSnapshot(await Bun.file(config.snapshot).json())
     : await (async () => {
-        const session = await connect(await resolveConnection(plugin, process.env, defaultStore()));
+        const scoped = await selectWorkspace(plugin, selected.workspace);
+        const session = await connect(await resolveConnection(scoped, process.env, defaultStore()));
         try {
           return await session.listTools();
         } finally {

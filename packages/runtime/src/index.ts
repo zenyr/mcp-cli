@@ -28,6 +28,9 @@ export type RuntimeIO = {
   readStdin(): Promise<string>;
 };
 export type RuntimeDependencies = {
+  forWorkspace?: (workspace?: string) => Promise<RuntimeDependencies>;
+  workspaceId?: string;
+  workspace?: import("@mcp-cli/core").Workspace;
   /** `credential` names the plugin credential switch given for this run, if any. */
   open(credential?: string): Promise<ToolSession>;
   io: RuntimeIO;
@@ -51,6 +54,16 @@ export const runService = async (
     manifest.credentials.map((alternate) => alternate.flag),
   );
   const { path, tokens, json, wantsHelp, fullHelp, allowRepeat } = parsed;
+  const offline =
+    wantsHelp ||
+    !path.length ||
+    [HELP, METHODS, SKILL, "schema"].includes(path[0] ?? "") ||
+    (path.length === 1 &&
+      !tokens.length &&
+      [RESOURCES, PROMPTS].some((command) => command === path[0]));
+  if (!offline && ports.forWorkspace) ports = await ports.forWorkspace(parsed.workspace);
+  else if (!offline && parsed.workspace && !ports.workspaceId)
+    throw new UsageError("This runtime does not support workspace selection");
   const credential = manifest.credentials.find((item) => item.flag === parsed.credential)?.base
     ? undefined
     : parsed.credential;
@@ -164,6 +177,7 @@ export const runService = async (
           io: dependencies.io,
           json,
           credential,
+          workspace: dependencies.workspace,
           runCommand: async (args) => {
             const output: string[] = [];
             const exitCode = await runService(

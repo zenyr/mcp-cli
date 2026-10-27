@@ -119,6 +119,8 @@ export const api = {
   pluginAction: (params: unknown, app: DesktopApp) =>
     run(app, ["desktop", "plugin-action"], params),
   status: (_params: unknown, app: DesktopApp) => checkDaemonStatus(app),
+  workspaceAction: (params: unknown, app: DesktopApp) =>
+    run(app, ["desktop", "workspace-action"], params),
   services: (_params: unknown, app: DesktopApp) => run(app, ["desktop", "services"]),
   start: (_params: unknown, app: DesktopApp) =>
     operations.run(async () => {

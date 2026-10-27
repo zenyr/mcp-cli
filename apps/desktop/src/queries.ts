@@ -34,6 +34,7 @@ const feedbackActions = new Set<keyof Api>([
   "authConfig",
   "saveSettings",
   "pluginAction",
+  "workspaceAction",
 ]);
 
 export const useAction = <K extends keyof Api>(method: K, message?: string) => {

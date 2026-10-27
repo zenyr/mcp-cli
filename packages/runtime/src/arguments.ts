@@ -22,6 +22,7 @@ export type ParsedArguments = {
   allowRepeat: boolean;
   /** The plugin credential switch given for this run, such as `xoxb`. */
   credential?: string;
+  workspace?: string;
 };
 
 const switches = new Set<string>([JSON_FLAG, HELP_FLAG, ALLOW_REPEAT_FLAG]);
@@ -47,12 +48,20 @@ export const parseArguments = (
   let fullHelp = false;
   let allowRepeat = false;
   let credential: string | undefined;
+  let workspace: string | undefined;
   let schema: JsonSchema | undefined;
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
     if (arg === undefined) continue;
     if (arg === "-h") {
       wantsHelp = true;
+      continue;
+    }
+    if (arg === "-w" || arg === "--workspace" || arg.startsWith("--workspace=")) {
+      const value = arg.startsWith("--workspace=") ? arg.slice(12) : argv[++index];
+      if (!value || value.startsWith("-")) tokens.push(invalid("Missing value for --workspace"));
+      else if (workspace !== undefined) tokens.push(invalid("Use --workspace only once"));
+      else workspace = value;
       continue;
     }
     if (schema === undefined && !arg.startsWith("-")) {
@@ -141,5 +150,6 @@ export const parseArguments = (
     fullHelp,
     allowRepeat,
     ...(credential && { credential }),
+    ...(workspace && { workspace }),
   };
 };

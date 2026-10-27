@@ -78,7 +78,7 @@ The `--` end-of-options marker is not supported.
 The default `call <tool-name>` path uses the tool name unchanged, so names containing `.` or `/` work without mappings.
 Plugin-defined `path` segments must match `[A-Za-z0-9_-]+`.
 If generated code is missing or outdated, the CLI exits with status 1 and asks you to run `mcp-cli generate <service>`.
-Properties whose flag form conflicts with global flags (`--json`, `--help`, `--input`, `--input-file`) can only be set through `--input`.
+Properties whose flag form conflicts with global flags (`--json`, `--help`, `--input`, `--input-file`, `--workspace`) can only be set through `--input`.
 Help labels these properties `set via --input only`. The comparison replaces `_` with `-`.
 Use `--input` for complex `$ref` or combined schemas. The entire input is validated against JSON Schema.
 Schemas without `$schema`, or with a 2020-12 declaration, use 2020-12 rules. Draft-07 declarations and draft-07-only schemas use draft-07 validation.
@@ -230,3 +230,36 @@ bun run cli notion page get --help
 
 - [Plugin authoring and static generation](../../plugins/README.md)
 - [Development environment and package layout](../../docs/development.md)
+
+## Multiple workspaces
+
+Slack, Notion, and Linear share one command catalog per plugin and can store multiple workspace connections.
+Existing credentials and settings remain available as the `default` workspace, without moving secret files.
+
+```bash
+mcp-cli workspaces add slack company
+mcp-cli login slack -w company
+slack -w company auth check
+mcp-cli workspaces default slack company
+mcp-cli workspaces rename slack company work
+mcp-cli workspaces list slack
+notion --workspace personal search --query "travel"
+```
+
+Use `-w NAME`, `--workspace NAME`, or `--workspace=NAME` to select a workspace for a command, login, logout, authentication settings, or generation.
+The host accepts a stable workspace ID in place of its name.
+A name is a local alias for a separately authenticated connection; OAuth still asks you to select or approve the remote workspace.
+Create an alias before logging in to it.
+Without a selector, the configured default is used; an ambiguous selection fails before dispatch.
+Adding another workspace does not change the default.
+Renaming an alias retains its credentials, settings, and storage identity.
+Logout deletes only the selected credential in the selected workspace.
+
+Existing token environment variables apply only to the original `default` workspace, even after it is renamed.
+Additional workspaces use their own stored credentials and settings.
+The host isolates daemon sessions, workflow caches, duplicate-call guards, and authentication locks by workspace.
+Nested workflow commands inherit the selected workspace unless they explicitly choose another one.
+Help, methods, and schema remain available without authentication or a workspace connection.
+
+The desktop app lists each workspace's authentication state and supports adding, renaming, and choosing the default workspace.
+Its daemon and authentication IPC responses remain single-line JSON.

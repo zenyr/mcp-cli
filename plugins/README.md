@@ -67,7 +67,7 @@ The default is `~/.config/mcp-cli/config.json`. Entries are package names, absol
 
 Invalid configuration produces a usage error (exit code 2) that includes the file path.
 If two locations provide the same service name, discovery fails and reports both locations.
-Service names cannot be `help`, `generate`, `plugins`, `login`, or `logout`.
+Service names cannot be `help`, `generate`, `plugins`, `workspaces`, `login`, or `logout`.
 
 When the package directory is writable, generated files go to `src/generated.ts` and `src/tools.json`.
 Otherwise, as with packages inside `node_modules`, they go to `$XDG_CACHE_HOME/mcp-cli/<service>/`.
@@ -122,3 +122,22 @@ fish-audio voice clone --audio-urls '["@./a.wav","@./b.wav"]' --confirm-voice-ri
 - Duplicate-call keys use the file content's SHA-256 instead of the upload URL. Rejected calls do not upload files.
 - Connection or upload failures allow the same call again because the tool has not been called.
 - PUT error messages do not include signed upload URLs.
+
+## Workspace support
+
+A plugin can opt into multiple independently authenticated workspaces:
+
+```typescript
+workspaces: { credentialEnv: ["MY_SERVICE_TOKEN"] },
+```
+
+List every environment variable that supplies credentials in `credentialEnv`.
+The host retains those variables for the legacy workspace and removes them for additional workspaces.
+Endpoint and other non-credential variables remain available.
+Installed-plugin credential namespaces still apply before the workspace namespace.
+
+The host populates `plugin.workspace` and the workflow context’s `workspace` with the selected stable ID and local name.
+Keep one plugin and one generated command catalog for all workspaces.
+Plugins should use the supplied token and settings stores instead of constructing global secret paths.
+Those stores scope every read, write, deletion, and lock to the selected workspace.
+The existing Slack user/bot and MCP/Web choices operate within each workspace.

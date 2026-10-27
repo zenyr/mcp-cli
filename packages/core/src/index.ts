@@ -1,3 +1,4 @@
+export type { Workspace, WorkspaceRegistry, WorkspaceAction } from "./workspaces";
 import { errorBrand, hasErrorBrand } from "./error-brand";
 
 const usageBrand = errorBrand("UsageError");
@@ -100,6 +101,10 @@ export type Connection =
       webApi?: WebApiConfig;
     };
 export type ServicePlugin = {
+  /** Host-selected workspace; plugins retain one command catalog across all workspaces. */
+  workspace?: import("./workspaces").Workspace;
+  /** Credential environment variables apply only to the legacy workspace. */
+  workspaces?: { credentialEnv: string[] };
   credentialNamespace?: string;
   authSupport?: import("./auth-support").AuthSupport;
   name: string;
@@ -207,6 +212,7 @@ export const COMMANDS = {
 } as const;
 export const FLAGS = {
   json: "json",
+  workspace: "workspace",
   help: "help",
   input: "input",
   inputFile: "input-file",

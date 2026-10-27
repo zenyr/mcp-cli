@@ -1,3 +1,4 @@
+import { WorkspaceManager } from "./workspace-manager";
 import { useEffect, useState } from "react";
 import {
   ActionIcon,
@@ -20,12 +21,13 @@ import { ServiceIcon } from "./service-icon";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useAction, useServices } from "./queries";
-import type { Service } from "./ipc";
+import { workspaceRows, type Service } from "./ipc";
 import { AuthSettingsPanel } from "./auth-settings-panel";
 
 type Selection = { service: Service; credential: Service["credentials"][number] };
 export const ServicesPage = () => {
   const { data, dataUpdatedAt, isPending, error } = useServices();
+  const rows = workspaceRows(data);
   const [selection, setSelection] = useState<Selection>();
   const [secret, setSecret] = useState("");
   const [url, setUrl] = useState("");
@@ -56,7 +58,11 @@ export const ServicesPage = () => {
     setSelection(item);
     if (item.service.auth === "oauth")
       login.mutate(
-        { service: item.service.name, credential: item.credential.flag },
+        {
+          service: item.service.name,
+          workspace: item.service.workspace?.id,
+          credential: item.credential.flag,
+        },
         {
           onSuccess: (result) => {
             if (result === null) setSelection(undefined);
@@ -82,7 +88,11 @@ export const ServicesPage = () => {
       labels: { confirm: "로그아웃", cancel: "취소" },
       confirmProps: { color: "red" },
       onConfirm: () =>
-        logout.mutate({ service: item.service.name, credential: item.credential.flag }),
+        logout.mutate({
+          service: item.service.name,
+          workspace: item.service.workspace?.id,
+          credential: item.credential.flag,
+        }),
     });
   return (
     <Stack gap="lg">
@@ -98,6 +108,7 @@ export const ServicesPage = () => {
         </Alert>
       )}
       {isPending && <Loader size="sm" />}
+      {data && <WorkspaceManager services={data} />}
       {data && (
         <Paper withBorder>
           <Table.ScrollContainer minWidth={480}>
@@ -105,13 +116,14 @@ export const ServicesPage = () => {
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>서비스</Table.Th>
+                  <Table.Th>워크스페이스</Table.Th>
                   <Table.Th>자격 증명</Table.Th>
                   <Table.Th>인증 상태</Table.Th>
                   <Table.Th />
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {data.flatMap((service) =>
+                {rows.flatMap((service) =>
                   (service.credentials.length
                     ? service.credentials
                     : [{ flag: "", summary: "", stored: false, fromEnv: false }]
@@ -136,7 +148,9 @@ export const ServicesPage = () => {
                             ? "teal"
                             : "orange";
                     return (
-                      <Table.Tr key={`${service.name}:${credential.flag}`}>
+                      <Table.Tr
+                        key={`${service.name}:${service.workspace?.id ?? "default"}:${credential.flag}`}
+                      >
                         <Table.Td>
                           <Group wrap="nowrap" gap="sm">
                             <ServiceIcon service={service.name} credential={credential.flag} />
@@ -149,6 +163,14 @@ export const ServicesPage = () => {
                               </Text>
                             </Stack>
                           </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          {service.workspace?.name ?? "default"}
+                          {service.workspace?.id === service.defaultWorkspaceId && (
+                            <Text size="xs" c="dimmed">
+                              기본
+                            </Text>
+                          )}
                         </Table.Td>
                         <Table.Td>
                           {credential.flag || (service.auth === "oauth" ? "OAuth" : "기본")}
@@ -213,14 +235,16 @@ export const ServicesPage = () => {
           </Table.ScrollContainer>
         </Paper>
       )}
-      {data
-        ?.filter((service) => service.authentication)
+      {rows
+        .filter((service) => service.authentication)
         .map(
           (service) =>
             service.authentication && (
               <AuthSettingsPanel
-                key={`${service.name}:${dataUpdatedAt}`}
+                key={`${service.name}:${service.workspace?.id ?? "default"}:${dataUpdatedAt}`}
                 service={service.name}
+                workspace={service.workspace?.id}
+                workspaceName={service.workspace?.name}
                 authentication={service.authentication}
               />
             ),
@@ -228,7 +252,7 @@ export const ServicesPage = () => {
       <Modal
         opened={Boolean(selection)}
         onClose={close}
-        title={`${selection?.service.name ?? ""} ${selection?.service.auth === "apiKey" ? "API key 저장" : "로그인"}`}
+        title={`${selection?.service.name ?? ""} / ${selection?.service.workspace?.name ?? "default"} ${selection?.service.auth === "apiKey" ? "API key 저장" : "로그인"}`}
         centered
       >
         <Stack gap="md">
@@ -252,6 +276,7 @@ export const ServicesPage = () => {
                   login.mutate(
                     {
                       service: selection.service.name,
+                      workspace: selection.service.workspace?.id,
                       credential: selection.credential.flag,
                       secret,
                     },

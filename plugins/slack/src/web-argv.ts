@@ -47,7 +47,14 @@ export const normalizeArgv = (argv: string[]): string[] => {
   ]);
   const global: string[] = [];
   const words = [...argv];
-  while (words[0] && globals.has(words[0])) global.push(words.shift() ?? "");
+  while (words[0]) {
+    const arg = words[0];
+    if (globals.has(arg) || arg.startsWith("--workspace=")) global.push(words.shift() ?? "");
+    else if (arg === "-w" || arg === "--workspace") {
+      global.push(words.shift() ?? "");
+      if (words[0] && !words[0].startsWith("-")) global.push(words.shift() ?? "");
+    } else break;
+  }
   const entry = [...specs]
     .sort((a, b) => b.path.length - a.path.length)
     .find((item) => item.path.split(" ").every((part, index) => words[index] === part));
@@ -65,6 +72,12 @@ export const normalizeArgv = (argv: string[]): string[] => {
     const arg = tail[index] ?? "";
     if (arg === "--") {
       literal = true;
+      continue;
+    }
+    if (!literal && (arg === "-w" || arg === "--workspace" || arg.startsWith("--workspace="))) {
+      global.push(arg);
+      if (!arg.includes("=") && tail[index + 1] && !tail[index + 1]?.startsWith("-"))
+        global.push(tail[++index] ?? "");
       continue;
     }
     if (!literal && globals.has(arg)) {

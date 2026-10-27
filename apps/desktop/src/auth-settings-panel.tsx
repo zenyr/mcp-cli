@@ -96,9 +96,13 @@ const SettingsField = ({
 
 export const AuthSettingsPanel = ({
   service,
+  workspace,
+  workspaceName,
   authentication,
 }: {
   service: string;
+  workspace?: string;
+  workspaceName?: string;
   authentication: Authentication;
 }) => {
   const [configuration, setConfiguration] = useState(authentication.configuration);
@@ -133,12 +137,15 @@ export const AuthSettingsPanel = ({
     <Paper withBorder p="md">
       <Stack gap="md">
         <Group justify="space-between">
-          <Title order={4}>{service} 인증 설정</Title>
+          <Title order={4}>
+            {service}
+            {workspaceName ? ` / ${workspaceName}` : ""} 인증 설정
+          </Title>
           <Button
             variant="default"
             loading={verify.isPending}
             disabled={busy && !verify.isPending}
-            onClick={() => verify.mutate({ service })}
+            onClick={() => verify.mutate({ service, workspace })}
           >
             연결 확인
           </Button>
@@ -160,7 +167,9 @@ export const AuthSettingsPanel = ({
               size="xs"
               variant="default"
               disabled={dirty || busy}
-              onClick={() => login.mutate({ service, target: state.target, method: "browser" })}
+              onClick={() =>
+                login.mutate({ service, workspace, target: state.target, method: "browser" })
+              }
             >
               브라우저 로그인
             </Button>
@@ -169,7 +178,7 @@ export const AuthSettingsPanel = ({
               color="red"
               variant="subtle"
               disabled={busy}
-              onClick={() => logout.mutate({ service, target: state.target })}
+              onClick={() => logout.mutate({ service, workspace, target: state.target })}
             >
               인증 삭제
             </Button>
@@ -233,7 +242,7 @@ export const AuthSettingsPanel = ({
           <Button
             disabled={!dirty || busy}
             loading={save.isPending}
-            onClick={() => save.mutate({ service, configuration })}
+            onClick={() => save.mutate({ service, workspace, configuration })}
           >
             설정 저장
           </Button>

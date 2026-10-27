@@ -40,5 +40,15 @@ export const extensionCacheScope = async (
       : auth.env;
     identity = (variable ? env[variable] : undefined) ?? (await store.read(name))?.accessToken;
   }
-  return createHash("sha256").update(JSON.stringify({ endpoint, name, identity })).digest("hex");
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        endpoint,
+        name,
+        identity,
+        workspace: plugin.workspace?.id,
+        namespace: plugin.credentialNamespace,
+      }),
+    )
+    .digest("hex");
 };

@@ -4,6 +4,7 @@ type Entry = {
   id: string;
   service: string;
   credential?: string;
+  workspace?: string;
   openedAt: number;
   session: Promise<ToolSession>;
   active: number;
@@ -78,6 +79,7 @@ export const createPool = (idleMs = 60_000, limit = 32) => {
     open: () => Promise<ToolSession>,
     run: (session: ToolSession) => Promise<T>,
     credential?: string,
+    workspace?: string,
   ): Promise<T> => {
     await resetting;
     if (stopped) throw new Error("Daemon is stopping");
@@ -88,6 +90,7 @@ export const createPool = (idleMs = 60_000, limit = 32) => {
         id: crypto.randomUUID(),
         service,
         credential,
+        workspace,
         openedAt: Date.now(),
         session: Promise.resolve().then(open),
         active: 0,
@@ -121,10 +124,11 @@ export const createPool = (idleMs = 60_000, limit = 32) => {
     reset,
     status: () =>
       [...entries.values()].map(
-        ({ id, service, credential, openedAt, active, leases, lastUsed }) => ({
+        ({ id, service, credential, workspace, openedAt, active, leases, lastUsed }) => ({
           id,
           service,
           credential,
+          workspace,
           openedAt,
           active,
           leases,

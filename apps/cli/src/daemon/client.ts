@@ -70,11 +70,13 @@ export const usesDaemon = (env: Record<string, string | undefined> = process.env
 export const openDaemonSession = async (
   service: string,
   credential?: string,
+  workspace?: string,
 ): Promise<ToolSession> => {
   const agent = new Agent({ keepAlive: true, maxSockets: 1 });
   const context = {
     service,
     credential,
+    workspace,
     cwd: process.cwd(),
     env: Object.fromEntries(
       Object.entries(process.env).filter(

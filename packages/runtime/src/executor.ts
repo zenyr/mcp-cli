@@ -55,6 +55,7 @@ export const createExecutor = (
         command.name,
         scope ? { input: normalized, uploadScope: scope } : normalized,
         options.credential,
+        dependencies.workspaceId,
       );
       const attempt = randomUUID();
       const earlier = await guard?.begin(manifest.service, key, command.name, attempt);

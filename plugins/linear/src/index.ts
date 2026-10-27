@@ -2,6 +2,7 @@ import { definePlugin } from "@mcp-cli/core";
 import { commands, groups, quickstart, skill } from "./commands";
 export default definePlugin({
   name: "linear",
+  workspaces: { credentialEnv: ["LINEAR_MCP_TOKEN"] },
   summary: "Linear issues, projects and cycles",
   commands,
   groups,

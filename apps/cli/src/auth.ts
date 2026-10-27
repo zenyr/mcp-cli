@@ -13,6 +13,8 @@ import {
 } from "@mcp-cli/core";
 import { createInterface } from "node:readline";
 import { login, oauthAuthorize } from "@mcp-cli/mcp";
+import { extractWorkspace } from "./workspace-arguments";
+import { selectWorkspace } from "./workspaces";
 import { pluginEnvironment, pluginStore, pluginSettings } from "./plugin-credentials";
 
 type Env = Record<string, string | undefined>;
@@ -167,8 +169,13 @@ const saveApiKey = async (
 };
 
 export const loginCommand = async (args: string[], context: AuthContext): Promise<void> => {
-  const parsed = serviceArguments("login [--no-browser]", args);
-  const plugin = await context.plugin(parsed.service);
+  const selected = extractWorkspace(args);
+  const parsed = serviceArguments("login [--no-browser]", selected.args);
+  const plugin = await selectWorkspace(
+    await context.plugin(parsed.service),
+    selected.workspace,
+    context.settings ?? defaultSettings(context.env),
+  );
   context = {
     ...context,
     env: pluginEnvironment(plugin, context.env),
@@ -229,8 +236,13 @@ export const loginCommand = async (args: string[], context: AuthContext): Promis
 };
 
 export const logoutCommand = async (args: string[], context: AuthContext): Promise<void> => {
-  const parsed = serviceArguments("logout", args);
-  const plugin = await context.plugin(parsed.service);
+  const selected = extractWorkspace(args);
+  const parsed = serviceArguments("logout", selected.args);
+  const plugin = await selectWorkspace(
+    await context.plugin(parsed.service),
+    selected.workspace,
+    context.settings ?? defaultSettings(context.env),
+  );
   context = {
     ...context,
     env: pluginEnvironment(plugin, context.env),
