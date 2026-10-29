@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { call } from "./ipc";
+import { t, useLocale } from "./i18n";
 import { AppShell, Badge, NavLink, Stack, Text } from "@mantine/core";
 import { IconKey, IconPlugConnected, IconSettings, IconPackage } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
@@ -7,6 +10,10 @@ import { useInteractionSounds } from "./ui-sounds";
 import { DaemonBar } from "./daemon-bar";
 
 export const App = () => {
+  const locale = useLocale();
+  useEffect(() => {
+    void call("setLocale", { locale }).catch(() => undefined);
+  }, [locale]);
   useInteractionSounds();
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,14 +53,14 @@ export const App = () => {
           <NavLink
             component={Link}
             to="/plugins"
-            label="플러그인"
+            label={t("플러그인")}
             leftSection={<IconPackage size={16} />}
             active={location.pathname === "/plugins"}
           />
           <NavLink
             component={Link}
             to="/connections"
-            label="연결"
+            label={t("연결")}
             leftSection={<IconPlugConnected size={16} />}
             rightSection={<Badge size="xs">{count}</Badge>}
             active={location.pathname === "/connections"}
@@ -61,14 +68,14 @@ export const App = () => {
           <NavLink
             component={Link}
             to="/services"
-            label="서비스"
+            label={t("서비스")}
             leftSection={<IconKey size={16} />}
             active={location.pathname === "/services"}
           />
           <NavLink
             component={Link}
             to="/settings"
-            label="설정"
+            label={t("설정")}
             leftSection={<IconSettings size={16} />}
             active={location.pathname === "/settings"}
           />

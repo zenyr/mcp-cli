@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import type { SoundKind } from "../shared/ui-sounds";
 import type {
   Workspace,
@@ -59,6 +60,7 @@ export type AuthInput = {
   target?: string;
 };
 export type Api = {
+  setLocale: { input: { locale: "en" | "ko" | "ja" }; output: null };
   workspaceAction: { input: WorkspaceAction; output: WorkspaceRegistry };
   plugins: { input: undefined; output: MarketplaceView };
   pluginAction: { input: MarketplaceAction; output: { message: string } };
@@ -84,7 +86,7 @@ export const call = <K extends keyof Api>(
   method: K,
   input?: Api[K]["input"],
 ): Promise<Api[K]["output"]> => {
-  if (!window.tiny) return Promise.reject(new Error("tinyjs에서 앱을 실행해 주세요."));
+  if (!window.tiny) return Promise.reject(new Error(t("tinyjs에서 앱을 실행해 주세요.")));
   return window.tiny.api.call(method, input) as Promise<Api[K]["output"]>;
 };
 

@@ -1,3 +1,4 @@
+import { t, useLocale } from "./i18n";
 import { useState } from "react";
 import {
   Alert,
@@ -16,6 +17,7 @@ import type { MarketplaceAction, MarketplacePlugin } from "@mcp-cli/core";
 import { useAction, usePlugins } from "./queries";
 
 export const PluginsPage = () => {
+  useLocale();
   const { data, error, isPending } = usePlugins();
   const action = useAction("pluginAction");
   const [repository, setRepository] = useState("");
@@ -35,18 +37,15 @@ export const PluginsPage = () => {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={3}>플러그인</Title>
-        <Text size="sm" c="dimmed">
-          필요한 플러그인만 설치하고 활성화하세요.
-        </Text>
+        <Title order={3}>{t("플러그인")}</Title>
       </Group>
       {error && <Alert color="red">{error.message}</Alert>}
       {action.error && <Alert color="red">{action.error.message}</Alert>}
       {action.data && <Alert color="teal">{action.data.message}</Alert>}
-      {isPending && <Text>플러그인 목록을 확인합니다.</Text>}
+      {isPending && <Text>{t("플러그인 목록을 확인합니다.")}</Text>}
       {data && !data.sources.length && !data.plugins.length && (
         <Alert color="gray">
-          등록한 카탈로그가 없습니다. 추천 목록에서 선택하거나 저장소 주소를 추가하세요.
+          {t("등록한 카탈로그가 없습니다. 추천 목록에서 선택하거나 저장소 주소를 추가하세요.")}
         </Alert>
       )}
       {data &&
@@ -55,7 +54,7 @@ export const PluginsPage = () => {
         ) && (
           <Paper withBorder p="md">
             <Stack gap="sm">
-              <Title order={4}>추천 카탈로그</Title>
+              <Title order={4}>{t("추천 카탈로그")}</Title>
               {data.recommendations
                 .filter((item) => !data.sources.some((source) => source.id === item.id))
                 .map((item) => (
@@ -70,7 +69,7 @@ export const PluginsPage = () => {
                       disabled={action.isPending}
                       onClick={() => run({ type: "source.add", url: item.url })}
                     >
-                      불러오기
+                      {t("불러오기")}
                     </Button>
                   </Group>
                 ))}
@@ -81,13 +80,13 @@ export const PluginsPage = () => {
         <Paper withBorder p="md">
           <Stack gap="sm">
             <Group justify="space-between">
-              <Text fw={600}>터미널 명령</Text>
+              <Text fw={600}>{t("터미널 명령")}</Text>
               <Badge color={data.onPath ? "teal" : "gray"}>
-                {data.onPath ? "PATH 등록됨" : "PATH 설정 확인"}
+                {data.onPath ? t("PATH 등록됨") : t("PATH 설정 확인")}
               </Badge>
             </Group>
             <Text size="sm">
-              활성화한 플러그인의 명령을 <Code>{data.commandDirectory}</Code>에 만듭니다.
+              {t("명령 폴더")} <Code>{data.commandDirectory}</Code>
             </Text>
             <Group>
               <Button
@@ -95,11 +94,11 @@ export const PluginsPage = () => {
                 loading={action.isPending}
                 onClick={() => run({ type: "commands.install" })}
               >
-                PATH에 등록
+                {t("PATH에 등록")}
               </Button>
             </Group>
             <Text size="xs" c="dimmed">
-              등록 후 새 터미널을 열어 주세요. 기존 명령 파일은 덮어쓰지 않습니다.
+              {t("등록 후 새 터미널을 열어 주세요. 기존 명령 파일은 덮어쓰지 않습니다.")}
             </Text>
           </Stack>
         </Paper>
@@ -113,18 +112,18 @@ export const PluginsPage = () => {
                   <Text fw={600}>{plugin.name}</Text>
                   <Badge color={plugin.revoked ? "red" : plugin.enabled ? "teal" : "gray"}>
                     {plugin.revoked
-                      ? "차단됨"
+                      ? t("차단됨")
                       : plugin.enabled
-                        ? "활성화됨"
+                        ? t("활성화됨")
                         : plugin.installed
-                          ? "비활성화됨"
-                          : "설치 가능"}
+                          ? t("비활성화됨")
+                          : t("설치 가능")}
                   </Badge>
-                  {plugin.development && <Badge variant="outline">개발</Badge>}
+                  {plugin.development && <Badge variant="outline">{t("개발")}</Badge>}
                 </Group>
                 <Text size="sm">{plugin.description}</Text>
                 <Text size="xs" c="dimmed">
-                  {plugin.sourceName} · {plugin.installedVersion ?? plugin.version} · 명령{" "}
+                  {plugin.sourceName} · {plugin.installedVersion ?? plugin.version} · {t("명령")}{" "}
                   <Code>{plugin.service}</Code>
                 </Text>
               </Stack>
@@ -134,7 +133,7 @@ export const PluginsPage = () => {
                     disabled={!plugin.supported || action.isPending || Boolean(plugin.revoked)}
                     onClick={() => select(plugin, "install")}
                   >
-                    설치
+                    {t("설치")}
                   </Button>
                 )}
                 {plugin.installed && (
@@ -145,7 +144,7 @@ export const PluginsPage = () => {
                         disabled={!plugin.supported || action.isPending}
                         onClick={() => select(plugin, "install")}
                       >
-                        업데이트
+                        {t("업데이트")}
                       </Button>
                     )}
                     <Button
@@ -157,7 +156,7 @@ export const PluginsPage = () => {
                           : select(plugin, "enable")
                       }
                     >
-                      {plugin.enabled ? "비활성화" : "활성화"}
+                      {plugin.enabled ? t("비활성화") : t("활성화")}
                     </Button>
                     <Button
                       color="red"
@@ -165,7 +164,7 @@ export const PluginsPage = () => {
                       disabled={action.isPending}
                       onClick={() => run({ type: "plugin.remove", key: plugin.key })}
                     >
-                      제거
+                      {t("제거")}
                     </Button>
                   </>
                 )}
@@ -173,7 +172,7 @@ export const PluginsPage = () => {
             </Group>
             {!plugin.supported && (
               <Text size="sm" c="dimmed">
-                이 운영체제와 CPU에 맞는 배포 파일이 없습니다.
+                {t("이 운영체제와 CPU에 맞는 배포 파일이 없습니다.")}
               </Text>
             )}
             {plugin.revoked && <Alert color="red">{plugin.revoked}</Alert>}
@@ -182,15 +181,16 @@ export const PluginsPage = () => {
       ))}
       <Paper withBorder p="md">
         <Stack gap="md">
-          <Title order={4}>카탈로그 저장소</Title>
+          <Title order={4}>{t("카탈로그 저장소")}</Title>
           <Text size="sm">
-            GitHub 또는 Forgejo의 HTTPS Git 주소를 추가하세요. 목록 갱신은 플러그인을 실행하지
-            않습니다.
+            {t(
+              "GitHub 또는 Forgejo의 HTTPS Git 주소를 추가하세요. 목록 갱신은 플러그인을 실행하지 않습니다.",
+            )}
           </Text>
           <Group align="end">
             <TextInput
               style={{ flex: 1 }}
-              label="저장소 주소"
+              label={t("저장소 주소")}
               placeholder="https://git.example.com/team/mcp-plugins.git"
               value={repository}
               onChange={(event) => setRepository(event.currentTarget.value)}
@@ -204,7 +204,7 @@ export const PluginsPage = () => {
                 )
               }
             >
-              추가
+              {t("추가")}
             </Button>
           </Group>
           {data?.sources.map((source) => (
@@ -214,7 +214,7 @@ export const PluginsPage = () => {
                   {source.name}
                 </Text>
                 <Text size="xs" c="dimmed">
-                  {source.url === "builtin" ? "앱에 포함된 카탈로그" : source.url} ·{" "}
+                  {source.url === "builtin" ? t("앱에 포함된 카탈로그") : source.url} ·{" "}
                   {source.commit.slice(0, 8)}
                 </Text>
               </Stack>
@@ -225,7 +225,7 @@ export const PluginsPage = () => {
                   disabled={action.isPending}
                   onClick={() => run({ type: "source.refresh", id: source.id })}
                 >
-                  목록 갱신
+                  {t("목록 갱신")}
                 </Button>
                 <Button
                   size="xs"
@@ -234,7 +234,7 @@ export const PluginsPage = () => {
                   disabled={action.isPending}
                   onClick={() => run({ type: "source.remove", id: source.id })}
                 >
-                  제거
+                  {t("제거")}
                 </Button>
               </Group>
             </Group>
@@ -242,16 +242,17 @@ export const PluginsPage = () => {
         </Stack>
       </Paper>
       <details>
-        <summary>플러그인 개발</summary>
+        <summary>{t("플러그인 개발")}</summary>
         <Stack mt="sm">
           <Text size="sm">
-            plugin.json과 manifest.json이 있는 로컬 폴더를 연결합니다. 개발 폴더의 코드는 다음
-            실행에 반영됩니다.
+            {t(
+              "plugin.json과 manifest.json이 있는 로컬 폴더를 연결합니다. 개발 폴더의 코드는 다음 실행에 반영됩니다.",
+            )}
           </Text>
           <Group align="end">
             <TextInput
               style={{ flex: 1 }}
-              label="개발 폴더의 절대 경로"
+              label={t("개발 폴더의 절대 경로")}
               value={directory}
               onChange={(event) => setDirectory(event.currentTarget.value)}
             />
@@ -264,7 +265,7 @@ export const PluginsPage = () => {
                 )
               }
             >
-              연결
+              {t("연결")}
             </Button>
           </Group>
         </Stack>
@@ -274,22 +275,34 @@ export const PluginsPage = () => {
         onClose={() => {
           if (!action.isPending) setSelection(undefined);
         }}
-        title={`${selection?.plugin.name ?? ""} ${selection?.operation === "install" ? "설치" : "활성화"}`}
+        title={`${selection?.plugin.name ?? ""} ${selection?.operation === "install" ? t("설치") : t("활성화")}`}
         centered
       >
         {selection && permissions && (
           <Stack>
-            <Text size="sm">출처: {selection.plugin.sourceName}</Text>
-            <Text size="sm">네트워크: {permissions.network.join(", ") || "선언 없음"}</Text>
-            <Text size="sm">파일 접근: {permissions.filesystem.join(", ") || "선언 없음"}</Text>
+            <Text size="sm">
+              {t("출처:")}
+              {selection.plugin.sourceName}
+            </Text>
+            <Text size="sm">
+              {t("네트워크:")}
+              {permissions.network.join(", ") || t("선언 없음")}
+            </Text>
+            <Text size="sm">
+              {t("파일 접근:")}
+              {permissions.filesystem.join(", ") || t("선언 없음")}
+            </Text>
             {permissions.localCode && (
               <Alert color="yellow">
-                활성화하면 다운로드한 플러그인을 이 컴퓨터에서 사용자 계정 권한으로 실행합니다.
-                파일과 네트워크 접근을 운영체제 샌드박스로 제한하지 않습니다.
+                {t(
+                  "활성화하면 다운로드한 플러그인을 이 컴퓨터에서 사용자 계정 권한으로 실행합니다. 파일과 네트워크 접근을 운영체제 샌드박스로 제한하지 않습니다.",
+                )}
               </Alert>
             )}
             {selection.operation === "install" && (
-              <Text size="sm">동의하면 플러그인을 다운로드하고 검증한 뒤 바로 활성화합니다.</Text>
+              <Text size="sm">
+                {t("동의하면 플러그인을 다운로드하고 검증한 뒤 바로 활성화합니다.")}
+              </Text>
             )}
             <Button
               loading={action.isPending}
@@ -312,7 +325,7 @@ export const PluginsPage = () => {
                 action.mutate(request, { onSuccess: () => setSelection(undefined) });
               }}
             >
-              {selection.operation === "install" ? "동의하고 설치" : "동의하고 활성화"}
+              {selection.operation === "install" ? t("동의하고 설치") : t("동의하고 활성화")}
             </Button>
           </Stack>
         )}

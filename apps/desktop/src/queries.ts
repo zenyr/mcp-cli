@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { playUiSound } from "./ui-sounds";
@@ -55,7 +56,7 @@ export const useAction = <K extends keyof Api>(method: K, message?: string) => {
     onError: (error) => {
       if (feedbackActions.has(method)) playUiSound("error");
       notifications.show({
-        title: "작업을 완료하지 못했습니다",
+        title: t("작업을 완료하지 못했습니다"),
         message: error.message,
         color: "red",
         autoClose: 6000,

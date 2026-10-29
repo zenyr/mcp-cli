@@ -1,3 +1,4 @@
+import { t, useLocale } from "./i18n";
 import { Paper, Switch } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
@@ -5,6 +6,7 @@ import { call, type Settings } from "./ipc";
 import { useSettings } from "./ui-sounds";
 
 export const SoundSettings = () => {
+  useLocale();
   const client = useQueryClient();
   const { data } = useSettings();
   const enabled = data?.soundsEnabled ?? true;
@@ -19,7 +21,7 @@ export const SoundSettings = () => {
     onError: (error, _value, previous) => {
       if (previous) client.setQueryData(["settings"], previous);
       notifications.show({
-        title: "효과음 설정을 저장하지 못했습니다",
+        title: t("효과음 설정을 저장하지 못했습니다"),
         message: error.message,
         color: "red",
       });
@@ -29,8 +31,7 @@ export const SoundSettings = () => {
   return (
     <Paper withBorder p="lg" data-sfx="off">
       <Switch
-        label="효과음"
-        description="대몬 시작, 작업 결과, 버튼 조작에 소리를 냅니다."
+        label={t("효과음")}
         checked={enabled}
         disabled={!data || save.isPending}
         onChange={(event) => save.mutate(event.currentTarget.checked)}

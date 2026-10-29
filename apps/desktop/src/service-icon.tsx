@@ -1,3 +1,4 @@
+import { t, useLocale } from "./i18n";
 import { Box, Tooltip } from "@mantine/core";
 import { IconPlug, IconRobot, IconUser } from "@tabler/icons-react";
 
@@ -10,9 +11,10 @@ const icons: Record<string, string> = {
 };
 
 export const ServiceIcon = ({ service, credential }: { service: string; credential: string }) => {
+  useLocale();
   const src = icons[service];
   const role = service === "slack" ? credential : "";
-  const label = role === "xoxp" ? "개인 토큰" : role === "xoxb" ? "봇 토큰" : undefined;
+  const label = role === "xoxp" ? t("개인 토큰") : role === "xoxb" ? t("봇 토큰") : undefined;
   return (
     <Box className="service-icon">
       {src ? <img src={src} width={32} height={32} alt="" /> : <IconPlug size={32} aria-hidden />}

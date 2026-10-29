@@ -1,3 +1,4 @@
+import { t, useLocale } from "./i18n";
 import { WorkspaceManager } from "./workspace-manager";
 import { useEffect, useState } from "react";
 import {
@@ -26,13 +27,14 @@ import { AuthSettingsPanel } from "./auth-settings-panel";
 
 type Selection = { service: Service; credential: Service["credentials"][number] };
 export const ServicesPage = () => {
+  useLocale();
   const { data, dataUpdatedAt, isPending, error } = useServices();
   const rows = workspaceRows(data);
   const [selection, setSelection] = useState<Selection>();
   const [secret, setSecret] = useState("");
   const [url, setUrl] = useState("");
-  const login = useAction("login", "인증을 저장했습니다.");
-  const logout = useAction("logout", "저장된 인증을 삭제했습니다.");
+  const login = useAction("login", t("인증을 저장했습니다."));
+  const logout = useAction("logout", t("저장된 인증을 삭제했습니다."));
   const cancel = useAction("cancelLogin");
   useEffect(
     () =>
@@ -43,7 +45,7 @@ export const ServicesPage = () => {
         setUrl(value);
         void window.tiny?.app.shell.open(value).catch((failure: Error) =>
           notifications.show({
-            title: "브라우저를 열지 못했습니다",
+            title: t("브라우저를 열지 못했습니다"),
             message: failure.message,
             color: "red",
           }),
@@ -78,14 +80,14 @@ export const ServicesPage = () => {
   };
   const remove = (item: Selection) =>
     modals.openConfirmModal({
-      title: `${item.service.name}에서 로그아웃할까요?`,
+      title: t("{service}에서 로그아웃할까요?", { service: item.service.name }),
       children: (
         <Text size="sm">
-          저장된 인증을 삭제하고 열린 연결을 초기화합니다.
-          {item.credential.fromEnv && " 환경 변수의 인증은 계속 사용됩니다."}
+          {t("저장된 인증을 삭제하고 열린 연결을 초기화합니다.")}
+          {item.credential.fromEnv && t(" 환경 변수의 인증은 계속 사용됩니다.")}
         </Text>
       ),
-      labels: { confirm: "로그아웃", cancel: "취소" },
+      labels: { confirm: t("로그아웃"), cancel: t("취소") },
       confirmProps: { color: "red" },
       onConfirm: () =>
         logout.mutate({
@@ -97,13 +99,10 @@ export const ServicesPage = () => {
   return (
     <Stack gap="lg">
       <Group justify="space-between">
-        <Title order={3}>서비스</Title>
-        <Text size="xs" c="dimmed">
-          사용할 서비스에 로그인해 주세요.
-        </Text>
+        <Title order={3}>{t("서비스")}</Title>
       </Group>
       {error && (
-        <Alert color="red" title="서비스를 가져오지 못했습니다">
+        <Alert color="red" title={t("서비스를 가져오지 못했습니다")}>
           {error.message}
         </Alert>
       )}
@@ -115,10 +114,10 @@ export const ServicesPage = () => {
             <Table verticalSpacing="sm">
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>서비스</Table.Th>
-                  <Table.Th>워크스페이스</Table.Th>
-                  <Table.Th>자격 증명</Table.Th>
-                  <Table.Th>인증 상태</Table.Th>
+                  <Table.Th>{t("서비스")}</Table.Th>
+                  <Table.Th>{t("워크스페이스")}</Table.Th>
+                  <Table.Th>{t("자격 증명")}</Table.Th>
+                  <Table.Th>{t("인증 상태")}</Table.Th>
                   <Table.Th />
                 </Table.Tr>
               </Table.Thead>
@@ -130,14 +129,14 @@ export const ServicesPage = () => {
                   ).map((credential) => {
                     const item = { service, credential };
                     const state = service.error
-                      ? "불러오기 실패"
+                      ? t("불러오기 실패")
                       : service.auth === "none"
-                        ? "인증 없음"
+                        ? t("인증 없음")
                         : credential.fromEnv
-                          ? "환경 변수 사용"
+                          ? t("환경 변수 사용")
                           : credential.stored
-                            ? "저장됨"
-                            : "로그인 필요";
+                            ? t("저장됨")
+                            : t("로그인 필요");
                     const color = service.error
                       ? "red"
                       : service.auth === "none"
@@ -158,9 +157,11 @@ export const ServicesPage = () => {
                               <Text size="sm" fw={500}>
                                 {service.name}
                               </Text>
-                              <Text size="xs" c="dimmed">
-                                {service.error ?? service.summary}
-                              </Text>
+                              {service.error && (
+                                <Text size="xs" c="dimmed">
+                                  {service.error}
+                                </Text>
+                              )}
                             </Stack>
                           </Group>
                         </Table.Td>
@@ -168,12 +169,12 @@ export const ServicesPage = () => {
                           {service.workspace?.name ?? "default"}
                           {service.workspace?.id === service.defaultWorkspaceId && (
                             <Text size="xs" c="dimmed">
-                              기본
+                              {t("기본")}
                             </Text>
                           )}
                         </Table.Td>
                         <Table.Td>
-                          {credential.flag || (service.auth === "oauth" ? "OAuth" : "기본")}
+                          {credential.flag || (service.auth === "oauth" ? "OAuth" : t("기본"))}
                         </Table.Td>
                         <Table.Td>
                           <Badge color={color}>{state}</Badge>
@@ -188,7 +189,9 @@ export const ServicesPage = () => {
                                       variant="subtle"
                                       color="gray"
                                       size="lg"
-                                      aria-label={`${service.name} ${credential.flag || "기본"} 더보기`}
+                                      aria-label={t("{name} 더보기", {
+                                        name: `${service.name} ${credential.flag || t("기본")}`,
+                                      })}
                                       disabled={
                                         login.isPending || cancel.isPending || logout.isPending
                                       }
@@ -201,7 +204,7 @@ export const ServicesPage = () => {
                                       leftSection={<IconKey size={16} />}
                                       onClick={() => begin(item)}
                                     >
-                                      {service.auth === "apiKey" ? "키 변경" : "다시 로그인"}
+                                      {service.auth === "apiKey" ? t("키 변경") : t("다시 로그인")}
                                     </Menu.Item>
                                     {credential.stored && (
                                       <Menu.Item
@@ -209,7 +212,7 @@ export const ServicesPage = () => {
                                         leftSection={<IconLogout size={16} />}
                                         onClick={() => remove(item)}
                                       >
-                                        로그아웃
+                                        {t("로그아웃")}
                                       </Menu.Item>
                                     )}
                                   </Menu.Dropdown>
@@ -220,7 +223,7 @@ export const ServicesPage = () => {
                                   disabled={login.isPending || cancel.isPending || logout.isPending}
                                   onClick={() => begin(item)}
                                 >
-                                  {service.auth === "apiKey" ? "키 저장" : "로그인"}
+                                  {service.auth === "apiKey" ? t("키 저장") : t("로그인")}
                                 </Button>
                               )}
                             </Group>
@@ -252,18 +255,18 @@ export const ServicesPage = () => {
       <Modal
         opened={Boolean(selection)}
         onClose={close}
-        title={`${selection?.service.name ?? ""} / ${selection?.service.workspace?.name ?? "default"} ${selection?.service.auth === "apiKey" ? "API key 저장" : "로그인"}`}
+        title={`${selection?.service.name ?? ""} / ${selection?.service.workspace?.name ?? "default"} ${selection?.service.auth === "apiKey" ? t("API key 저장") : t("로그인")}`}
         centered
       >
         <Stack gap="md">
           {selection?.credential.fromEnv && (
-            <Alert color="violet">설정된 환경 변수가 저장된 인증보다 우선합니다.</Alert>
+            <Alert color="violet">{t("설정된 환경 변수가 저장된 인증보다 우선합니다.")}</Alert>
           )}
           {selection?.service.auth === "apiKey" ? (
             <>
               <PasswordInput
                 label="API key"
-                description="키는 이 기기의 인증 저장소에 저장합니다."
+                description={t("키는 이 기기의 인증 저장소에 저장합니다.")}
                 value={secret}
                 onChange={(event) => setSecret(event.currentTarget.value)}
                 autoFocus
@@ -289,7 +292,7 @@ export const ServicesPage = () => {
                   );
                 }}
               >
-                저장
+                {t("저장")}
               </Button>
             </>
           ) : (
@@ -298,12 +301,12 @@ export const ServicesPage = () => {
                 {login.isPending && <Loader size="sm" />}
                 <Text size="sm">
                   {login.isPending
-                    ? "브라우저에서 로그인을 완료해 주세요."
-                    : "로그인 요청이 종료되었습니다."}
+                    ? t("브라우저에서 로그인을 완료해 주세요.")
+                    : t("로그인 요청이 종료되었습니다.")}
                 </Text>
               </Group>
               <Text size="xs" c="dimmed">
-                로그인은 5분 뒤 만료됩니다. 취소하면 로그인 요청을 종료합니다.
+                {t("로그인은 5분 뒤 만료됩니다. 취소하면 로그인 요청을 종료합니다.")}
               </Text>
               {url && (
                 <Group>
@@ -313,7 +316,7 @@ export const ServicesPage = () => {
                       void window.tiny?.app.shell.open(url);
                     }}
                   >
-                    브라우저 다시 열기
+                    {t("브라우저 다시 열기")}
                   </Button>
                   <Button
                     variant="subtle"
@@ -321,12 +324,12 @@ export const ServicesPage = () => {
                       void window.tiny?.clipboard.write({ text: url });
                     }}
                   >
-                    로그인 URL 복사
+                    {t("로그인 URL 복사")}
                   </Button>
                 </Group>
               )}
               <Button variant="default" onClick={close}>
-                취소
+                {t("취소")}
               </Button>
             </>
           )}

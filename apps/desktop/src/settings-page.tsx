@@ -1,3 +1,4 @@
+import { setLocale, t, useLocale } from "./i18n";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,6 +8,7 @@ import {
   Code,
   Group,
   Paper,
+  Select,
   Stack,
   Switch,
   Text,
@@ -19,6 +21,7 @@ import { useSettings } from "./ui-sounds";
 import { useAction, useStatus } from "./queries";
 
 export const SettingsPage = () => {
+  const locale = useLocale();
   const client = useQueryClient();
   const { data: settings, error } = useSettings();
   const autostart = useQuery({
@@ -27,7 +30,7 @@ export const SettingsPage = () => {
   });
   const { data } = useStatus();
   const [command, setCommand] = useState<string>();
-  const save = useAction("saveSettings", "설정을 저장했습니다.");
+  const save = useAction("saveSettings", t("설정을 저장했습니다."));
   const persist = async (autoStart = settings?.autoStart ?? false) => {
     await save.mutateAsync({
       ...(command !== undefined && {
@@ -42,16 +45,29 @@ export const SettingsPage = () => {
   };
   return (
     <Stack gap="lg">
-      <Title order={3}>설정</Title>
+      <Title order={3}>{t("설정")}</Title>
+      <Select
+        label={t("언어")}
+        value={locale}
+        data={[
+          { value: "en", label: "English" },
+          { value: "ko", label: "한국어" },
+          { value: "ja", label: "日本語" },
+        ]}
+        onChange={(value) => {
+          if (value === "en" || value === "ko" || value === "ja") setLocale(value);
+        }}
+        allowDeselect={false}
+      />
       {error && <Alert color="red">{error.message}</Alert>}
       <Paper withBorder p="lg">
         <Stack gap="lg">
           <Switch
-            label="로그인할 때 앱 실행"
+            label={t("로그인할 때 앱 실행")}
             description={
               autostart.data === "unsupported"
-                ? "개발 모드에서는 지원하지 않습니다."
-                : "앱은 트레이에서 시작합니다."
+                ? t("개발 모드에서는 지원하지 않습니다.")
+                : t("앱은 트레이에서 시작합니다.")
             }
             checked={autostart.data === "enabled"}
             disabled={!autostart.data || autostart.data === "unsupported"}
@@ -60,7 +76,7 @@ export const SettingsPage = () => {
                 const state = await window.tiny?.app.launchAtLogin.set(event.currentTarget.checked);
                 if (state === "requires-approval")
                   notifications.show({
-                    message: "시스템 설정에서 로그인 항목을 허용해 주세요.",
+                    message: t("시스템 설정에서 로그인 항목을 허용해 주세요."),
                     color: "yellow",
                   });
                 await client.invalidateQueries({ queryKey: ["autostart"] });
@@ -73,8 +89,8 @@ export const SettingsPage = () => {
             }}
           />
           <Switch
-            label="앱을 시작할 때 연결 준비"
-            description="앱을 종료해도 백그라운드에서 실행합니다."
+            label={t("앱을 시작할 때 연결 준비")}
+            description={t("앱을 종료해도 백그라운드에서 실행합니다.")}
             checked={settings?.autoStart ?? false}
             disabled={!settings || save.isPending}
             onChange={(event) => {
@@ -83,12 +99,14 @@ export const SettingsPage = () => {
           />
           <Accordion variant="contained">
             <Accordion.Item value="advanced">
-              <Accordion.Control>고급 설정</Accordion.Control>
+              <Accordion.Control>{t("고급 설정")}</Accordion.Control>
               <Accordion.Panel>
                 <Stack gap="md">
                   <Textarea
-                    label="CLI 실행 명령"
-                    description="별도 CLI를 사용할 때만 변경해 주세요. 실행 파일과 인수를 줄마다 하나씩 입력합니다."
+                    label={t("CLI 실행 명령")}
+                    description={t(
+                      "별도 CLI를 사용할 때만 변경해 주세요. 실행 파일과 인수를 줄마다 하나씩 입력합니다.",
+                    )}
                     autosize
                     minRows={2}
                     value={command ?? settings?.cliCommand.join("\n") ?? ""}
@@ -114,7 +132,7 @@ export const SettingsPage = () => {
                         }
                       }}
                     >
-                      기본 명령 사용
+                      {t("기본 명령 사용")}
                     </Button>
                     <Button
                       loading={save.isPending}
@@ -122,11 +140,11 @@ export const SettingsPage = () => {
                         void persist().catch(() => undefined);
                       }}
                     >
-                      저장
+                      {t("저장")}
                     </Button>
                   </Group>
                   <Text size="xs" c="dimmed">
-                    유휴 종료 <Code>60초</Code>
+                    {t("유휴 종료")} <Code>{t("60초")}</Code>
                   </Text>
                   {data?.online && (
                     <Text size="xs" c="dimmed">
@@ -142,7 +160,7 @@ export const SettingsPage = () => {
       <SoundSettings />
       <Stack gap="xs">
         <Text size="xs" c="dimmed">
-          앱 버전 <Code>0.1.0</Code>
+          {t("앱 버전")} <Code>0.1.0</Code>
         </Text>
       </Stack>
     </Stack>

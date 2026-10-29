@@ -1,3 +1,4 @@
+import { t, useLocale } from "./i18n";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -25,7 +26,7 @@ const stateLabels = {
   expired: "만료됨",
   reauth: "재로그인 필요",
   failed: "확인 실패",
-};
+} as const;
 
 const valueAt = (record: Record<string, unknown>, path: string[]): unknown => {
   let value: unknown = record;
@@ -105,15 +106,16 @@ export const AuthSettingsPanel = ({
   workspaceName?: string;
   authentication: Authentication;
 }) => {
+  useLocale();
   const [configuration, setConfiguration] = useState(authentication.configuration);
   const [group, setGroup] = useState(authentication.fields[0]?.path[0] ?? "");
   const save = useAction(
     "authConfig",
-    "인증 설정을 저장했습니다. 변경한 설정으로 다시 로그인해 주세요.",
+    t("인증 설정을 저장했습니다. 변경한 설정으로 다시 로그인해 주세요."),
   );
   const verify = useAction("authStatus");
-  const login = useAction("login", "인증을 저장했습니다.");
-  const logout = useAction("logout", "이 기기의 인증을 삭제했습니다.");
+  const login = useAction("login", t("인증을 저장했습니다."));
+  const logout = useAction("logout", t("이 기기의 인증을 삭제했습니다."));
   const cancel = useAction("cancelLogin");
   const [url, setUrl] = useState("");
   useEffect(
@@ -139,7 +141,7 @@ export const AuthSettingsPanel = ({
         <Group justify="space-between">
           <Title order={4}>
             {service}
-            {workspaceName ? ` / ${workspaceName}` : ""} 인증 설정
+            {workspaceName ? ` / ${workspaceName}` : ""} {t("인증 설정")}
           </Title>
           <Button
             variant="default"
@@ -147,12 +149,13 @@ export const AuthSettingsPanel = ({
             disabled={busy && !verify.isPending}
             onClick={() => verify.mutate({ service, workspace })}
           >
-            연결 확인
+            {t("연결 확인")}
           </Button>
         </Group>
         <Text size="sm">
-          서비스 관리자 화면에서 확인한 값을 입력하세요. PKCE 활성화와 등록한 Redirect URL을 먼저
-          확인하세요.
+          {t(
+            "서비스 관리자 화면에서 확인한 값을 입력하세요. PKCE 활성화와 등록한 Redirect URL을 먼저 확인하세요.",
+          )}
         </Text>
         {(verify.data?.states ?? authentication.states).map((state) => (
           <Group key={state.target}>
@@ -160,7 +163,7 @@ export const AuthSettingsPanel = ({
               {state.target}
             </Text>
             <Badge color={state.state === "connected" ? "teal" : "gray"}>
-              {stateLabels[state.state]}
+              {t(stateLabels[state.state])}
             </Badge>
             <Text size="sm">{state.detail}</Text>
             <Button
@@ -171,7 +174,7 @@ export const AuthSettingsPanel = ({
                 login.mutate({ service, workspace, target: state.target, method: "browser" })
               }
             >
-              브라우저 로그인
+              {t("브라우저 로그인")}
             </Button>
             <Button
               size="xs"
@@ -180,15 +183,15 @@ export const AuthSettingsPanel = ({
               disabled={busy}
               onClick={() => logout.mutate({ service, workspace, target: state.target })}
             >
-              인증 삭제
+              {t("인증 삭제")}
             </Button>
           </Group>
         ))}
         {login.isPending && (
           <Group>
-            <Text size="sm">브라우저에서 로그인을 완료하세요.</Text>
+            <Text size="sm">{t("브라우저에서 로그인을 완료하세요.")}</Text>
             <Button variant="default" onClick={() => cancel.mutate()}>
-              로그인 취소
+              {t("로그인 취소")}
             </Button>
           </Group>
         )}
@@ -200,7 +203,7 @@ export const AuthSettingsPanel = ({
                 void window.tiny?.app.shell.open(url);
               }}
             >
-              로그인 브라우저 열기
+              {t("로그인 브라우저 열기")}
             </Button>
             <Button
               variant="subtle"
@@ -208,13 +211,13 @@ export const AuthSettingsPanel = ({
                 void window.tiny?.clipboard.write({ text: url });
               }}
             >
-              로그인 주소 복사
+              {t("로그인 주소 복사")}
             </Button>
           </Group>
         )}
         {groups.length > 1 && (
           <Select
-            label="설정 대상"
+            label={t("설정 대상")}
             data={groups}
             value={group}
             disabled={busy}
@@ -244,7 +247,7 @@ export const AuthSettingsPanel = ({
             loading={save.isPending}
             onClick={() => save.mutate({ service, workspace, configuration })}
           >
-            설정 저장
+            {t("설정 저장")}
           </Button>
         </Group>
       </Stack>
