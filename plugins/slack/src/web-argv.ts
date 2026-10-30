@@ -125,9 +125,14 @@ export const positional = (entry: WebSpec, input: Input): Input => {
   let index = 0;
   for (const field of fields) {
     const key = field.replace(/\?|\.\.\./g, "");
-    const value = field.endsWith("...") ? values.slice(index) : values[index];
-    if ((value === undefined || (Array.isArray(value) && !value.length)) && !field.endsWith("?"))
-      throw new UsageError(`Missing positional argument: ${key}`);
+    const value =
+      field.endsWith("...") && index < values.length ? values.slice(index) : values[index];
+    if (
+      (value === undefined || (Array.isArray(value) && !value.length)) &&
+      !field.endsWith("?") &&
+      result[key] === undefined
+    )
+      throw new UsageError(`Missing argument: ${key}`);
     if (value !== undefined) {
       if (result[key] !== undefined)
         throw new UsageError(`Conflicting positional argument and option: ${key}`);

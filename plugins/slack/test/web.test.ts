@@ -118,6 +118,8 @@ test("search query survives positional, structured, raw API and batch inputs", a
   try {
     for (const args of [
       ["messages", "search", query],
+      ["messages", "search", "--query", query],
+      ["messages", "search", "--input", JSON.stringify({ query })],
       ["messages", "search", "--args", JSON.stringify([query])],
       ["messages", "search", "--input", JSON.stringify({ args: [query] })],
       ["call", "web.search.messages", "--query", query],
@@ -127,7 +129,37 @@ test("search query survives positional, structured, raw API and batch inputs", a
       expect((await f.run(args)).code).toBe(0);
       expect(f.seen.at(-1)).toMatchObject({ method: "search.messages", input: { query } });
     }
-    expect(f.seen).toHaveLength(6);
+    expect(f.seen).toHaveLength(8);
+  } finally {
+    f.stop();
+  }
+});
+
+test("named fields support thread reads, mixed inputs and variadic arguments", async () => {
+  const f = fixture();
+  try {
+    for (const args of [
+      ["messages", "replies", "--channel", C, "--ts", TS],
+      ["messages", "replies", C, "--ts", TS],
+      ["messages", "replies", "--input", JSON.stringify({ channel: C, ts: TS })],
+      ["messages", "replies", "--channel", url],
+    ]) {
+      expect((await f.run(args)).code).toBe(0);
+      expect(f.seen.at(-1)).toMatchObject({
+        method: "conversations.replies",
+        input: { channel: C, ts: TS },
+      });
+    }
+    expect((await f.run(["users", "get", "--users", JSON.stringify([U])])).code).toBe(0);
+    expect(f.seen.at(-1)).toMatchObject({ method: "users.info", input: { user: U } });
+    const before = f.seen.length;
+    await expect(f.run(["messages", "replies", C, "--channel", C, "--ts", TS])).rejects.toThrow(
+      "Conflicting positional argument and option: channel",
+    );
+    await expect(f.run(["messages", "replies", "--ts", TS])).rejects.toThrow(
+      "Missing argument: channel",
+    );
+    expect(f.seen).toHaveLength(before);
   } finally {
     f.stop();
   }
@@ -530,6 +562,8 @@ test("help and schema cover every business command without a connection", async 
       ),
     ).toBe(0);
     expect(output.join("\n")).toContain(entry.method);
+    for (const field of entry.args)
+      expect(output.join("\n")).toContain(`--${field.replace(/\?|\.\.\./g, "")}`);
     expect(
       await runService(
         slack,

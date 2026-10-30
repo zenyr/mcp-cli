@@ -33,6 +33,23 @@ MCP_CLI_DAEMON=0 slack channels list --json
 - `schema <command path>` and `--help=full` print the current input schema.
 - `methods --json` lists both MCP tools and Web API commands.
 
+## Named inputs
+
+All Web API commands expose named fields in help and input schemas.
+Use flags or structured input without constructing an ordered `args` array:
+
+```sh
+slack messages replies --channel C0123456789 --ts 1700000000.123456
+slack messages replies --input '{"channel":"C0123456789","ts":"1700000000.123456"}'
+slack messages search --query 'in:general deployment'
+slack users get --users '["U0123456789","U9876543210"]'
+```
+
+A message URL can replace the channel and timestamp: `slack messages replies --channel <url>`.
+Existing positional arguments and `--args` remain supported.
+Positional arguments retain their original slots when mixed with named fields.
+Supplying the same field both ways produces a usage error.
+
 ## New commands and fixed call routes
 
 Each command supports `--help` and `--json`.

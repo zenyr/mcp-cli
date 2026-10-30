@@ -141,8 +141,16 @@ export const schemaFor = (entry: WebSpec): JsonSchema => ({
     args: {
       type: "array",
       items: { type: "string" },
-      description: `Positional arguments: ${entry.args.join(" ")}`,
+      description: `Legacy positional arguments: ${entry.args.join(" ")}; prefer named fields.`,
     },
+    ...Object.fromEntries(
+      entry.args.map((field) => [
+        field.replace(/\?|\.\.\./g, ""),
+        field.endsWith("...")
+          ? { type: "array", items: { type: "string" }, minItems: 1 }
+          : { type: "string" },
+      ]),
+    ),
     ...Object.fromEntries(
       entry.options
         .split(" ")
