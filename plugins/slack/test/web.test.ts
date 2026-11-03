@@ -22,6 +22,15 @@ afterEach(async () => {
   for (const directory of directories.splice(0))
     await rm(directory, { recursive: true, force: true });
 });
+const formValue = (raw: string): unknown => {
+  if (/^-?\d+$/.test(raw) || raw === "true" || raw === "false") return JSON.parse(raw);
+  if (!/^[[{]/.test(raw)) return raw;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+};
 const fixture = () => {
   const seen: Array<{ method: string; input: Record<string, unknown>; auth: string | null }> = [];
   let respond = (method: string, _input: Record<string, unknown>): Record<string, unknown> => ({
@@ -44,24 +53,16 @@ const fixture = () => {
     port: 0,
     fetch: async (request) => {
       const method = new URL(request.url).pathname.slice(1);
-      if (
-        method === "search.messages" &&
-        request.headers.get("content-type") !== "application/x-www-form-urlencoded"
-      )
+      // Real Slack ignores JSON bodies on read methods, so the fixture accepts form bodies only.
+      if (request.headers.get("content-type") !== "application/x-www-form-urlencoded")
         return Response.json({
           ok: false,
           error: "invalid_arguments",
-          response_metadata: { messages: ["[ERROR] missing required field: query"] },
+          response_metadata: { messages: ["[ERROR] missing required field: channel"] },
         });
-      const value: unknown =
-        method === "search.messages"
-          ? Object.fromEntries(new URLSearchParams(await request.text()))
-          : await request.json();
-      const input = isRecord(value) ? value : {};
-      if (method === "search.messages") {
-        for (const key of ["count", "page"])
-          if (typeof input[key] === "string") input[key] = Number(input[key]);
-      }
+      const input = Object.fromEntries(
+        [...new URLSearchParams(await request.text())].map(([key, raw]) => [key, formValue(raw)]),
+      );
       seen.push({ method, input, auth: request.headers.get("authorization") });
       return Response.json(respond(method, input));
     },
@@ -582,4 +583,108 @@ test("Markdown converts Slack differences while preserving code spans", async ()
     "*bold* _italic_ ~gone~ <https://example.test|docs> `**literal**`",
   );
   expect(markdown("# Heading\n> quote & <tag>")).toBe("*Heading*\n> quote &amp; &lt;tag&gt;");
+});
+
+test("read commands deliver channel and ts to the Web API from every input form", async () => {
+  const f = fixture();
+  const replies = { method: "conversations.replies", input: { channel: C, ts: TS } };
+  try {
+    for (const args of [
+      ["messages", "replies", C, TS, "--limit=20"],
+      ["messages", "replies", "--input", JSON.stringify({ channel: C, ts: TS, limit: 15 })],
+      [
+        "call",
+        "web.conversations.replies",
+        "--input",
+        JSON.stringify({ channel: C, ts: TS, limit: 15 }),
+      ],
+    ]) {
+      expect((await f.run(args)).code).toBe(0);
+      expect(f.seen.at(-1)).toMatchObject(replies);
+    }
+    expect((await f.run(["messages", "fetch", url])).code).toBe(0);
+    expect(f.seen.at(-1)).toMatchObject({
+      method: "conversations.history",
+      input: { channel: C, latest: TS },
+    });
+  } finally {
+    f.stop();
+  }
+});
+
+test("post-ephemeral accepts payload, blocks and dry-run like post", async () => {
+  const f = fixture();
+  const blocks = [
+    {
+      type: "plan",
+      title: "Release plan",
+      tasks: [{ type: "task_card", task_id: "t1", title: "Run checks", status: "complete" }],
+    },
+  ];
+  const payload = { channel: C, user: U, blocks, thread_ts: TS };
+  try {
+    const dry = await f.run([
+      "messages",
+      "post-ephemeral",
+      "--xoxp",
+      "--dry-run",
+      `--payload=${JSON.stringify(payload)}`,
+    ]);
+    expect(dry.code).toBe(0);
+    expect(f.seen).toHaveLength(0);
+    expect(dry.result.structuredContent).toMatchObject({
+      dry_run: true,
+      method: "chat.postEphemeral",
+      ephemeral: true,
+      payload: { ...payload, text: "Release plan\nRun checks" },
+    });
+    expect(
+      (await f.run(["messages", "post-ephemeral", "--payload", JSON.stringify(payload)])).code,
+    ).toBe(0);
+    expect(f.seen.at(-1)).toMatchObject({ method: "chat.postEphemeral", input: payload });
+    expect((await f.run(["messages", "post-ephemeral", C, U, "**Hi**", "--blocks"])).code).toBe(0);
+    expect(f.seen.at(-1)?.input).toMatchObject({
+      user: U,
+      text: "**Hi**",
+      blocks: [{ type: "section", text: { type: "mrkdwn", text: "*Hi*" } }],
+    });
+    expect(
+      (await f.run(["messages", "post-ephemeral", "--input", JSON.stringify({ payload })])).code,
+    ).toBe(0);
+    await expect(
+      f.run(["messages", "post-ephemeral", "--payload", JSON.stringify({ ...payload, as: 1 })]),
+    ).rejects.toThrow("Unsupported payload field: as");
+    await expect(
+      f.run(["messages", "post-ephemeral", "--payload", JSON.stringify({ channel: C, text: "x" })]),
+    ).rejects.toThrow();
+  } finally {
+    f.stop();
+  }
+});
+
+test("blocks-only messages derive fallback text from rich_text and markdown blocks", async () => {
+  const f = fixture();
+  const rich = [
+    {
+      type: "rich_text",
+      elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "rich body" }] }],
+    },
+  ];
+  const md = [{ type: "markdown", text: "**md body**" }];
+  try {
+    for (const [blocks, text] of [
+      [rich, "rich body"],
+      [md, "**md body**"],
+    ] as const) {
+      const result = await f.run([
+        "messages",
+        "post",
+        "--input",
+        JSON.stringify({ channel: C, blocks, "dry-run": true }),
+      ]);
+      expect(result.result.structuredContent).toMatchObject({ payload: { blocks, text } });
+    }
+  } finally {
+    f.stop();
+  }
 });

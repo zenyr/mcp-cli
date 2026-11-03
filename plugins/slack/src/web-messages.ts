@@ -7,7 +7,6 @@ import {
   object,
   page,
   records,
-  requireId,
   select,
   target,
   text,
@@ -15,7 +14,19 @@ import {
   type Input,
 } from "./web-common";
 import { searchQuery } from "./web-datetime";
-import { postPolicy, prepareMessage, saveDryRun } from "./web-payload";
+import {
+  messageMethods,
+  postPolicy,
+  prepareMessage,
+  saveDryRun,
+  type MessageMode,
+} from "./web-payload";
+const writeModes: Record<string, MessageMode | undefined> = {
+  "messages post": "post",
+  "messages reply": "post",
+  "messages update": "update",
+  "messages post-ephemeral": "ephemeral",
+};
 const range = ["limit", "cursor", "oldest", "latest", "inclusive"];
 const validateRange = (input: Input): void => {
   for (const key of ["oldest", "latest"]) if (input[key] !== undefined) timestamp(text(input, key));
@@ -181,7 +192,8 @@ export const messages = async (
     };
   }
   if (path === "messages unreads") return unreads(input, context);
-  if (["messages post", "messages reply", "messages update"].includes(path)) {
+  const mode = writeModes[path];
+  if (mode) {
     const normalized = { ...input };
     if (path === "messages reply") {
       const ref = messageUrl(text(input, "url"));
@@ -192,34 +204,17 @@ export const messages = async (
       normalized.channel = ref.channel;
       normalized.ts = ref.ts;
     }
-    const payload = await prepareMessage(normalized, context, path === "messages update");
+    const payload = await prepareMessage(normalized, context, mode);
     if (payload.ts !== undefined) timestamp(text(payload, "ts"));
     if (payload.thread_ts !== undefined) timestamp(text(payload, "thread_ts"));
-    if (path === "messages update" && !payload.ts) throw new UsageError("Update requires ts");
-    if (path !== "messages update") postPolicy(text(payload, "channel"));
+    if (mode === "update" && !payload.ts) throw new UsageError("Update requires ts");
+    if (mode === "post") postPolicy(text(payload, "channel"));
     await saveDryRun(input, payload);
+    const method = messageMethods[mode];
+    const ephemeral = mode === "ephemeral" && { ephemeral: true, persistent_message: false };
     if (input["dry-run"] === true)
-      return {
-        ok: true,
-        dry_run: true,
-        method: path === "messages update" ? "chat.update" : "chat.postMessage",
-        payload,
-      };
-    return call(context, path === "messages update" ? "chat.update" : "chat.postMessage", payload);
-  }
-  if (path === "messages post-ephemeral") {
-    const id = await channel(context, text(input, "channel"));
-    const body = text(input, "text") === "-" ? await context.io.readStdin() : text(input, "text");
-    return {
-      ...(await call(context, "chat.postEphemeral", {
-        channel: id,
-        user: requireId(text(input, "user"), "user"),
-        text: body,
-        ...select(input, ["thread-ts"]),
-      })),
-      ephemeral: true,
-      persistent_message: false,
-    };
+      return { ok: true, dry_run: true, method, payload, ...ephemeral };
+    return { ...(await call(context, method, payload)), ...ephemeral };
   }
   if (path === "messages history") {
     validateRange(input);

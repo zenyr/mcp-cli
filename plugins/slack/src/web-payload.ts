@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { isRecord, UsageError, type ExtensionContext } from "@mcp-cli/core";
-import { channel, type Input } from "./web-common";
+import { channel, requireId, type Input } from "./web-common";
+import { methodSchema } from "./web-schemas";
 
 export const jsonSource = async (value: string, context: ExtensionContext): Promise<unknown> => {
   const source =
@@ -54,54 +55,59 @@ export const markdown = (value: string): string =>
         .replace(/^&gt; ?/gm, "> ");
     })
     .join("");
+// Collects readable text from nested Block Kit objects for the accessible fallback.
+const readable = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.flatMap(readable);
+  if (!isRecord(value)) return [];
+  return Object.entries(value).flatMap(([key, item]) =>
+    typeof item === "string"
+      ? ["text", "title", "alt_text"].includes(key)
+        ? [item]
+        : []
+      : readable(item),
+  );
+};
 const fallback = (blocks: unknown[]): string =>
-  blocks
-    .flatMap((block) => {
-      if (!isRecord(block)) return [];
-      const pieces = [
-        block.text,
-        ...(Array.isArray(block.elements) ? block.elements : []),
-        ...(Array.isArray(block.fields) ? block.fields : []),
-      ];
-      return pieces.flatMap((piece) =>
-        isRecord(piece) && typeof piece.text === "string" ? [piece.text] : [],
-      );
-    })
+  readable(blocks)
+    .filter((piece) => piece.trim())
     .join("\n")
     .slice(0, 40000);
 export const checkStdin = (input: Input): void => {
   if (["text", "blocks", "payload", "view"].filter((key) => input[key] === "-").length > 1)
     throw new UsageError("stdin cannot be used by multiple inputs");
 };
-const fields = [
-  "channel",
-  "text",
-  "blocks",
-  "attachments",
-  "thread_ts",
-  "reply_broadcast",
-  "unfurl_links",
-  "unfurl_media",
-  "ts",
-  "parse",
-  "link_names",
-  "mrkdwn",
-  "metadata",
-];
+export type MessageMode = "post" | "update" | "ephemeral";
+export const messageMethods: Record<MessageMode, string> = {
+  post: "chat.postMessage",
+  update: "chat.update",
+  ephemeral: "chat.postEphemeral",
+};
+const payloadFields = (mode: MessageMode): string[] => {
+  const { properties } = methodSchema(messageMethods[mode]);
+  return isRecord(properties) ? Object.keys(properties) : [];
+};
+const readPayload = async (
+  input: Input,
+  context: ExtensionContext,
+  fields: string[],
+): Promise<Input> => {
+  if (input.payload === undefined) return {};
+  const parsed =
+    typeof input.payload === "string" ? await jsonSource(input.payload, context) : input.payload;
+  if (!isRecord(parsed)) throw new UsageError("payload must be an object");
+  for (const key of Object.keys(parsed))
+    if (!fields.includes(key)) throw new UsageError(`Unsupported payload field: ${key}`);
+  return { ...parsed };
+};
 export const prepareMessage = async (
   input: Input,
   context: ExtensionContext,
-  update = false,
+  mode: MessageMode = "post",
 ): Promise<Input> => {
   checkStdin(input);
-  let payload: Input = {};
-  if (typeof input.payload === "string") {
-    const parsed = await jsonSource(input.payload, context);
-    if (!isRecord(parsed)) throw new UsageError("payload must be an object");
-    payload = { ...parsed };
-    for (const key of Object.keys(payload))
-      if (!fields.includes(key)) throw new UsageError(`Unsupported payload field: ${key}`);
-  }
+  const update = mode === "update";
+  const fields = payloadFields(mode);
+  const payload = await readPayload(input, context, fields);
   for (const key of fields) {
     const option = key.replaceAll("_", "-");
     const value = input[option];
@@ -111,6 +117,7 @@ export const prepareMessage = async (
   }
   if (payload.channel === undefined) throw new UsageError("A channel is required");
   payload.channel = await channel(context, String(payload.channel));
+  if (mode === "ephemeral") payload.user = requireId(String(payload.user ?? ""), "user");
   if (input.text === "-") payload.text = await context.io.readStdin();
   if (
     payload.text !== undefined &&

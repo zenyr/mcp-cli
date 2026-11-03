@@ -17,7 +17,7 @@ const spec = (
 ): WebSpec => ({ path, method, args: args.split(" ").filter(Boolean), options, write, details });
 const list = "limit:n cursor:s";
 const range = `${list} oldest:s latest:s inclusive:b`;
-const payload = "blocks:s attachments:s payload:s dry-run:b payload-out:s";
+const payload = "blocks:a attachments:a payload:o dry-run:b payload-out:s";
 export const specs: WebSpec[] = [
   spec("channels list", "conversations.list", "", `${list} type:s query:s query-targets:s sort:s`),
   spec("channels me", "users.conversations", "", list),
@@ -54,7 +54,13 @@ export const specs: WebSpec[] = [
     `${payload} thread-ts:s reply-broadcast:b unfurl-links:b unfurl-media:b`,
     true,
   ),
-  spec("messages post-ephemeral", "chat.postEphemeral", "channel user text", "thread-ts:s", true),
+  spec(
+    "messages post-ephemeral",
+    "chat.postEphemeral",
+    "channel? user? text?",
+    `${payload} thread-ts:s`,
+    true,
+  ),
   spec("messages delete", "chat.delete", "channel ts?", "", true),
   spec("messages update", "chat.update", "channel? ts? text?", payload, true),
   spec("messages reply", "chat.postMessage", "url text?", payload, true),
@@ -121,7 +127,7 @@ export const specs: WebSpec[] = [
     true,
     "Read-modify-write may overwrite concurrent membership changes. Removing the last member is refused.",
   ),
-  spec("views publish", "views.publish", "user", "view:s hash:s", true),
+  spec("views publish", "views.publish", "user", "view:o hash:s", true),
   spec("views clear", "views.publish", "user", "", true),
   spec("auth check", "auth.test", ""),
   spec("auth whoami", "auth.test", ""),
@@ -165,7 +171,9 @@ export const schemaFor = (entry: WebSpec): JsonSchema => ({
                   minimum: key.endsWith("count") ? 0 : 1,
                   maximum: key.endsWith("count") ? 100 : 10000,
                 }
-              : { type: type === "b" ? "boolean" : "string" },
+              : type === "a" || type === "o"
+                ? { type: ["string", type === "a" ? "array" : "object"] }
+                : { type: type === "b" ? "boolean" : "string" },
           ];
         }),
     ),

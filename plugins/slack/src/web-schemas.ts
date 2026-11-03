@@ -14,8 +14,9 @@ const definitions: Record<string, string> = {
   "conversations.history": "channel! limit:n cursor oldest latest inclusive:b",
   "conversations.replies": "channel! ts! limit:n cursor oldest latest inclusive:b",
   "chat.postMessage":
-    "channel! text blocks:a attachments:a thread_ts reply_broadcast:b unfurl_links:b unfurl_media:b parse link_names:b mrkdwn:b metadata:o",
-  "chat.postEphemeral": "channel! user! text! thread_ts",
+    "channel! text blocks:a attachments:a thread_ts reply_broadcast:b unfurl_links:b unfurl_media:b parse link_names:b mrkdwn:b metadata:o icon_emoji icon_url username",
+  "chat.postEphemeral":
+    "channel! user! text blocks:a attachments:a thread_ts parse link_names:b icon_emoji icon_url username",
   "chat.update": "channel! ts! text blocks:a attachments:a parse link_names:b metadata:o",
   "chat.delete": "channel! ts!",
   "conversations.mark": "channel! ts!",

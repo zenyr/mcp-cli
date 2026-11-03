@@ -100,7 +100,9 @@ const execute = async (entry: WebSpec, input: Input, context: ExtensionContext):
     const view =
       path === "views clear"
         ? { type: "home", blocks: [] }
-        : await jsonSource(text(input, "view"), context);
+        : typeof input.view === "string"
+          ? await jsonSource(input.view, context)
+          : input.view;
     if (
       typeof view !== "object" ||
       view === null ||
@@ -123,9 +125,8 @@ const command = (entry: WebSpec): ExtensionCommand => ({
   details: [
     entry.details,
     `Route: Web API. Arguments: ${entry.args.join(" ") || "none"}.`,
-    entry.path.startsWith("messages ") &&
-    ["messages post", "messages reply", "messages update"].includes(entry.path)
-      ? "--blocks [JSON|true|-] converts Markdown or reads JSON. Blocks-only posts derive fallback text from text elements; otherwise supply text. --payload JSON|-|@file reads a request. --dry-run validates without a write. --payload-out creates a reusable request file. Omitted update fields stay unchanged; empty arrays/text clear them."
+    entry.options.includes("payload:")
+      ? "--blocks [JSON|true|-] converts Markdown or reads JSON. Blocks-only posts derive fallback text from nested text, title and alt_text; otherwise supply text. --payload JSON|-|@file reads a request. --dry-run validates without a write. --payload-out creates a reusable request file. Omitted update fields stay unchanged; empty arrays/text clear them."
       : "",
   ]
     .filter(Boolean)

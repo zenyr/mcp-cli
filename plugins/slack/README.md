@@ -30,6 +30,8 @@ MCP_CLI_DAEMON=0 slack channels list --json
 - The daemon isolates connections by credentials and connection settings.
 - Write requests do not retry automatically. Uncertain outcomes preserve duplicate-protection state.
 - Read requests retry once only for `429` responses with `Retry-After: 0`.
+- Every Web API request uses form encoding, like the official Slack SDK.
+  Slack ignores JSON bodies on read methods such as `conversations.replies`.
 - `schema <command path>` and `--help=full` print the current input schema.
 - `methods --json` lists both MCP tools and Web API commands.
 
@@ -75,7 +77,7 @@ Each command supports `--help` and `--json`.
 | messages history        | conversations.history                                          | Implemented/passed   | Preserves cursors and ranges                   |
 | messages context        | conversations.history or conversations.replies                 | Implemented/passed   | 10,000-item cap; reports missing ranges        |
 | messages post           | chat.postMessage                                               | Implemented/passed   | Posting policies apply                         |
-| messages post-ephemeral | chat.postEphemeral                                             | Implemented/passed   | Identifies messages as nonpersistent           |
+| messages post-ephemeral | chat.postEphemeral                                             | Implemented/passed   | Same payload/blocks/dry-run options as post    |
 | messages delete         | chat.delete                                                    | Implemented/passed   | No automatic retries                           |
 | messages update         | chat.update                                                    | Implemented/passed   | Distinguishes omitted and empty values         |
 | messages reply          | chat.postMessage                                               | Implemented/passed   | Posting policies apply                         |
@@ -100,6 +102,24 @@ Each command supports `--help` and `--json`.
 | views publish           | views.publish                                                  | Implemented/passed   | Home views only                                |
 | views clear             | views.publish                                                  | Implemented/passed   | Publishes empty home blocks                    |
 
+## Migrating from the legacy Slack CLI
+
+Input flags remain compatible: `--payload`, `--dry-run`, `--json`, `--xoxp`, and `--xoxb`.
+`--json` output differs from the legacy CLI.
+It prints a tool-result envelope, not the raw Slack response:
+
+```json
+{
+  "content": [{ "type": "text", "text": "..." }],
+  "structuredContent": { "ok": true, "message_ts": "..." }
+}
+```
+
+- Read the Slack response from `structuredContent`.
+- A dry run returns `{ ok, dry_run: true, method, payload }` with the normalized request.
+- `post-ephemeral` responses also include `ephemeral: true` and `persistent_message: false`.
+- Check `which slack` when a helper expects another implementation. This package installs `slack` as `mcp-cli/bin/slack.ts`.
+
 ## Lists, search, and time
 
 ```sh
@@ -118,7 +138,6 @@ slack users status set :house: 'Working from home' --expiration today --timezone
 - Channel-name resolution scans up to 10,000 items. Reaching the cap and finding no match produce different errors.
 - `users get` removes duplicate IDs. Partial failures are preserved per item.
 - Message search uses `--limit` up to 100 and `--page`. It does not accept `--cursor`.
-- `messages search` and `call web.search.messages` send search arguments with form encoding.
 - `--im <conversation>` passes that DM conversation as an `in:` search condition.
 - Search condition values are quoted and escaped. The user's base query retains Slack search syntax.
 - `--after`, `--before`, and `--on` support `YYYY-MM-DD`, `1d`, `1w`, and `30d`.
@@ -138,7 +157,13 @@ slack messages post C0123456789 '**Deployment complete**' --blocks --dry-run --p
 slack messages post --payload @request.json
 slack messages update 'https://workspace.slack.com/archives/C0123456789/p1700000000123456' 'Updated content'
 slack messages reply 'https://workspace.slack.com/archives/C0123456789/p1700000000123456' 'Confirmed'
+slack messages post-ephemeral --dry-run --payload '{"channel":"C0123456789","user":"U0123456789","blocks":[...]}'
 ```
+
+- `messages post`, `reply`, `update`, and `post-ephemeral` share `--payload`, `--blocks`, `--attachments`, `--dry-run`, and `--payload-out`.
+- Payload fields follow the Slack method: `chat.postMessage`, `chat.update`, or `chat.postEphemeral`.
+- `post-ephemeral` requires `user`. Its output adds `ephemeral: true` and `persistent_message: false`.
+- `--input` accepts `blocks` and `attachments` as JSON arrays and `payload` as a JSON object.
 
 - `--blocks <JSON>` accepts a Block Kit array.
 - `--blocks` and `--blocks=true` convert Markdown text to Block Kit.
@@ -148,7 +173,8 @@ slack messages reply 'https://workspace.slack.com/archives/C0123456789/p17000000
 - `--payload JSON|-|@file` accepts a request object. Unsupported fields are rejected.
 - Positional arguments or options that duplicate payload fields are rejected.
 - Stdin can be used only once. Text and blocks cannot both come from stdin.
-- When only blocks are provided, text elements generate accessible fallback text.
+- When only blocks are provided, nested `text`, `title`, and `alt_text` values generate accessible fallback text.
+  This covers `rich_text`, `markdown`, `plan`, and `task_card` blocks.
 - Blocks that cannot produce fallback text require explicit text.
 - `--dry-run` performs no writes. Resolving channel names may require read requests.
 - `--payload-out` creates new files only. It never overwrites files.
@@ -157,6 +183,7 @@ slack messages reply 'https://workspace.slack.com/archives/C0123456789/p17000000
 - Timestamps remain strings. URL parsing distinguishes a thread's parent from the target message.
 - `SLACK_MCP_POST_CHANNEL_ALLOWLIST` and `SLACK_MCP_POST_CHANNEL_DENYLIST` accept comma-separated channel IDs.
 - When both policies exist, post and reply require inclusion in the allowlist and absence from the denylist.
+- The channel policies do not apply to `post-ephemeral`.
 
 ## Attachments and batches
 

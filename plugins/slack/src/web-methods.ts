@@ -40,7 +40,8 @@ export const webName = (method: string): string => `web.${method}`;
 export const webTools: WebApiConfig["tools"] = [...reads, ...writes, "download"].map((method) => ({
   name: webName(method),
   method,
-  bodyEncoding: method === "search.messages" ? "form" : "json",
+  // Slack ignores JSON bodies on read methods, so every call uses form encoding like the official SDK.
+  bodyEncoding: "form",
   description: `Slack Web API ${method}`,
   inputSchema: methodSchema(method),
   annotations: {
