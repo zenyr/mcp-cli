@@ -48,7 +48,12 @@ results go directly into `find-related`; multi-repository paths include a prefix
 
 `--help`, `schema`, `methods`, and `skill` use local definitions without starting
 Semble. Both search commands are read-only and allow repeated calls through the
-host's repeat guard. `--json` preserves the MCP result envelope.
+host's repeat guard. Default output lists ranked `file:line-range` locations and
+unchanged snippets, without repeating the query, field names, or scores.
+Multiple-repository results retain the prefix-to-source map. Empty searches print
+`No matches.`. Errors and unrecognized response shapes retain the host output.
+`--json` preserves the full MCP result envelope, including scores and duplicate
+text/structured payloads, for existing integrations and diagnostics.
 
 ## Process and cache lifetime
 

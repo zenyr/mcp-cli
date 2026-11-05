@@ -1,5 +1,6 @@
 import { definePlugin } from "@mcp-cli/core";
 import { normalizeArgv } from "./argv";
+import { formatSearchResult } from "./output";
 
 export default definePlugin({
   name: "fast-semble",
@@ -25,6 +26,7 @@ export default definePlugin({
     },
   },
   extensions: { commands: [], normalizeArgv },
+  formatResult: formatSearchResult,
   quickstart: [
     { command: 'search --query "authentication flow" --repo .', summary: "Search this repository" },
   ],
@@ -39,6 +41,7 @@ Use fast-semble find-related file_path line /absolute/repo with a search result.
 Omitting the repository searches the current directory; use --input with a repo array for multiple repositories.
 Use --top-k to limit results and --max-snippet-lines 0 for locations only.
 Use --content docs, config, or all for non-code content.
+Default output contains ranked file:line-range locations and unchanged snippets; --json retains the full MCP envelope.
 Navigate to the returned paths and lines instead of repeating the same search.
 Start the mcp-cli daemon or desktop app to reuse the local Semble process between calls.
 Without the daemon, each invocation opens and closes its own Semble process.`,

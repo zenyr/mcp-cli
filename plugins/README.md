@@ -101,6 +101,8 @@ Entries in `groups` or `quickstart` that reference nonexistent groups or command
 If the server hides a tool based on permissions, set `optional: true` on its mapping.
 When that tool is absent, the mapping and its related `groups` and `quickstart` entries are omitted from help.
 Use `beforeCall(command, input)` for service-specific pre-call checks.
+Use `formatResult(result)` for service-specific plain-text output; return `undefined` to keep host formatting.
+The host bypasses this formatter for `--json`, which preserves the full MCP result.
 Mapped commands and `call` commands undergo the same checks.
 `connection(env)` reads environment variables at runtime and may return a `Promise`. Credentials never enter generated output.
 `sanitizeTools(tools)` removes account-specific metadata before writing snapshots and generated modules, for both live and snapshot-based generation.

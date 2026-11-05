@@ -201,7 +201,9 @@ export const runService = async (
           cacheScope: await dependencies.cacheScope?.(credential),
         })
       : { result: await executor.callTool(command?.name ?? "", input) };
-    const text = formatResult(outcome.result, json);
+    const text =
+      (!json ? plugin.formatResult?.(outcome.result) : undefined) ??
+      formatResult(outcome.result, json);
     if (outcome.result.isError && !json) dependencies.io.writeError(text);
     else dependencies.io.write(text);
     return outcome.exitCode ?? (outcome.result.isError ? 1 : 0);
