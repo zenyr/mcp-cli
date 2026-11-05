@@ -117,6 +117,13 @@
         "@mcp-cli/core": "workspace:*",
       },
     },
+    "plugins/fast-semble": {
+      "name": "@mcp-cli/plugin-fast-semble",
+      "version": "0.1.0",
+      "dependencies": {
+        "@mcp-cli/core": "workspace:*",
+      },
+    },
     "plugins/fish-audio": {
       "name": "@mcp-cli/plugin-fish-audio",
       "version": "0.1.0",
@@ -189,6 +196,8 @@
     "@mcp-cli/mem": ["@mcp-cli/mem@workspace:apps/mem"],
 
     "@mcp-cli/plugin-demo": ["@mcp-cli/plugin-demo@workspace:plugins/demo"],
+
+    "@mcp-cli/plugin-fast-semble": ["@mcp-cli/plugin-fast-semble@workspace:plugins/fast-semble"],
 
     "@mcp-cli/plugin-fish-audio": ["@mcp-cli/plugin-fish-audio@workspace:plugins/fish-audio"],
 

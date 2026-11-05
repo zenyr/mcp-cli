@@ -11,6 +11,7 @@ independent releases, managed runtimes, and local development.
 - [Linear](linear/README.md): issue management and authentication
 - [Slack](slack/README.md): messaging tools and token settings
 - [Fish Audio](fish-audio/README.md): speech generation, transcription, and media operations
+- [Fast Semble](fast-semble/README.md): local code search through a reusable Semble MCP session
 - `demo`: a local stdio MCP server that requires no external account
 
 ## Static generation
