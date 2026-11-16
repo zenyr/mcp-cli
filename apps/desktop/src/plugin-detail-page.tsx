@@ -16,7 +16,8 @@ import {
 import { IconChevronLeft } from "@tabler/icons-react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import type { MarketplacePlugin } from "@mcp-cli/core";
-import { useCommands, usePlugins, useServices } from "./queries";
+import { usePlugins, useServices } from "./queries";
+import { useCommandCatalog } from "./command-catalog";
 import { ServiceIcon } from "./service-icon";
 import { AuthBadge, PluginStateBadge } from "./plugin-badges";
 import { ConsentModal, PluginActions, type Consent } from "./plugin-actions";
@@ -73,7 +74,10 @@ export const PluginDetailPage = () => {
   const details = services.data?.find((item) => item.name === service);
   const active = Boolean(details) && (!plugin || plugin.enabled);
   const tab = search.tab ?? (plugin ? "overview" : "commands");
-  const commands = useCommands(service, active && (tab === "commands" || tab === "diagram"));
+  const { catalog, status } = useCommandCatalog(
+    service,
+    active && (tab === "commands" || tab === "diagram"),
+  );
   const path = search.path?.split(" ") ?? [];
   const go = (next: DetailSearch) =>
     void navigate({
@@ -85,13 +89,6 @@ export const PluginDetailPage = () => {
   const inactive = (
     <Alert color="gray">{t("플러그인을 활성화하면 명령과 인증을 확인할 수 있습니다.")}</Alert>
   );
-  const catalog = commands.error ? (
-    <Alert color="red" title={t("명령 목록을 가져오지 못했습니다")}>
-      {commands.error.message}
-    </Alert>
-  ) : commands.isPending ? (
-    <Loader size="sm" />
-  ) : undefined;
   return (
     <Stack gap="md">
       <Anchor component={Link} to="/plugins" size="sm">
@@ -141,20 +138,13 @@ export const PluginDetailPage = () => {
             {tab === "overview" && plugin && <Overview plugin={plugin} />}
             {tab === "auth" && (active && details ? <ServiceAuth service={details} /> : inactive)}
             {(tab === "commands" || tab === "diagram") && !active && inactive}
-            {(tab === "commands" || tab === "diagram") && active && (catalog ?? null)}
-            {commands.data?.bootstrap && active && (tab === "commands" || tab === "diagram") && (
-              <Alert color="blue">
-                {t(
-                  "번들 카탈로그 기준입니다. 계정에서 실제로 쓸 수 있는 도구는 연결 후 달라질 수 있습니다.",
-                )}
-              </Alert>
+            {(tab === "commands" || tab === "diagram") && active && status}
+            {tab === "commands" && active && catalog && (
+              <CommandExplorer catalog={catalog} path={path} onSelect={select} />
             )}
-            {tab === "commands" && active && commands.data && (
-              <CommandExplorer catalog={commands.data} path={path} onSelect={select} />
-            )}
-            {tab === "diagram" && active && commands.data && (
+            {tab === "diagram" && active && catalog && (
               <Suspense fallback={<Loader size="sm" />}>
-                <CommandDiagram catalog={commands.data} selected={path} onSelect={select} />
+                <CommandDiagram catalog={catalog} selected={path} onSelect={select} />
               </Suspense>
             )}
           </Stack>

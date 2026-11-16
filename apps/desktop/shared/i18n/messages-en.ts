@@ -192,8 +192,6 @@ export const messages = {
   개요: "Overview",
   인증: "Credentials",
   구조도: "Diagram",
-  "번들 카탈로그 기준입니다. 계정에서 실제로 쓸 수 있는 도구는 연결 후 달라질 수 있습니다.":
-    "This list uses the bundled catalog. The tools available to your account can differ after connecting.",
   "이 플러그인은 인증이 필요하지 않습니다.": "This plugin does not need credentials.",
   그룹: "Group",
   워크플로: "Workflow",
@@ -214,4 +212,10 @@ export const messages = {
   도움말: "Help",
   인증됨: "Signed in",
   "이 카탈로그가 제공하는 플러그인이 없습니다.": "This catalog provides no plugins.",
+  "다시 조회": "Refresh",
+  "서버에서 조회한 현재 도구 목록입니다.": "Current tool list from the server.",
+  "현재 도구 목록을 조회하지 못해 번들 목록을 표시합니다":
+    "Could not load the current tools, so the bundled list is shown",
+  "서버에서 현재 도구 목록을 조회합니다. 그동안 번들 목록을 표시합니다.":
+    "Loading the current tools from the server. The bundled list is shown meanwhile.",
 } as const;

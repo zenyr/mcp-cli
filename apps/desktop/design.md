@@ -262,7 +262,9 @@ Plugin cards and catalog entries open it. The `Help` button opens the `commands`
 | `diagram`  | Mermaid flowchart rendered by `pele`. Clicking a node opens its command help        |
 
 - `mcp-cli desktop commands` returns the command tree with each node's help text. It works offline.
-- Session-discovery plugins show their bundled bootstrap catalog with a notice.
+- Session-discovery plugins show the bundled bootstrap catalog first. The app then requests `{ live: true }`, connects to the server with the default workspace and credential, and replaces the tree with the current tools.
+- If the live request fails, the app keeps the bundled tree and shows the error with a `Refresh` button.
+- Tools without a custom path appear under a trailing `call` group, the same as `<service> call --help`.
 - The diagram uses node ID prefixes `s`, `g`, `c`, and `w` for service, group, command, and workflow colors.
 
 ### Credential table

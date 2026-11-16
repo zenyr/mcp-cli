@@ -65,7 +65,7 @@ export type Api = {
   workspaceAction: { input: WorkspaceAction; output: WorkspaceRegistry };
   plugins: { input: undefined; output: MarketplaceView };
   pluginAction: { input: MarketplaceAction; output: { message: string } };
-  commands: { input: { service: string }; output: CommandCatalog };
+  commands: { input: { service: string; live?: boolean }; output: CommandCatalog };
   status: { input: undefined; output: Status };
   services: { input: undefined; output: Service[] };
   start: { input: undefined; output: null };

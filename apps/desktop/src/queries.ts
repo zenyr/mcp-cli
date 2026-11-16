@@ -26,12 +26,12 @@ export const usePlugins = () =>
     staleTime: 10_000,
     retry: false,
   });
-export const useCommands = (service: string, enabled: boolean) =>
+export const useCommands = (service: string, enabled: boolean, live = false) =>
   useQuery({
-    queryKey: ["commands", service],
-    queryFn: () => call("commands", { service }),
+    queryKey: ["commands", service, live ? "live" : "bundled"],
+    queryFn: () => call("commands", { service, live }),
     enabled,
-    staleTime: 60_000,
+    staleTime: live ? 300_000 : 60_000,
     retry: false,
   });
 const feedbackActions = new Set<keyof Api>([

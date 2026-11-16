@@ -12,7 +12,8 @@ const node = (path: string[], kind: CommandNode["kind"], children: CommandNode[]
 });
 const catalog: CommandCatalog = {
   service: "demo",
-  bootstrap: false,
+  origin: "static",
+  discovery: false,
   root: node([], "service", [
     node(["chat"], "group", [
       node(["chat", "post"], "command"),
