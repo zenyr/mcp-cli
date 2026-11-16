@@ -14,6 +14,7 @@ import { mount, register } from "pele/core";
 import flowchart from "pele/diagrams/flowchart";
 import type { CommandCatalog } from "@mcp-cli/core";
 import { commandMermaid } from "./command-mermaid";
+import { attachDiagramViewport } from "./diagram-viewport";
 
 register(flowchart);
 
@@ -28,6 +29,7 @@ export const CommandDiagram = ({
 }) => {
   useLocale();
   const ref = useRef<HTMLDivElement>(null);
+  const viewport = useRef<ReturnType<typeof attachDiagramViewport>>(undefined);
   const select = useRef(onSelect);
   useEffect(() => {
     select.current = onSelect;
@@ -43,10 +45,10 @@ export const CommandDiagram = ({
     if (!element) return;
     setFailure(undefined);
     const mounted = mount(element, diagram.source, {
-      zoom: {
-        always: true,
-        controls: true,
-        labels: { zoomIn: t("확대"), zoomOut: t("축소"), reset: t("원래 크기") },
+      zoom: false,
+      onRender: () => {
+        viewport.current?.destroy();
+        viewport.current = attachDiagramViewport(element);
       },
       onError: (error) => setFailure(error instanceof Error ? error.message : String(error)),
     });
@@ -58,6 +60,8 @@ export const CommandDiagram = ({
     element.addEventListener("click", click);
     return () => {
       element.removeEventListener("click", click);
+      viewport.current?.destroy();
+      viewport.current = undefined;
       mounted.destroy();
     };
   }, [diagram]);
@@ -91,9 +95,20 @@ export const CommandDiagram = ({
         </CopyButton>
       </Group>
       {failure && <Alert color="red">{failure}</Alert>}
+      <Group gap="xs">
+        <Button size="xs" variant="default" onClick={() => viewport.current?.zoomBy(1.25)}>
+          {t("확대")}
+        </Button>
+        <Button size="xs" variant="default" onClick={() => viewport.current?.zoomBy(0.8)}>
+          {t("축소")}
+        </Button>
+        <Button size="xs" variant="default" onClick={() => viewport.current?.reset()}>
+          {t("원래 크기")}
+        </Button>
+      </Group>
       <Paper withBorder className="command-diagram" ref={ref} />
       <Text size="xs" c="dimmed">
-        {t("노드를 누르면 해당 명령의 도움말로 이동합니다. 스크롤과 드래그로 확대하고 이동합니다.")}
+        {t("노드를 누르면 해당 명령의 도움말로 이동합니다. 드래그로 이동하고 버튼으로 확대합니다.")}
       </Text>
     </Stack>
   );

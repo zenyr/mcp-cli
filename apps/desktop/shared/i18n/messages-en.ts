@@ -209,8 +209,8 @@ export const messages = {
   "모든 명령": "All commands",
   그룹만: "Groups only",
   "Mermaid 복사": "Copy Mermaid",
-  "노드를 누르면 해당 명령의 도움말로 이동합니다. 스크롤과 드래그로 확대하고 이동합니다.":
-    "Click a node to open its command help. Scroll to zoom and drag to pan.",
+  "노드를 누르면 해당 명령의 도움말로 이동합니다. 드래그로 이동하고 버튼으로 확대합니다.":
+    "Click a node to open command help. Drag to pan and use the buttons to zoom.",
   도움말: "Help",
   인증됨: "Signed in",
   "이 카탈로그가 제공하는 플러그인이 없습니다.": "This catalog provides no plugins.",
