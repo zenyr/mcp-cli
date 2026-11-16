@@ -40,6 +40,7 @@ export const loadManagedPlugin = async (
     name: manifest.service,
     summary: manifest.description,
     credentialNamespace,
+    discovery: impl.discovery,
     commands:
       manifest.commands &&
       Object.fromEntries(

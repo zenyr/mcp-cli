@@ -50,6 +50,7 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
   const pool = createPool(idleMs);
   const startedAt = Date.now();
   let stopping: Promise<void> | undefined;
+  const sessionIds = new WeakMap<ToolSession, string>();
   const leases = new Map<Socket, { session: ToolSession; release: () => void }>();
   const run = async (value: unknown, socket: Socket): Promise<unknown> => {
     if (!isRecord(value)) throw new UsageError("Invalid daemon request");
@@ -104,13 +105,25 @@ export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000
     return pool.use(
       key,
       request.service,
-      () => connect(connection),
+      () => connect(connection, { sessionTools: plugin.discovery?.tools === "session" }),
       (session) => {
-        if (leases.get(socket)?.session !== session) {
+        let connectionId = sessionIds.get(session);
+        if (!connectionId) {
+          connectionId = crypto.randomUUID();
+          sessionIds.set(session, connectionId);
+        }
+        if (request.connectionId && request.connectionId !== connectionId)
+          throw new Error("Discovery connection changed; start a new command before dispatch");
+        const lease = leases.get(socket);
+        if (lease && lease.session !== session && plugin.discovery?.tools === "session")
+          throw new Error("Discovery connection changed; start a new command before dispatch");
+        if (lease?.session !== session) {
           leases.get(socket)?.release();
           leases.set(socket, { session, release: pool.retain(key) });
         }
-        return execute(session, request);
+        return request.operation === "ensure"
+          ? Promise.resolve({ connectionId })
+          : execute(session, request);
       },
       credential,
       plugin.workspace?.name,

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@mcp-cli/core": "workspace:*",
+    "@mcp-cli/schema": "workspace:*",
     "@modelcontextprotocol/client": "2.3.0"
   },
   "devDependencies": {

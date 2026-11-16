@@ -61,6 +61,11 @@ export const loadManifest = async (
   plugin: DiscoveredPlugin,
 ): Promise<GeneratedManifest> => {
   const name = plugin.service;
+  if (
+    plugin.installed?.manifest.implementation.type === "mcp" &&
+    plugin.installed.manifest.implementation.discovery?.tools === "session"
+  )
+    return readInstalledManifest(plugin.dir);
   const files = await existingFiles(registry, plugin);
   if (plugin.installed && files?.location === "package") return readInstalledManifest(plugin.dir);
   if (!files && plugin.bundled) return decodeManifest(plugin.bundled.manifest);

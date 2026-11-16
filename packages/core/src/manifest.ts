@@ -156,7 +156,8 @@ export const applyCustomizations = (
   const absentNames = new Set<string>();
   for (const [name, customization] of Object.entries(plugin.commands ?? {})) {
     if (names.has(name)) continue;
-    if (!customization.optional) throw new Error(`Plugin refers to missing tool: ${name}`);
+    if (!customization.optional && !plugin.discovery)
+      throw new Error(`Plugin refers to missing tool: ${name}`);
     if (!validPath(customization.path)) throw new Error(`Invalid command path for ${name}`);
     claimPath(customization.path, fallbackPath(name), [...paths, ...absent]);
     absent.push(customization.path);

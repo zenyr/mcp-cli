@@ -12,6 +12,7 @@ export type Operation =
 export type SessionRequest = {
   operation: Operation;
   service: string;
+  connectionId?: string;
   credential?: string;
   workspace?: string;
   env: Record<string, string>;
@@ -40,12 +41,14 @@ export const decodeSessionRequest = (value: unknown): SessionRequest => {
     !isRecord(value.input) ||
     !isRecord(value.env) ||
     Object.values(value.env).some((item) => typeof item !== "string") ||
+    (value.connectionId !== undefined && typeof value.connectionId !== "string") ||
     (value.credential !== undefined && typeof value.credential !== "string") ||
     (value.workspace !== undefined && typeof value.workspace !== "string")
   )
     throw new UsageError("Invalid daemon session request");
   return {
     operation: value.operation as Operation,
+    connectionId: value.connectionId,
     service: value.service,
     cwd: value.cwd,
     name: value.name,

@@ -1,7 +1,7 @@
 import Ajv, { type ErrorObject, type ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
-import type { JsonSchema } from "@mcp-cli/core";
+import type { JsonSchema, ToolDefinition } from "@mcp-cli/core";
 
 export type ValidationIssue = { path: string; message: string };
 
@@ -52,6 +52,9 @@ const compile = (schema: JsonSchema): ValidateFunction => {
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     throw new SchemaCompileError(`Invalid input schema: ${reason}`, { cause: error });
+  } finally {
+    draft07.removeSchema(schema);
+    draft2020.removeSchema(schema);
   }
 };
 
@@ -63,4 +66,14 @@ const toIssue = (error: ErrorObject): ValidationIssue => ({
 export const validateInput = (schema: JsonSchema, input: Record<string, unknown>): void => {
   const validate = compile(schema);
   if (!validate(input)) throw invalidInput((validate.errors ?? []).map(toIssue));
+};
+
+export const validateTools = (tools: readonly ToolDefinition[]): void => {
+  const names = new Set<string>();
+  for (const tool of tools) {
+    if (names.has(tool.name)) throw new SchemaCompileError(`Duplicate tool: ${tool.name}`);
+    names.add(tool.name);
+    compile(tool.inputSchema);
+    if (tool.outputSchema) compile(tool.outputSchema);
+  }
 };

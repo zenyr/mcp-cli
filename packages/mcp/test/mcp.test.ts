@@ -167,3 +167,45 @@ test("HTTP close ignores terminate failures and stays bounded", async () => {
     await hanging.stop();
   }
 }, 5000);
+
+test("session discovery atomically aggregates all pages", async () => {
+  const session = await connect(stdio("paged"), { sessionTools: true });
+  try {
+    const results = await Promise.all([session.listTools(), session.listTools()]);
+    expect(results[0]?.map(({ name }) => name)).toEqual(["echo", "slow"]);
+    expect(results[0]).toBe(results[1]);
+  } finally {
+    await session.close();
+  }
+});
+
+test("a failed later discovery page never becomes a partial catalog", async () => {
+  const session = await connect(stdio("paged-failure"), { sessionTools: true });
+  try {
+    await expect(session.listTools()).rejects.toThrow("page failed");
+    await expect(session.listTools()).rejects.toThrow("page failed");
+  } finally {
+    await session.close();
+  }
+});
+
+test("MCP list_changed invalidates a cached session catalog including empty results", async () => {
+  const session = await connect(stdio("dynamic"), { sessionTools: true });
+  try {
+    await Promise.all([session.listTools(), session.listTools()]);
+    await session.listTools();
+    expect((await session.callTool("change", {})).content).toEqual([{ type: "text", text: "1" }]);
+    expect(await session.listTools()).toEqual([]);
+  } finally {
+    await session.close();
+  }
+});
+
+test("MCP notifications during a discovery supersede its result", async () => {
+  const session = await connect(stdio("race"), { sessionTools: true });
+  try {
+    expect(await session.listTools()).toEqual([]);
+  } finally {
+    await session.close();
+  }
+});

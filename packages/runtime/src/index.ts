@@ -17,6 +17,7 @@ import { HELP, METHODS, PROMPTS, RESOURCES, SKILL } from "./reserved";
 import { runResources } from "./resources";
 import { createExecutor } from "./executor";
 import { findExtension } from "./extensions";
+import { runSessionService } from "./session-discovery";
 import { compactDescription } from "./descriptions";
 export { help } from "./help";
 
@@ -44,9 +45,28 @@ export const runService = async (
   argv: string[],
   ports: RuntimeDependencies,
 ): Promise<number> => {
+  const normalized = plugin.extensions?.normalizeArgv?.(argv) ?? argv;
+  if (plugin.discovery?.tools === "session")
+    return runSessionService(
+      plugin,
+      generated,
+      normalized,
+      ports,
+      (plugin, manifest, argv, ports) => runStaticService(plugin, manifest, argv, ports, true),
+    );
+  return runStaticService(plugin, generated, normalized, ports);
+};
+
+const runStaticService = async (
+  plugin: ServicePlugin,
+  generated: GeneratedManifest,
+  argv: string[],
+  ports: RuntimeDependencies,
+  selected = false,
+): Promise<number> => {
   const manifest = applyCustomizations(plugin, generated);
   const parsed = parseArguments(
-    plugin.extensions?.normalizeArgv?.(argv) ?? argv,
+    argv,
     (commandPath) =>
       findCommand(manifest, commandPath)?.inputSchema ??
       findExtension(manifest, commandPath)?.inputSchema ??
@@ -61,8 +81,9 @@ export const runService = async (
     (path.length === 1 &&
       !tokens.length &&
       [RESOURCES, PROMPTS].some((command) => command === path[0]));
-  if (!offline && ports.forWorkspace) ports = await ports.forWorkspace(parsed.workspace);
-  else if (!offline && parsed.workspace && !ports.workspaceId)
+  if (!selected && !offline && ports.forWorkspace)
+    ports = await ports.forWorkspace(parsed.workspace);
+  else if (!selected && !offline && parsed.workspace && !ports.workspaceId)
     throw new UsageError("This runtime does not support workspace selection");
   const credential = manifest.credentials.find((item) => item.flag === parsed.credential)?.base
     ? undefined
@@ -148,7 +169,10 @@ export const runService = async (
     if (tokens.length) throw new UsageError("Skill does not accept input flags");
     dependencies.io.write(
       plugin.skill ??
-        `Discovery: ${plugin.name} --help → <group> --help → <group> <action> --help.\n--help=full: server instructions, full JSON schemas.\nmethods --json: baked-in tool map.\nComplex schemas: --input.\nHelp/discovery: no server connection.\nresources, prompts: fetch from server at runtime.`,
+        (plugin.discovery
+          ? "Session discovery: root help uses the bundled bootstrap catalog; methods, schema and tool help require a live connection.\n"
+          : "") +
+          `Discovery: ${plugin.name} --help → <group> --help → <group> <action> --help.\n--help=full: server instructions, full JSON schemas.\n${plugin.discovery ? "methods --json: live tool map." : "methods --json: baked-in tool map."}\nComplex schemas: --input.\n${plugin.discovery ? "Tool discovery: live server connection." : "Help/discovery: no server connection."}\nresources, prompts: fetch from server at runtime.`,
     );
     return 0;
   }

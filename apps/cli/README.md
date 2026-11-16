@@ -263,3 +263,49 @@ Help, methods, and schema remain available without authentication or a workspace
 
 The desktop app lists each workspace's authentication state and supports adding, renaming, and choosing the default workspace.
 Its daemon and authentication IPC responses remain single-line JSON.
+
+## Session tool discovery (opt-in)
+
+MCP package descriptors can select account-specific tool discovery without running `generate`:
+
+```json
+{
+  "schemaVersion": 1,
+  "implementation": {
+    "type": "mcp",
+    "server": { "type": "http", "url": "https://example.com/mcp" },
+    "auth": { "type": "oauth" },
+    "discovery": { "tools": "session" }
+  }
+}
+```
+
+This fragment belongs in a complete `plugin.json` with the usual package metadata and permissions.
+Descriptors that omit `discovery` keep static behavior, including generated cache overrides.
+Existing hosts reject the new field explicitly; updated hosts accept existing descriptors.
+There is no new engine negotiation or `minHostVersion` field.
+The repository currently has no host release identifier beyond its private package version;
+identify this feature by its introducing Git commit until a formal release is published.
+
+For session discovery, service root help and `skill` remain offline and identify their bundled
+bootstrap catalog. The package's `manifest.json` supplies that catalog even if a generated cache
+exists. It is documentation, not a claim about the selected account's current permissions.
+`methods`, `schema`, group/tool help, and tool execution require live discovery.
+Discovery failure never falls back to bootstrap tools for dispatch, including tools marked read-only.
+The CLI selects the workspace and credential, opens one session, discovers tools, then parses
+schema-dependent flags and dispatches through that same session.
+
+The daemon caches one successful catalog per actual MCP connection and shares concurrent discovery.
+All pages must succeed before publication; empty lists replace the previous catalog completely.
+`notifications/tools/list_changed` invalidates the catalog, including discoveries already in flight.
+New connections rediscover tools; idle connections still expire under the existing daemon policy.
+A continuously used connection can last longer than the idle timeout. Without server notifications,
+permission changes become visible on the next connection. The server must enforce authorization.
+No account-specific catalog is persisted by automatic discovery, and failed calls are not replayed.
+Manual `generate` remains an explicit fresh discovery and persistence operation.
+
+During development, use `MCP_CLI_DAEMON=0` for a direct connection, or set a separate absolute
+`MCP_CLI_DAEMON_DIR` for both the updated daemon and its CLI clients.
+Do not use an old daemon to test the new policy.
+Normal upgrades retain the plugin credential namespace when source and plugin identity stay the same;
+linking a copy from another source gives it a separate identity and may require a separate login.

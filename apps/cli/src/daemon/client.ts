@@ -71,6 +71,7 @@ export const openDaemonSession = async (
   service: string,
   credential?: string,
   workspace?: string,
+  requireBinding = false,
 ): Promise<ToolSession> => {
   const agent = new Agent({ keepAlive: true, maxSockets: 1 });
   const context = {
@@ -84,10 +85,17 @@ export const openDaemonSession = async (
       ),
     ),
   };
+  let connectionId: string | undefined;
   const call = <T>(operation: Operation, name = "", input: Record<string, unknown> = {}) =>
-    daemonRequest<T>(operation, { ...context, name, input }, undefined, agent);
+    daemonRequest<T>(operation, { ...context, connectionId, name, input }, undefined, agent);
   try {
-    await call("ensure");
+    const opened: unknown = await call("ensure");
+    if (requireBinding && isRecord(opened) && typeof opened.connectionId === "string")
+      connectionId = opened.connectionId;
+    if (requireBinding && !connectionId)
+      throw new UsageError(
+        "Session discovery requires an updated daemon; restart it or set MCP_CLI_DAEMON=0",
+      );
   } catch (error) {
     agent.destroy();
     if (isRecord(error) && ["ENOENT", "ECONNREFUSED"].includes(String(error.code)))

@@ -62,6 +62,8 @@ const slow = async (id: Message["id"], params: Record<string, unknown>) => {
   send({ id, result: { content: [{ type: "text", text: "done" }] } });
 };
 
+let changed = false;
+let lists = 0;
 const handle = (message: Message) => {
   const { id, method, params = {} } = message;
   if (id === undefined) return;
@@ -74,7 +76,28 @@ const handle = (message: Message) => {
         serverInfo: { name: "fixture", version: "1.0.0" },
       },
     });
-  if (method === "tools/list") return send({ id, result: { tools } });
+  if (method === "tools/call" && params.name === "change") {
+    changed = true;
+    send({ method: "notifications/tools/list_changed" });
+    return send({ id, result: { content: [{ type: "text", text: String(lists) }] } });
+  }
+  if (method === "tools/list") {
+    lists++;
+    if (mode === "race" && lists === 1) {
+      changed = true;
+      send({ method: "notifications/tools/list_changed" });
+      return send({ id, result: { tools } });
+    }
+    if ((mode === "dynamic" || mode === "race") && changed)
+      return send({ id, result: { tools: [] } });
+    if (mode === "paged-failure" && params.cursor)
+      return send({ id, error: { code: -32000, message: "page failed" } });
+    if (mode.startsWith("paged")) {
+      const { items, ...rest } = page([[tools[0]], [tools[1]]], params.cursor);
+      return send({ id, result: { tools: items, ...rest } });
+    }
+    return send({ id, result: { tools } });
+  }
   if (method === "resources/list") {
     const { items, ...rest } = page(resourcePages, params.cursor);
     return send({ id, result: { resources: items, ...rest } });

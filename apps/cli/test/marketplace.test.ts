@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import git from "isomorphic-git";
 import { Effect, Fiber } from "effect";
 import { discover, findPlugin, loadPlugin } from "../src/discovery";
+import { cacheFiles, loadManifest } from "../src/plugins";
 import { commandText } from "../src/marketplace/commands";
 import { scaffold } from "../src/marketplace/scaffold";
 import { desktopService } from "../src/desktop-services";
@@ -519,4 +520,47 @@ test("legacy builtin installations remain enabled without forcing their catalog 
   expect(await readState(f.context)).toEqual(state);
   const registry = await discover({ ...f.context, nodeModules: [], writable: async () => false });
   expect(findPlugin(registry, "hello").installed?.enabled).toBe(true);
+});
+
+test("session descriptors keep bootstrap catalogs despite generated caches; static descriptors keep overrides", async () => {
+  const f = await fixture();
+  const manifest = {
+    ...f.manifest,
+    permissions: { localCode: false, network: ["example.com"], filesystem: [] },
+    implementation: {
+      type: "mcp",
+      server: { type: "http", url: "https://example.com/mcp" },
+      discovery: { tools: "session" },
+    },
+  };
+  await writeFile(join(f.source, "plugin.json"), JSON.stringify(manifest));
+  await f.run({ type: "plugin.link", directory: f.source });
+  const key = (await readState(f.context)).installed[0]?.key;
+  await f.run({ type: "plugin.enable", key, enabled: true });
+  const context = { ...f.context, nodeModules: [], writable: async () => true };
+  const registry = await discover(context);
+  const found = findPlugin(registry, "hello");
+  const loaded = await loadPlugin(found, context);
+  expect(loaded.discovery).toEqual({ tools: "session" });
+  expect(loaded.credentialNamespace).toBe(`plugin-${key}`);
+  const cache = cacheFiles(registry, found);
+  await mkdir(join(cache.module, ".."), { recursive: true });
+  await writeFile(cache.module, 'export const manifest = {version:2,service:"hello",tools:[]};');
+  expect((await loadManifest(registry, found)).tools.map(({ name }) => name)).toEqual(["echo"]);
+  const installed = found.installed;
+  if (!installed) throw new Error("Missing installed fixture");
+  const staticFound = {
+    ...found,
+    installed: {
+      ...installed,
+      manifest: {
+        ...installed.manifest,
+        implementation: {
+          type: "mcp" as const,
+          server: { type: "http" as const, url: "https://example.com/mcp" },
+        },
+      },
+    },
+  };
+  expect((await loadManifest(registry, staticFound)).tools).toEqual([]);
 });

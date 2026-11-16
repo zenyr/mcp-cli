@@ -85,7 +85,12 @@ export const PackageManifest = Schema.Struct({
   quickstart: Schema.optional(Schema.Array(Schema.Struct({ command: Text, summary: Text }))),
   implementation: Schema.Union([
     Schema.Struct({ type: Schema.Literal("module"), entry: Text }),
-    Schema.Struct({ type: Schema.Literal("mcp"), server: Server, auth: Schema.optional(Auth) }),
+    Schema.Struct({
+      type: Schema.Literal("mcp"),
+      server: Server,
+      auth: Schema.optional(Auth),
+      discovery: Schema.optional(Schema.Struct({ tools: Schema.Literal("session") })),
+    }),
   ]),
 });
 export const Source = Schema.Struct({

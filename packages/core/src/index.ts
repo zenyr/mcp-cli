@@ -101,7 +101,8 @@ export type Connection =
       webApi?: WebApiConfig;
     };
 export type ServicePlugin = {
-  /** Host-selected workspace; plugins retain one command catalog across all workspaces. */
+  discovery?: { tools: "session" };
+  /** Host-selected workspace for this invocation. */
   workspace?: import("./workspaces").Workspace;
   /** Credential environment variables apply only to the legacy workspace. */
   workspaces?: { credentialEnv: string[] };

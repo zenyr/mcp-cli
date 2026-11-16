@@ -68,3 +68,14 @@ test("stdio sessions keep working directory and environment isolation", () => {
     connectionKey({ ...request, env: { TERM: "other" } }, config, "identity", plugin),
   ).not.toBe(key);
 });
+
+test("session catalogs isolate workspaces and upgraded package directories", () => {
+  const key = connectionKey({ ...request, workspace: "one" }, http, "identity", plugin);
+  expect(connectionKey({ ...request, workspace: "two" }, http, "identity", plugin)).not.toBe(key);
+  expect(
+    connectionKey({ ...request, workspace: "one" }, http, "identity", {
+      ...plugin,
+      dir: "/new-artifact",
+    }),
+  ).not.toBe(key);
+});

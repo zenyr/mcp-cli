@@ -1,7 +1,10 @@
+import { sessionTools } from "./session-tools";
+import { validateTools } from "@mcp-cli/schema";
 import { connectWebApi } from "./web-api";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import type { CatalogSession, Connection, ResourceContent, ToolSession } from "@mcp-cli/core";
+import { decodeManifest } from "@mcp-cli/core";
 import { authorizedFetch } from "./authorize";
 import { authFailure } from "./oauth";
 
@@ -10,6 +13,7 @@ export { LoginError, startLoopback } from "./loopback";
 export { oauthAuthorize, type OAuthAuthorizeOptions } from "./oauth";
 
 export type ConnectOptions = {
+  sessionTools?: boolean;
   timeoutMs?: number;
   callTimeoutMs?: number;
   maxCallTimeoutMs?: number;
@@ -172,20 +176,32 @@ const connectMcp = async (
     onprogress: () => undefined,
     ...(maxTotalTimeout !== undefined && { maxTotalTimeout }),
   };
+  const fetchTools = async () => {
+    if (!client.getServerCapabilities()?.tools)
+      throw new MissingToolsCapabilityError("Server does not advertise the tools capability");
+    const { tools } = await client.listTools(undefined, {
+      timeout,
+      ...(options.sessionTools && { cacheMode: "refresh" as const }),
+    });
+    const definitions = tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema,
+      ...(tool.outputSchema && { outputSchema: tool.outputSchema }),
+      ...(tool.annotations && { annotations: tool.annotations }),
+    }));
+    if (options.sessionTools) {
+      decodeManifest({ version: 2, service: "session", tools: definitions });
+      validateTools(definitions);
+    }
+    return definitions;
+  };
+  const discovery = sessionTools(fetchTools);
+  if (options.sessionTools)
+    client.setNotificationHandler("notifications/tools/list_changed", discovery.invalidate);
   return {
     ...catalog(client, timeout, callTimeout),
-    listTools: async () => {
-      if (!client.getServerCapabilities()?.tools)
-        throw new MissingToolsCapabilityError("Server does not advertise the tools capability");
-      const { tools } = await client.listTools(undefined, { timeout });
-      return tools.map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        inputSchema: tool.inputSchema,
-        ...(tool.outputSchema && { outputSchema: tool.outputSchema }),
-        ...(tool.annotations && { annotations: tool.annotations }),
-      }));
-    },
+    listTools: options.sessionTools ? discovery.list : fetchTools,
     callTool: async (name, input) => {
       const result = await client.callTool({ name, arguments: input }, callOptions);
       return {
