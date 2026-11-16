@@ -9,7 +9,11 @@ export type CommandNode = {
 };
 export type CommandCatalog = {
   service: string;
-  /** Session-discovery plugins describe their bundled bootstrap catalog. */
-  bootstrap: boolean;
+  /** `bootstrap` is a session-discovery plugin's bundled list, `live` its server's current list. */
+  origin: "static" | "bootstrap" | "live";
+  /** Session-discovery plugins return their live catalog only when the request asks for it. */
+  discovery: boolean;
+  fetchedAt?: number;
+  workspace?: string;
   root: CommandNode;
 };

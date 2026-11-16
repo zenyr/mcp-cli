@@ -1,8 +1,8 @@
-import { RESERVED_COMMANDS, type CommandNode, type Manifest } from "@mcp-cli/core";
+import { COMMANDS, type CommandNode, type Manifest } from "@mcp-cli/core";
 import { childSummary, displayCommands, help, within } from "./help";
 import { compactDescription } from "./descriptions";
 
-// Mirrors the root and group listings of `--help`, so every node reaches the same commands.
+// Mirrors `--help` listings, and keeps uncustomized tools under a trailing `call` group.
 export const commandTree = (manifest: Manifest): CommandNode => {
   const commands = displayCommands(manifest);
   const node = (path: string[]): CommandNode => {
@@ -14,10 +14,13 @@ export const commandTree = (manifest: Manifest): CommandNode => {
         commands
           .filter((item) => item.path.length > path.length && within(item, path))
           .map((item) => item.path[path.length])
-          .filter((part): part is string => Boolean(part))
-          .filter((part) => path.length || !RESERVED_COMMANDS.includes(part)),
+          .filter((part): part is string => Boolean(part)),
       ),
-    ].sort();
+    ].sort((left, right) =>
+      !path.length && (left === COMMANDS.call || right === COMMANDS.call)
+        ? Number(left === COMMANDS.call) - Number(right === COMMANDS.call)
+        : left.localeCompare(right),
+    );
     return {
       path,
       kind: !path.length

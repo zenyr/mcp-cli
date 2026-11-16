@@ -5,6 +5,7 @@ import {
   UsageError,
   type GeneratedManifest,
   type ServicePlugin,
+  type ToolSession,
 } from "@mcp-cli/core";
 import { validateTools } from "@mcp-cli/schema";
 import { parseArguments } from "./arguments";
@@ -19,6 +20,16 @@ type Run = (
 
 const bootstrapNotice =
   "Bootstrap catalog: bundled tools; current account availability requires live discovery.";
+
+// Every live catalog passes the same decoding and validation as tool execution.
+export const sessionManifest = async (
+  service: string,
+  session: ToolSession,
+): Promise<GeneratedManifest> => {
+  const live = decodeManifest({ version: 2, service, tools: await session.listTools() });
+  validateTools(live.tools);
+  return live;
+};
 
 export const runSessionService = async (
   plugin: ServicePlugin,
@@ -53,12 +64,7 @@ export const runSessionService = async (
       (session) =>
         Effect.tryPromise({
           try: async () => {
-            const live = decodeManifest({
-              version: 2,
-              service: plugin.name,
-              tools: await session.listTools(),
-            });
-            validateTools(live.tools);
+            const live = await sessionManifest(plugin.name, session);
             return run(plugin, live, argv, {
               ...selected,
               open: async () => ({ ...session, close: async () => {} }),
