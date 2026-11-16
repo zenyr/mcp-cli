@@ -21,7 +21,7 @@ import { typeLabel } from "./schema";
 import { findExtension } from "./extensions";
 import { compactDescription } from "./descriptions";
 
-const displayCommands = (manifest: Manifest): CommandSpec[] => [
+export const displayCommands = (manifest: Manifest): CommandSpec[] => [
   ...manifest.commands,
   ...(manifest.extensions ?? []).map((command) => ({
     ...command,
@@ -61,9 +61,9 @@ const table = (rows: Array<[string, string]>): string[] => {
   const width = Math.max(0, ...rows.map(([left]) => left.length));
   return rows.map(([left, right]) => `  ${left.padEnd(width)}  ${right}`.trimEnd());
 };
-const within = (command: CommandSpec, path: string[]): boolean =>
+export const within = (command: CommandSpec, path: string[]): boolean =>
   path.every((part, index) => command.path[index] === part);
-const childSummary = (manifest: Manifest, path: string[]): string => {
+export const childSummary = (manifest: Manifest, path: string[]): string => {
   const key = path.join(" ");
   const command = displayCommands(manifest).find((command) => command.path.join(" ") === key);
   if (command) return compactDescription(command.summary ?? command.name);

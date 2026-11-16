@@ -8,6 +8,7 @@ import { resetDaemonIfRunning } from "./daemon/client";
 import { authenticationDetails, configureAuthentication } from "./auth-settings";
 import { marketplaceRequest, marketplaceView } from "./marketplace/entry";
 import { desktopService } from "./desktop-services";
+import { desktopCommandCatalog } from "./desktop-commands";
 
 const readAuthInput = async (): Promise<string> => {
   const lines = createInterface({ input: process.stdin });
@@ -29,6 +30,14 @@ const readAuthInput = async (): Promise<string> => {
   }
 };
 
+// Bun truncates piped console.log output at 64 KiB once process.stdout exists.
+const writeResult = (result: unknown) =>
+  new Promise<void>((resolve, reject) =>
+    process.stdout.write(`${JSON.stringify({ result })}\n`, (error) =>
+      error ? reject(error) : resolve(),
+    ),
+  );
+
 export const desktopCommand = async (args: string[]) => {
   const [action, ...rest] = args;
   if (
@@ -42,24 +51,29 @@ export const desktopCommand = async (args: string[]) => {
       "plugins",
       "plugin-action",
       "workspace-action",
+      "commands",
     ].includes(action ?? "")
   )
-    throw new UsageError("Usage: mcp-cli desktop <services|login|logout|auth-config|auth-status>");
+    throw new UsageError(
+      "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>",
+    );
   if (action === "plugins") {
-    console.log(JSON.stringify({ result: await marketplaceView() }));
+    await writeResult(await marketplaceView());
+    return;
+  }
+  if (action === "commands") {
+    await writeResult(await desktopCommandCatalog(JSON.parse(await readAuthInput())));
     return;
   }
   if (action === "plugin-action") {
-    console.log(
-      JSON.stringify({ result: await marketplaceRequest(JSON.parse(await readAuthInput())) }),
-    );
+    await writeResult(await marketplaceRequest(JSON.parse(await readAuthInput())));
     return;
   }
   const registry = await discover(await defaultContext());
   if (action === "workspace-action") {
     const request = decodeWorkspaceAction(JSON.parse(await readAuthInput()));
     const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
-    console.log(JSON.stringify({ result: await updateWorkspace(plugin, request) }));
+    await writeResult(await updateWorkspace(plugin, request));
     return;
   }
   const store = defaultStore();
@@ -67,7 +81,7 @@ export const desktopCommand = async (args: string[]) => {
     const services = await Promise.all(
       registry.plugins.map((found) => desktopService(found, registry, store)),
     );
-    console.log(JSON.stringify({ result: services }));
+    await writeResult(services);
     return;
   }
   const value: unknown = JSON.parse(await readAuthInput());
@@ -85,9 +99,7 @@ export const desktopCommand = async (args: string[]) => {
   );
   if (action === "auth-config" || action === "auth-status") {
     if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
-    console.log(
-      JSON.stringify({ result: await authenticationDetails(plugin, action === "auth-status") }),
-    );
+    await writeResult(await authenticationDetails(plugin, action === "auth-status"));
     return;
   }
   const credential =
@@ -127,5 +139,5 @@ export const desktopCommand = async (args: string[]) => {
     process.removeListener("SIGTERM", abort);
   }
   await resetDaemonIfRunning();
-  console.log(JSON.stringify({ result: null }));
+  await writeResult(null);
 };

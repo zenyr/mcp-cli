@@ -20,6 +20,7 @@ import { findExtension } from "./extensions";
 import { runSessionService } from "./session-discovery";
 import { compactDescription } from "./descriptions";
 export { help } from "./help";
+export { commandTree } from "./command-tree";
 
 export type RuntimeIO = {
   write(text: string): void;

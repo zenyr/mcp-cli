@@ -1,3 +1,4 @@
+export type { CommandCatalog, CommandNode } from "./command-tree";
 export type { Workspace, WorkspaceRegistry, WorkspaceAction } from "./workspaces";
 import { errorBrand, hasErrorBrand } from "./error-brand";
 
