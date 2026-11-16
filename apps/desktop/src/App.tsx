@@ -19,23 +19,29 @@ export const App = () => {
     defaultValue: 168,
   });
   const press = useRef<{ x: number; y: number; width: number; moved: boolean }>(undefined);
+  const collapseIntent = useRef(!sidebarOpened);
+  const expandedWidth = Math.max(168, sidebarWidth);
   const resize = useAppShellResize({
-    navbar: { min: 8, max: 360, collapseThreshold: 72, label: t("사이드바 너비 조절") },
-    initialSizes: { navbar: sidebarOpened ? sidebarWidth : 8 },
+    navbar: { min: 168, max: 360, collapseThreshold: 120, label: t("사이드바 너비 조절") },
+    initialSizes: { navbar: sidebarOpened ? expandedWidth : 8 },
+    onCollapseChange: (_, collapsed) => {
+      collapseIntent.current = collapsed;
+    },
     onResize: ({ navbar }) => {
       if (press.current && navbar !== undefined && Math.abs(navbar - press.current.width) >= 4)
         press.current.moved = true;
     },
     onResizeEnd: ({ navbar }) => {
       if (navbar === undefined) return;
-      const opened = navbar >= 72;
+      const opened = !collapseIntent.current;
       setSidebarOpened(opened);
       if (opened) setSidebarWidth(navbar);
       else resize.navbar.setSize(8);
     },
   });
   const toggleSidebar = () => {
-    resize.navbar.setSize(sidebarOpened ? 8 : sidebarWidth);
+    collapseIntent.current = sidebarOpened;
+    resize.navbar.setSize(sidebarOpened ? 8 : expandedWidth);
     setSidebarOpened(!sidebarOpened);
   };
   const locale = useLocale();
@@ -72,7 +78,7 @@ export const App = () => {
     <AppShell
       header={{ height: 58 }}
       navbar={{
-        width: sidebarOpened ? sidebarWidth : 8,
+        width: sidebarOpened ? expandedWidth : 8,
         breakpoint: 0,
       }}
       resize={resize}
@@ -85,6 +91,7 @@ export const App = () => {
       <AppShell.Navbar
         p={sidebarOpened ? "sm" : 0}
         onPointerDownCapture={(event) => {
+          collapseIntent.current = !sidebarOpened;
           if (event.target instanceof Element && event.target.closest('[role="separator"]'))
             press.current = {
               x: event.clientX,
@@ -106,6 +113,7 @@ export const App = () => {
             toggleSidebar();
         }}
         onKeyDownCapture={(event) => {
+          collapseIntent.current = !sidebarOpened;
           if (
             (event.key === "Enter" || event.key === " ") &&
             event.target instanceof Element &&
@@ -120,7 +128,12 @@ export const App = () => {
             event.stopPropagation();
         }}
       >
-        <Stack gap={0} display={sidebarOpened ? undefined : "none"}>
+        <Stack
+          gap={0}
+          display={sidebarOpened ? undefined : "none"}
+          miw={144}
+          style={{ whiteSpace: "nowrap" }}
+        >
           <Text fw={700} size="sm" px="sm" pt="xs" pb="lg">
             MCP CLI
           </Text>
