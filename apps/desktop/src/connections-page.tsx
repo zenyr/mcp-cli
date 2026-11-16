@@ -99,7 +99,7 @@ export const ConnectionsPage = () => {
               <summary>{t("터미널에서 연결 유지 사용하기")}</summary>
               <Code>mcp-cli demo message echo --text hello</Code>
             </details>
-            <Button component={Link} to="/services" variant="subtle">
+            <Button component={Link} to="/plugins" variant="subtle">
               {t("서비스 인증 확인")}
             </Button>
           </Stack>

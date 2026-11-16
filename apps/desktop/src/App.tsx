@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { call } from "./ipc";
 import { t, useLocale } from "./i18n";
 import { AppShell, Badge, NavLink, Stack, Text } from "@mantine/core";
-import { IconKey, IconPlugConnected, IconSettings, IconPackage } from "@tabler/icons-react";
+import { IconPlugConnected, IconSettings, IconPackage } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useHotkeys } from "@mantine/hooks";
 import { useStatus } from "./queries";
@@ -23,13 +23,13 @@ export const App = () => {
     [
       "mod+1",
       () => {
-        void navigate({ to: "/connections" });
+        void navigate({ to: "/plugins" });
       },
     ],
     [
       "mod+2",
       () => {
-        void navigate({ to: "/services" });
+        void navigate({ to: "/connections" });
       },
     ],
     [
@@ -55,7 +55,7 @@ export const App = () => {
             to="/plugins"
             label={t("플러그인")}
             leftSection={<IconPackage size={16} />}
-            active={location.pathname === "/plugins"}
+            active={location.pathname.startsWith("/plugins")}
           />
           <NavLink
             component={Link}
@@ -64,13 +64,6 @@ export const App = () => {
             leftSection={<IconPlugConnected size={16} />}
             rightSection={<Badge size="xs">{count}</Badge>}
             active={location.pathname === "/connections"}
-          />
-          <NavLink
-            component={Link}
-            to="/services"
-            label={t("서비스")}
-            leftSection={<IconKey size={16} />}
-            active={location.pathname === "/services"}
           />
           <NavLink
             component={Link}

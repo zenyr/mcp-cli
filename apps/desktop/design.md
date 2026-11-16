@@ -41,10 +41,11 @@ Tray
 └─ Quit app
 
 Management window
-├─ Daemon bar (fixed at the top of every screen)
-├─ /connections   Connections
-├─ /services      Services
-└─ /settings      Settings
+├─ Daemon bar (fixed at the top of every screen, with the language menu)
+├─ /plugins                Plugins
+│  └─ /plugins/$service    Plugin detail: overview, credentials, commands, diagram
+├─ /connections            Connections
+└─ /settings               Settings
 
 Modals
 ├─ OAuth login progress
@@ -57,12 +58,14 @@ Modals
 
 Use code-based TanStack Router configuration. Use `createHashHistory()` for the desktop webview.
 
-| Path           | Screen      | Notes                                           |
-| -------------- | ----------- | ----------------------------------------------- |
-| `/`            | None        | Redirect to `/connections`                      |
-| `/connections` | Connections | Default screen                                  |
-| `/services`    | Services    | Authentication status and login actions         |
-| `/settings`    | Settings    | Launch at login, paths, and version information |
+| Path                | Screen        | Notes                                                        |
+| ------------------- | ------------- | ------------------------------------------------------------ |
+| `/`                 | None          | Redirect to `/plugins`                                       |
+| `/plugins`          | Plugins       | Default screen. Installed, catalog, and local plugins        |
+| `/plugins/$service` | Plugin detail | Search: `tab`, `path` (command words), `source` (catalog ID) |
+| `/connections`      | Connections   | Open connections and in-flight requests                      |
+| `/services`         | None          | Redirect to `/plugins`. Credentials moved to plugin detail   |
+| `/settings`         | Settings      | Launch at login, sounds, paths, and version information      |
 
 Modals are local screen state, not routes.
 Opening the window from the tray preserves the last route.
@@ -246,7 +249,23 @@ Use `Alert color="red" variant="light"` for the error block.
 
 The query failure `Alert` reads: `Could not load connections. Retrying in 2 seconds.`
 
-## 7. Services screen `/services`
+## 7. Plugin detail `/plugins/$service`
+
+The plugin detail screen merges the former services screen into each plugin.
+Plugin cards and catalog entries open it. The `Help` button opens the `commands` tab.
+
+| Tab        | Content                                                                             |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `overview` | Source, version, and declared permissions. Catalog plugins only                     |
+| `auth`     | Workspace manager and the credential table below, scoped to one service             |
+| `commands` | Command tree at every depth, search, and the same text as `<service> <path> --help` |
+| `diagram`  | Mermaid flowchart rendered by `pele`. Clicking a node opens its command help        |
+
+- `mcp-cli desktop commands` returns the command tree with each node's help text. It works offline.
+- Session-discovery plugins show their bundled bootstrap catalog with a notice.
+- The diagram uses node ID prefixes `s`, `g`, `c`, and `w` for service, group, command, and workflow colors.
+
+### Credential table
 
 ### Layout
 

@@ -15,7 +15,6 @@ import {
   Stack,
   Table,
   Text,
-  Title,
 } from "@mantine/core";
 import { IconDotsVertical, IconKey, IconLogout } from "@tabler/icons-react";
 import { ServiceIcon } from "./service-icon";
@@ -26,10 +25,10 @@ import { workspaceRows, type Service } from "./ipc";
 import { AuthSettingsPanel } from "./auth-settings-panel";
 
 type Selection = { service: Service; credential: Service["credentials"][number] };
-export const ServicesPage = () => {
+export const ServiceAuth = ({ service: target }: { service: Service }) => {
   useLocale();
-  const { data, dataUpdatedAt, isPending, error } = useServices();
-  const rows = workspaceRows(data);
+  const { dataUpdatedAt } = useServices();
+  const rows = workspaceRows([target]);
   const [selection, setSelection] = useState<Selection>();
   const [secret, setSecret] = useState("");
   const [url, setUrl] = useState("");
@@ -98,25 +97,17 @@ export const ServicesPage = () => {
     });
   return (
     <Stack gap="lg">
-      <Group justify="space-between">
-        <Title order={3}>{t("서비스")}</Title>
-      </Group>
-      {error && (
-        <Alert color="red" title={t("서비스를 가져오지 못했습니다")}>
-          {error.message}
-        </Alert>
-      )}
-      {isPending && <Loader size="sm" />}
-      {data && <WorkspaceManager services={data} />}
-      {data && (
+      {target.supportsWorkspaces && <WorkspaceManager services={[target]} />}
+      {target.auth === "none" && !target.error ? (
+        <Alert color="gray">{t("이 플러그인은 인증이 필요하지 않습니다.")}</Alert>
+      ) : (
         <Paper withBorder>
           <Table.ScrollContainer minWidth={480}>
             <Table verticalSpacing="sm">
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>{t("서비스")}</Table.Th>
-                  <Table.Th>{t("워크스페이스")}</Table.Th>
                   <Table.Th>{t("자격 증명")}</Table.Th>
+                  <Table.Th>{t("워크스페이스")}</Table.Th>
                   <Table.Th>{t("인증 상태")}</Table.Th>
                   <Table.Th />
                 </Table.Tr>
@@ -155,7 +146,8 @@ export const ServicesPage = () => {
                             <ServiceIcon service={service.name} credential={credential.flag} />
                             <Stack gap={2}>
                               <Text size="sm" fw={500}>
-                                {service.name}
+                                {credential.flag ||
+                                  (service.auth === "oauth" ? "OAuth" : t("기본"))}
                               </Text>
                               {service.error && (
                                 <Text size="xs" c="dimmed">
@@ -172,9 +164,6 @@ export const ServicesPage = () => {
                               {t("기본")}
                             </Text>
                           )}
-                        </Table.Td>
-                        <Table.Td>
-                          {credential.flag || (service.auth === "oauth" ? "OAuth" : t("기본"))}
                         </Table.Td>
                         <Table.Td>
                           <Badge color={color}>{state}</Badge>

@@ -27,15 +27,17 @@ export const WorkspaceManager = ({ services }: { services: Service[] }) => {
       <Stack gap="sm">
         <Text fw={500}>{t("워크스페이스 관리")}</Text>
         <Group align="flex-end">
-          <Select
-            label={t("서비스")}
-            value={service.name}
-            data={available.map((item) => item.name)}
-            onChange={(value) => {
-              setServiceName(value);
-              setSelected(null);
-            }}
-          />
+          {available.length > 1 && (
+            <Select
+              label={t("서비스")}
+              value={service.name}
+              data={available.map((item) => item.name)}
+              onChange={(value) => {
+                setServiceName(value);
+                setSelected(null);
+              }}
+            />
+          )}
           <Select
             label={t("워크스페이스")}
             value={current?.id ?? null}

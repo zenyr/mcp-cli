@@ -1,4 +1,4 @@
-import { setLocale, t, useLocale } from "./i18n";
+import { t, useLocale } from "./i18n";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -8,7 +8,6 @@ import {
   Code,
   Group,
   Paper,
-  Select,
   Stack,
   Switch,
   Text,
@@ -21,7 +20,7 @@ import { useSettings } from "./ui-sounds";
 import { useAction, useStatus } from "./queries";
 
 export const SettingsPage = () => {
-  const locale = useLocale();
+  useLocale();
   const client = useQueryClient();
   const { data: settings, error } = useSettings();
   const autostart = useQuery({
@@ -46,19 +45,6 @@ export const SettingsPage = () => {
   return (
     <Stack gap="lg">
       <Title order={3}>{t("설정")}</Title>
-      <Select
-        label={t("언어")}
-        value={locale}
-        data={[
-          { value: "en", label: "English" },
-          { value: "ko", label: "한국어" },
-          { value: "ja", label: "日本語" },
-        ]}
-        onChange={(value) => {
-          if (value === "en" || value === "ko" || value === "ja") setLocale(value);
-        }}
-        allowDeselect={false}
-      />
       {error && <Alert color="red">{error.message}</Alert>}
       <Paper withBorder p="lg">
         <Stack gap="lg">

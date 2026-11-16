@@ -26,6 +26,14 @@ export const usePlugins = () =>
     staleTime: 10_000,
     retry: false,
   });
+export const useCommands = (service: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ["commands", service],
+    queryFn: () => call("commands", { service }),
+    enabled,
+    staleTime: 60_000,
+    retry: false,
+  });
 const feedbackActions = new Set<keyof Api>([
   "start",
   "stop",
@@ -51,6 +59,9 @@ export const useAction = <K extends keyof Api>(method: K, message?: string) => {
         client.invalidateQueries({ queryKey: ["status"] }),
         client.invalidateQueries({ queryKey: ["services"] }),
         client.invalidateQueries({ queryKey: ["plugins"] }),
+        ...(method === "pluginAction"
+          ? [client.invalidateQueries({ queryKey: ["commands"] })]
+          : []),
       ]);
     },
     onError: (error) => {

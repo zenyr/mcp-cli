@@ -2,6 +2,7 @@ import { t, useLocale } from "./i18n";
 import { Badge, Button, Group, Loader, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useAction, useStatus } from "./queries";
+import { LanguageMenu } from "./language-menu";
 
 export const DaemonBar = () => {
   useLocale();
@@ -75,6 +76,7 @@ export const DaemonBar = () => {
             {t("연결 준비")}
           </Button>
         )}
+        <LanguageMenu />
       </Group>
     </Group>
   );

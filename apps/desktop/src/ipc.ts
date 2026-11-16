@@ -8,6 +8,7 @@ import type {
   AuthSettingsField,
   MarketplaceAction,
   MarketplaceView,
+  CommandCatalog,
 } from "@mcp-cli/core";
 
 export type Authentication = {
@@ -64,6 +65,7 @@ export type Api = {
   workspaceAction: { input: WorkspaceAction; output: WorkspaceRegistry };
   plugins: { input: undefined; output: MarketplaceView };
   pluginAction: { input: MarketplaceAction; output: { message: string } };
+  commands: { input: { service: string }; output: CommandCatalog };
   status: { input: undefined; output: Status };
   services: { input: undefined; output: Service[] };
   start: { input: undefined; output: null };

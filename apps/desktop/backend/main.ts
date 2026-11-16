@@ -131,6 +131,7 @@ export const api = {
   plugins: (_params: unknown, app: DesktopApp) => run(app, ["desktop", "plugins"]),
   pluginAction: (params: unknown, app: DesktopApp) =>
     run(app, ["desktop", "plugin-action"], params),
+  commands: (params: unknown, app: DesktopApp) => run(app, ["desktop", "commands"], params),
   status: (_params: unknown, app: DesktopApp) => checkDaemonStatus(app),
   workspaceAction: (params: unknown, app: DesktopApp) =>
     run(app, ["desktop", "workspace-action"], params),

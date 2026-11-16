@@ -14,8 +14,9 @@ The app includes the CLI host and independent packages for the default plugins.
 Open **Plugins** to install, activate, update, or remove plugins and add metadata-only Git catalogs.
 Catalogs start empty; select **Load** under recommended catalogs to add the included catalog.
 The installation dialog shows permissions and activates the verified plugin with one consent.
-The page also registers service commands in PATH. Open **Services** to configure active plugins.
-Choose English, 한국어, or 日本語 in **Settings → Language**.
+The page also registers service commands in PATH. Select a plugin to open its detail screen.
+The detail screen configures credentials, browses every command's help, and draws the command diagram.
+Choose English, 한국어, or 日本語 from the language menu at the right of the top bar.
 The app initially uses the system language, with English as the fallback.
 The selected language persists and also applies to tray actions.
 Plugin-provided metadata and external error details retain their original language.

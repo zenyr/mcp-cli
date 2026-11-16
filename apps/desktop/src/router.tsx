@@ -7,9 +7,10 @@ import {
 } from "@tanstack/react-router";
 import { App } from "./App";
 import { ConnectionsPage } from "./connections-page";
-import { ServicesPage } from "./services-page";
 import { SettingsPage } from "./settings-page";
 import { PluginsPage } from "./plugins-page";
+import { PluginDetailPage } from "./plugin-detail-page";
+import { parseDetailSearch } from "./detail-search";
 const root = createRootRoute({ component: App });
 const index = createRoute({
   getParentRoute: () => root,
@@ -24,7 +25,7 @@ const connections = createRoute({
 const services = createRoute({
   getParentRoute: () => root,
   path: "/services",
-  component: ServicesPage,
+  component: () => <Navigate to="/plugins" />,
 });
 const settings = createRoute({
   getParentRoute: () => root,
@@ -36,8 +37,14 @@ const plugins = createRoute({
   path: "/plugins",
   component: PluginsPage,
 });
+export const pluginDetail = createRoute({
+  getParentRoute: () => root,
+  path: "/plugins/$service",
+  validateSearch: parseDetailSearch,
+  component: PluginDetailPage,
+});
 export const router = createRouter({
-  routeTree: root.addChildren([index, connections, services, settings, plugins]),
+  routeTree: root.addChildren([index, connections, services, settings, plugins, pluginDetail]),
   history: createHashHistory(),
 });
 declare module "@tanstack/react-router" {

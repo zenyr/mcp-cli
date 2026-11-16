@@ -10,7 +10,13 @@ const icons: Record<string, string> = {
   slack: new URL("../assets/services/slack.svg", import.meta.url).href,
 };
 
-export const ServiceIcon = ({ service, credential }: { service: string; credential: string }) => {
+export const ServiceIcon = ({
+  service,
+  credential = "",
+}: {
+  service: string;
+  credential?: string;
+}) => {
   useLocale();
   const src = icons[service];
   const role = service === "slack" ? credential : "";

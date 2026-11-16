@@ -40,3 +40,57 @@ body {
   background: var(--mantine-color-body);
   color: var(--mantine-color-text);
 }
+.catalog-entry,
+.command-row {
+  display: block;
+  border-radius: var(--mantine-radius-sm);
+}
+.catalog-entry:hover,
+.command-row:hover {
+  background: var(--mantine-color-default-hover);
+}
+.command-help {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+}
+.command-diagram {
+  position: relative;
+  height: 560px;
+  overflow: hidden;
+  --pele-bg: var(--mantine-color-body);
+  --pele-fg: var(--mantine-color-text);
+  --pele-muted: var(--mantine-color-dimmed);
+  --pele-line: var(--mantine-color-gray-5);
+  --pele-surface: var(--mantine-color-body);
+  --pele-surface-alt: var(--mantine-color-default-hover);
+  --pele-border: var(--mantine-color-default-border);
+  --pele-accent: var(--mantine-primary-color-filled);
+  --pele-font: var(--mantine-font-family);
+  --pele-radius: 6px;
+}
+.command-diagram .pele-node {
+  cursor: pointer;
+}
+.command-diagram .pele-node[data-id^="s"] > :first-child {
+  fill: var(--mantine-primary-color-filled);
+  stroke: var(--mantine-primary-color-filled);
+}
+.command-diagram .pele-node[data-id^="s"] .pele-label {
+  fill: var(--mantine-color-white);
+  font-weight: 600;
+}
+.command-diagram .pele-node[data-id^="g"] > :first-child {
+  fill: var(--mantine-color-blue-light);
+  stroke: var(--mantine-color-blue-light-color);
+}
+.command-diagram .pele-node[data-id^="w"] > :first-child {
+  fill: var(--mantine-color-grape-light);
+  stroke: var(--mantine-color-grape-light-color);
+}
+.command-diagram .pele-node:hover > :first-child,
+.command-diagram .pele-node.selected > :first-child {
+  stroke: var(--mantine-primary-color-filled);
+  stroke-width: 2.5px;
+}
