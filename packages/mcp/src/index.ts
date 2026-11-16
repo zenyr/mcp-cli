@@ -157,9 +157,17 @@ const connectMcp = async (
       ? undefined
       : positive("Max call timeout", options.maxCallTimeoutMs, timeout);
   const terminateTimeout = positive("Terminate timeout", options.terminateTimeoutMs, 2000);
+  const discovery = sessionTools(() => fetchTools());
   const client = new Client(
     { name: "mcp-cli", version: "0.1.0" },
-    { versionNegotiation: { mode: "auto" } },
+    {
+      versionNegotiation: { mode: "auto" },
+      ...(options.sessionTools && {
+        listChanged: {
+          tools: { autoRefresh: false, debounceMs: 0, onChanged: discovery.invalidate },
+        },
+      }),
+    },
   );
   const { transport, terminate } = openTransport(config);
   try {
@@ -196,7 +204,6 @@ const connectMcp = async (
     }
     return definitions;
   };
-  const discovery = sessionTools(fetchTools);
   if (options.sessionTools)
     client.setNotificationHandler("notifications/tools/list_changed", discovery.invalidate);
   return {

@@ -209,3 +209,14 @@ test("MCP notifications during a discovery supersede its result", async () => {
     await session.close();
   }
 });
+
+test("modern MCP connections subscribe to tool-list changes", async () => {
+  const session = await connect(stdio("modern"), { sessionTools: true, timeoutMs: 1000 });
+  try {
+    expect((await session.listTools()).map(({ name }) => name)).toEqual(["echo", "slow"]);
+    await session.callTool("change", {});
+    expect(await session.listTools()).toEqual([]);
+  } finally {
+    await session.close();
+  }
+}, 5000);

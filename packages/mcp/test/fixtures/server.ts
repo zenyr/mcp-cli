@@ -9,7 +9,9 @@ if (pidFile) writeFileSync(pidFile, String(process.pid));
 
 type Message = { id?: number | string; method?: string; params?: Record<string, unknown> };
 const send = (message: Record<string, unknown>) =>
-  process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", ...message })}\n`);
+  process.stdout.write(
+    `${JSON.stringify({ jsonrpc: "2.0", ...message, ...(mode === "modern" && isRecord(message.result) && { result: { ...message.result, resultType: "complete" } }) })}\n`,
+  );
 const numberArg = (args: unknown, key: string): number => {
   const value = isRecord(args) ? args[key] : undefined;
   return typeof value === "number" ? value : 0;
@@ -64,9 +66,30 @@ const slow = async (id: Message["id"], params: Record<string, unknown>) => {
 
 let changed = false;
 let lists = 0;
+let subscription: Message["id"];
 const handle = (message: Message) => {
   const { id, method, params = {} } = message;
   if (id === undefined) return;
+  if (method === "server/discover" && mode === "modern")
+    return send({
+      id,
+      result: {
+        supportedVersions: ["2026-07-28"],
+        capabilities: { tools: { listChanged: true } },
+        ttlMs: 0,
+        cacheScope: "private",
+      },
+    });
+  if (method === "subscriptions/listen" && mode === "modern") {
+    subscription = id;
+    return send({
+      method: "notifications/subscriptions/acknowledged",
+      params: {
+        _meta: { "io.modelcontextprotocol/subscriptionId": id },
+        notifications: { toolsListChanged: true },
+      },
+    });
+  }
   if (method === "initialize")
     return send({
       id,
@@ -78,11 +101,19 @@ const handle = (message: Message) => {
     });
   if (method === "tools/call" && params.name === "change") {
     changed = true;
-    send({ method: "notifications/tools/list_changed" });
+    if (mode !== "modern" || subscription !== undefined)
+      send({
+        method: "notifications/tools/list_changed",
+        ...(subscription !== undefined && {
+          params: { _meta: { "io.modelcontextprotocol/subscriptionId": subscription } },
+        }),
+      });
     return send({ id, result: { content: [{ type: "text", text: String(lists) }] } });
   }
   if (method === "tools/list") {
     lists++;
+    if (mode === "modern")
+      return send({ id, result: { tools: changed ? [] : tools, ttlMs: 0, cacheScope: "private" } });
     if (mode === "race" && lists === 1) {
       changed = true;
       send({ method: "notifications/tools/list_changed" });
