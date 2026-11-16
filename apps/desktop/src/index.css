@@ -55,6 +55,18 @@ body {
   line-height: 1.5;
   white-space: pre;
 }
+.desktop-shell {
+  --sidebar-visible-width: 8px;
+}
+.desktop-shell[data-sidebar-opened="true"] {
+  --sidebar-visible-width: max(168px, var(--app-shell-navbar-width));
+}
+.desktop-shell .sidebar-nav {
+  width: var(--sidebar-visible-width);
+}
+.desktop-shell .sidebar-main {
+  padding-inline-start: calc(var(--sidebar-visible-width) + var(--app-shell-padding));
+}
 .sidebar-resize-handle {
   --app-shell-resize-handle-size: 12px;
 }

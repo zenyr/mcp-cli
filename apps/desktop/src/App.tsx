@@ -8,6 +8,7 @@ import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { useStatus } from "./queries";
 import { useInteractionSounds } from "./ui-sounds";
 import { DaemonBar } from "./daemon-bar";
+import { sidebarSize } from "./sidebar-size";
 
 export const App = () => {
   const [sidebarOpened, setSidebarOpened] = useLocalStorage({
@@ -19,28 +20,26 @@ export const App = () => {
     defaultValue: 168,
   });
   const press = useRef<{ x: number; y: number; width: number; moved: boolean }>(undefined);
-  const collapseIntent = useRef(!sidebarOpened);
+  const dragStartedOpened = useRef(sidebarOpened);
   const expandedWidth = Math.max(168, sidebarWidth);
   const resize = useAppShellResize({
-    navbar: { min: 168, max: 360, collapseThreshold: 120, label: t("사이드바 너비 조절") },
+    navbar: { min: 8, max: 360, label: t("사이드바 너비 조절") },
     initialSizes: { navbar: sidebarOpened ? expandedWidth : 8 },
-    onCollapseChange: (_, collapsed) => {
-      collapseIntent.current = collapsed;
-    },
     onResize: ({ navbar }) => {
-      if (press.current && navbar !== undefined && Math.abs(navbar - press.current.width) >= 4)
-        press.current.moved = true;
+      if (navbar === undefined) return;
+      if (press.current && Math.abs(navbar - press.current.width) >= 4) press.current.moved = true;
+      const next = sidebarSize(dragStartedOpened.current, navbar);
+      setSidebarOpened(next.opened);
     },
     onResizeEnd: ({ navbar }) => {
       if (navbar === undefined) return;
-      const opened = !collapseIntent.current;
-      setSidebarOpened(opened);
-      if (opened) setSidebarWidth(navbar);
-      else resize.navbar.setSize(8);
+      const next = sidebarSize(dragStartedOpened.current, navbar);
+      setSidebarOpened(next.opened);
+      resize.navbar.setSize(next.width);
+      if (next.opened) setSidebarWidth(next.width);
     },
   });
   const toggleSidebar = () => {
-    collapseIntent.current = sidebarOpened;
     resize.navbar.setSize(sidebarOpened ? 8 : expandedWidth);
     setSidebarOpened(!sidebarOpened);
   };
@@ -76,6 +75,8 @@ export const App = () => {
   ]);
   return (
     <AppShell
+      className="desktop-shell"
+      data-sidebar-opened={sidebarOpened}
       header={{ height: 58 }}
       navbar={{
         width: sidebarOpened ? expandedWidth : 8,
@@ -89,9 +90,10 @@ export const App = () => {
         <DaemonBar />
       </AppShell.Header>
       <AppShell.Navbar
+        className="sidebar-nav"
         p={sidebarOpened ? "sm" : 0}
         onPointerDownCapture={(event) => {
-          collapseIntent.current = !sidebarOpened;
+          dragStartedOpened.current = sidebarOpened;
           if (event.target instanceof Element && event.target.closest('[role="separator"]'))
             press.current = {
               x: event.clientX,
@@ -112,8 +114,11 @@ export const App = () => {
           )
             toggleSidebar();
         }}
+        onPointerCancelCapture={() => setSidebarOpened(dragStartedOpened.current)}
         onKeyDownCapture={(event) => {
-          collapseIntent.current = !sidebarOpened;
+          if (resize.navbar.active && event.key === "Escape")
+            setSidebarOpened(dragStartedOpened.current);
+          if (!resize.navbar.active) dragStartedOpened.current = sidebarOpened;
           if (
             (event.key === "Enter" || event.key === " ") &&
             event.target instanceof Element &&
@@ -163,7 +168,7 @@ export const App = () => {
           </Stack>
         </Stack>
       </AppShell.Navbar>
-      <AppShell.Main>
+      <AppShell.Main className="sidebar-main">
         <Outlet />
       </AppShell.Main>
     </AppShell>
