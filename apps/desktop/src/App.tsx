@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { call } from "./ipc";
 import { t, useLocale } from "./i18n";
-import { AppShell, Badge, NavLink, Stack, Text } from "@mantine/core";
+import { AppShell, Badge, NavLink, Stack, Text, useAppShellResize } from "@mantine/core";
 import { IconPlugConnected, IconSettings, IconPackage } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useHotkeys, useLocalStorage } from "@mantine/hooks";
@@ -14,6 +14,30 @@ export const App = () => {
     key: "mcp-cli.sidebar-opened",
     defaultValue: true,
   });
+  const [sidebarWidth, setSidebarWidth] = useLocalStorage({
+    key: "mcp-cli.sidebar-width",
+    defaultValue: 168,
+  });
+  const press = useRef<{ x: number; y: number; width: number; moved: boolean }>(undefined);
+  const resize = useAppShellResize({
+    navbar: { min: 8, max: 360, collapseThreshold: 72, label: t("사이드바 너비 조절") },
+    initialSizes: { navbar: sidebarOpened ? sidebarWidth : 8 },
+    onResize: ({ navbar }) => {
+      if (press.current && navbar !== undefined && Math.abs(navbar - press.current.width) >= 4)
+        press.current.moved = true;
+    },
+    onResizeEnd: ({ navbar }) => {
+      if (navbar === undefined) return;
+      const opened = navbar >= 72;
+      setSidebarOpened(opened);
+      if (opened) setSidebarWidth(navbar);
+      else resize.navbar.setSize(8);
+    },
+  });
+  const toggleSidebar = () => {
+    resize.navbar.setSize(sidebarOpened ? 8 : sidebarWidth);
+    setSidebarOpened(!sidebarOpened);
+  };
   const locale = useLocale();
   useEffect(() => {
     void call("setLocale", { locale }).catch(() => undefined);
@@ -48,45 +72,82 @@ export const App = () => {
     <AppShell
       header={{ height: 58 }}
       navbar={{
-        width: 168,
+        width: sidebarOpened ? sidebarWidth : 8,
         breakpoint: 0,
-        collapsed: { desktop: !sidebarOpened, mobile: !sidebarOpened },
       }}
+      resize={resize}
+      classNames={{ resizeHandle: "sidebar-resize-handle" }}
       padding="lg"
     >
       <AppShell.Header>
-        <DaemonBar
-          sidebarOpened={sidebarOpened}
-          onToggleSidebar={() => setSidebarOpened((opened) => !opened)}
-        />
+        <DaemonBar />
       </AppShell.Header>
-      <AppShell.Navbar p="sm">
-        <Text fw={700} size="sm" px="sm" pt="xs" pb="lg">
-          MCP CLI
-        </Text>
-        <Stack gap={4}>
-          <NavLink
-            component={Link}
-            to="/plugins"
-            label={t("플러그인")}
-            leftSection={<IconPackage size={16} />}
-            active={location.pathname.startsWith("/plugins")}
-          />
-          <NavLink
-            component={Link}
-            to="/connections"
-            label={t("연결")}
-            leftSection={<IconPlugConnected size={16} />}
-            rightSection={<Badge size="xs">{count}</Badge>}
-            active={location.pathname === "/connections"}
-          />
-          <NavLink
-            component={Link}
-            to="/settings"
-            label={t("설정")}
-            leftSection={<IconSettings size={16} />}
-            active={location.pathname === "/settings"}
-          />
+      <AppShell.Navbar
+        p={sidebarOpened ? "sm" : 0}
+        onPointerDownCapture={(event) => {
+          if (event.target instanceof Element && event.target.closest('[role="separator"]'))
+            press.current = {
+              x: event.clientX,
+              y: event.clientY,
+              width: event.currentTarget.getBoundingClientRect().width,
+              moved: false,
+            };
+        }}
+        onClickCapture={(event) => {
+          const start = press.current;
+          press.current = undefined;
+          if (
+            start &&
+            !start.moved &&
+            event.target instanceof Element &&
+            event.target.closest('[role="separator"]') &&
+            Math.hypot(event.clientX - start.x, event.clientY - start.y) < 4
+          )
+            toggleSidebar();
+        }}
+        onKeyDownCapture={(event) => {
+          if (
+            (event.key === "Enter" || event.key === " ") &&
+            event.target instanceof Element &&
+            event.target.closest('[role="separator"]')
+          ) {
+            event.preventDefault();
+            toggleSidebar();
+          }
+        }}
+        onDoubleClickCapture={(event) => {
+          if (event.target instanceof Element && event.target.closest('[role="separator"]'))
+            event.stopPropagation();
+        }}
+      >
+        <Stack gap={0} display={sidebarOpened ? undefined : "none"}>
+          <Text fw={700} size="sm" px="sm" pt="xs" pb="lg">
+            MCP CLI
+          </Text>
+          <Stack gap={4}>
+            <NavLink
+              component={Link}
+              to="/plugins"
+              label={t("플러그인")}
+              leftSection={<IconPackage size={16} />}
+              active={location.pathname.startsWith("/plugins")}
+            />
+            <NavLink
+              component={Link}
+              to="/connections"
+              label={t("연결")}
+              leftSection={<IconPlugConnected size={16} />}
+              rightSection={<Badge size="xs">{count}</Badge>}
+              active={location.pathname === "/connections"}
+            />
+            <NavLink
+              component={Link}
+              to="/settings"
+              label={t("설정")}
+              leftSection={<IconSettings size={16} />}
+              active={location.pathname === "/settings"}
+            />
+          </Stack>
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>

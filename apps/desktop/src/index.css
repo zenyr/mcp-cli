@@ -55,6 +55,19 @@ body {
   line-height: 1.5;
   white-space: pre;
 }
+.sidebar-resize-handle {
+  --app-shell-resize-handle-size: 12px;
+}
+.sidebar-resize-handle::after {
+  top: calc(50% - 20px);
+  bottom: auto;
+  height: 40px;
+  border-radius: 2px;
+  background-color: var(--mantine-color-default-border);
+}
+.sidebar-resize-handle:where(:hover, :focus-visible, [data-active])::after {
+  background-color: var(--mantine-primary-color-filled);
+}
 .command-diagram {
   position: relative;
   height: 560px;
