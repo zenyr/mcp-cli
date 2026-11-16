@@ -1,4 +1,6 @@
 export const messages = {
+  뒤로가기: "Back",
+  앞으로가기: "Forward",
   플러그인: "Plugins",
   연결: "Connections",
   서비스: "Services",

@@ -58,7 +58,7 @@ body {
 .command-diagram {
   position: relative;
   height: 560px;
-  overflow: hidden;
+  overflow: auto;
   --pele-bg: var(--mantine-color-body);
   --pele-fg: var(--mantine-color-text);
   --pele-muted: var(--mantine-color-dimmed);

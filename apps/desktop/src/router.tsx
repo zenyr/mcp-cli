@@ -15,7 +15,7 @@ const root = createRootRoute({ component: App });
 const index = createRoute({
   getParentRoute: () => root,
   path: "/",
-  component: () => <Navigate to="/plugins" />,
+  component: () => <Navigate to="/plugins" replace />,
 });
 const connections = createRoute({
   getParentRoute: () => root,
@@ -25,7 +25,7 @@ const connections = createRoute({
 const services = createRoute({
   getParentRoute: () => root,
   path: "/services",
-  component: () => <Navigate to="/plugins" />,
+  component: () => <Navigate to="/plugins" replace />,
 });
 const settings = createRoute({
   getParentRoute: () => root,

@@ -8,6 +8,7 @@ import { useHotkeys } from "@mantine/hooks";
 import { useStatus } from "./queries";
 import { useInteractionSounds } from "./ui-sounds";
 import { DaemonBar } from "./daemon-bar";
+import { HistoryNavigation } from "./history-navigation";
 
 export const App = () => {
   const locale = useLocale();
@@ -46,6 +47,7 @@ export const App = () => {
         <DaemonBar />
       </AppShell.Header>
       <AppShell.Navbar p="sm">
+        <HistoryNavigation />
         <Text fw={700} size="sm" px="sm" pt="xs" pb="lg">
           MCP CLI
         </Text>
