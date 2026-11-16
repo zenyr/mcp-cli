@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActionIcon, Group, Tooltip } from "@mantine/core";
+import { ActionIcon, Tooltip } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { useRouter } from "@tanstack/react-router";
@@ -46,10 +46,10 @@ export const HistoryNavigation = () => {
     return () => window.removeEventListener("mouseup", navigate);
   }, [back, forward]);
   return (
-    <Group gap={4} px="xs">
+    <ActionIcon.Group>
       <Tooltip label={t("뒤로가기")}>
         <ActionIcon
-          variant="subtle"
+          variant="default"
           color="gray"
           aria-label={t("뒤로가기")}
           disabled={position.index === 0}
@@ -60,7 +60,7 @@ export const HistoryNavigation = () => {
       </Tooltip>
       <Tooltip label={t("앞으로가기")}>
         <ActionIcon
-          variant="subtle"
+          variant="default"
           color="gray"
           aria-label={t("앞으로가기")}
           disabled={position.index >= position.last}
@@ -69,6 +69,6 @@ export const HistoryNavigation = () => {
           <IconArrowRight size={18} />
         </ActionIcon>
       </Tooltip>
-    </Group>
+    </ActionIcon.Group>
   );
 };

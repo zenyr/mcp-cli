@@ -3,6 +3,7 @@ import { Badge, Button, Group, Loader, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useAction, useStatus } from "./queries";
 import { LanguageMenu } from "./language-menu";
+import { HistoryNavigation } from "./history-navigation";
 
 export const DaemonBar = () => {
   useLocale();
@@ -35,6 +36,7 @@ export const DaemonBar = () => {
   return (
     <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
       <Group gap="sm" wrap="nowrap">
+        <HistoryNavigation />
         {isPending || busy ? (
           <Loader size={14} />
         ) : (
