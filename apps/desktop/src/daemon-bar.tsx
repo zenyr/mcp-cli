@@ -1,11 +1,18 @@
 import { t, useLocale } from "./i18n";
-import { Badge, Button, Group, Loader, Text } from "@mantine/core";
+import { ActionIcon, Badge, Button, Group, Loader, Text, Tooltip } from "@mantine/core";
+import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
 import { useAction, useStatus } from "./queries";
 import { LanguageMenu } from "./language-menu";
 import { HistoryNavigation } from "./history-navigation";
 
-export const DaemonBar = () => {
+export const DaemonBar = ({
+  sidebarOpened,
+  onToggleSidebar,
+}: {
+  sidebarOpened: boolean;
+  onToggleSidebar: () => void;
+}) => {
   useLocale();
   const { data, isPending } = useStatus();
   const start = useAction("start");
@@ -36,6 +43,21 @@ export const DaemonBar = () => {
   return (
     <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
       <Group gap="sm" wrap="nowrap">
+        <Tooltip label={sidebarOpened ? t("사이드바 접기") : t("사이드바 펼치기")}>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            aria-label={sidebarOpened ? t("사이드바 접기") : t("사이드바 펼치기")}
+            aria-expanded={sidebarOpened}
+            onClick={onToggleSidebar}
+          >
+            {sidebarOpened ? (
+              <IconLayoutSidebarLeftCollapse size={18} />
+            ) : (
+              <IconLayoutSidebarLeftExpand size={18} />
+            )}
+          </ActionIcon>
+        </Tooltip>
         <HistoryNavigation />
         {isPending || busy ? (
           <Loader size={14} />

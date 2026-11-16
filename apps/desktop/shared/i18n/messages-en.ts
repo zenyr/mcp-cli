@@ -1,4 +1,6 @@
 export const messages = {
+  "사이드바 접기": "Collapse sidebar",
+  "사이드바 펼치기": "Expand sidebar",
   뒤로가기: "Back",
   앞으로가기: "Forward",
   플러그인: "Plugins",

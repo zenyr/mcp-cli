@@ -4,12 +4,16 @@ import { t, useLocale } from "./i18n";
 import { AppShell, Badge, NavLink, Stack, Text } from "@mantine/core";
 import { IconPlugConnected, IconSettings, IconPackage } from "@tabler/icons-react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useHotkeys } from "@mantine/hooks";
+import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { useStatus } from "./queries";
 import { useInteractionSounds } from "./ui-sounds";
 import { DaemonBar } from "./daemon-bar";
 
 export const App = () => {
+  const [sidebarOpened, setSidebarOpened] = useLocalStorage({
+    key: "mcp-cli.sidebar-opened",
+    defaultValue: true,
+  });
   const locale = useLocale();
   useEffect(() => {
     void call("setLocale", { locale }).catch(() => undefined);
@@ -41,9 +45,20 @@ export const App = () => {
     ["mod+w", () => window.tiny?.win.hide({ app: false })],
   ]);
   return (
-    <AppShell header={{ height: 58 }} navbar={{ width: 168, breakpoint: 0 }} padding="lg">
+    <AppShell
+      header={{ height: 58 }}
+      navbar={{
+        width: 168,
+        breakpoint: 0,
+        collapsed: { desktop: !sidebarOpened, mobile: !sidebarOpened },
+      }}
+      padding="lg"
+    >
       <AppShell.Header>
-        <DaemonBar />
+        <DaemonBar
+          sidebarOpened={sidebarOpened}
+          onToggleSidebar={() => setSidebarOpened((opened) => !opened)}
+        />
       </AppShell.Header>
       <AppShell.Navbar p="sm">
         <Text fw={700} size="sm" px="sm" pt="xs" pb="lg">

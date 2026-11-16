@@ -83,6 +83,7 @@ export const PluginDetailPage = () => {
     void navigate({
       search: (previous) => ({ ...previous, ...next }),
       replace: next.tab === undefined,
+      resetScroll: false,
     });
   const select = (next: string[]) => go({ tab: "commands", path: next.join(" ") || undefined });
   const loading = plugins.isPending || services.isPending;
