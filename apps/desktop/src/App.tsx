@@ -17,11 +17,11 @@ export const App = () => {
   });
   const [sidebarWidth, setSidebarWidth] = useLocalStorage({
     key: "mcp-cli.sidebar-width",
-    defaultValue: 168,
+    defaultValue: 156,
   });
   const press = useRef<{ x: number; y: number; width: number; moved: boolean }>(undefined);
   const dragStartedOpened = useRef(sidebarOpened);
-  const expandedWidth = Math.max(168, sidebarWidth);
+  const expandedWidth = Math.max(156, sidebarWidth);
   const resize = useAppShellResize({
     navbar: { min: 8, max: 360, label: t("사이드바 너비 조절") },
     initialSizes: { navbar: sidebarOpened ? expandedWidth : 8 },
@@ -136,7 +136,7 @@ export const App = () => {
         <Stack
           gap={0}
           display={sidebarOpened ? undefined : "none"}
-          miw={144}
+          miw={132}
           style={{ whiteSpace: "nowrap" }}
         >
           <Text fw={700} size="sm" px="sm" pt="xs" pb="lg">

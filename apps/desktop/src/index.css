@@ -59,7 +59,7 @@ body {
   --sidebar-visible-width: 8px;
 }
 .desktop-shell[data-sidebar-opened="true"] {
-  --sidebar-visible-width: max(168px, var(--app-shell-navbar-width));
+  --sidebar-visible-width: max(156px, var(--app-shell-navbar-width));
 }
 .desktop-shell .sidebar-nav {
   width: var(--sidebar-visible-width);
