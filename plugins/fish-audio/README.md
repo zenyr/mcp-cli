@@ -53,8 +53,9 @@ The default path is `~/.cache/mcp-cli/fish-audio/`. Responses and audio files ar
 Authentication identifiers partition the cache. Tokens are not stored in the cache.
 OAuth refresh preserves the partition. A new login creates a new partition.
 
-- `pending`: the call started, but its response was not durably saved. Automatic retries remain blocked after the normal duplicate-call window expires.
+- `pending`: the call started, but its response was not durably saved. Automatic retries remain blocked after the normal duplicate-call window expires. Use `fish-audio speech history` to find the generation.
 - `generated`: the response was durably saved. Downloads or file exports can resume without another paid call.
+  A long text can return a charged `running` task instead of audio. The workflow polls `speech get` and resumes the same task on rerun without another paid call.
 - `ready`: the audio file was durably saved. Conversion and merging reuse it. If missing, the saved response is used.
 - `failed`: the server returned `isError`, or the runner confirmed that request transmission never started. Explicit server errors retry once under the same execution policy. Pre-transmission failures return to the caller and can be retried.
 

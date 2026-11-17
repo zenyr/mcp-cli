@@ -1,5 +1,6 @@
 import type { CommandCustomization, QuickstartEntry } from "@mcp-cli/core";
 import { assetCommands } from "./asset-commands";
+import { studioCommands } from "./studio-commands";
 
 const mediaInputs = [
   "Read media model get first; --inputs is a JSON array of role/object_key pairs matching that model's capability.",
@@ -9,6 +10,7 @@ const mediaInputs = [
 // Paths follow `fish-audio <noun> [sub-noun] <verb>`; get_audio_data is a player helper and stays under `call`.
 export const commands: Record<string, CommandCustomization> = {
   ...assetCommands,
+  ...studioCommands,
   text_to_speech: {
     path: ["speech", "create"],
     summary: "Generate speech from text and return an audio URL (1 credit per UTF-8 byte)",
@@ -143,80 +145,49 @@ export const commands: Record<string, CommandCustomization> = {
     path: ["media", "job", "result"],
     summary: "Get a finished media generation's outputs and billing",
   },
-  studio_help: {
-    path: ["studio", "manual"],
-    summary: "Read the Story Studio manual; run this before the first studio command",
-    examples: ["fish-audio studio manual", "fish-audio studio manual --topic billing"],
+  list_media_generations: {
+    path: ["media", "job", "list"],
+    summary: "List recent generations to recover a lost generate reply",
   },
-  studio_list_projects: {
-    path: ["studio", "project", "list"],
-    summary: "List Story Studio projects, newest first",
+  get_speech: {
+    path: ["speech", "get"],
+    summary: "Check a long speech generation by task id",
   },
-  studio_project: {
-    path: ["studio", "project", "get"],
-    summary: "Show a project's chapters, roster and import/export job state",
-    examples: ["fish-audio studio project get --project-id <id>"],
+  list_speech_history: {
+    path: ["speech", "history"],
+    summary: "List recent speech generations to recover a lost reply",
+    examples: ["fish-audio speech history --limit 5"],
   },
-  studio_create_project: {
-    path: ["studio", "project", "create"],
-    summary: "Create a project from structured chapters, up to 200 blocks (free)",
+  design_voice: {
+    path: ["voice", "design", "create"],
+    summary: "Design a voice from a description and get 2 samples (paid plan)",
   },
-  studio_import_document: {
-    path: ["studio", "project", "import"],
-    summary: "Import a long document into a new project in the background (free)",
+  save_designed_voice: {
+    path: ["voice", "design", "save"],
+    summary: "Save a designed voice sample as a usable voice (free)",
   },
-  studio_update_project: {
-    path: ["studio", "project", "update"],
-    summary: "Rename a project, set defaults or reorder chapters",
+  search_sound_effects: {
+    path: ["sound", "search"],
+    summary: "Search the free sound effect library",
+    examples: ['fish-audio sound search --query "door slam"'],
   },
-  studio_export: {
-    path: ["studio", "project", "export"],
-    summary: "Quote, then export a project to an audio file (paid plan)",
+  generate_sound_effect: {
+    path: ["sound", "create"],
+    summary: "Generate sound effects (5,000 credits each); search the library first",
+    rules: [
+      "Every call is charged again; check results with sound get, never by calling create again.",
+    ],
   },
-  studio_create_chapter: {
-    path: ["studio", "chapter", "create"],
-    summary: "Add a chapter with one empty block",
-  },
-  studio_update_chapter: { path: ["studio", "chapter", "update"], summary: "Rename a chapter" },
-  studio_read_blocks: {
-    path: ["studio", "block", "read"],
-    summary: "Read blocks of a chapter or by anchor",
-  },
-  studio_write_blocks: {
-    path: ["studio", "block", "write"],
-    summary: "Edit, insert, move or delete up to 100 blocks (free)",
-  },
-  studio_find: {
-    path: ["studio", "block", "find"],
-    summary: "Search block text across the project",
-  },
-  studio_enhance_text: {
-    path: ["studio", "block", "enhance"],
-    summary: "Polish one block's text for TTS with spoken numbers and delivery tags (free)",
-  },
-  studio_generate: {
-    path: ["studio", "block", "generate"],
-    summary: "Synthesize audio for blocks; run with --dry-run first for a quote",
-    examples: ["fish-audio studio block generate --project-id <id> --dry-run"],
-  },
-  studio_list_takes: {
-    path: ["studio", "take", "list"],
-    summary: "List a block's generated takes",
-  },
-  studio_adopt_take: {
-    path: ["studio", "take", "adopt"],
-    summary: "Bind a previous take back to its block (free)",
-  },
-  studio_recast_speaker: {
-    path: ["studio", "speaker", "recast"],
-    summary: "Swap one voice for another across the whole project (free)",
+  get_audio_task: {
+    path: ["sound", "get"],
+    summary: "Check a generated sound effect by task id",
   },
 };
 
 export const groups: Record<string, string> = {
-  speech: "Text-to-speech",
+  speech: "Text-to-speech and its history",
   transcription: "Speech-to-text",
-  voice: "Search, inspect and clone voices",
+  voice: "Search, inspect, clone and design voices",
   upload: "Upload slots for local files; send the returned URL to other commands",
   account: "Plan, credits and workspaces",
   feedback: "Feedback to the Fish Audio team",
@@ -225,13 +196,18 @@ export const groups: Record<string, string> = {
   "media image": "Text-to-image generation",
   "media image-edit": "Image edit and upscale",
   "media video": "Video, lip sync and talking avatar generation",
-  "media job": "Status and results of submitted media generations",
+  "media job": "Status, results and history of media generations",
   studio: "Story Studio multi-speaker audio projects; start with studio manual",
   "studio project": "Create, import, inspect and export projects",
   "studio chapter": "Add and rename chapters",
   "studio block": "Read, edit, polish and synthesize blocks",
-  "studio take": "Generated audio history per block",
+  "studio take": "Generated audio history, retakes and ratings per block",
   "studio speaker": "Change a speaker's voice project-wide",
+  "studio script": "Import voice-acting scripts",
+  "studio scene": "Perform voice-acting scenes with Drama 3",
+  "studio share": "Public listening link and its comments",
+  sound: "Sound effect library and generation",
+  "voice design": "Design voices from a description and save a sample",
   asset: "Retained files, folders and avatars",
   "asset collection": "Browse and edit folders, avatars and styles",
   "asset folder": "Create folders for retained files",
@@ -267,7 +243,8 @@ export const skill = [
   "tts - preserves stdin text/newlines; stt - reads audio URL, not bytes.",
   "Extensions: mp3/wav/ogg/flac/m4a; conversion/multi-part joining need ffmpeg.",
   "Resume: rerun same input/generation options; generated responses survive download failures.",
-  "Unknown pending generation: reconcile; --allow-repeat preserves workflow journals.",
+  "Unknown pending generation: find it with speech history; --allow-repeat preserves workflow journals.",
+  "Long speech returns a charged task; workflows poll speech get and resume it on rerun.",
   "Completed cache artifacts retained; changed generation options = new request.",
   "Estimates reserve 2 credits/UTF-8 byte; remote billing may differ, no local guarantee.",
   "--json: structured result envelope; prefer structuredContent, then JSON text content.",
@@ -290,9 +267,10 @@ export const skill = [
   "Organize: asset folder create or asset avatar create -> asset update --collection-id; explicit null: move asset to root.",
   "Avatars: one prepared image source; optional default-voice-id; creates no media.",
   "Studio: studio manual first; quotes: studio block generate --dry-run, studio project export without --confirmed-credits.",
+  "Sound: sound search first (free); sound create charges per call, then poll sound get.",
   "",
   "Cost rules:",
-  "Show user quote before any paid call: speech create, transcription create, media * create, studio block generate, studio project export.",
+  "Show user quote before any paid call: speech create, transcription create, media * create, sound create, studio block generate, studio scene perform, studio take retake, studio project export.",
   "If paid call may exceed budget: check account balance.",
   "Folder/avatar creation: UUID request-id; recovery: identical input; moving existing portrait: explicit approval.",
   "",

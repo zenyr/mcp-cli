@@ -21,6 +21,8 @@ export interface FishPorts {
   };
   confirm: (message: string) => Promise<boolean>;
   cancelled: () => boolean;
+  /** Waits between status polls and rejects when the workflow is cancelled. */
+  delay: (seconds: number) => Promise<void>;
   cachePath: (key: string) => string;
   copyAudio: (source: string, destination: string) => Promise<void>;
   writeText: (path: string, text: string) => Promise<void>;

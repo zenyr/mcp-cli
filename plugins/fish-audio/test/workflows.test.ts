@@ -46,6 +46,7 @@ const fixture = () => {
     },
     confirm: async () => true,
     cancelled: () => false,
+    delay: async () => {},
     cachePath: (key) => `cache/${key}.mp3`,
     writeText: async (_path, text) => {
       writes.push(text);
@@ -132,6 +133,53 @@ test("unknown transport outcome never retries, including on resume", async () =>
   await expect(f.app.tts("hello", { yes: true })).rejects.toThrow("connection lost");
   await expect(f.app.tts("hello", { yes: true })).rejects.toThrow("Unknown");
   expect(f.paid()).toHaveLength(1);
+});
+
+test("a running TTS task is polled with get_speech, resumed without recharging, and retried after refund", async () => {
+  const f = fixture();
+  const call = f.ports.callTool;
+  const waits: number[] = [];
+  f.ports.delay = async (seconds) => {
+    waits.push(seconds);
+  };
+  const checks: Array<Record<string, unknown> | "error"> = [
+    { status: "running", poll_after_seconds: 2 },
+    "error",
+  ];
+  f.ports.callTool = async (name, input) => {
+    if (name === "text_to_speech") {
+      await call(name, input);
+      return resultOf({ status: "running", task_id: "t1", voice: { id: "pinned" } });
+    }
+    if (name !== "get_speech") return call(name, input);
+    const next = checks.shift() ?? { status: "succeeded", audio_url: "https://example.com/a.mp3" };
+    return next === "error" ? { ...resultOf({}), isError: true } : resultOf(next);
+  };
+  await expect(f.app.tts("hello", { output: "out.mp3", yes: true })).rejects.toThrow("resume");
+  expect(waits).toEqual([5, 2]);
+  const done = await f.app.tts("hello", { output: "out.mp3", yes: true });
+  expect(resultData(done.result).voice).toEqual({ id: "pinned" });
+  expect(f.paid()).toHaveLength(1);
+  expect(f.transitions.slice(-2)).toEqual(["generated", "ready"]);
+
+  const g = fixture();
+  const paid = g.ports.callTool;
+  let failed = false;
+  g.ports.callTool = async (name, input) => {
+    if (name === "text_to_speech" && !failed) {
+      await paid(name, input);
+      return resultOf({ status: "running", task_id: "t2" });
+    }
+    if (name === "get_speech") {
+      failed = true;
+      return resultOf({ status: "failed" });
+    }
+    return paid(name, input);
+  };
+  await expect(g.app.tts("hello", { yes: true })).rejects.toThrow("refunded");
+  expect(g.transitions.at(-1)).toBe("failed");
+  await g.app.tts("hello", { yes: true });
+  expect(g.paid()).toHaveLength(2);
 });
 
 test("explicit isError retries once, full input options isolate cache", async () => {

@@ -3,6 +3,7 @@ import type { SpeechOptions } from "../domain/options";
 import { creditCharge, object, requestKey, resultData, resultOf } from "../domain/result";
 import { scriptChunks, utf8Bytes } from "../domain/script";
 import type { FishPorts, JournalEntry, WorkflowOutcome } from "./ports";
+import { runningTask, settleSpeechTask } from "./speech-task";
 
 export const readInput = async (
   ports: FishPorts,
@@ -80,7 +81,9 @@ export const createSpeech =
       unique.add(key);
       const stored = await ports.store.get(key);
       if (stored?.status === "pending")
-        throw new Error("Unknown TTS outcome in pending journal; reconcile before retrying.");
+        throw new Error(
+          "Unknown TTS outcome in pending journal; find it with speech history before retrying.",
+        );
       if (stored?.status === "ready" || stored?.status === "generated") cached++;
       else reservation += utf8Bytes(piece) * 2;
     }
@@ -132,7 +135,9 @@ export const createSpeech =
       let stored = await ports.store.get(key);
       if (stored?.status === "ready") return stored;
       if (stored?.status === "pending")
-        throw new Error("Unknown TTS outcome in pending journal; reconcile before retrying.");
+        throw new Error(
+          "Unknown TTS outcome in pending journal; find it with speech history before retrying.",
+        );
       if (!stored || stored.status === "failed") {
         const budget = utf8Bytes(piece) * 2;
         if (spent + reserved + budget > ceiling)
@@ -159,6 +164,20 @@ export const createSpeech =
       }
       if (!stored || stored.status !== "generated")
         throw new Error("No generated response in journal.");
+      const taskId = runningTask(stored.result);
+      if (taskId) {
+        const settled = await settleSpeechTask(ports, stored.result, taskId);
+        if (settled.status === "failed") {
+          await ports.store.put(key, {
+            status: "failed",
+            input: callInput,
+            result: settled.result,
+          });
+          throw new Error(`Speech task ${taskId} failed and was refunded; run again to retry it.`);
+        }
+        stored = { status: "generated", input: callInput, result: settled.result };
+        await ports.store.put(key, stored);
+      }
       if (!options.output) return stored;
       const cachePath = ports.cachePath(key);
       const path = (await ports.saveAudio(stored.result, cachePath)) ?? cachePath;

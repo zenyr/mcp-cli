@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { stat } from "node:fs/promises";
+import { setTimeout as sleep } from "node:timers/promises";
 import { createInterface } from "node:readline/promises";
 import { UsageError, type ExtensionContext } from "@mcp-cli/core";
 import type { FishPorts } from "../application/ports";
@@ -28,6 +29,7 @@ export const createPorts = (
     copyAudio,
     writeText,
     cancelled: () => signal.aborted,
+    delay: (seconds) => sleep(seconds * 1000, undefined, { signal }),
     ...createStore(output, scope, cacheRoot),
     confirm: async (message) => {
       if (!process.stdin.isTTY || !process.stderr.isTTY || stdin || signal.aborted) return false;
