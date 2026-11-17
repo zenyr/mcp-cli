@@ -14,7 +14,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@mcp-cli/core": "workspace:*"
+    "@mcp-cli/core": "workspace:*",
+    "@mcp-cli/mcp": "workspace:*"
   },
   "devDependencies": {
     "@mcp-cli/runtime": "workspace:*"

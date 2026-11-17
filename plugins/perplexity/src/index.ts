@@ -1,19 +1,18 @@
 import { definePlugin } from "@mcp-cli/core";
 import { normalizeArgv } from "./argv";
+import { KEY_ENV, SERVICE, perplexityAuth, serverUrl } from "./auth-support";
 
 const MESSAGE =
   "Positional words become one user message. Use --messages with a JSON array for multi-turn context.";
 
 export default definePlugin({
-  name: "pplx",
+  name: SERVICE,
   summary: "Perplexity web search, answers, reasoning and deep research",
-  auth: { type: "apiKey", env: "PERPLEXITY_API_KEY" },
-  workspaces: { credentialEnv: ["PERPLEXITY_API_KEY"] },
-  // An explicit PERPLEXITY_API_KEY takes precedence over the key stored by `mcp-cli login pplx`.
-  connection: (env) => ({
-    type: "http",
-    url: env.PERPLEXITY_MCP_URL ?? "https://api.perplexity.ai/mcp",
-  }),
+  // `mcp-cli login pplx` saves an API key, `--browser` runs OAuth, and PERPLEXITY_API_KEY wins over both.
+  auth: { type: "apiKey", env: KEY_ENV },
+  authSupport: perplexityAuth,
+  workspaces: { credentialEnv: [KEY_ENV] },
+  connection: (env) => ({ type: "http", url: serverUrl(env) }),
   commands: {
     perplexity_search: {
       path: ["search"],
@@ -62,5 +61,6 @@ export default definePlugin({
 Use pplx ask <question> for quick cited answers, pplx reason for comparisons or multi-step analysis, and pplx research only for deep multi-source reports because it takes minutes and costs the most.
 Positional words become the query or a single user message; use --messages with a JSON array for multi-turn context.
 Narrow sources with --search-recency-filter hour|day|week|month|year and --search-domain-filter '["example.com","-reddit.com"]'.
-Every call spends Perplexity API credits; cite the returned URLs instead of repeating the same query.`,
+Every call spends Perplexity API credits; cite the returned URLs instead of repeating the same query.
+Authenticate with mcp-cli login pplx --browser, mcp-cli login pplx with an API key, or PERPLEXITY_API_KEY.`,
 });

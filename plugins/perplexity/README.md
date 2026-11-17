@@ -5,13 +5,18 @@ through mcp-cli commands. The plugin runs no local server process.
 
 ## Setup
 
-Create an API key in the [Perplexity API console](https://console.perplexity.ai).
-Then choose one of these options:
+Choose one of these options:
 
-1. Run `mcp-cli login pplx` and paste the key. The CLI stores it.
-2. Set `PERPLEXITY_API_KEY`. The environment variable wins over the stored key.
+1. Run `mcp-cli login pplx --browser` and approve the Perplexity OAuth page.
+   The CLI registers an `mcp-cli` client, stores the tokens, and refreshes them.
+   The desktop app's **브라우저 로그인** button runs the same login.
+2. Create an API key in the [Perplexity API console](https://console.perplexity.ai).
+   Run `mcp-cli login pplx` and paste the key.
+3. Set `PERPLEXITY_API_KEY`.
 
-The CLI sends the key as `Authorization: Bearer <key>`.
+Both logins write the same stored credential, so the most recent login wins.
+`PERPLEXITY_API_KEY` wins over any stored credential.
+`mcp-cli logout pplx` deletes the stored credential of either kind.
 Set `PERPLEXITY_MCP_URL` to use another server URL.
 
 ## Commands
@@ -43,5 +48,5 @@ Every call spends Perplexity API credits. `--help`, `schema`, `methods`, and
 The hosted server and `@perplexity-ai/mcp-server` 1.3.0 expose the same four tools.
 
 ```sh
-PERPLEXITY_API_KEY=... bun run generate pplx
+bun run generate pplx
 ```
