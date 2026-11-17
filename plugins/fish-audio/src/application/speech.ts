@@ -17,8 +17,10 @@ export const readInput = async (
 };
 const voiceId = (entry?: JournalEntry): string | undefined => {
   if (!entry || entry.status === "pending" || entry.status === "failed") return undefined;
-  const voice = object(resultData(entry.result).voice);
-  return typeof voice?.id === "string" ? voice.id : undefined;
+  const data = resultData(entry.result);
+  const voice = object(data.voice);
+  if (typeof voice?.id === "string") return voice.id;
+  return typeof data.voice_id === "string" ? data.voice_id : undefined;
 };
 const positive = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;

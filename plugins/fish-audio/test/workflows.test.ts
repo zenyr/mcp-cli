@@ -109,6 +109,24 @@ test("first voice pins later chunks, identical chunks deduplicate and complete c
   expect(f.paid()).toHaveLength(3);
 });
 
+test("a running first chunk pins later chunks with get_speech's voice_id", async () => {
+  const f = fixture();
+  const call = f.ports.callTool;
+  let first = true;
+  f.ports.callTool = async (name, input) => {
+    const result = await call(name, input);
+    if (name === "text_to_speech" && first) {
+      first = false;
+      return resultOf({ status: "running", task_id: "t1" });
+    }
+    if (name === "get_speech")
+      return resultOf({ status: "succeeded", audio_url: "https://e.com/a.mp3", voice_id: "v9" });
+    return result;
+  };
+  await f.app.script("aaa bbb", { chunkChars: 4, output: "out.mp3", yes: true });
+  expect(f.paid().map((paid) => paid.input.voice_id)).toEqual([undefined, "v9"]);
+});
+
 test("download failure resumes generated response without another paid call", async () => {
   const f = fixture();
   f.ports.saveAudio = async () => {
