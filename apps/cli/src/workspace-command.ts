@@ -10,7 +10,7 @@ export const workspaceCommand = async (argv: string[]) => {
   const json = argv.includes("--json");
   const [action, service, workspace, name, ...rest] = argv.filter((arg) => arg !== "--json");
   if (!service || rest.length) throw new UsageError(usage);
-  const registry = await discover(await defaultContext());
+  const registry = await discover(await defaultContext(process.env));
   const plugin = await loadPlugin(findPlugin(registry, service), registry.context);
   if (action === "list" && !workspace && !name) {
     console.log(formatOutput(await readWorkspaces(plugin), json));

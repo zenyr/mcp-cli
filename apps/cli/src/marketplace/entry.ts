@@ -30,7 +30,7 @@ export const marketplaceRequest = async (input: unknown) => {
   process.once("SIGINT", abort);
   try {
     const context = {
-      ...(await defaultContext()),
+      ...(await defaultContext(process.env)),
       signal: controller.signal,
       reset: () => resetDaemonIfRunning(),
     };
@@ -40,7 +40,8 @@ export const marketplaceRequest = async (input: unknown) => {
     process.removeListener("SIGINT", abort);
   }
 };
-export const marketplaceView = async () => runMarketplace(marketView(await defaultContext()));
+export const marketplaceView = async () =>
+  runMarketplace(marketView(await defaultContext(process.env)));
 
 const usage = `Usage: mcp-cli plugins [list [--json]]
        mcp-cli plugins catalog <recommended|add URL|refresh ID|remove ID>
@@ -82,7 +83,7 @@ export const pluginsCommand = async (args: string[]): Promise<void> => {
           plugin.id,
         ].join("\t"),
       );
-    const registry = await discover(await defaultContext());
+    const registry = await discover(await defaultContext(process.env));
     const development = {
       ...registry,
       plugins: registry.plugins.filter((item) => !item.installed),

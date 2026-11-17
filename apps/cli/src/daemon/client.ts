@@ -7,7 +7,7 @@ import type { DaemonStatus, Operation } from "./protocol";
 export const daemonRequest = async <T>(
   operation: string,
   payload: Record<string, unknown> = {},
-  directory = daemonDirectory(),
+  directory = daemonDirectory(process.env),
   agent?: Agent,
 ): Promise<T> => {
   const token = await readFile(`${directory}/token`, "utf8");
@@ -60,7 +60,7 @@ export class DaemonUnavailableError extends Error {
   override name = "DaemonUnavailableError";
 }
 
-export const usesDaemon = (env: Record<string, string | undefined> = process.env): boolean => {
+export const usesDaemon = (env: Record<string, string | undefined>): boolean => {
   const mode = env.MCP_CLI_DAEMON;
   if (mode === undefined || mode === "" || mode === "1") return true;
   if (mode === "0") return false;

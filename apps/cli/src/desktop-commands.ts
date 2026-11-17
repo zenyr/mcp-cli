@@ -37,7 +37,7 @@ export const desktopCommandCatalog = async (input: unknown): Promise<CommandCata
     (input.workspace !== undefined && typeof input.workspace !== "string")
   )
     throw new UsageError("Invalid desktop commands request");
-  const registry = await discover(await defaultContext());
+  const registry = await discover(await defaultContext(process.env));
   const found = findPlugin(registry, input.service);
   const plugin = await loadPlugin(found, registry.context);
   const discovery = plugin.discovery?.tools === "session";

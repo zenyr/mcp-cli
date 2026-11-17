@@ -40,7 +40,7 @@ const execute = (session: ToolSession, request: SessionRequest): Promise<unknown
   }
 };
 
-export const startDaemon = async (directory = daemonDirectory(), idleMs = 60_000) => {
+export const startDaemon = async (directory = daemonDirectory(process.env), idleMs = 60_000) => {
   if (!isAbsolute(directory)) throw new UsageError("MCP_CLI_DAEMON_DIR must be absolute");
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await chmod(directory, 0o700);

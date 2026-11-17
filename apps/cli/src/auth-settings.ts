@@ -8,7 +8,10 @@ import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
 import { pluginEnvironment, pluginSettings, pluginStore } from "./plugin-credentials";
 
-export const authenticationContext = (env = process.env, plugin?: ServicePlugin) => ({
+export const authenticationContext = (
+  env: Record<string, string | undefined>,
+  plugin?: ServicePlugin,
+) => ({
   env: plugin ? pluginEnvironment(plugin, env) : env,
   store: plugin ? pluginStore(plugin, defaultStore(env)) : defaultStore(env),
   settings: plugin ? pluginSettings(plugin, defaultSettings(env)) : defaultSettings(env),
@@ -41,7 +44,7 @@ export const authSettingsCommand = async (argv: string[]) => {
     throw new UsageError(
       "Usage: mcp-cli auth configure <service> < settings.json | mcp-cli auth status <service> [--check]",
     );
-  const registry = await discover(await defaultContext());
+  const registry = await discover(await defaultContext(process.env));
   const plugin = await selectWorkspace(
     await loadPlugin(findPlugin(registry, service)),
     selected.workspace,

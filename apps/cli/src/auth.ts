@@ -11,7 +11,6 @@ import {
   type TokenStore,
   type SettingsStore,
 } from "@mcp-cli/core";
-import { createInterface } from "node:readline";
 import { login, oauthAuthorize } from "@mcp-cli/mcp";
 import { extractWorkspace } from "./workspace-arguments";
 import { selectWorkspace } from "./workspaces";
@@ -34,8 +33,8 @@ export type AuthContext = {
   readSecret: (prompt: string) => Promise<string>;
 };
 
-export const defaultStore = (env: Env = process.env): TokenStore => fileTokenStore({ env });
-export const defaultSettings = (env: Env = process.env): SettingsStore =>
+export const defaultStore = (env: Env): TokenStore => fileTokenStore({ env });
+export const defaultSettings = (env: Env): SettingsStore =>
   fileSettingsStore(join(dirname(credentialsDir(env)), "settings"));
 
 type KeyChoice = { env: string; credential?: string };
@@ -299,13 +298,3 @@ export const openInBrowser =
       // Printing the URL is enough when no browser opener is available.
     }
   };
-
-/** Feeds each stdin line to the login as a pasted redirect URL until the login ends. */
-export const stdinRedirects = (submit: (input: string) => void): (() => void) => {
-  const lines = createInterface({ input: process.stdin, terminal: false });
-  lines.on("line", submit);
-  return () => {
-    lines.close();
-    process.stdin.pause();
-  };
-};

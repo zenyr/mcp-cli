@@ -41,7 +41,9 @@ export const generate = async (args: string[], registry: Registry): Promise<void
     ? decodeSnapshot(await Bun.file(config.snapshot).json())
     : await (async () => {
         const scoped = await selectWorkspace(plugin, selected.workspace);
-        const session = await connect(await resolveConnection(scoped, process.env, defaultStore()));
+        const session = await connect(
+          await resolveConnection(scoped, process.env, defaultStore(process.env)),
+        );
         try {
           return await session.listTools();
         } finally {

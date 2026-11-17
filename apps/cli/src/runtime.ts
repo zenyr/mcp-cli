@@ -21,7 +21,7 @@ export const runtimeDependencies = (
         ? undefined
         : `${plugin.credentialNamespace ?? plugin.name}:${selected.workspace?.id}`,
       open: async (credential) => {
-        if (usesDaemon()) {
+        if (usesDaemon(process.env)) {
           try {
             return await openDaemonSession(
               plugin.name,
@@ -33,12 +33,15 @@ export const runtimeDependencies = (
             if (!(error instanceof DaemonUnavailableError)) throw error;
           }
         }
-        return connect(await resolveConnection(selected, process.env, defaultStore(), credential), {
-          sessionTools: selected.discovery?.tools === "session",
-        });
+        return connect(
+          await resolveConnection(selected, process.env, defaultStore(process.env), credential),
+          {
+            sessionTools: selected.discovery?.tools === "session",
+          },
+        );
       },
       cacheScope: (credential) =>
-        extensionCacheScope(selected, process.env, defaultStore(), credential),
+        extensionCacheScope(selected, process.env, defaultStore(process.env), credential),
     };
   },
   open: async () => {

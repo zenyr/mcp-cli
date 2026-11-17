@@ -13,7 +13,7 @@ export const daemonCommand = async (argv: string[]) => {
   if (rest.length || !action || !["start", "status", "reset", "stop", "recover"].includes(action))
     throw new UsageError("Usage: mcp-cli daemon <start|status|reset|stop|recover>");
   if (action === "recover") {
-    await prepareOwnership(daemonDirectory());
+    await prepareOwnership(daemonDirectory(process.env));
     return;
   }
   if (action === "start") {

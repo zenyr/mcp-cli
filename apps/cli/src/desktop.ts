@@ -69,14 +69,14 @@ export const desktopCommand = async (args: string[]) => {
     await writeResult(await marketplaceRequest(JSON.parse(await readAuthInput())));
     return;
   }
-  const registry = await discover(await defaultContext());
+  const registry = await discover(await defaultContext(process.env));
   if (action === "workspace-action") {
     const request = decodeWorkspaceAction(JSON.parse(await readAuthInput()));
     const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
     await writeResult(await updateWorkspace(plugin, request));
     return;
   }
-  const store = defaultStore();
+  const store = defaultStore(process.env);
   if (action === "services") {
     const services = await Promise.all(
       registry.plugins.map((found) => desktopService(found, registry, store)),

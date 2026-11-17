@@ -68,7 +68,7 @@ const hasWorkspaces = async (dir: string): Promise<boolean> => {
 };
 
 // Follows Node resolution order: node_modules beside each ancestor of the CLI package.
-export const defaultContext = async (env: Env = process.env): Promise<DiscoveryContext> => {
+export const defaultContext = async (env: Env): Promise<DiscoveryContext> => {
   if (standalone() || bundledPlugins().length)
     return {
       env,

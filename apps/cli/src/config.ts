@@ -4,7 +4,7 @@ import { dirname } from "node:path";
 import { isRecord, UsageError } from "@mcp-cli/core";
 import { configPath, expandHome, type Env } from "./paths";
 
-export const ensureConfigDirectory = async (env: Env = process.env): Promise<void> => {
+export const ensureConfigDirectory = async (env: Env): Promise<void> => {
   const path = configPath({ env, home: env.HOME || homedir() });
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
 };

@@ -63,7 +63,7 @@ const storage = (plugin: ServicePlugin, settings: SettingsStore) => ({
 });
 export const readWorkspaces = async (
   plugin: ServicePlugin,
-  settings = defaultSettings(),
+  settings = defaultSettings(process.env),
 ): Promise<WorkspaceRegistry> => {
   const { store, key } = storage(plugin, settings);
   const value = await store.read(key);
@@ -73,7 +73,7 @@ export const readWorkspaces = async (
 export const selectWorkspace = async (
   plugin: ServicePlugin,
   selector?: string,
-  settings = defaultSettings(),
+  settings = defaultSettings(process.env),
 ): Promise<ServicePlugin> => {
   const registry = await readWorkspaces(plugin, settings);
   const workspace =
@@ -95,7 +95,7 @@ export const selectWorkspace = async (
 export const updateWorkspace = async (
   plugin: ServicePlugin,
   action: WorkspaceAction,
-  settings = defaultSettings(),
+  settings = defaultSettings(process.env),
 ): Promise<WorkspaceRegistry> => {
   const { store, key } = storage(plugin, settings);
   const operation = Effect.tryPromise({

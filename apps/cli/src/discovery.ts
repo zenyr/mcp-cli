@@ -197,7 +197,12 @@ export const loadPlugin = async (
   context?: DiscoveryContext,
 ): Promise<ServicePlugin> => {
   if (plugin.installed)
-    return loadManagedPlugin(plugin.installed, plugin.dir, context?.env, plugin.runtimeDirectory);
+    return loadManagedPlugin(
+      plugin.installed,
+      plugin.dir,
+      context?.env ?? process.env,
+      plugin.runtimeDirectory,
+    );
   const loaded = plugin.bundled?.plugin ?? (await importPlugin(plugin.entry));
   if (loaded.name !== plugin.service)
     throw new Error(

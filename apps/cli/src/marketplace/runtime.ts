@@ -15,7 +15,7 @@ import type { Installed } from "./schema";
 export const loadManagedPlugin = async (
   installed: Installed,
   directory: string,
-  env = process.env,
+  env: Record<string, string | undefined>,
   runtimeDirectory?: string,
 ): Promise<ServicePlugin> => {
   if (!installed.enabled) throw new UsageError(`Plugin is disabled: ${installed.metadata.service}`);
