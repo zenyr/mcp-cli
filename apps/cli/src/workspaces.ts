@@ -7,7 +7,6 @@ import {
   type WorkspaceAction,
   type WorkspaceRegistry,
 } from "@mcp-cli/core";
-import { defaultSettings } from "./auth";
 import { pluginSettings } from "./plugin-credentials";
 
 class WorkspaceStorageError extends Error {
@@ -63,7 +62,7 @@ const storage = (plugin: ServicePlugin, settings: SettingsStore) => ({
 });
 export const readWorkspaces = async (
   plugin: ServicePlugin,
-  settings = defaultSettings(process.env),
+  settings: SettingsStore,
 ): Promise<WorkspaceRegistry> => {
   const { store, key } = storage(plugin, settings);
   const value = await store.read(key);
@@ -72,8 +71,8 @@ export const readWorkspaces = async (
 
 export const selectWorkspace = async (
   plugin: ServicePlugin,
-  selector?: string,
-  settings = defaultSettings(process.env),
+  selector: string | undefined,
+  settings: SettingsStore,
 ): Promise<ServicePlugin> => {
   const registry = await readWorkspaces(plugin, settings);
   const workspace =
@@ -92,13 +91,14 @@ export const selectWorkspace = async (
   return { ...plugin, workspace };
 };
 
-export const updateWorkspace = async (
+/** Applies a workspace action under the settings lock. */
+export const workspaceUpdate = (
   plugin: ServicePlugin,
   action: WorkspaceAction,
-  settings = defaultSettings(process.env),
-): Promise<WorkspaceRegistry> => {
+  settings: SettingsStore,
+): Effect.Effect<WorkspaceRegistry, UsageError | WorkspaceStorageError> => {
   const { store, key } = storage(plugin, settings);
-  const operation = Effect.tryPromise({
+  return Effect.tryPromise({
     try: () =>
       store.withLock(key, async () => {
         const registry = await readWorkspaces(plugin, settings);
@@ -138,7 +138,15 @@ export const updateWorkspace = async (
         ? error
         : new WorkspaceStorageError("Could not update workspace settings", { cause: error }),
   });
-  const exit = await Effect.runPromiseExit(operation);
+};
+
+/** Promise form of workspaceUpdate for callers outside Effect. */
+export const updateWorkspace = async (
+  plugin: ServicePlugin,
+  action: WorkspaceAction,
+  settings: SettingsStore,
+): Promise<WorkspaceRegistry> => {
+  const exit = await Effect.runPromiseExit(workspaceUpdate(plugin, action, settings));
   if (Exit.isSuccess(exit)) return exit.value;
   throw Cause.squash(exit.cause);
 };

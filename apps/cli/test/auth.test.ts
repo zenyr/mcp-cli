@@ -2,7 +2,6 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { fileTokenStore } from "@mcp-cli/auth";
 import {
   AuthRequiredError,
@@ -20,6 +19,7 @@ import {
   resolveConnection,
   type AuthContext,
 } from "../src/auth";
+import { runCli } from "./host";
 
 let root = "";
 let store: TokenStore;
@@ -137,13 +137,9 @@ test("logout removes stored credentials and rejects bad arguments", async () => 
 });
 
 const cli = async (env: Record<string, string>, ...args: string[]) => {
-  const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
-    cwd: fileURLToPath(new URL("../../../", import.meta.url)),
-    env: { ...process.env, DEMO_AUTH_TOKEN: "", ...env },
-    stdout: "pipe",
-    stderr: "pipe",
+  const { stderr, code } = await runCli(args, {
+    env: { HOME: root, MCP_CLI_INTERNAL_PLUGINS: "only", DEMO_AUTH_TOKEN: "", ...env },
   });
-  const [stderr, code] = await Promise.all([new Response(child.stderr).text(), child.exited]);
   return { stderr, code };
 };
 

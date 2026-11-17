@@ -1,6 +1,7 @@
 import { decodeWorkspaceAction, selectWorkspace, updateWorkspace } from "./workspaces";
 import { isRecord, UsageError } from "@mcp-cli/core";
 import { Effect } from "effect";
+import { attempt } from "./attempt";
 import { defaultSettings, defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin, type Registry } from "./discovery";
 import { defaultContext } from "./paths";
@@ -24,9 +25,6 @@ const ACTIONS = [
 ];
 const USAGE =
   "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>";
-
-const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({ try: operation, catch: (error) => error });
 
 // The desktop app may keep stdin open, so one request ends at the first line set that parses as JSON.
 const readRequest = (host: Host): Effect.Effect<unknown> =>

@@ -1,14 +1,12 @@
 import { formatOutput } from "@mcp-cli/runtime";
 import { UsageError } from "@mcp-cli/core";
 import { Effect } from "effect";
+import { attempt } from "../attempt";
 import { CliHost, printLine } from "../host";
 import { daemonRequest, daemonStatus } from "./client";
 import { prepareOwnership } from "./ownership";
 import { daemonDirectory } from "./endpoint";
 import { startDaemon } from "./server";
-
-const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({ try: operation, catch: (error) => error });
 
 // Serves until a termination signal or an IPC stop, and the scope finalizer stops the server.
 const serve = (directory: string, ready: Effect.Effect<void, never, CliHost>) =>

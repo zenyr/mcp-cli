@@ -10,6 +10,7 @@ import { commandTree, sessionManifest } from "@mcp-cli/runtime";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
+import { processHost } from "./host";
 import { runtimeDependencies } from "./runtime";
 import type { Env } from "./host";
 
@@ -17,7 +18,7 @@ const liveManifest = async (
   plugin: ServicePlugin,
   workspace: string | undefined,
 ): Promise<{ manifest: GeneratedManifest; workspace?: string }> => {
-  const selected = await runtimeDependencies(plugin).forWorkspace?.(workspace);
+  const selected = await runtimeDependencies(plugin, processHost).forWorkspace?.(workspace);
   if (!selected) throw new UsageError("This runtime does not support workspace selection");
   const session = await selected.open();
   try {

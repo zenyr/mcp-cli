@@ -1,5 +1,6 @@
 import { formatOutput } from "@mcp-cli/runtime";
 import { Effect } from "effect";
+import { attempt } from "../attempt";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { UsageError, type MarketplaceView } from "@mcp-cli/core";
@@ -14,9 +15,6 @@ import { manage, type Action } from "./manager";
 import { marketView } from "./catalog";
 import { MarketplaceError, digest } from "./storage";
 import { scaffold } from "./scaffold";
-
-const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({ try: operation, catch: (error) => error });
 
 /** Reports marketplace failures as usage errors and leaves defects untouched. */
 export const runMarketplace = <A, R>(

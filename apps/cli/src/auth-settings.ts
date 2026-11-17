@@ -3,15 +3,13 @@ import { extractWorkspace } from "./workspace-arguments";
 import { formatOutput } from "@mcp-cli/runtime";
 import { UsageError, type ServicePlugin } from "@mcp-cli/core";
 import { Effect } from "effect";
+import { attempt } from "./attempt";
 import { defaultSettings, defaultStore } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
 import { CliHost, printLine, type Env } from "./host";
 import { pluginEnvironment, pluginSettings, pluginStore } from "./plugin-credentials";
-
-const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({ try: operation, catch: (error) => error });
 
 export const authenticationContext = (env: Env, plugin?: ServicePlugin) => ({
   env: plugin ? pluginEnvironment(plugin, env) : env,

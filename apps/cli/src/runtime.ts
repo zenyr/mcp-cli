@@ -1,60 +1,91 @@
 import type { ServicePlugin } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
-import type { RuntimeDependencies } from "@mcp-cli/runtime";
-import { defaultStore, resolveConnection } from "./auth";
+import { resolve } from "node:path";
+import { runService, type RuntimeDependencies } from "@mcp-cli/runtime";
+import { Effect } from "effect";
+import { attempt, attemptSync } from "./attempt";
+import { defaultSettings, defaultStore, resolveConnection } from "./auth";
 import { DaemonUnavailableError, openDaemonSession, usesDaemon } from "./daemon/client";
 import { extensionCacheScope } from "./cache-scope";
+import { findPlugin, hostRegistry, loadPlugin } from "./discovery";
+import { CliHost, type Host } from "./host";
+import { loadManifest } from "./plugins";
 import { defaultRepeatGuard } from "./repeat";
 import { putBytes } from "./transfer";
 import { selectWorkspace } from "./workspaces";
 
+/** Service runtime ports wired to one host's environment, working directory and stdio. */
 export const runtimeDependencies = (
   plugin: ServicePlugin,
+  host: Host,
   inherited?: string,
 ): RuntimeDependencies => ({
   forWorkspace: async (selector) => {
-    const selected = await selectWorkspace(plugin, selector ?? inherited);
+    const selected = await selectWorkspace(
+      plugin,
+      selector ?? inherited,
+      defaultSettings(host.env),
+    );
+    const sessionTools = selected.discovery?.tools === "session";
     return {
-      ...runtimeDependencies(plugin, selected.workspace?.id),
+      ...runtimeDependencies(plugin, host, selected.workspace?.id),
       workspace: selected.workspace,
       workspaceId: selected.workspace?.legacy
         ? undefined
         : `${plugin.credentialNamespace ?? plugin.name}:${selected.workspace?.id}`,
       open: async (credential) => {
-        if (usesDaemon(process.env)) {
+        if (usesDaemon(host.env)) {
           try {
             return await openDaemonSession(
               plugin.name,
               credential,
               selected.workspace?.id,
-              selected.discovery?.tools === "session",
-              { env: process.env, cwd: process.cwd() },
+              sessionTools,
+              {
+                env: host.env,
+                cwd: host.cwd,
+              },
             );
           } catch (error) {
             if (!(error instanceof DaemonUnavailableError)) throw error;
           }
         }
         return connect(
-          await resolveConnection(selected, process.env, defaultStore(process.env), credential),
-          {
-            sessionTools: selected.discovery?.tools === "session",
-          },
+          await resolveConnection(selected, host.env, defaultStore(host.env), credential),
+          { sessionTools },
         );
       },
       cacheScope: (credential) =>
-        extensionCacheScope(selected, process.env, defaultStore(process.env), credential),
+        extensionCacheScope(selected, host.env, defaultStore(host.env), credential),
     };
   },
   open: async () => {
     throw new Error("Select a workspace before opening a connection");
   },
-  guard: defaultRepeatGuard(process.env),
+  guard: defaultRepeatGuard(host.env),
   putBytes,
   io: {
-    write: (text) => console.log(text),
-    writeError: (text) => console.error(text),
-    readFile: (path) => Bun.file(path).text(),
-    readStdin: () => Bun.stdin.text(),
-    readBytes: (path) => Bun.file(path).bytes(),
+    // RuntimeIO.write is synchronous, so a failed write such as a closed pipe is dropped.
+    write: (text) => void host.write(`${text}\n`).catch(() => undefined),
+    writeError: (text) => host.writeError(`${text}\n`),
+    readFile: (path) => Bun.file(resolve(host.cwd, path)).text(),
+    readStdin: host.readStdin,
+    readBytes: (path) => Bun.file(resolve(host.cwd, path)).bytes(),
   },
 });
+
+/** Runs one service command and returns its exit status. */
+export const serviceCommand = (
+  service: string,
+  args: string[],
+): Effect.Effect<number, unknown, CliHost> =>
+  Effect.gen(function* () {
+    const host = yield* CliHost;
+    const registry = yield* hostRegistry;
+    const found = yield* attemptSync(() => findPlugin(registry, service));
+    const plugin = yield* attempt(() => loadPlugin(found, registry.context));
+    const manifest = yield* attempt(() => loadManifest(registry, found));
+    return yield* attempt(() =>
+      runService(plugin, manifest, args, runtimeDependencies(plugin, host)),
+    );
+  });

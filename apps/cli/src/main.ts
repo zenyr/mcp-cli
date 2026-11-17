@@ -2,29 +2,21 @@
 import { leadingArguments } from "./workspace-arguments";
 import { RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { Cause, Effect, Exit } from "effect";
+import { attempt } from "./attempt";
 import { CliHost, printLine, processHost, type Host } from "./host";
 import { ensureConfigDirectory } from "./config";
 import { desktopCommand } from "./desktop";
 import { authSettingsCommand } from "./auth-settings";
 import { daemonCommand } from "./daemon/command";
-import { resetDaemonIfRunning } from "./daemon/client";
-import { runService } from "@mcp-cli/runtime";
-import { defaultStore, loginCommand, logoutCommand, openInBrowser } from "./auth";
-import { generate } from "./generate";
-import { discover, findPlugin, loadPlugin } from "./discovery";
+import { generateCommand } from "./generate";
+import { discover } from "./discovery";
+import { credentialCommand } from "./login-command";
 import { pluginsCommand } from "./marketplace/entry";
 import { defaultContext } from "./paths";
-import { loadManifest } from "./plugins";
-import { runtimeDependencies } from "./runtime";
+import { serviceCommand } from "./runtime";
 import { workspaceCommand } from "./workspace-command";
 
 export const EXIT = { ok: 0, failure: 1, usage: 2, repeated: 3 } as const;
-
-const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({ try: operation, catch: (error) => error });
-// Runs a command module that has not moved onto CliHost yet.
-const legacy = (operation: () => Promise<void>): Effect.Effect<number, unknown> =>
-  Effect.as(attempt(operation), EXIT.ok);
 
 const USAGE = `Usage: mcp-cli <service> <command>
        mcp-cli generate <service> [--snapshot <path>] [--check]
@@ -48,35 +40,15 @@ export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
       );
       return EXIT.ok;
     }
-    if (command === "workspaces") return yield* legacy(() => workspaceCommand(args));
+    if (command === "workspaces") return yield* Effect.as(workspaceCommand(args), EXIT.ok);
     if (command === "desktop") return yield* Effect.as(desktopCommand(args), EXIT.ok);
     if (command === "auth") return yield* Effect.as(authSettingsCommand(args), EXIT.ok);
     if (command === "daemon") return yield* Effect.as(daemonCommand(args), EXIT.ok);
-    if (command === "generate") return yield* legacy(async () => generate(args, await registry()));
+    if (command === "generate") return yield* Effect.as(generateCommand(args), EXIT.ok);
     if (command === "plugins") return yield* Effect.as(pluginsCommand(args), EXIT.ok);
-    if (command === "login" || command === "logout") {
-      const writeError = (text: string) => host.writeError(`${text}\n`);
-      const run = command === "login" ? loginCommand : logoutCommand;
-      return yield* legacy(async () => {
-        await run(args, {
-          env: host.env,
-          store: defaultStore(host.env),
-          plugin: async (name) => loadPlugin(findPlugin(await registry(), name)),
-          writeError,
-          open: openInBrowser(writeError),
-          manual: host.onStdinLine,
-          readSecret: host.readSecret,
-        });
-        await resetDaemonIfRunning(host.env);
-      });
-    }
-    return yield* attempt(async () => {
-      const discovered = await registry();
-      const found = findPlugin(discovered, command);
-      const plugin = await loadPlugin(found, discovered.context);
-      const manifest = await loadManifest(discovered, found);
-      return runService(plugin, manifest, args, runtimeDependencies(plugin));
-    });
+    if (command === "login" || command === "logout")
+      return yield* Effect.as(credentialCommand(command, args), EXIT.ok);
+    return yield* serviceCommand(command, args);
   });
 
 export const exitCodeFor = (error: unknown): number =>

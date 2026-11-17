@@ -1,11 +1,19 @@
 import { expect, test } from "bun:test";
-import { AuthRequiredError, type ServicePlugin, type TokenStore, type Tokens } from "@mcp-cli/core";
+import {
+  AuthRequiredError,
+  isRecord,
+  UsageError,
+  type ServicePlugin,
+  type TokenStore,
+  type Tokens,
+} from "@mcp-cli/core";
 import { resolveConnection } from "../src/auth";
 import { pluginStore } from "../src/plugin-credentials";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { exitCodeFor } from "../src/main";
 
 test("plugins sharing a service name cannot inherit another catalog's credentials or environment key", async () => {
   const values = new Map<string, Tokens>([["hello", { accessToken: "legacy" }]]);
@@ -51,21 +59,23 @@ test("independently bundled plugins preserve typed CLI errors", async () => {
     );
     const built = await Bun.build({
       entrypoints: [entry],
-      outdir: directory,
+      // A separate output directory avoids the resolver listing cached while bundling the entry.
+      outdir: join(directory, "out"),
       naming: "plugin.mjs",
       target: "bun",
     });
     expect(built.success).toBe(true);
-    const main = fileURLToPath(new URL("../src/main.ts", import.meta.url));
-    const script = `const host = await import(${JSON.stringify(main)}); const plugin = await import(${JSON.stringify(join(directory, "plugin.mjs"))}); console.log(JSON.stringify([host.exitCodeFor(new plugin.UsageError("bad")), host.exitCodeFor(new plugin.RepeatedCallError("again"))]));`;
-    const child = Bun.spawn([process.execPath, "-e", script], { stdout: "pipe", stderr: "pipe" });
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
+    const plugin: unknown = await import(pathToFileURL(join(directory, "out", "plugin.mjs")).href);
+    if (!isRecord(plugin)) throw new Error("expected a module namespace");
+    const make = (name: string) => {
+      const constructor = plugin[name];
+      if (typeof constructor !== "function") throw new Error(`missing ${name}`);
+      return Reflect.construct(constructor, ["bundled"]);
+    };
+    expect(plugin.UsageError).not.toBe(UsageError);
+    expect([exitCodeFor(make("UsageError")), exitCodeFor(make("RepeatedCallError"))]).toEqual([
+      2, 3,
     ]);
-    expect(code, stderr).toBe(0);
-    expect(JSON.parse(stdout)).toEqual([2, 3]);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
