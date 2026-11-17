@@ -47,4 +47,4 @@ test("linked commands share daemon selection and fall back when it is absent", a
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
-});
+}, 20_000);

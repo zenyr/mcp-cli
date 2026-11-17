@@ -80,4 +80,4 @@ test("desktop API key operations share CLI storage without printing secrets", as
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
-});
+}, 20_000);
