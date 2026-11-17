@@ -44,16 +44,30 @@ const onStdinLine = (handler: (line: string) => void, onEnd?: () => void): (() =
   };
 };
 
+// A reader that closes stdout early, such as `head`, ends output quietly the way console.log did.
+const closedPipe = (error: unknown): boolean =>
+  typeof error === "object" && error !== null && "code" in error && error.code === "EPIPE";
+process.stdout.on("error", (error) => {
+  if (!closedPipe(error)) throw error;
+});
+
+const writeStdout = (text: string): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    const settle = (error?: unknown) => (error && !closedPipe(error) ? reject(error) : resolve());
+    try {
+      process.stdout.write(text, settle);
+    } catch (error) {
+      settle(error);
+    }
+  });
+
 /** The real process: environment, working directory, stdio and signals. */
 export const processHost: Host = {
   env: process.env,
   cwd: process.cwd(),
   stderrIsTTY: Boolean(process.stderr.isTTY),
   // Bun truncates piped console.log output at 64 KiB once process.stdout exists.
-  write: (text) =>
-    new Promise<void>((resolve, reject) =>
-      process.stdout.write(text, (error) => (error ? reject(error) : resolve())),
-    ),
+  write: writeStdout,
   writeError: (text) => void process.stderr.write(text),
   readStdin: () => Bun.stdin.text(),
   onStdinLine,

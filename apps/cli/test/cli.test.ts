@@ -7,7 +7,7 @@ import { EXIT, exitCodeFor } from "../src/main";
 import { discover, findPlugin, loadPlugin } from "../src/discovery";
 import { defaultContext } from "../src/paths";
 import { loadManifest, packageFiles } from "../src/plugins";
-import { runCli } from "./host";
+import { repositoryRoot, runCli } from "./host";
 // Points config and cache lookups away from the real home directory.
 const sandbox = mkdtempSync(join(tmpdir(), "mcp-cli-test-"));
 const isolatedEnv = {
@@ -127,4 +127,17 @@ test("CLI defaults JSON tool text and schemas to YAML with a global JSON overrid
   expect(schema.stdout).toStartWith("path:\n");
   const jsonSchema = await run("demo", "schema", "message", "echo", "--json");
   expect(JSON.parse(jsonSchema.stdout)).toHaveProperty("inputSchema");
+});
+
+// A real process is required because the subject is a closed stdout pipe and the generated bin wrapper.
+test("the bin wrapper exits 0 when the stdout reader closes early", async () => {
+  const child = Bun.spawn([process.execPath, "bin/mcp-cli.ts", "--help"], {
+    cwd: repositoryRoot,
+    env: { ...isolatedEnv, PATH: process.env.PATH ?? "" },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  await child.stdout.cancel();
+  const [stderr, code] = await Promise.all([new Response(child.stderr).text(), child.exited]);
+  expect({ stderr, code }).toEqual({ stderr: "", code: 0 });
 });
