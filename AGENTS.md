@@ -28,6 +28,15 @@
 - Stop automatic integration/build/push on user stop, failed verification, unresolved conflicts, or blocking permission/environment constraints. Report cause and remaining work.
 - Never include/overwrite user uncommitted changes without authorization or force-push remote history.
 
+# Plugins and tests
+
+- Hidden contract plugins: `demo` (stdio MCP server), `demo-auth` (API key alternates, `AuthSupport`, Web API). `"hidden": true` in the `mcp-cli` package marker keeps a plugin out of end-user discovery and release catalogs.
+- `MCP_CLI_INTERNAL_PLUGINS`: `1` adds hidden plugins to discovery; `only` discovers nothing else. `apps/cli/test/setup.ts` preloads `only`.
+- `MCP_CLI_BUNDLE_PLUGINS=<a,b>`: the CLI build packages exactly those plugins; default packages every visible plugin.
+- `apps/cli` tests: hidden plugins or temporary fixtures only, never real service plugins. Missing host behavior goes into `demo-auth` or a test fixture.
+- Plugin-specific tests: `plugins/<service>/test` with `@mcp-cli/runtime/testing`. Declare every imported workspace package in `devDependencies`; no relative imports into `packages/` or `apps/`.
+- Never add plugin dependencies to the CLI package.
+
 <!-- BEGIN:turborepo-agent-rules -->
 
 # Version-specific Turborepo
