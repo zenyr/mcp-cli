@@ -9,6 +9,7 @@
     "mcp-cli": "bin/mcp-cli.ts",
     "mem": "apps/mem/src/main.ts",
     "notion": "bin/notion.ts",
+    "pplx": "bin/pplx.ts",
     "slack": "bin/slack.ts"
   },
   "workspaces": [

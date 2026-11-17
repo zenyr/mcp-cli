@@ -167,6 +167,16 @@
         "@mcp-cli/runtime": "workspace:*",
       },
     },
+    "plugins/perplexity": {
+      "name": "@mcp-cli/plugin-perplexity",
+      "version": "0.1.0",
+      "dependencies": {
+        "@mcp-cli/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
+      },
+    },
     "plugins/slack": {
       "name": "@mcp-cli/plugin-slack",
       "version": "0.1.0",
@@ -233,6 +243,8 @@
     "@mcp-cli/plugin-linear": ["@mcp-cli/plugin-linear@workspace:plugins/linear"],
 
     "@mcp-cli/plugin-notion": ["@mcp-cli/plugin-notion@workspace:plugins/notion"],
+
+    "@mcp-cli/plugin-perplexity": ["@mcp-cli/plugin-perplexity@workspace:plugins/perplexity"],
 
     "@mcp-cli/plugin-slack": ["@mcp-cli/plugin-slack@workspace:plugins/slack"],
 
