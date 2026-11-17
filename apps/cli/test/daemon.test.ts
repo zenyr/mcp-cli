@@ -115,7 +115,6 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
   const directory = await mkdtemp(join(tmpdir(), "mcp-daemon-"));
   const daemon = await startDaemon(directory);
   const env = {
-    ...process.env,
     HOME: directory,
     XDG_CONFIG_HOME: directory,
     XDG_CACHE_HOME: directory,
@@ -123,22 +122,9 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
     MCP_CLI_CONFIG: "",
     MCP_CLI_DAEMON_DIR: directory,
     MCP_CLI_DAEMON: "",
+    MCP_CLI_INTERNAL_PLUGINS: "only",
   };
-  // Service commands still read the daemon directory from process.env in runtime.ts, so they run as separate processes.
-  const run = async (...args: string[]) => {
-    const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
-      cwd: fileURLToPath(new URL("../../../", import.meta.url)),
-      env,
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ]);
-    return { stdout, stderr, code };
-  };
+  const run = (...args: string[]) => runCli(args, { env });
   try {
     expect(await run("demo", "message", "echo", "--text", "one")).toEqual({
       stdout: "one\n",
@@ -343,37 +329,20 @@ test("CLI does not switch to direct execution after a daemon tool request fails"
   });
   await new Promise<void>((resolve) => server.listen(daemonSocket(directory), resolve));
   try {
-    // Service commands still read the daemon directory from process.env in runtime.ts, so this runs as a separate process.
-    const child = Bun.spawn(
-      [
-        process.execPath,
-        "apps/cli/src/main.ts",
-        "demo",
-        "message",
-        "echo",
-        "--text",
-        "must-not-run-directly",
-      ],
+    const { stdout, stderr, code } = await runCli(
+      ["demo", "message", "echo", "--text", "must-not-run-directly"],
       {
-        cwd: fileURLToPath(new URL("../../../", import.meta.url)),
         env: {
-          ...process.env,
           MCP_CLI_DAEMON: "",
           MCP_CLI_DAEMON_DIR: directory,
           XDG_CONFIG_HOME: directory,
           XDG_STATE_HOME: directory,
           XDG_CACHE_HOME: directory,
           MCP_CLI_CONFIG: "",
+          MCP_CLI_INTERNAL_PLUGINS: "only",
         },
-        stdout: "pipe",
-        stderr: "pipe",
       },
     );
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ]);
     expect(code).toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toContain("write outcome unknown");
