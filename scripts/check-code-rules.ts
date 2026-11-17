@@ -50,37 +50,45 @@ const commentRanges = (source: ts.SourceFile): ts.CommentRange[] => {
   return [...seen.values()];
 };
 
-// CLI code reaches process state only through the CliHost implementation and the bootstrap files listed here.
-const hostBoundary = /(?:^|\/)apps\/cli\/src\/(?!(?:host|main|secret|marketplace\/scaffold)\.ts$)/;
-const processMembers = new Set([
-  "env",
-  "stdin",
-  "stdout",
-  "stderr",
-  "cwd",
-  "once",
-  "on",
-  "exit",
-  "exitCode",
-  "argv",
-]);
-const consoleMembers = new Set(["log", "error", "warn", "info"]);
-const ambientAccess = (node: ts.Node): boolean => {
-  if (!ts.isPropertyAccessExpression(node) || !ts.isIdentifier(node.expression)) return false;
+// CLI code reaches process state only through the CliHost implementation and its bootstrap in main.ts.
+const hostBoundary = /(?:^|\/)apps\/cli\/src\/(?!(?:host|main|secret)\.ts$)/;
+const argvBootstrap = /(?:^|\/)apps\/cli\/src\/marketplace\/runtime\.ts$/;
+const processMetadata = new Set(["platform", "execPath", "pid", "kill", "arch", "versions"]);
+const bunStreams = new Set(["env", "stdin", "stdout", "stderr"]);
+const ambientAccess = (node: ts.Node, file: string): boolean => {
+  if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+    const bindings = node.importClause?.namedBindings;
+    return (
+      ["process", "node:process"].includes(node.moduleSpecifier.text) ||
+      (node.moduleSpecifier.text.endsWith("/host") &&
+        bindings !== undefined &&
+        ts.isNamedImports(bindings) &&
+        bindings.elements.some((item) => item.name.text === "processHost"))
+    );
+  }
+  if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
+    const [owner, member] = [node.expression.text, node.name.text];
+    return (
+      (owner === "Bun" && bunStreams.has(member)) ||
+      (owner === "globalThis" && ["process", "console"].includes(member))
+    );
+  }
+  if (!ts.isIdentifier(node) || !["process", "console"].includes(node.text)) return false;
   const parent = node.parent;
-  // The plugin runtime bootstrap hands its entry module a fresh argv.
-  if (
-    node.name.text === "argv" &&
-    ts.isBinaryExpression(parent) &&
-    parent.left === node &&
-    parent.operatorToken.kind === ts.SyntaxKind.EqualsToken
-  )
+  if (ts.isPropertyAccessExpression(parent) && parent.name === node) return false;
+  if ((ts.isPropertyAssignment(parent) || ts.isBindingElement(parent)) && parent.name === node)
     return false;
-  const [owner, member] = [node.expression.text, node.name.text];
-  return (
-    (owner === "process" && processMembers.has(member)) ||
-    (owner === "console" && consoleMembers.has(member)) ||
-    (owner === "Bun" && member === "stdin")
+  if (node.text === "console") return true;
+  if (!ts.isPropertyAccessExpression(parent) || parent.expression !== node) return true;
+  if (processMetadata.has(parent.name.text)) return false;
+  const assignment = parent.parent;
+  // The plugin runtime bootstrap hands its entry module a fresh argv.
+  return !(
+    parent.name.text === "argv" &&
+    argvBootstrap.test(file) &&
+    ts.isBinaryExpression(assignment) &&
+    assignment.left === parent &&
+    assignment.operatorToken.kind === ts.SyntaxKind.EqualsToken
   );
 };
 
@@ -134,7 +142,7 @@ for (const file of files) {
   const report = (node: ts.Node, message: string) => reportAt(node.getStart(source), message);
   const hostOnly = hostBoundary.test(file);
   const visit = (node: ts.Node): void => {
-    if (hostOnly && ambientAccess(node)) report(node, "Read process state through CliHost.");
+    if (hostOnly && ambientAccess(node, file)) report(node, "Read process state through CliHost.");
     if ((ts.isFunctionExpression(node) && !effectGenerator(node)) || hasBody(node))
       report(node, "Use an arrow function.");
     if (ts.isNonNullExpression(node)) report(node, "Non-null assertions are prohibited.");
