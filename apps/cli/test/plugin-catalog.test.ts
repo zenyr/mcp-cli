@@ -79,11 +79,15 @@ const examples: Example[] = [
   notionCase("attachment urls", "get-file-download-urls", {
     references: [`notion-file-block://${uuid}/${uuid}?space_id=${uuid}&name=notes.txt`],
   }),
-  notionCase("memory search", "memory-search", { query: "release preferences", limit: 10 }),
   notionCase("agent-skill list-enabled", "get-enabled-skills"),
-  notionCase("agent-skill update-enabled", "update-enabled-skills", {
-    add_skill_urls: [`https://www.notion.so/${uuid}`],
-    surfaces: ["mcp"],
+  notionCase("agent-skill update-settings", "update-skill-settings", {
+    skill_url: `https://www.notion.so/${uuid}`,
+    settings: { enabled: true, use_in_connected_agents: true },
+  }),
+  notionCase("version changes", "get-version-changes", { page: uuid }),
+  notionCase("suggestion resolve", "resolve-suggested-edit", {
+    suggested_edit_url: `https://www.notion.so/${uuid}`,
+    action: "accept",
   }),
   notionCase("page delete", "delete-pages", { page_ids: [uuid] }),
   notionCase("database delete", "delete-databases", { database_ids: [uuid] }),
@@ -188,7 +192,7 @@ test("Notion's documented JSON inputs pass schema validation and reach their too
   const commands = [
     { path: ["calendar", "event", "create"], tool: "notion-calendar-create-events" },
     { path: ["calendar", "event", "update"], tool: "notion-calendar-update-events" },
-    { path: ["agent-skill", "update-enabled"], tool: "notion-update-enabled-skills" },
+    { path: ["agent-skill", "update-settings"], tool: "notion-update-skill-settings" },
   ];
   expect(blocks).toHaveLength(commands.length);
   for (const [index, command] of commands.entries()) {

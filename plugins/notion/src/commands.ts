@@ -8,7 +8,7 @@ const at = (path: string, summary: string, examples?: string[]): CommandCustomiz
   ...(examples && { examples }),
 });
 
-// The two next-steps tools answer instructions inside tool results, so they stay under `call`.
+// The two setup-flow tools return instructions to follow, so they stay under `call`.
 export const commands: Record<string, CommandCustomization> = {
   ...calendarCommands,
   ...workspaceCommands,
@@ -38,7 +38,6 @@ export const commands: Record<string, CommandCustomization> = {
     ...at("page get", "Fetch a page, database, data source or view by URL or ID", [
       "notion page get --id https://www.notion.so/<page>",
       "notion page get --id <page-id> --include-file-urls",
-      "notion page get --id memory",
     ]),
     rules: [
       "Uploaded files use stable notion-file-block:// references by default; resolve them with attachment urls or request --include-file-urls.",
@@ -128,7 +127,7 @@ export const groups: Record<string, string> = {
   database: "Create databases or move them to Trash",
   "data-source": "Query and change database data sources",
   view: "Database views",
-  "meeting-notes": "Meeting notes",
+  "meeting-notes": "Create, query and link meeting notes",
   folder: "Folders",
   attachment: "Attachments",
   upload: "File uploads",
@@ -140,7 +139,9 @@ export const groups: Record<string, string> = {
   session: "Custom Agent sessions",
   account: "Connected workspace and user",
   group: "Permission groups used by People properties",
-  memory: "Context saved by connected agents",
+  suggestion: "Reviewable suggested edits",
+  version: "Page and database version history",
+  sidebar: "Your sidebar tabs",
   calendar: "Connected calendars, events, contacts and rooms",
   "calendar event": "Read schedules, create events and manage invitations",
   "calendar contact": "Resolve attendees",
@@ -167,8 +168,9 @@ export const skill = [
   "Views: --configure accepts map/chart/form settings; inspect current view before edits.",
   "Files: page get -> attachment urls with exact notion-file-block:// refs; signed URLs expire.",
   "Comments: comment list -> comment create --reply-to-comment-id or comment update with full replacement text.",
-  "Memory: resources read notion://docs/memory once -> memory search; page get --id memory exposes data source.",
-  "Skills: agent-skill list-enabled -> tell user skill to load -> agent-skill download.",
+  "History: version changes -> version get; version restore only after listing changes and confirmation.",
+  "Suggestions: page get -> suggestion create; review: suggestion get -> user choice -> suggestion resolve.",
+  "Skills: agent-skill list-enabled -> tell user skill to load -> agent-skill download; settings: agent-skill update-settings.",
   "Calendar: calendar list -> calendar event list with explicit timeMin/timeMax/timeZone -> confirm -> create/update/cancel.",
   "Attendees: calendar contact search; details: calendar event list-coworkers; rooms: calendar room list.",
   "Async: page create/update may return tasks -> task get.",
@@ -178,7 +180,8 @@ export const skill = [
   "page delete/database delete preview without --user-confirmed; show user preview before retry confirmation.",
   "Calendar writes may notify attendees; decline others' events: event update with RSVP, not event cancel.",
   "Resolve comment discussions: explicit human request only; comment update/delete/resolve/react require Business or Enterprise.",
-  "Set surfaces when updating enabled skills; default changes both Notion AI and external MCP clients.",
+  "agent-skill update-settings changes only provided settings; disabling clears placements and MCP use.",
+  "Setup: call notion-get-setup-guide only when the user asks to set up Notion.",
   "Tools vary by connection/plan; access check: availability; optional commands may be absent.",
   "Nested args (pages/properties/etc.): --input or --input-file.",
 ].join("\n");

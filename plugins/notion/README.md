@@ -4,7 +4,7 @@ Run `bun run cli notion ...` from the repository. After linking globally, use `n
 `notion --help`, group help, `methods`, and `skill` do not connect to the server.
 Individual commands show arguments and examples with `--help`, and original server descriptions and nested JSON schemas with `--help=full`.
 Run `notion access check` to inspect the connected account's tools and plan restrictions.
-Calendar features, comment management, memory, and skill settings depend on the connection and plan.
+Calendar features, comment management, suggested edits, and skill settings depend on the connection and plan.
 Commands absent from the generated tool definitions do not appear in help.
 
 See the [common usage guide](../../apps/cli/README.md) and [plugin development guide](../README.md).
@@ -85,7 +85,7 @@ Editing, deleting, resolving, and reacting to comments require a Business or Ent
 Show the preview to the user, obtain confirmation, and rerun with `--user-confirmed`.
 Use `page restore` to restore pages and databases from trash.
 
-## Files, memory, and skills
+## Files and skills
 
 By default, `page get` returns uploaded files as `notion-file-block://` references.
 `--include-file-urls` immediately retrieves signed URLs.
@@ -93,24 +93,26 @@ You can also pass references unchanged to `attachment urls --references '["<refe
 Keep stable references in pages because signed URLs expire.
 Use `page backlinks --page-id <id>` to find referring pages. Pass `next_cursor` as `--cursor` to continue.
 
-Before using memory, run `notion resources read notion://docs/memory` once per conversation.
-`memory search --query 'release preferences'` searches memory saved by connected agents.
-For listing or filtering, use the data source returned by `page get --id memory`.
-This feature is separate from the repository's [mem CLI](../../apps/mem/README.md).
-
 `agent-skill list-enabled` lists skills available to external MCP clients.
 Before loading a skill, inform the user and run `agent-skill download`.
-To enable a skill, pass this JSON to `agent-skill update-enabled`:
+To make a skill available to MCP clients, pass this JSON to `agent-skill update-settings`:
 
 ```json
 {
-  "add_skill_urls": ["https://www.notion.so/<skill-page-id>"],
-  "surfaces": ["mcp"]
+  "skill_url": "https://www.notion.so/<skill-page-id>",
+  "settings": { "enabled": true, "use_in_connected_agents": true }
 }
 ```
 
-Use `remove_skill_urls` to disable skills.
-`surfaces` accepts `mcp` and `notion_ai`. Omitting it changes both.
+Only the provided settings change. Disabling a skill also clears its placements and MCP use.
+
+## History and suggestions
+
+- `version changes --page <id>` lists changes and their authors. The range defaults to the last 24 hours.
+- `version get --page <id> --time <ISO time>` reads a page or database as it looked at that time.
+- `version restore` undoes every later edit, including other people's. List the changes and obtain confirmation first.
+- `suggestion create` proposes one change without editing the page. Business or Enterprise is required.
+- Inspect a suggestion with `suggestion get`. Run `suggestion resolve` only after the user chooses accept or reject.
 
 ## Page and database behavior
 
@@ -123,4 +125,4 @@ Use `remove_skill_urls` to disable skills.
 - Wait for asynchronous operations with `task get`. Template content may require another `page get` check after the task succeeds.
 
 `call <MCP-tool-name>` applies the same schemas and policies as mapped commands.
-Two follow-up tools are available only through `call` because they process instructions included in tool results.
+The two setup-flow tools are available only through `call` because they return instructions to follow.

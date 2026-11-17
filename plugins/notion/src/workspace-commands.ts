@@ -29,28 +29,20 @@ export const workspaceCommands: Record<string, CommandCustomization> = {
       "URLs expire within minutes; resolve references again when needed (up to 25 per call).",
     ],
   ),
-  "notion-memory-search": at(
-    "memory search",
-    "Search context, preferences and decisions saved by connected agents",
-    ['notion memory search --query "release preferences" --limit 10'],
-    [
-      "Read notion://docs/memory once with resources read before using memory in a conversation.",
-      "To list or filter all memories, page get --id memory, then query its data source.",
-    ],
-  ),
   "notion-get-enabled-skills": at(
     "agent-skill list-enabled",
     "List skills enabled for external MCP clients",
     ["notion agent-skill list-enabled"],
     ["Tell the user before loading a listed skill, then download it with agent-skill download."],
   ),
-  "notion-update-enabled-skills": at(
-    "agent-skill update-enabled",
-    "Enable or disable skills for selected surfaces",
-    ["notion agent-skill update-enabled --input-file skills.json"],
+  "notion-update-skill-settings": at(
+    "agent-skill update-settings",
+    "Enable, disable or place one skill, including for MCP clients",
     [
-      "Set surfaces explicitly to limit the change; omitting it affects Notion AI and external MCP clients.",
-      "Use add_skill_urls and remove_skill_urls for the current user's settings.",
+      'notion agent-skill update-settings --skill-url https://www.notion.so/<skill-page-id> --settings \'{"enabled":true,"use_in_connected_agents":true}\'',
+    ],
+    [
+      "Only the provided settings change; disabling a skill also clears its placements and MCP use.",
     ],
   ),
   "notion-delete-pages": at(
@@ -110,5 +102,74 @@ export const workspaceCommands: Record<string, CommandCustomization> = {
       'notion comment react --comment-id <comment-id> --emoji "👍" --no-reacted',
     ],
     ["Requires Business or Enterprise; repeating the same state is safe."],
+  ),
+  "notion-create-suggested-edit": at(
+    "suggestion create",
+    "Propose one reviewable change without editing the page",
+    ['notion suggestion create --page-id <page-id> --old-text "Draft" --new-text "Ready"'],
+    ["Requires Business or Enterprise; copy old_text exactly from page get."],
+  ),
+  "notion-get-suggested-edit": at(
+    "suggestion get",
+    "Show a pending suggestion's diff and allowed actions",
+    ["notion suggestion get --suggested-edit-url <url>"],
+  ),
+  "notion-resolve-suggested-edit": at(
+    "suggestion resolve",
+    "Accept or reject one pending suggestion",
+    ["notion suggestion resolve --suggested-edit-url <url> --action accept"],
+    ["Inspect it with suggestion get, then resolve only after the user chooses."],
+  ),
+  "notion-get-version-changes": at(
+    "version changes",
+    "List what changed in a page or database and who changed it",
+    ["notion version changes --page <url-or-id>"],
+    ["The range defaults to the last 24 hours."],
+  ),
+  "notion-view-version": at("version get", "Read a page or database as it looked at a past time", [
+    "notion version get --page <url-or-id> --time 2026-11-01T09:00:00Z",
+  ]),
+  "notion-restore-version": at(
+    "version restore",
+    "Restore a whole page or database to a past time",
+    ["notion version restore --page <url-or-id> --time 2026-11-01T09:00:00Z"],
+    [
+      "This undoes everyone's later edits; list version changes since that time and get confirmation first.",
+    ],
+  ),
+  "notion-get-sidebar-tabs": at(
+    "sidebar get",
+    "Show your sidebar tabs and the shortcuts and sections you can add",
+    ["notion sidebar get"],
+  ),
+  "notion-update-sidebar-tabs": at(
+    "sidebar update",
+    "Replace your complete, ordered sidebar tab list",
+    ["notion sidebar update --input-file tabs.json"],
+    ["Run sidebar get first and send back every item to keep; omitted items are removed."],
+  ),
+  "notion-update-page-favorites": at(
+    "page favorite",
+    "Favorite or unfavorite up to 100 pages or databases",
+    ["notion page favorite --page-urls '[\"<page-url>\"]' --favorited"],
+  ),
+  "notion-create-meeting-note": at(
+    "meeting-notes create",
+    "Create a meeting note, optionally for a calendar event",
+    ['notion meeting-notes create --title "Weekly sync" --content "## Agenda"'],
+    [
+      "Omit parent unless the user names a destination; find scheduled meetings with calendar event list.",
+    ],
+  ),
+  "notion-convert-to-meetings-database": at(
+    "meeting-notes convert-database",
+    "Turn a regular database into a Meetings database",
+    ["notion meeting-notes convert-database --database-url <database-url>"],
+    ["Ask the user before converting a database."],
+  ),
+  "notion-link-meeting-note-to-calendar-event": at(
+    "meeting-notes link-event",
+    "Link an existing meeting note to a calendar event",
+    ["notion meeting-notes link-event --input-file link.json"],
   ),
 };

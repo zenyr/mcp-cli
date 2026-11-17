@@ -56,6 +56,14 @@ export const manifest = {
             },
             "maxItems": 50,
             "type": "array"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -296,6 +304,14 @@ export const manifest = {
             "maxItems": 50,
             "type": "array"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "timeZone": {
             "description": "Date-times of returned events will be expressed in this time-zone",
             "type": "string"
@@ -344,6 +360,10 @@ export const manifest = {
             "description": "If true, do not narrow rooms to the user's working-location building for this day. Set this when the user is explicitly asking about rooms in a different office (e.g. for a visiting team).",
             "type": "boolean"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "maxCount": {
             "description": "Maximum number of resources to return per time slot (default: 20, max: 40)",
             "exclusiveMinimum": 0,
@@ -355,6 +375,10 @@ export const manifest = {
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991,
             "type": "integer"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           },
           "timeSlots": {
             "description": "Specific time slots to check. Returns available resources for each time slot independently.",
@@ -405,12 +429,20 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "onlyAccountEmails": {
             "description": "Return only accounts linked to these email addresses. Useful to get calendars from a work account only for example. Do not specify if you are interested in getting the whole picture of someone's agenda across work and personal accounts.",
             "items": {
               "type": "string"
             },
             "type": "array"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -429,6 +461,10 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "queries": {
             "description": "Optional search queries to filter contacts by name or email. Results matching any query are included.",
             "items": {
@@ -436,6 +472,10 @@ export const manifest = {
             },
             "maxItems": 50,
             "type": "array"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -460,6 +500,14 @@ export const manifest = {
               "type": "string"
             },
             "type": "array"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           },
           "timeMax": {
             "description": "End of the time range, as an ISO 8601 date-time.",
@@ -500,6 +548,14 @@ export const manifest = {
             "description": "Whether to include event invites the user has declined",
             "type": "boolean"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "timeMax": {
             "description": "End of the time range, as an ISO 8601 date-time.",
             "type": "string"
@@ -534,6 +590,14 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "timeZone": {
             "description": "Date-times of returned events will be expressed in this time-zone",
             "type": "string"
@@ -887,53 +951,38 @@ export const manifest = {
     {
       "annotations": {
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false,
-        "readOnlyHint": true
+        "readOnlyHint": false
       },
-      "description": "When to call: Only when a Notion fetch result instructs you to. Finish all Notion tool calls needed for the current request, then call at most once with no arguments. Never call it per fetch or failure, without that instruction, or retry it.\n\nResult handling: If no next step is returned or rendering fails, do not retry or mention it. Otherwise, finish the user's task before the follow-up.\n\nFollow-up: Add one brief sentence grounded in the user's Notion work this session, followed by the returned destination as a compact, labeled Markdown link. You may present it as an optional Business next step for that type of work, but only claim a benefit when the tool result explicitly provides it. Do not introduce other capabilities or estimate performance or time savings. Give this follow-up once. Never mention limits, eligibility, or frequency logic. Do not give a sales pitch, tell the user to upgrade, criticize their workflow, use a bare URL, or create a link preview.",
+      "description": "Records when you have completed a guided set up flow of the Notion MCP. Only call this tool when explicitly asked.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
-        "default": {},
-        "properties": {},
-        "type": "object"
-      },
-      "name": "notion-check-mcp-next-steps",
-      "outputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
         "properties": {
-          "action": {
+          "completed_setup": {
+            "description": "Setup type you have just completed.",
             "enum": [
-              "start_trial",
-              "request_trial",
-              "learn_more"
+              "skills",
+              "setup_prompt"
             ],
             "type": "string"
           },
-          "client_name": {
-            "maxLength": 64,
-            "minLength": 1,
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
             "type": "string"
           },
-          "destination_url": {
-            "format": "uri",
-            "type": "string"
-          },
-          "kind": {
-            "enum": [
-              "mcp_business_education",
-              "mcp_business_education_not_displayed"
-            ],
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
         "required": [
-          "kind"
+          "completed_setup"
         ],
         "type": "object"
-      }
+      },
+      "name": "notion-complete-mcp-setup"
     },
     {
       "annotations": {
@@ -947,10 +996,18 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_url": {
             "description": "The full Notion URL of the page to mark as a skill.",
             "maxLength": 2000,
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -965,10 +1022,53 @@ export const manifest = {
       "annotations": {
         "destructiveHint": false,
         "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Turn an existing regular database into a Meetings database, so its rows can be meeting notes. Existing rows are kept as they are. Only pass dateProperty or attendeesProperty when the user chose an existing property; otherwise a single matching property is reused and a missing one is created.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "attendeesProperty": {
+            "description": "Name of an existing person property to use as the meeting attendees.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "databaseUrl": {
+            "description": "URL of the database to convert, or of its data source or one of its views.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "dateProperty": {
+            "description": "Name of an existing date property to use as the meeting date.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "databaseUrl"
+        ],
+        "type": "object"
+      },
+      "name": "notion-convert-to-meetings-database"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": true,
         "readOnlyHint": false
       },
-      "description": "Create an attachment and upload it to Notion.\n\nProvide exactly one source:\n- content for small UTF-8 text artifacts such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG files.\n- source_url for a direct, publicly reachable HTTPS file URL.\n- source_file_id for a file this exact integration already uploaded. When create_file_upload is available, use it for local files so the upload has the same owner.\n\n\nFor content and source_url, filename must use a supported extension and content_type must agree with it. Omit content_type to infer it. source_file_id takes neither because the stored upload carries both. For larger files, redirects, or authenticated downloads, upload through the Notion File Upload API with this integration's token and pass source_file_id.\n\nThe response includes a markdown_source value. To place the uploaded file on a page, pass that source to create-pages or update-page. To attach it to a comment, include suggested_markdown on a separate line in create-comment markdown. Unattached uploads remain temporary and are deleted once they expire: content and source_url open a fresh one-hour window, while source_file_id keeps the window that opened when the file was first uploaded, so place that source promptly and upload the file again if it has already expired. \"HTML\", \"HTML block\", \"HTML artifact\", and \"HTML embed\" all mean an HTML file placed with <embed src=\"file-upload://...\"> so Notion renders the sandboxed preview. Never place HTML in a code block or file block. Use <file src=\"file-upload://...\"> for other files.",
+      "description": "Create an attachment and upload it to Notion.\n\nProvide exactly one source:\n- content for small UTF-8 text artifacts such as HTML, Markdown, plain text, CSV, JSON, XML, CSS, YAML, TSV, calendar, GPX, or SVG files.\n- source_url for a direct, publicly reachable HTTPS file URL.\n- source_file_id for a file this exact integration already uploaded. When create_file_upload is available, use it for local files so the upload has the same owner.\n\n\nFor content and source_url, filename must use a supported extension and content_type must agree with it. Omit content_type to infer it. source_file_id takes neither because the stored upload carries both. For larger files, redirects, or authenticated downloads, upload through the Notion File Upload API with this integration's token and pass source_file_id.\n\nThe response includes a markdown_source value. To place the uploaded file on a page, pass that source to create-pages or update-page. To attach it to a comment, include suggested_markdown on a separate line in create-comment markdown. Unattached uploads remain temporary and are deleted once they expire: content and source_url open a fresh one-hour window, while source_file_id keeps the window that opened when the file was first uploaded, so place that source promptly and upload the file again if it has already expired. \"HTML\", \"HTML block\", \"HTML artifact\", and \"HTML embed\" all mean an HTML file placed with <embed source=\"file-upload://...\" /> so Notion renders the sandboxed preview. Never place HTML in a code block or file block. Use <file source=\"file-upload://...\" /> for other files.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -987,6 +1087,14 @@ export const manifest = {
           "filename": {
             "description": "The filename to create in Notion, including a supported extension such as .html, .md, .pdf, or .png. Required with content and source_url. Omit it with source_file_id; the stored upload already carries a filename.",
             "minLength": 1,
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "source_file_id": {
@@ -1013,7 +1121,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Add a comment to a page or specific content.\n\nProvide `page_id` to identify the page, then choose ONE targeting mode:\n- `page_id` alone: Add a top-level comment to the page\n- `page_id` + `selection_with_ellipsis`: Highlight selected text within one block, or comment on the block where the match starts if no inline highlight can be resolved. No matching content returns an error.\n- `reply_to_comment_id`: Reply to a comment using its `id` from get-comments (page_id is still required)\n- `discussion_id`: Reply to an existing discussion (page_id is still required)\n\n\nProvide exactly one content format:\n- `markdown`: Preferred. Inline Notion-flavored Markdown for comment text. For exact syntax, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using `$`Equation`$`, and user/page/database/date mention tags such as `<mention-date start=\"YYYY-MM-DD\"/>`. To attach a file created by `create-file-upload` or `create-attachment`, include its returned `suggested_markdown` on a separate line; up to three file attachments are supported. Do not use UI shortcuts like `@today`, `@name`, `[[page]]`, or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real `url` where required by the spec. Other block-level Markdown such as headings, lists, tables, blockquotes, and fenced code blocks is stored as plain comment text rather than rendered as blocks.\n- `rich_text`: Array of rich text objects.",
+      "description": "Add a comment to a page or specific content.\n\nProvide `page_id` to identify the page, then choose ONE targeting mode:\n- `page_id` alone: Add a top-level comment to the page\n- `page_id` + `selection_with_ellipsis`: Highlight selected text within one block, or comment on the block where the match starts if no inline highlight can be resolved. No matching content returns an error.\n- `reply_to_comment_id`: Reply to a comment using its `id` from get-comments (page_id is still required)\n- `discussion_id`: Reply to an existing discussion (page_id is still required)\n\n\nProvide exactly one content format:\n- `markdown`: Preferred. Inline Notion-flavored Markdown for comment text. For exact syntax, read the MCP resource `notion://docs/notion-flavored-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using `$Equation$`, user, page, and database mentions such as `<mention url=\"user://...\" />`, and date mentions such as `<date start=\"YYYY-MM-DD\" />`. To attach a file created by `create-file-upload` or `create-attachment`, include its returned `suggested_markdown` on a separate line; up to three file attachments are supported. Do not use UI shortcuts like `@today`, `@name`, `[[page]]`, or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real `url` where required by the spec. Other block-level Markdown such as headings, lists, tables, blockquotes, and fenced code blocks is stored as plain comment text rather than rendered as blocks.\n- `rich_text`: Array of rich text objects.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1022,12 +1130,16 @@ export const manifest = {
             "description": "The ID or URL of an existing discussion to reply to (e.g., discussion://pageId/blockId/discussionId).",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "markdown": {
-            "description": "The content of the comment as a Markdown string. Provide exactly one of markdown or rich_text. For exact syntax, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using $`Equation`$, and user/page/database/date mention tags such as <mention-date start=\"YYYY-MM-DD\"/>. To attach a file created by create-file-upload or create-attachment, include its returned suggested_markdown on a separate line; up to three file attachments are supported. Do not use UI shortcuts like @today, @name, [[page]], or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real url where required by the spec. Other block-level Markdown such as fenced code blocks, headings, lists, tables, and blockquotes is stored as plain comment text rather than rendered as blocks. Example: <example>Looks good.</example>.",
+            "description": "The content of the comment as a Markdown string. Provide exactly one of markdown or rich_text. For exact syntax, read the MCP resource `notion://docs/notion-flavored-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using $Equation$, user, page, and database mentions such as <mention url=\"user://...\" />, and date mentions such as <date start=\"YYYY-MM-DD\" />. To attach a file created by create-file-upload or create-attachment, include its returned suggested_markdown on a separate line; up to three file attachments are supported. Do not use UI shortcuts like @today, @name, [[page]], or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real url where required by the spec. Other block-level Markdown such as fenced code blocks, headings, lists, tables, and blockquotes is stored as plain comment text rather than rendered as blocks. Example: <example>Looks good.</example>.",
             "type": "string"
           },
           "page_id": {
-            "description": "The ID of the page to comment on (with or without dashes).",
+            "description": "The page ID, with or without dashes, or a Notion page URL.",
             "type": "string"
           },
           "reply_to_comment_id": {
@@ -1449,6 +1561,10 @@ export const manifest = {
           "selection_with_ellipsis": {
             "description": "Unique content snippet: ~10 characters from each end, joined by \"...\". A match within one block's text gets an inline comment on that text; otherwise, comment on the block where the match starts. No match returns an error.",
             "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -1465,7 +1581,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Creates a new Notion database using SQL DDL syntax, or a canonical typed database for tasks, projects, or skills.\n\nProvide exactly one of:\n- schema: a CREATE TABLE statement. If no title property is provided, \"Name\" is auto-added.\n- database_type: one of tasks, projects, or skills. The database is created with the canonical required properties and typed metadata used by Notion.\n\n\nFor schema, use CREATE TABLE with double-quoted column names and single-quoted type options. If no title property is provided, \"Name\" is auto-added.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nReturns Markdown with schema, SQLite definition, and data source ID in <data-source> tag for use with update_data_source and query_data_sources tools.",
+      "description": "Creates a new Notion database using SQL DDL syntax, or a canonical typed database for tasks, projects, or skills.\n\nProvide exactly one of:\n- schema: a CREATE TABLE statement. If no title property is provided, \"Name\" is auto-added.\n- database_type: one of tasks, projects, or skills. The database is created with the canonical required properties and typed metadata used by Notion.\n\n\nFor schema, use CREATE TABLE with double-quoted column names and single-quoted type options. If no title property is provided, \"Name\" is auto-added.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- Option names can't contain commas: use '$1000+', not '$1,000+'. List separate options as 'A', 'B', not 'A, B'.\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'WEB-BUG'] / CREATED_TIME / LAST_EDITED_TIME\n- UNIQUE_ID PREFIX: 2-10 characters, a letter then letters, digits, or hyphens (e.g. 'TASK-ID', not 'TASK_ID' or 'T'). Each prefix can be used by only one data source per workspace, so prefer a specific prefix like 'WEB-BUG' over 'TASK'.\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nReturns Markdown with schema, SQLite definition, and data source ID in <data-source> tag for use with update_data_source and query_data_sources tools.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1481,6 +1597,10 @@ export const manifest = {
           },
           "description": {
             "description": "The description of the new database.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
             "type": "string"
           },
           "parent": {
@@ -1505,7 +1625,11 @@ export const manifest = {
             "type": "object"
           },
           "schema": {
-            "description": "SQL DDL CREATE TABLE statement defining the database schema. Cannot be combined with database_type. Column names must be double-quoted and type options use single quotes.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- Minimal: <example>CREATE TABLE (\"Name\" TITLE)</example>\n- With options: <example>CREATE TABLE (\"Name\" TITLE, \"Budget\" NUMBER FORMAT 'dollar', \"Tags\" MULTI_SELECT('eng':blue, 'design':pink), \"Task ID\" UNIQUE_ID PREFIX 'PRJ')</example>\n- Self-relations are a two-step flow: create the database, then use its data source ID with update_data_source to add paired properties such as RELATION('ds', DUAL 'Children' 'children').",
+            "description": "SQL DDL CREATE TABLE statement defining the database schema. Cannot be combined with database_type. Column names must be double-quoted and type options use single quotes.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- Option names can't contain commas: use '$1000+', not '$1,000+'. List separate options as 'A', 'B', not 'A, B'.\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'WEB-BUG'] / CREATED_TIME / LAST_EDITED_TIME\n- UNIQUE_ID PREFIX: 2-10 characters, a letter then letters, digits, or hyphens (e.g. 'TASK-ID', not 'TASK_ID' or 'T'). Each prefix can be used by only one data source per workspace, so prefer a specific prefix like 'WEB-BUG' over 'TASK'.\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- Minimal: <example>CREATE TABLE (\"Name\" TITLE)</example>\n- With options: <example>CREATE TABLE (\"Name\" TITLE, \"Budget\" NUMBER FORMAT 'dollar', \"Tags\" MULTI_SELECT('eng':blue, 'design':pink), \"Task ID\" UNIQUE_ID PREFIX 'PRJ')</example>\n- Self-relations are a two-step flow: create the database, then use its data source ID with update_data_source to add paired properties such as RELATION('ds', DUAL 'Children' 'children').",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "title": {
@@ -1539,6 +1663,14 @@ export const manifest = {
             "description": "The filename to create in Notion, including a supported extension such as .pdf, .png, or .zip.",
             "minLength": 1,
             "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -1560,6 +1692,10 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "parent": {
             "anyOf": [
               {
@@ -1591,6 +1727,10 @@ export const manifest = {
             ],
             "description": "Where to create the Folder."
           },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "title": {
             "description": "The title of the new Folder.",
             "type": "string"
@@ -1608,10 +1748,166 @@ export const manifest = {
       "annotations": {
         "destructiveHint": false,
         "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Create a Notion meeting note. Use this instead of create_pages whenever the user asks for a meeting note. content is written to the meeting note's Notes tab. Omit parent to file the note where the user's meeting notes go by default; pass parent only when the user names a destination. If parent is a regular database, not a Meetings database, first ask the user whether to convert it with convert_to_meetings_database. If the request refers to a scheduled meeting, first find it with the calendar tools and pass calendarEvent, without parent, title or content; if none matches, create the note without it. With calendarEvent, returns the event's meeting note (status \"existing\") or creates one filed and titled like the event's other notes; add content to it afterwards. Without calendarEvent, creates a new meeting note on every call.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "calendarEvent": {
+            "additionalProperties": false,
+            "description": "The calendar event to link the meeting note to. Copy calendar and eventId from the event returned by calendar tools.",
+            "properties": {
+              "calendar": {
+                "additionalProperties": false,
+                "description": "The calendar the event belongs to.",
+                "properties": {
+                  "accountId": {
+                    "description": "ID of the calendar account.",
+                    "type": "string"
+                  },
+                  "calendarId": {
+                    "description": "ID of the calendar.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "accountId",
+                  "calendarId"
+                ],
+                "type": "object"
+              },
+              "eventId": {
+                "description": "ID of the event.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "calendar",
+              "eventId"
+            ],
+            "type": "object"
+          },
+          "content": {
+            "description": "The meeting note's Notes, in Notion Markdown (tool-docs://notion/notion-markdown.md). Do not wrap them in <meeting-notes> tags.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "description": "Parent type.",
+                    "enum": [
+                      "user"
+                    ],
+                    "type": "string"
+                  },
+                  "url": {
+                    "description": "URL of the user.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "description": "Parent type.",
+                    "enum": [
+                      "page"
+                    ],
+                    "type": "string"
+                  },
+                  "url": {
+                    "description": "URL of the page.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "description": "Parent type.",
+                    "enum": [
+                      "dataSource"
+                    ],
+                    "type": "string"
+                  },
+                  "url": {
+                    "description": "URL of the data source.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "description": "Parent type.",
+                    "enum": [
+                      "teamspace"
+                    ],
+                    "type": "string"
+                  },
+                  "url": {
+                    "description": "URL of the teamspace.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "url"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Where to file the meeting note. Pass only when the user names a destination; omit it to use the user's default meeting notes database. Pass a page to append the meeting note to the page content."
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "title": {
+            "description": "Meeting note title.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-create-meeting-note"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Creates one or more Notion pages with the specified properties and content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT guess or hallucinate Markdown syntax. Do not put the page title at the top of content; set it in properties. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nUse a named destination as parent. Otherwise use \"creation_mode\": \"draft\" for a durable private page. Do not combine draft mode with parent, or move or share it without direction.\n\nFor a database destination, ALWAYS fetch first. Use its collection:// URL as data_source_id, exact property names, and title property. Never put a database ID in page_id. Outside a database, the only allowed property is the required \"title\".\n\nFor reusable instructions, set \"is_skill\": true. Before creating a skill, read the MCP resource `notion://docs/skills` through your MCP client's resource-reading interface. If your client does not support reading MCP resources, call the Notion \"fetch\" tool with this URI instead. Do NOT pass this URI to any other URL-fetching tool. Do not mark ordinary pages or drafts as skills.",
+      "description": "Creates one or more Notion pages with the specified properties and content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/notion-flavored-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT invent Markdown syntax. Put the page title in properties, not content. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nUse a named destination as parent. Otherwise use \"creation_mode\": \"draft\" for a durable private page. Do not combine draft mode with parent, or move or share it without direction.\n\nFor a meeting note, use create_meeting_note if available, even in a Meetings database, unless the user wants a regular page.\n\nFor a database, ALWAYS fetch first. Use its collection:// URL as data_source_id, exact property names, and title property. Never put a database ID in page_id. Outside a database, the only allowed property is the required \"title\".\n\n\n\nFor reusable instructions, set \"is_skill\": true. Before creating a skill, read the MCP resource `notion://docs/skills` through your MCP client's resource-reading interface. If your client does not support reading MCP resources, call the Notion \"fetch\" tool with this URI instead. Do NOT pass this URI to any other URL-fetching tool. Do not mark ordinary pages or drafts as skills. Report any \"warnings\" in the result to the user.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -1627,18 +1923,26 @@ export const manifest = {
             ],
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "pages": {
             "description": "The pages to create.",
             "items": {
               "additionalProperties": false,
               "properties": {
                 "content": {
-                  "description": "The content of the new page, using Notion Markdown. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.",
+                  "description": "The content of the new page, using Notion Markdown. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.",
                   "type": "string"
                 },
                 "cover": {
                   "description": "An external image URL for the page cover. Use \"none\" to explicitly set no cover. Omit to leave unchanged.",
                   "type": "string"
+                },
+                "full_width": {
+                  "description": "Set to true for a full-width page, or false for the default width. Omit to use the default. For database pages, overrides the database layout for this page only.",
+                  "type": "boolean"
                 },
                 "icon": {
                   "description": "An emoji character (e.g. \"🚀\"), a custom emoji by name (e.g. \":rocket_ship:\"), a Notion icon identifier as returned by fetch (e.g. \"icons/pizza_blue\"), or an external image URL. Use \"none\" to explicitly set no icon. Omit to leave unchanged. Keep the title free of a duplicate leading emoji because the icon renders separately.",
@@ -1691,13 +1995,6 @@ export const manifest = {
           },
           "parent": {
             "anyOf": [
-              {
-                "description": "Always `memory`",
-                "enum": [
-                  "memory"
-                ],
-                "type": "string"
-              },
               {
                 "additionalProperties": {},
                 "properties": {
@@ -1772,7 +2069,11 @@ export const manifest = {
                 "type": "object"
               }
             ],
-            "description": "All pages in one call share this parent. Pass \"memory\" to save a personal memory; see notion://docs/memory. Otherwise use a page (page_id), database page (database_id), data source (data_source_id), or teamspace root (teamspace_id, from get_teams). Teamspace roots require a user-backed connection and permission to add top-level pages. A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit \"creation_mode\": \"draft\" over omitting the parent."
+            "description": "All pages in one call share this parent. Otherwise use a page (page_id), database page (database_id), data source (data_source_id), or teamspace root (teamspace_id, from get_teams). Teamspace roots require a user-backed connection and permission to add top-level pages. A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit \"creation_mode\": \"draft\" over omitting the parent."
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -1789,13 +2090,72 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
+      "description": "Propose one precise, reviewable change without changing accepted page content. Copy old_text exactly from fetch, use one suggestion per localized change, and use get_suggested_edit to inspect it before any later resolution.\n\nRequires a Business or Enterprise workspace plan. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "Optional inline Markdown comment that starts the suggestion thread.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "mode": {
+            "description": "How to apply new_text relative to old_text. Defaults to replace.",
+            "enum": [
+              "replace",
+              "insert_before",
+              "insert_after"
+            ],
+            "type": "string"
+          },
+          "new_text": {
+            "description": "Proposed Notion Markdown. With replace, it replaces old_text; use an empty string to suggest deletion. With insert_before or insert_after, it is only the text to insert and old_text remains unchanged.",
+            "type": "string"
+          },
+          "old_text": {
+            "description": "Unique, non-empty exact text copied from the accepted Notion Markdown returned by fetch.",
+            "type": "string"
+          },
+          "page_id": {
+            "description": "Page UUID or URL containing the target text.",
+            "type": "string"
+          },
+          "property_name": {
+            "description": "Exact page title or database title/text property name. Omit for page body text.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page_id",
+          "old_text",
+          "new_text"
+        ],
+        "type": "object"
+      },
+      "name": "notion-create-suggested-edit"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Create a new view on a Notion database.\n\nUse fetch first to get database_id, parent_page_id, and the collection:// data_source_id. The caller needs edit access to the database or parent page and access to the data source.\n\nProvide exactly one placement: database_id adds a view tab to that database; parent_page_id appends an inline linked database view to that page. Always provide data_source_id.\n\nSupported types: table, board, list, calendar, timeline, gallery, form, chart, map, and dashboard.\n\nThe optional configure field uses the view DSL for filters, sorts, grouping, and display. Read notion://docs/view-dsl-spec through the MCP resource interface, or pass that URI to the Notion fetch tool. Do not guess the syntax.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
           "configure": {
-            "description": "View configuration DSL directives and examples:\n- FILTER \"Property\" = \"value\" — filter rows. Relation values must be a page URL or UUID; person values must be a user URI (user://<user_id>), user UUID, or \"me\". Names are not supported for either.\n- QUICK FILTER \"Property\" — add a quick filter to the view's filter bar with no criteria; add a condition to preselect one (QUICK FILTER \"Status\" = \"Done\")\n- SORT BY \"Property\" ASC — sort rows\n- GROUP BY \"Property\" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — group by property (required for board views)\n- SUB GROUP BY \"Property\" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — add board sub-grouping\n- CARD LAYOUT default | compact — set board or gallery card layout\n- CALENDAR BY \"Property\" — date property (required for calendar views)\n- TIMELINE BY \"Start\" TO \"End\" — date range (required for timeline views)\n- MAP BY \"Property\" — location property (required for map views)\n- CHART column|bar|line|donut|number — chart type with optional AGGREGATE, COLOR, HEIGHT, SORT, STACK BY, CAPTION\n- FORM CLOSE|OPEN — close/open form submissions\n- FORM ANONYMOUS true|false — toggle anonymous submissions\n- FORM PERMISSIONS none|reader|editor — set submission permissions\n- SHOW \"Prop1\", \"Prop2\" — set visible properties\n- COVER \"Property\" — cover image property\n\n\n<example>SHOW \"Name\", \"Status\", \"Due Date\"</example>\n<example>GROUP BY \"Status\" BY GROUP SHOW EMPTY; SUB GROUP BY \"Priority\"; CARD LAYOUT compact</example>\n<example>FILTER \"Status\" = \"In Progress\"; SORT BY \"Due Date\" ASC</example>\n<example>CALENDAR BY \"Due Date\"</example>\n<example>TIMELINE BY \"Start\" TO \"End\"</example>\n<example>FILTER \"Company\" = \"Acme\"</example>",
+            "description": "View configuration DSL directives and examples:\n- FILTER \"Property\" = \"value\" — filter rows. Relation values must be a page URL or UUID; person values must be a user URI (user://<user_id>), user UUID, or \"me\". Names are not supported for either.\n- QUICK FILTER \"Property\" — add a quick filter to the view's filter bar with no criteria; add a condition to preselect one (QUICK FILTER \"Status\" = \"Done\")\n- SORT BY \"Property\" ASC — sort rows\n- GROUP BY \"Property\" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — group by property (required for board views)\n- SUB GROUP BY \"Property\" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — add board sub-grouping BY OPTION and BY GROUP apply only to status properties and rollups that return status values (Show original or Show unique). For select and multi_select properties, omit both modifiers, even if the property is named \"Status\" (for example, GROUP BY \"Status\").\n- CARD LAYOUT default | compact — set board or gallery card layout\n- CARD SIZE small|medium|large — set gallery card size independently of its cover\n- CALENDAR BY \"Property\" — date property (required for calendar views)\n- TIMELINE BY \"Start\" TO \"End\" — date range (required for timeline views)\n- MAP BY \"Property\" — location property (required for map views)\n- CHART column|bar|line|donut|number — chart type with optional AGGREGATE, COLOR, HEIGHT, SORT, STACK BY, CAPTION\n- FORM CLOSE|OPEN — close/open form submissions\n- FORM ANONYMOUS true|false — toggle anonymous submissions\n- FORM PERMISSIONS none|reader|editor — set submission permissions\n- SHOW \"Prop1\", \"Prop2\" — set visible properties\n- WIDTH \"Prop1\" 320, \"Prop2\" 120 — set table column widths in pixels\n- COVER \"Property\" — cover image property\n- WRAP PROPERTIES true|false — wrap configured gallery property values\n- ICON \"🚀\" — view tab icon: an emoji, a Notion icon such as \"icons/rocket_blue\", or an image URL\n- SUBSET FILTER \"Property\" = \"value\"; SUBSET LIMIT 10000 — choose which XL database rows this view syncs (XL data sources only)\n\n\n<example>SHOW \"Name\", \"Status\", \"Due Date\"</example>\n<example>GROUP BY \"Status\" BY GROUP SHOW EMPTY; SUB GROUP BY \"Priority\"; CARD LAYOUT compact</example>\n<example>SHOW \"Name\", \"Status\"; CARD SIZE small; WRAP PROPERTIES true</example>\n<example>FILTER \"Status\" = \"In Progress\"; SORT BY \"Due Date\" ASC</example>\n<example>CALENDAR BY \"Due Date\"</example>\n<example>TIMELINE BY \"Start\" TO \"End\"</example>\n<example>FILTER \"Company\" = \"Acme\"</example>",
             "type": "string"
           },
           "data_source_id": {
@@ -1806,12 +2166,24 @@ export const manifest = {
             "description": "The database to add a view tab to. Accepts a Notion URL or a bare UUID. Mutually exclusive with `parent_page_id`; exactly one must be provided.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "name": {
             "description": "The name of the view.",
             "type": "string"
           },
           "parent_page_id": {
             "description": "A page to create an inline linked database view on, like the UI /linked command. Accepts a Notion URL or a bare UUID. The new linked view block is appended at the end of the page and references `data_source_id`. Mutually exclusive with `database_id`; exactly one must be provided.",
+            "type": "string"
+          },
+          "show_data_source_title": {
+            "description": "Whether the new linked view block shows its data source title above the view, like the Show data source title toggle in the Notion app. Defaults to true. Only valid with `parent_page_id`.",
+            "type": "boolean"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "type": {
@@ -1847,13 +2219,21 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Delete a comment you wrote. Get the comment ID from get_comments or create_comment. If it is the last comment in its discussion, the discussion is removed too. Use this only when the user asks to delete a comment; to fix a comment, use update_comment instead. You can only delete your own comments.\n\nRequires a Business or Enterprise plan.",
+      "description": "Delete a comment you wrote. Get the comment ID from get_comments or create_comment. If it is the last comment in its discussion, the discussion is removed too. Use this only when the user asks to delete a comment; to fix a comment, use update_comment instead. You can only delete your own comments.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "comment_id": {
             "description": "The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -1885,6 +2265,14 @@ export const manifest = {
             "minItems": 1,
             "type": "array"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "user_confirmed": {
             "description": "Set to true only after the user explicitly asked to delete these exact databases, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.",
             "type": "boolean"
@@ -1909,6 +2297,10 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_ids": {
             "description": "IDs of the pages to move to Trash, 1 to 20. Database rows are pages. Duplicate IDs are processed once.",
             "items": {
@@ -1917,6 +2309,10 @@ export const manifest = {
             "maxItems": 20,
             "minItems": 1,
             "type": "array"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           },
           "user_confirmed": {
             "description": "Set to true only after the user explicitly asked to delete these exact pages, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.",
@@ -1945,6 +2341,14 @@ export const manifest = {
           "file_upload_id": {
             "description": "The FileUpload ID returned by the create-attachment tool.",
             "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -1969,6 +2373,14 @@ export const manifest = {
           "id": {
             "description": "Identifier for a Notion skill page.",
             "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -1990,8 +2402,16 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_id": {
-            "description": "The ID of the page to duplicate. This is a v4 UUID, with or without dashes, and can be parsed from a Notion page URL.",
+            "description": "The page ID, with or without dashes, or a Notion page URL.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -2009,13 +2429,13 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Retrieves details about a Notion entity (page, database, data source, or saved database view) by URL or ID.\n\nProvide a URL or ID in `id`. Make multiple calls for multiple entities.\n\nFor pages, use path, verification, edit time, and truncation metadata to assess the source. Treat recency as context, not proof. Report material uncertainty when sources conflict.\n\nPages use enhanced Markdown format. For the complete specification, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool.\n\nPass a `notion://docs/*` URI as `id` to read that MCP documentation resource.\n\nDatabases return data sources in `<data-source url=\"collection://...\">` tags. Fetch the collection:// URL for its schema and use it with update_data_source or query_data_sources. Multi-source databases return more than one data source.\n\nSaved views return filters, sorts, and display settings. To query their rows, use query_data_sources with `mode: \"view\"`.\n\nA null cover or icon means none; an omitted one means unavailable, not absent. Keep a page's Markdown icon attribute for edit round trips. File URLs expire; re-fetch to refresh them. Uploaded media blocks use stable `notion-file-block://` sources; keep them when editing or copying Markdown. Get download URLs with get_file_download_urls, or set `include_file_urls` to true for a `references` map. Before relying on page content, check `truncated`, `unknown_block_count`, and `unknown_block_ids` for omitted subtrees.\n\nSet `include_discussions` to true for discussion counts, markers, previews, and `discussion://` URLs that correlate with get_comments.\n\nUse get_tool_access to check tool availability, parameter restrictions, and upgrade links for this connection.",
+      "description": "Retrieves details about a Notion entity (page, database, data source, or saved database view) by URL or ID.\n\nProvide a URL or ID in `id`. Make multiple calls for multiple entities.\n\nFor pages, use path, verification, edit time, and truncation metadata to assess the source. Treat recency as context, not proof. Report material uncertainty when sources conflict.\n\nPages use Notion-flavored Markdown. For the complete specification, read the MCP resource `notion://docs/notion-flavored-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool.\n\nPass a `notion://docs/*` URI as `id` to read that MCP documentation resource.\n\nDatabases return data sources in `<data-source url=\"collection://...\">` tags. Fetch the collection:// URL for its schema and use it with update_data_source or query_data_sources. Multi-source databases return more than one data source.\n\nSaved views return filters, sorts, and display settings. To query their rows, use query_data_sources with `mode: \"view\"`.\n\nA null cover or icon means none; an omitted one means unavailable, not absent. Keep a page's Markdown icon attribute for edit round trips. File URLs expire; re-fetch to refresh them. Uploaded media blocks use stable `notion-file-block://` sources; keep them when editing or copying Markdown. Get download URLs with get_file_download_urls, or set `include_file_urls` to true for a `references` map. Before relying on page content, check `truncated`, `unknown_block_count`, and `unknown_block_ids` for omitted subtrees.\n\nSet `include_discussions` to true for discussion counts, markers, previews, and `discussion://` URLs that correlate with get_comments.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
           "id": {
-            "description": "The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass \"memory\" to fetch the connected user's About page and memory database in this workspace without creating them. Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/enhanced-markdown-spec</example>.",
+            "description": "The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/notion-flavored-markdown-spec</example>.",
             "type": "string"
           },
           "include_discussions": {
@@ -2029,6 +2449,14 @@ export const manifest = {
           "include_transcript": {
             "description": "Whether to include meeting note transcripts. Defaults to false. When true, full transcripts are included; when false, a placeholder with the meeting note URL is shown instead.",
             "type": "boolean"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -2050,6 +2478,14 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "task_id": {
             "description": "The ID of the async task to retrieve, as returned in the async_task response of the tool that started it.",
             "minLength": 1,
@@ -2070,25 +2506,33 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get comments and discussions from a Notion page.\n\nReturns discussions with full comment content in XML format. By default, returns page-level discussions only. On supported Business connections, pending suggested edits use `kind=\"suggested_edit\"` and their `discussion://` URL can be passed to `get_suggested_edit`. Resolved suggestions stay retired. Check `suggested_edits_status` to distinguish an empty result from unavailable suggestion discovery. Comments you wrote have `by-you=\"true\"`.\n\nTip: Use the `fetch` tool with `include_discussions: true` first to see where discussions are anchored in the page content, then use this tool to retrieve full discussion threads. The `discussion://` URLs in the fetch output match the discussion IDs returned here.\n\nParameters:\n- `include_all_blocks`: Include discussions on child blocks (default: false)\n- `include_resolved`: Include resolved discussions (default: false)\n- `discussion_id`: Fetch a specific discussion by ID or URL\n\n\n<example>{\"page_id\": \"page-uuid\"}</example>\n<example>{\"page_id\": \"page-uuid\", \"include_all_blocks\": true}</example>\n<example>{\"page_id\": \"page-uuid\", \"discussion_id\": \"discussion://pageId/blockId/discussionId\"}</example>",
+      "description": "Get comments and discussions from a Notion page.\n\nReturns page-level and inline discussions in XML format. Long results are shortened:\n- If `shown-count` is less than `total-count`, some discussions were left out. Up to 50 are listed as `<omitted-discussion id=\"discussion://...\"/>`: pass that URL as `discussion_id` to fetch it. If `omitted-truncated=\"true\"`, more were left out; `fetch` with `include_discussions: true` may show their URLs.\n- Each discussion has `comment-count` (comments shown) and `total-comment-count`. A discussion that does not fit keeps its newest comments. When older comments were left out, it has `next-cursor`: pass it as `cursor` with that `discussion_id` to get the next older comments. Repeat until a response has no `next-cursor`. If it has `reactions-truncated=\"true\"`, some of its reactions were left out to fit. On supported Business connections, pending suggested edits use `kind=\"suggested_edit\"` and their `discussion://` URL can be passed to `get_suggested_edit`. Resolved suggestions stay retired. Check `suggested_edits_status` to distinguish an empty result from unavailable suggestion discovery. Comments you wrote have `by-you=\"true\"`.\n\n\nTip: Use the `fetch` tool with `include_discussions: true` first to see where discussions are anchored in the page content, then use this tool to retrieve full discussion threads. The `discussion://` URLs in the fetch output match the discussion IDs returned here.\n\nParameters:\n- `include_resolved`: Include resolved discussions (default: false)\n- `discussion_id`: Fetch a specific discussion by ID or URL\n- `cursor`: A discussion's `next-cursor`, to get its older comments (requires `discussion_id`)\n\n\n<example>{\"page_id\": \"page-uuid\"}</example>\n<example>{\"page_id\": \"page-uuid\", \"discussion_id\": \"discussion://pageId/blockId/discussionId\"}</example>\n<example>{\"page_id\": \"page-uuid\", \"discussion_id\": \"discussion://pageId/blockId/discussionId\", \"cursor\": \"comment-uuid\"}</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "cursor": {
+            "description": "The `next-cursor` value from a discussion in an earlier response. Returns that discussion's older comments. Requires `discussion_id`.",
+            "type": "string"
+          },
           "discussion_id": {
             "description": "Fetch a specific discussion by ID or discussion URL (e.g., discussion://pageId/blockId/discussionId).",
             "type": "string"
-          },
-          "include_all_blocks": {
-            "description": "Include discussions on child blocks, not just page-level discussions. Defaults to false.",
-            "type": "boolean"
           },
           "include_resolved": {
             "description": "Include resolved discussions in the response. Defaults to false.",
             "type": "boolean"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_id": {
-            "description": "Identifier for a Notion page.",
+            "description": "The page ID, with or without dashes, or a Notion page URL.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -2110,7 +2554,16 @@ export const manifest = {
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "name": "notion-get-enabled-skills"
@@ -2127,6 +2580,10 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "references": {
             "description": "Stable notion-file-block:// file references, copied exactly from the Markdown returned by fetch. Up to 25 per call.",
             "items": {
@@ -2135,6 +2592,10 @@ export const manifest = {
             "maxItems": 25,
             "minItems": 1,
             "type": "array"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -2156,10 +2617,18 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "query": {
             "description": "Optional group name to search for (case-insensitive), or a group ID from a People property value (`space_permission_group-<id>` or the bare ID) to look up that group.",
             "maxLength": 100,
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -2174,11 +2643,20 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get the current Notion connection's workspace and authenticated user. Call with {}. Returns the workspace ID and name, and the user's ID, name, type, and email when available. Use this tool to identify the connected account. To check tool availability, use get_tool_access.",
+      "description": "Get the current Notion connection's workspace and authenticated user. Call with {}. Returns the workspace ID and name, and the user's ID, name, type, and email when available. Use this tool to identify the connected account.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
-        "properties": {},
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "name": "notion-get-self"
@@ -2190,14 +2668,22 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get the latest turn's status for a Custom Agent session without waiting.\n\nRequires Notion AI.",
+      "description": "Get the latest turn's status for a Custom Agent session without waiting.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "session_url": {
             "description": "Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.",
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -2215,15 +2701,105 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
+      "description": "Returns Notion's setup guide for agents: how to set up Notion as the user's shared context and memory across agents. Call it when the user asks you to set up Notion or the Notion MCP, then follow the guide step by step with the user.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-get-setup-guide"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Get the current user's Notion sidebar tabs, in order, plus catalogs of the shortcuts and sections they can add. Shortcut groups are not returned or editable. Catalog examples are valid update_sidebar_tabs inputs, including configured New page shortcuts and database view sections. Each tab is independent: built-in items may appear in more than one tab. Call this before update_sidebar_tabs.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "notion-get-sidebar-tabs"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read the exact before-and-after diff and currently allowed actions for one pending suggested edit. Call this before deciding whether to accept or reject it.\n\nRequires a Business or Enterprise workspace plan. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "suggested_edit_url": {
+            "description": "Pending suggested-edit discussion URL returned by get_comments or create_suggested_edit.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggested_edit_url"
+        ],
+        "type": "object"
+      },
+      "name": "notion-get-suggested-edit"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Retrieves a list of teams (teamspaces) in the current workspace. Shows which teams exist, user membership status, IDs, names, and roles.\n\nTeams are returned split by membership status and limited to a maximum of 10 results.\n\n<examples>\n1. List all teams (up to the limit of each type): {}\n\n2. Search for teams by name: {\"query\": \"engineering\"}\n\n3. Find a specific team: {\"query\": \"Product Design\"}\n</examples>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "query": {
             "description": "Optional search query to filter teams by name (case-insensitive).",
             "maxLength": 100,
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -2238,11 +2814,19 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Get current tool availability, parameter restrictions, and available upgrade links for this Notion connection. This lookup is optional: tools apply access limits themselves and report them in their results as notices or errors with upgrade links. Use it when the user asks which Notion tools or features are available, or after a result reports restricted access or an upgrade requirement. Call with {} for the full access map, or pass tool_names to narrow the result. Unknown names and tools not exposed to this connection are omitted. The map may report AI search access under ai_search; use search for every content search, which runs AI search when it is available. Tool availability and restricted_parameters are independent. This tool does not grant access or change the workspace.",
+      "description": "Inspect current tool availability, parameter restrictions, and recovery links when diagnosing an access problem or when the user asks about access. For routine work, call the tool you need directly; no access precheck is required. Tool results report access denials and recovery steps for the calling account. Call with {} for the full access map, or pass tool_names, for example [\"search\", \"connector_search\"], to narrow the result. Reuse access information already in context, but the operation's result is authoritative if access changes. Use tools marked \"available\". Use tools marked \"available_with_limit\" within their limits. It shows one of two content-search setups. Unified search: use ai_search when it is available, including user lookup with query_type=\"user\", and search is then omitted; otherwise use search. Split search: ai_search is omitted, search covers Notion pages, databases, and user lookup, and connector_search covers connected sources such as Slack or Google Drive. connector_search needs AI search access and a connected source to return results. A listed tool may still be restricted for the calling account. Tool availability and restricted_parameters are independent: omit restricted options even when the tool is available. Unknown names and tools not exposed to this connection are omitted. This tool does not grant access or change the workspace.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "tool_names": {
             "description": "Optional RunTool names to include, such as search and ai_search. Omit to return all tools visible to this connection. Unknown or unexposed names are omitted. An empty list returns an empty map.",
             "items": {
@@ -2270,6 +2854,10 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_size": {
             "description": "Number of users to return per page (1–100; default 100).",
             "maximum": 100,
@@ -2280,6 +2868,10 @@ export const manifest = {
             "description": "Optional search query to filter users by name or email (case-insensitive).",
             "maxLength": 100,
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "start_cursor": {
@@ -2305,6 +2897,138 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
+      "description": "List what changed in a Notion page or database between two times, who changed it, and whether they used AI, an agent, or an MCP client. Each block, property, row, data source, or view that changed is listed once, with how it looked at the start and at the end of the time range. The range defaults to the last 24 hours. Filter by authors or sources to list only the records those people, agents, or kinds of edits touched; before and after still include everyone's edits, so use a shorter range to isolate one author. To read the whole page at a time, use view_version. Comments are not listed. Changes inside a page's inline databases are not listed either; pass an inline database's url to read them. Times are in UTC; convert them to the user's time zone before you show them. Requires edit access to the page.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "description": "Only return records that these people or agents changed: user:// URLs or agent URLs. Each record's before and after still include everyone's edits in the range, and contributors lists everyone who edited it.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "end_time": {
+            "description": "End of the time range, included, as an ISO 8601 time with a time zone, such as \"2026-10-10T18:05:02Z\". Must be after start_time. Leave it out unless the user names a time; it defaults to now.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "page": {
+            "description": "The page or database to read: a page URL, database URL, data source (collection://) URL, or ID.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "sources": {
+            "description": "Only return records changed through these, such as [\"notion_ai\", \"custom_agent\", \"mcp\"] for changes made by AI. Each record's before and after still include every edit in the range, and contributors lists everyone who edited it.",
+            "items": {
+              "description": "One of: `notion_ai`, `custom_agent`, `mcp`, `database_automation`",
+              "enum": [
+                "notion_ai",
+                "custom_agent",
+                "mcp",
+                "database_automation"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          },
+          "start_time": {
+            "description": "Start of the time range, not included, as an ISO 8601 time with a time zone, such as \"2026-10-10T18:05:02Z\". Leave it out unless the user names a time; it defaults to 24 hours before end_time.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page"
+        ],
+        "type": "object"
+      },
+      "name": "notion-get-version-changes"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Link an existing full-page meeting note to a calendar event. First find the event with the calendar tools. A meeting note embedded in a page appears as a <meeting-notes> tag: pass the URL from that tag, not the URL of the page around it. If the result lists otherMeetingNoteUrls, tell the user the event already has those meeting notes and link them. To create a new meeting note for an event, use create_meeting_note.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "calendarEvent": {
+            "additionalProperties": false,
+            "description": "The calendar event to link the meeting note to. Copy calendar and eventId from the event returned by calendar tools.",
+            "properties": {
+              "calendar": {
+                "additionalProperties": false,
+                "description": "The calendar the event belongs to.",
+                "properties": {
+                  "accountId": {
+                    "description": "ID of the calendar account.",
+                    "type": "string"
+                  },
+                  "calendarId": {
+                    "description": "ID of the calendar.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "accountId",
+                  "calendarId"
+                ],
+                "type": "object"
+              },
+              "eventId": {
+                "description": "ID of the event.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "calendar",
+              "eventId"
+            ],
+            "type": "object"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "meetingNote": {
+            "description": "URL of the existing full-page meeting note to link.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meetingNote",
+          "calendarEvent"
+        ],
+        "type": "object"
+      },
+      "name": "notion-link-meeting-note-to-calendar-event"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "List the current user's favorite pages and databases in sidebar order. Use this when the user refers to a favorite or pinned workspace item. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2314,9 +3038,17 @@ export const manifest = {
             "description": "Opaque pagination cursor from the previous response.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "limit": {
             "description": "Maximum results to return (1-200).",
             "type": "number"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2339,6 +3071,10 @@ export const manifest = {
             "description": "next_cursor from the previous call.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_id": {
             "description": "ID or URL of the page or database to find backlinks for.",
             "type": "string"
@@ -2348,6 +3084,10 @@ export const manifest = {
             "maximum": 100,
             "minimum": 1,
             "type": "integer"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           },
           "types": {
             "description": "Only return these kinds of backlinks. page_mention is an inline @-mention in text, a title, or a caption; link_to_page is a link-to-page block; property_mention is a mention in a database property; comment_mention is a mention in a comment. Omit for all kinds.",
@@ -2379,7 +3119,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List the current user's top-level pages and databases in their Private sidebar section. Use this to browse private workspace structure. For content searches, including keywords and titles, use search. Follow cursor pagination when the complete list is needed.",
+      "description": "List the current user's top-level pages and databases in their Private sidebar section. Use this to browse private workspace structure. For content searches, including keywords and titles, use search. Use connector_search, when listed, for connected sources. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -2388,9 +3128,17 @@ export const manifest = {
             "description": "Opaque pagination cursor from the previous response.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "limit": {
             "description": "Maximum results to return (1-200).",
             "type": "number"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2413,9 +3161,17 @@ export const manifest = {
             "description": "Opaque pagination cursor from the previous response.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "limit": {
             "description": "Maximum results to return (1-200).",
             "type": "number"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2429,7 +3185,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List short summaries of saved events in a Custom Agent session.\n\nRequires Notion AI.",
+      "description": "List short summaries of saved events in a Custom Agent session.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -2452,9 +3208,17 @@ export const manifest = {
             "minimum": 1,
             "type": "integer"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "session_url": {
             "description": "Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.",
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -2473,7 +3237,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List pages and databases in the current user's Shared sidebar section. Use this to browse content shared directly with the user. For content searches, including keywords and titles, use search. Follow cursor pagination when the complete list is needed.",
+      "description": "List pages and databases in the current user's Shared sidebar section. Use this to browse content shared directly with the user. For content searches, including keywords and titles, use search. Use connector_search, when listed, for connected sources. Follow cursor pagination when the complete list is needed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -2482,9 +3246,17 @@ export const manifest = {
             "description": "Opaque pagination cursor from the previous response.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "limit": {
             "description": "Maximum results to return (1-200).",
             "type": "number"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2493,48 +3265,20 @@ export const manifest = {
     },
     {
       "annotations": {
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": false,
-        "readOnlyHint": true
-      },
-      "description": "Search memories that the user's connected agents saved in earlier sessions: context, preferences, corrections, and decisions. Returns the best matches, not every memory. To list, count, or filter memories, fetch id \"memory\" and run query-data-sources on its data source. The first time you use memory in a conversation, whether searching or saving, read notion://docs/memory once.",
-      "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "properties": {
-          "limit": {
-            "description": "Maximum number of memories to return. Defaults to 10 and cannot exceed 50.",
-            "maximum": 50,
-            "minimum": 1,
-            "type": "integer"
-          },
-          "query": {
-            "description": "Words or a short phrase to find in personal memories.",
-            "maxLength": 500,
-            "minLength": 1,
-            "type": "string"
-          }
-        },
-        "required": [
-          "query"
-        ],
-        "type": "object"
-      },
-      "name": "notion-memory-search"
-    },
-    {
-      "annotations": {
-        "destructiveHint": false,
+        "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Move one or more Notion pages or databases to a new parent.",
+      "description": "Move one or more Notion pages or databases to a new parent. People can gain or lose access because moved items inherit access from the new parent.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "new_parent": {
             "anyOf": [
               {
@@ -2624,6 +3368,10 @@ export const manifest = {
             "maxItems": 100,
             "minItems": 1,
             "type": "array"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -2641,8 +3389,1371 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Query Notion data sources using faithful structured rows, SQL, or a saved view.\n\nUse fetch first to read the schema and collection:// URL for every data source you query.\n\nChoose the mode by the data needed; omitting mode uses sql:\n- rows preserves rich-text mentions, links, formatting, dates, and equations. Use it before repairing or rewriting rich-text properties.\n- sql runs read-only SQLite. Use only table and column names shown in each fetched `<sqlite-table>` definition. The system columns include `url` and `createdTime`; use other metadata names only when the table lists them. Do not assume generic names such as `Name` or `Title`, or names such as `page_id`, `rowid`, or `lastEditedTime`. Date properties expand to `date:<Name>:start`, `:end`, `:is_datetime`; `created_time` keeps its base name. Try a column the error suggests, or fetch the data source again for its current `<sqlite-table>` names. Bind untrusted values with `?` placeholders and `params`, and include every needed filter. View filters are not applied automatically. SQL text is lossy: mentions and formatting may be omitted, and links may lose their destination. Never treat that output as proof that a property is corrupt.\n- view runs one saved view's filters and sorts. Omit is_archived or set it false for active rows; true selects archived rows. When has_more is true, pass next_cursor as start_cursor with the same is_archived value.\n\n\nView mode has no tool-specific plan quota. SQL is unlimited on Business and Enterprise with Notion AI. Other plans have a shared workspace limit for single-data-source SQL and cannot query multiple data sources at once.",
+      "description": "Query data source rows, SQL, or a saved view.\n\nUse the required top-level `data` object. Do not pass query parameters at the top level.\n\nFirst fetch every data source's schema and collection:// URL.\n\nMissing-column recovery: try a schema-backed error suggestion or refetch. If correction fails, next call MUST be fetch, NOT SQL, even with new hints. Rebuild from current `<sqlite-table>`; never guess names/IDs.\n\nModes (default: sql):\n- rows preserves mentions, links, formatting, dates, and equations. Use before rich-text repairs/rewrites.\n- sql runs read-only SQLite. No `VALUES`; inline rows: `WITH \"ids\"(\"x\") AS (SELECT 'a' UNION ALL SELECT 'b')`. Use only table/column names in fetched `<sqlite-table>`, never property IDs. Schema keys name properties; schema/view listings (e.g. `displayProperties`) may be unqueryable. Formula/rollup columns must be listed; otherwise use rows/fetch. System `url`/`createdTime` are columns; other metadata must be listed. Never guess `Name`, `Title`, `page_id`, `rowid`, `lastEditedTime`. User `url`/`id` use `userDefined:` columns (e.g. `\"userDefined:url\"`). Date properties expand to `date:<Name>:start`, `:end`, `:is_datetime`; `created_time` keeps its base name. Bind untrusted values with `?` and `params`. Include needed filters; view filters don't apply. SQL may omit mentions/formatting and link destinations. This is not proof of corrupt properties.\n- view runs saved filters/sorts. archive_status: active (default), archived, or all. If has_more, keep archive_status and set start_cursor=next_cursor.\n\n\nRows `limit` and view `page_size` are integers 1-100. Examples: `notion://docs/query-data-sources`.\n\nView mode has no tool-specific plan quota. SQL is unlimited on Business and Enterprise with Notion AI. Other plans have a shared workspace limit for single-data-source SQL and cannot query multiple data sources at once. Call this tool directly. If a SQL limit is reached, follow the guidance in the result or use a saved view.",
       "inputSchema": {
+        "$defs": {
+          "CheckboxFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for checkbox properties.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "checkbox_is",
+                  "checkbox_is_not"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "checkbox"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "additionalProperties": false,
+                "description": "Value to compare.",
+                "properties": {
+                  "type": {
+                    "description": "Filter or value variant.",
+                    "enum": [
+                      "exact"
+                    ],
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value to compare.",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "DateFilter": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operator": {
+                    "description": "Filter operator.",
+                    "enum": [
+                      "date_is",
+                      "date_is_before",
+                      "date_is_after",
+                      "date_is_on_or_before",
+                      "date_is_on_or_after"
+                    ],
+                    "type": "string"
+                  },
+                  "property": {
+                    "description": "Exact data source property name to filter.",
+                    "type": "string"
+                  },
+                  "propertyType": {
+                    "description": "Notion property type used to select valid operators and value shapes.",
+                    "enum": [
+                      "date",
+                      "created_time",
+                      "last_edited_time",
+                      "last_visited_time"
+                    ],
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Filter or value variant.",
+                    "enum": [
+                      "property"
+                    ],
+                    "type": "string"
+                  },
+                  "use_end": {
+                    "description": "For a date property, compare its end date instead of its start date.",
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "exact"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "relative"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "enum": [
+                              "today",
+                              "tomorrow",
+                              "yesterday",
+                              "one_week_ago",
+                              "one_week_from_now",
+                              "one_month_ago",
+                              "one_month_from_now"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Value to compare."
+                  }
+                },
+                "required": [
+                  "type",
+                  "property",
+                  "propertyType",
+                  "operator",
+                  "value"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operator": {
+                    "description": "Filter operator.",
+                    "enum": [
+                      "date_is_within",
+                      "date_is_relative_to"
+                    ],
+                    "type": "string"
+                  },
+                  "property": {
+                    "description": "Exact data source property name to filter.",
+                    "type": "string"
+                  },
+                  "propertyType": {
+                    "description": "Notion property type used to select valid operators and value shapes.",
+                    "enum": [
+                      "date",
+                      "created_time",
+                      "last_edited_time",
+                      "last_visited_time"
+                    ],
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Filter or value variant.",
+                    "enum": [
+                      "property"
+                    ],
+                    "type": "string"
+                  },
+                  "use_end": {
+                    "description": "For a date property, compare its end date instead of its start date.",
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "exact"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "additionalProperties": false,
+                            "description": "Value to compare.",
+                            "properties": {
+                              "end_date": {
+                                "description": "ISO 8601 date or date-time at the end of the range.",
+                                "type": "string"
+                              },
+                              "start_date": {
+                                "description": "ISO 8601 date or date-time at the start of the range.",
+                                "type": "string"
+                              },
+                              "type": {
+                                "description": "Filter or value variant.",
+                                "enum": [
+                                  "daterange"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "count": {
+                            "description": "Number of units in the custom relative range.",
+                            "type": "number"
+                          },
+                          "direction": {
+                            "description": "Whether the custom range extends into the past or future.",
+                            "enum": [
+                              "past",
+                              "future"
+                            ],
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "relative"
+                            ],
+                            "type": "string"
+                          },
+                          "unit": {
+                            "description": "Time unit used to measure a relative date range.",
+                            "enum": [
+                              "year",
+                              "month",
+                              "week",
+                              "day"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "enum": [
+                              "custom"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                          "direction",
+                          "unit",
+                          "count"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "relative"
+                            ],
+                            "type": "string"
+                          },
+                          "unit": {
+                            "description": "Time unit used to measure a relative date range.",
+                            "enum": [
+                              "year",
+                              "month",
+                              "week",
+                              "day"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "enum": [
+                              "surrounding"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                          "unit"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "relative"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "enum": [
+                              "this_week",
+                              "the_past_week",
+                              "the_past_month",
+                              "the_past_year",
+                              "the_next_week",
+                              "the_next_month",
+                              "the_next_year"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Value to compare."
+                  }
+                },
+                "required": [
+                  "type",
+                  "property",
+                  "propertyType",
+                  "operator",
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Property filter for date properties."
+          },
+          "EmptyPropertyFilter": {
+            "additionalProperties": false,
+            "description": "Checks whether a property has any value.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "is_empty",
+                  "is_not_empty"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator"
+            ],
+            "type": "object"
+          },
+          "FormulaFilter": {
+            "additionalProperties": false,
+            "description": "Filter applied to a formula property.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "any",
+                  "none",
+                  "every"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "formula"
+                ],
+                "type": "string"
+              },
+              "resultFilter": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/EmptyPropertyFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/TextFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/NumberFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/DateFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/SelectFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/MultiSelectFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/CheckboxFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/RelationFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/StatusFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/PersonFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/VerificationFilter"
+                  }
+                ],
+                "description": "Filter on the formula's result. The propertyType in the resultFilter should be the resultType of the formula."
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "resultFilter"
+            ],
+            "type": "object"
+          },
+          "MultiSelectFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for multi-select properties.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "enum_contains",
+                  "enum_does_not_contain"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "multi_select"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "description": "Filter or value variant.",
+                        "enum": [
+                          "exact"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Value to compare.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "description": "Filter or value variant.",
+                          "enum": [
+                            "exact"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value to compare.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Value to compare."
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "NumberFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for number properties.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "number_equals",
+                  "number_does_not_equal",
+                  "number_greater_than",
+                  "number_less_than",
+                  "number_greater_than_or_equal_to",
+                  "number_less_than_or_equal_to"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "number",
+                  "auto_increment_id"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "additionalProperties": false,
+                "description": "Value to compare.",
+                "properties": {
+                  "type": {
+                    "description": "Filter or value variant.",
+                    "enum": [
+                      "exact"
+                    ],
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value to compare.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "PersonFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for person-like properties. Exact values use user://, bot://, organization_bot://, or space_permission_group:// URIs; relative values use me.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "person_contains",
+                  "person_does_not_contain"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "person",
+                  "created_by",
+                  "last_edited_by"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "exact"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "type": {
+                            "description": "Filter or value variant.",
+                            "enum": [
+                              "relative"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "Value to compare.",
+                            "enum": [
+                              "me"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "description": "Filter or value variant.",
+                              "enum": [
+                                "exact"
+                              ],
+                              "type": "string"
+                            },
+                            "value": {
+                              "description": "Value to compare.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "description": "Filter or value variant.",
+                              "enum": [
+                                "relative"
+                              ],
+                              "type": "string"
+                            },
+                            "value": {
+                              "description": "Value to compare.",
+                              "enum": [
+                                "me"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "value"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Value to compare."
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "RelationFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for relation properties.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "relation_contains",
+                  "relation_does_not_contain"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "relation"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "description": "Filter or value variant.",
+                        "enum": [
+                          "exact"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Value to compare.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "description": "Filter or value variant.",
+                          "enum": [
+                            "exact"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value to compare.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Value to compare."
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "RollupFilter": {
+            "additionalProperties": false,
+            "properties": {
+              "operator": {
+                "description": "Required for original or unique values. Omit for aggregated values.",
+                "enum": [
+                  "any",
+                  "none",
+                  "every"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "rollup"
+                ],
+                "type": "string"
+              },
+              "resultFilter": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/EmptyPropertyFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/TextFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/NumberFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/DateFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/SelectFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/MultiSelectFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/CheckboxFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/RelationFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/StatusFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/PersonFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/VerificationFilter"
+                  }
+                ],
+                "description": "Filter on the rollup result. Use the same property name as the outer filter."
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "resultFilter"
+            ],
+            "type": "object"
+          },
+          "SelectFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for select properties by option name.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "enum_is",
+                  "enum_is_not"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "select"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "description": "Filter or value variant.",
+                        "enum": [
+                          "exact"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Value to compare.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "description": "Filter or value variant.",
+                          "enum": [
+                            "exact"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value to compare.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Value to compare."
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "StatusFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for status properties by option name.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "status_is",
+                  "status_is_not"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "status"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "description": "Filter or value variant.",
+                        "enum": [
+                          "is_group",
+                          "is_option"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Value to compare.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "description": "Filter or value variant.",
+                          "enum": [
+                            "is_group",
+                            "is_option"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value to compare.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Value to compare."
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "TextFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for text-like properties.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "string_is",
+                  "string_is_not",
+                  "string_contains",
+                  "string_does_not_contain",
+                  "string_starts_with",
+                  "string_ends_with"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "title",
+                  "text",
+                  "url",
+                  "email",
+                  "phone_number"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "additionalProperties": false,
+                "description": "Value to compare.",
+                "properties": {
+                  "type": {
+                    "description": "Filter or value variant.",
+                    "enum": [
+                      "exact"
+                    ],
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value to compare.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "VerificationFilter": {
+            "additionalProperties": false,
+            "description": "Property filter for page verification state.",
+            "properties": {
+              "operator": {
+                "description": "Filter operator.",
+                "enum": [
+                  "verification_is",
+                  "verification_is_not"
+                ],
+                "type": "string"
+              },
+              "property": {
+                "description": "Exact data source property name to filter.",
+                "type": "string"
+              },
+              "propertyType": {
+                "description": "Notion property type used to select valid operators and value shapes.",
+                "enum": [
+                  "verification"
+                ],
+                "type": "string"
+              },
+              "type": {
+                "description": "Filter or value variant.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "description": "Filter or value variant.",
+                        "enum": [
+                          "exact"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Value to compare.",
+                        "enum": [
+                          "verified",
+                          "expired",
+                          "none"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "description": "Filter or value variant.",
+                          "enum": [
+                            "exact"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value to compare.",
+                          "enum": [
+                            "verified",
+                            "expired",
+                            "none"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Value to compare."
+              }
+            },
+            "required": [
+              "type",
+              "property",
+              "propertyType",
+              "operator",
+              "value"
+            ],
+            "type": "object"
+          },
+          "workflowPropertyFilter": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EmptyPropertyFilter"
+              },
+              {
+                "$ref": "#/$defs/TextFilter"
+              },
+              {
+                "$ref": "#/$defs/NumberFilter"
+              },
+              {
+                "$ref": "#/$defs/DateFilter"
+              },
+              {
+                "$ref": "#/$defs/SelectFilter"
+              },
+              {
+                "$ref": "#/$defs/MultiSelectFilter"
+              },
+              {
+                "$ref": "#/$defs/CheckboxFilter"
+              },
+              {
+                "$ref": "#/$defs/RelationFilter"
+              },
+              {
+                "$ref": "#/$defs/StatusFilter"
+              },
+              {
+                "$ref": "#/$defs/PersonFilter"
+              },
+              {
+                "$ref": "#/$defs/VerificationFilter"
+              },
+              {
+                "$ref": "#/$defs/FormulaFilter"
+              },
+              {
+                "$ref": "#/$defs/RollupFilter"
+              }
+            ],
+            "description": "Filter applied to a single property."
+          }
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
@@ -2656,11 +4767,11 @@ export const manifest = {
                     "items": {
                       "type": "string"
                     },
-                    "maxItems": 100,
+                    "maxItems": 10,
                     "type": "array"
                   },
                   "mode": {
-                    "description": "Optional mode parameter. Defaults to 'sql' if not specified. SQL mode does not accept is_archived; that parameter belongs only to view mode.",
+                    "description": "Optional mode parameter. Defaults to 'sql' if not specified. Archive selectors belong only to view mode.",
                     "enum": [
                       "sql"
                     ],
@@ -2688,7 +4799,7 @@ export const manifest = {
                     "type": "array"
                   },
                   "query": {
-                    "description": "Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM \"collection://...\" WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.",
+                    "description": "Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM \"collection://...\" WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Example: if the fetched schema has a date property `Due`, use `\"date:Due:start\"`, not `\"Due\"`. Properties of type `created_time` or `last_edited_time` keep their exact fetched base columns (e.g. `\"Created\"` only if listed). A formula or another property with a date-looking name or result does not automatically have `date:` columns or become queryable. Copy actual fetched columns, not property labels. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.",
                     "type": "string"
                   }
                 },
@@ -2699,11 +4810,16 @@ export const manifest = {
                 "type": "object"
               },
               {
-                "additionalProperties": false,
+                "additionalProperties": {},
                 "properties": {
-                  "is_archived": {
-                    "description": "Optional archive selector. Omitted or false queries non-archived rows only; true queries archived rows only.",
-                    "type": "boolean"
+                  "archive_status": {
+                    "description": "Select active pages, archived pages, or both. Defaults to active. Takes precedence over is_archived. Trashed pages remain excluded, and permissions still apply.",
+                    "enum": [
+                      "active",
+                      "archived",
+                      "all"
+                    ],
+                    "type": "string"
                   },
                   "mode": {
                     "description": "Mode for executing a database view's existing query",
@@ -2751,2378 +4867,7 @@ export const manifest = {
                         "items": {
                           "anyOf": [
                             {
-                              "anyOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Checks whether a property has any value.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "is_empty",
-                                        "is_not_empty"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for text-like properties.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "string_is",
-                                        "string_is_not",
-                                        "string_contains",
-                                        "string_does_not_contain",
-                                        "string_starts_with",
-                                        "string_ends_with"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "title",
-                                        "text",
-                                        "url",
-                                        "email",
-                                        "phone_number"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "additionalProperties": false,
-                                      "description": "Literal or relative value used by the filter.",
-                                      "properties": {
-                                        "type": {
-                                          "description": "Selects the filter or filter-value variant.",
-                                          "enum": [
-                                            "exact"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "Literal or relative value used by the filter.",
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for number properties.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "number_equals",
-                                        "number_does_not_equal",
-                                        "number_greater_than",
-                                        "number_less_than",
-                                        "number_greater_than_or_equal_to",
-                                        "number_less_than_or_equal_to"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "number",
-                                        "auto_increment_id"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "additionalProperties": false,
-                                      "description": "Literal or relative value used by the filter.",
-                                      "properties": {
-                                        "type": {
-                                          "description": "Selects the filter or filter-value variant.",
-                                          "enum": [
-                                            "exact"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "Literal or relative value used by the filter.",
-                                          "type": "number"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "anyOf": [
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "operator": {
-                                          "description": "Comparison or Boolean operation applied by this filter.",
-                                          "enum": [
-                                            "date_is",
-                                            "date_is_before",
-                                            "date_is_after",
-                                            "date_is_on_or_before",
-                                            "date_is_on_or_after"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "property": {
-                                          "description": "Exact data source property name to filter.",
-                                          "type": "string"
-                                        },
-                                        "propertyType": {
-                                          "description": "Notion property type used to select valid operators and value shapes.",
-                                          "enum": [
-                                            "date",
-                                            "created_time",
-                                            "last_edited_time",
-                                            "last_visited_time"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "type": {
-                                          "description": "Selects the filter or filter-value variant.",
-                                          "enum": [
-                                            "property"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "use_end": {
-                                          "description": "For a date property, compare its end date instead of its start date.",
-                                          "type": "boolean"
-                                        },
-                                        "value": {
-                                          "anyOf": [
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "relative"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "enum": [
-                                                    "today",
-                                                    "tomorrow",
-                                                    "yesterday",
-                                                    "one_week_ago",
-                                                    "one_week_from_now",
-                                                    "one_month_ago",
-                                                    "one_month_from_now"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          ],
-                                          "description": "Literal or relative value used by the filter."
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "property",
-                                        "propertyType",
-                                        "operator",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "operator": {
-                                          "description": "Comparison or Boolean operation applied by this filter.",
-                                          "enum": [
-                                            "date_is_within",
-                                            "date_is_relative_to"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "property": {
-                                          "description": "Exact data source property name to filter.",
-                                          "type": "string"
-                                        },
-                                        "propertyType": {
-                                          "description": "Notion property type used to select valid operators and value shapes.",
-                                          "enum": [
-                                            "date",
-                                            "created_time",
-                                            "last_edited_time",
-                                            "last_visited_time"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "type": {
-                                          "description": "Selects the filter or filter-value variant.",
-                                          "enum": [
-                                            "property"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "use_end": {
-                                          "description": "For a date property, compare its end date instead of its start date.",
-                                          "type": "boolean"
-                                        },
-                                        "value": {
-                                          "anyOf": [
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "additionalProperties": false,
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "properties": {
-                                                    "end_date": {
-                                                      "description": "ISO 8601 date or date-time at the end of the range.",
-                                                      "type": "string"
-                                                    },
-                                                    "start_date": {
-                                                      "description": "ISO 8601 date or date-time at the start of the range.",
-                                                      "type": "string"
-                                                    },
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "daterange"
-                                                      ],
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type"
-                                                  ],
-                                                  "type": "object"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "count": {
-                                                  "description": "Number of units in the custom relative range.",
-                                                  "type": "number"
-                                                },
-                                                "direction": {
-                                                  "description": "Whether the custom range extends into the past or future.",
-                                                  "enum": [
-                                                    "past",
-                                                    "future"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "relative"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "unit": {
-                                                  "description": "Time unit used to measure a relative date range.",
-                                                  "enum": [
-                                                    "year",
-                                                    "month",
-                                                    "week",
-                                                    "day"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "enum": [
-                                                    "custom"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value",
-                                                "direction",
-                                                "unit",
-                                                "count"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "relative"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "unit": {
-                                                  "description": "Time unit used to measure a relative date range.",
-                                                  "enum": [
-                                                    "year",
-                                                    "month",
-                                                    "week",
-                                                    "day"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "enum": [
-                                                    "surrounding"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value",
-                                                "unit"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "relative"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "enum": [
-                                                    "this_week",
-                                                    "the_past_week",
-                                                    "the_past_month",
-                                                    "the_past_year",
-                                                    "the_next_week",
-                                                    "the_next_month",
-                                                    "the_next_year"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          ],
-                                          "description": "Literal or relative value used by the filter."
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "property",
-                                        "propertyType",
-                                        "operator",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  ],
-                                  "description": "Property filter for date properties."
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for select properties by option name.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "enum_is",
-                                        "enum_is_not"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "select"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "anyOf": [
-                                        {
-                                          "additionalProperties": false,
-                                          "properties": {
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "exact"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "description": "Literal or relative value used by the filter.",
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "items": {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          "type": "array"
-                                        }
-                                      ],
-                                      "description": "Literal or relative value used by the filter."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for multi-select properties.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "enum_contains",
-                                        "enum_does_not_contain"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "multi_select"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "anyOf": [
-                                        {
-                                          "additionalProperties": false,
-                                          "properties": {
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "exact"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "description": "Literal or relative value used by the filter.",
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "items": {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          "type": "array"
-                                        }
-                                      ],
-                                      "description": "Literal or relative value used by the filter."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for checkbox properties.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "checkbox_is",
-                                        "checkbox_is_not"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "checkbox"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "additionalProperties": false,
-                                      "description": "Literal or relative value used by the filter.",
-                                      "properties": {
-                                        "type": {
-                                          "description": "Selects the filter or filter-value variant.",
-                                          "enum": [
-                                            "exact"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "Literal or relative value used by the filter.",
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for relation properties.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "relation_contains",
-                                        "relation_does_not_contain"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "relation"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "anyOf": [
-                                        {
-                                          "additionalProperties": false,
-                                          "properties": {
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "exact"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "description": "Literal or relative value used by the filter.",
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "items": {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          "type": "array"
-                                        }
-                                      ],
-                                      "description": "Literal or relative value used by the filter."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for status properties by option name.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "status_is",
-                                        "status_is_not"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "status"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "anyOf": [
-                                        {
-                                          "additionalProperties": false,
-                                          "properties": {
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "is_group",
-                                                "is_option"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "description": "Literal or relative value used by the filter.",
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "items": {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "is_group",
-                                                  "is_option"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          "type": "array"
-                                        }
-                                      ],
-                                      "description": "Literal or relative value used by the filter."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for person-like properties. Exact values use user://, bot://, organization_bot://, or space_permission_group:// URIs; relative values use me.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "person_contains",
-                                        "person_does_not_contain"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "person",
-                                        "created_by",
-                                        "last_edited_by"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "anyOf": [
-                                        {
-                                          "anyOf": [
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "relative"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "enum": [
-                                                    "me"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "items": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "exact"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "relative"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "enum": [
-                                                      "me"
-                                                    ],
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              }
-                                            ]
-                                          },
-                                          "type": "array"
-                                        }
-                                      ],
-                                      "description": "Literal or relative value used by the filter."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Property filter for page verification state.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "verification_is",
-                                        "verification_is_not"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "verification"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "anyOf": [
-                                        {
-                                          "additionalProperties": false,
-                                          "properties": {
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "exact"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "description": "Literal or relative value used by the filter.",
-                                              "enum": [
-                                                "verified",
-                                                "expired",
-                                                "none"
-                                              ],
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "items": {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "enum": [
-                                                  "verified",
-                                                  "expired",
-                                                  "none"
-                                                ],
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          "type": "array"
-                                        }
-                                      ],
-                                      "description": "Literal or relative value used by the filter."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "operator",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Filter applied to a formula property.",
-                                  "properties": {
-                                    "operator": {
-                                      "description": "Comparison or Boolean operation applied by this filter.",
-                                      "enum": [
-                                        "any",
-                                        "none",
-                                        "every"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "property": {
-                                      "description": "Exact data source property name to filter.",
-                                      "type": "string"
-                                    },
-                                    "propertyType": {
-                                      "description": "Notion property type used to select valid operators and value shapes.",
-                                      "enum": [
-                                        "formula"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "resultFilter": {
-                                      "anyOf": [
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Checks whether a property has any value.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "is_empty",
-                                                "is_not_empty"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for text-like properties.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "string_is",
-                                                "string_is_not",
-                                                "string_contains",
-                                                "string_does_not_contain",
-                                                "string_starts_with",
-                                                "string_ends_with"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "title",
-                                                "text",
-                                                "url",
-                                                "email",
-                                                "phone_number"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "additionalProperties": false,
-                                              "description": "Literal or relative value used by the filter.",
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for number properties.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "number_equals",
-                                                "number_does_not_equal",
-                                                "number_greater_than",
-                                                "number_less_than",
-                                                "number_greater_than_or_equal_to",
-                                                "number_less_than_or_equal_to"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "number",
-                                                "auto_increment_id"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "additionalProperties": false,
-                                              "description": "Literal or relative value used by the filter.",
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "type": "number"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "anyOf": [
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "operator": {
-                                                  "description": "Comparison or Boolean operation applied by this filter.",
-                                                  "enum": [
-                                                    "date_is",
-                                                    "date_is_before",
-                                                    "date_is_after",
-                                                    "date_is_on_or_before",
-                                                    "date_is_on_or_after"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "property": {
-                                                  "description": "Exact data source property name to filter.",
-                                                  "type": "string"
-                                                },
-                                                "propertyType": {
-                                                  "description": "Notion property type used to select valid operators and value shapes.",
-                                                  "enum": [
-                                                    "date",
-                                                    "created_time",
-                                                    "last_edited_time",
-                                                    "last_visited_time"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "property"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "use_end": {
-                                                  "description": "For a date property, compare its end date instead of its start date.",
-                                                  "type": "boolean"
-                                                },
-                                                "value": {
-                                                  "anyOf": [
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "exact"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    },
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "relative"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "enum": [
-                                                            "today",
-                                                            "tomorrow",
-                                                            "yesterday",
-                                                            "one_week_ago",
-                                                            "one_week_from_now",
-                                                            "one_month_ago",
-                                                            "one_month_from_now"
-                                                          ],
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    }
-                                                  ],
-                                                  "description": "Literal or relative value used by the filter."
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "property",
-                                                "propertyType",
-                                                "operator",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "operator": {
-                                                  "description": "Comparison or Boolean operation applied by this filter.",
-                                                  "enum": [
-                                                    "date_is_within",
-                                                    "date_is_relative_to"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "property": {
-                                                  "description": "Exact data source property name to filter.",
-                                                  "type": "string"
-                                                },
-                                                "propertyType": {
-                                                  "description": "Notion property type used to select valid operators and value shapes.",
-                                                  "enum": [
-                                                    "date",
-                                                    "created_time",
-                                                    "last_edited_time",
-                                                    "last_visited_time"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "property"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "use_end": {
-                                                  "description": "For a date property, compare its end date instead of its start date.",
-                                                  "type": "boolean"
-                                                },
-                                                "value": {
-                                                  "anyOf": [
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "exact"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "additionalProperties": false,
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "properties": {
-                                                            "end_date": {
-                                                              "description": "ISO 8601 date or date-time at the end of the range.",
-                                                              "type": "string"
-                                                            },
-                                                            "start_date": {
-                                                              "description": "ISO 8601 date or date-time at the start of the range.",
-                                                              "type": "string"
-                                                            },
-                                                            "type": {
-                                                              "description": "Selects the filter or filter-value variant.",
-                                                              "enum": [
-                                                                "daterange"
-                                                              ],
-                                                              "type": "string"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "type"
-                                                          ],
-                                                          "type": "object"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    },
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "count": {
-                                                          "description": "Number of units in the custom relative range.",
-                                                          "type": "number"
-                                                        },
-                                                        "direction": {
-                                                          "description": "Whether the custom range extends into the past or future.",
-                                                          "enum": [
-                                                            "past",
-                                                            "future"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "relative"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "unit": {
-                                                          "description": "Time unit used to measure a relative date range.",
-                                                          "enum": [
-                                                            "year",
-                                                            "month",
-                                                            "week",
-                                                            "day"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "enum": [
-                                                            "custom"
-                                                          ],
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value",
-                                                        "direction",
-                                                        "unit",
-                                                        "count"
-                                                      ],
-                                                      "type": "object"
-                                                    },
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "relative"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "unit": {
-                                                          "description": "Time unit used to measure a relative date range.",
-                                                          "enum": [
-                                                            "year",
-                                                            "month",
-                                                            "week",
-                                                            "day"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "enum": [
-                                                            "surrounding"
-                                                          ],
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value",
-                                                        "unit"
-                                                      ],
-                                                      "type": "object"
-                                                    },
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "relative"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "enum": [
-                                                            "this_week",
-                                                            "the_past_week",
-                                                            "the_past_month",
-                                                            "the_past_year",
-                                                            "the_next_week",
-                                                            "the_next_month",
-                                                            "the_next_year"
-                                                          ],
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    }
-                                                  ],
-                                                  "description": "Literal or relative value used by the filter."
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "property",
-                                                "propertyType",
-                                                "operator",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          ],
-                                          "description": "Property filter for date properties."
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for select properties by option name.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "enum_is",
-                                                "enum_is_not"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "select"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "anyOf": [
-                                                {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                {
-                                                  "items": {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  "type": "array"
-                                                }
-                                              ],
-                                              "description": "Literal or relative value used by the filter."
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for multi-select properties.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "enum_contains",
-                                                "enum_does_not_contain"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "multi_select"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "anyOf": [
-                                                {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                {
-                                                  "items": {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  "type": "array"
-                                                }
-                                              ],
-                                              "description": "Literal or relative value used by the filter."
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for checkbox properties.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "checkbox_is",
-                                                "checkbox_is_not"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "checkbox"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "additionalProperties": false,
-                                              "description": "Literal or relative value used by the filter.",
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Selects the filter or filter-value variant.",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Literal or relative value used by the filter.",
-                                                  "type": "boolean"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for relation properties.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "relation_contains",
-                                                "relation_does_not_contain"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "relation"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "anyOf": [
-                                                {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                {
-                                                  "items": {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  "type": "array"
-                                                }
-                                              ],
-                                              "description": "Literal or relative value used by the filter."
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for status properties by option name.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "status_is",
-                                                "status_is_not"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "status"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "anyOf": [
-                                                {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "is_group",
-                                                        "is_option"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                {
-                                                  "items": {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "is_group",
-                                                          "is_option"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  "type": "array"
-                                                }
-                                              ],
-                                              "description": "Literal or relative value used by the filter."
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for person-like properties. Exact values use user://, bot://, organization_bot://, or space_permission_group:// URIs; relative values use me.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "person_contains",
-                                                "person_does_not_contain"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "person",
-                                                "created_by",
-                                                "last_edited_by"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "anyOf": [
-                                                {
-                                                  "anyOf": [
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "exact"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    },
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "relative"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "enum": [
-                                                            "me"
-                                                          ],
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "items": {
-                                                    "anyOf": [
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "exact"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      },
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "relative"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "enum": [
-                                                              "me"
-                                                            ],
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      }
-                                                    ]
-                                                  },
-                                                  "type": "array"
-                                                }
-                                              ],
-                                              "description": "Literal or relative value used by the filter."
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        },
-                                        {
-                                          "additionalProperties": false,
-                                          "description": "Property filter for page verification state.",
-                                          "properties": {
-                                            "operator": {
-                                              "description": "Comparison or Boolean operation applied by this filter.",
-                                              "enum": [
-                                                "verification_is",
-                                                "verification_is_not"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "property": {
-                                              "description": "Exact data source property name to filter.",
-                                              "type": "string"
-                                            },
-                                            "propertyType": {
-                                              "description": "Notion property type used to select valid operators and value shapes.",
-                                              "enum": [
-                                                "verification"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Selects the filter or filter-value variant.",
-                                              "enum": [
-                                                "property"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "value": {
-                                              "anyOf": [
-                                                {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "enum": [
-                                                        "verified",
-                                                        "expired",
-                                                        "none"
-                                                      ],
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                {
-                                                  "items": {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "enum": [
-                                                          "verified",
-                                                          "expired",
-                                                          "none"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  "type": "array"
-                                                }
-                                              ],
-                                              "description": "Literal or relative value used by the filter."
-                                            }
-                                          },
-                                          "required": [
-                                            "type",
-                                            "property",
-                                            "propertyType",
-                                            "operator",
-                                            "value"
-                                          ],
-                                          "type": "object"
-                                        }
-                                      ],
-                                      "description": "Filter on the formula's result. The propertyType in the resultFilter should be the resultType of the formula."
-                                    },
-                                    "type": {
-                                      "description": "Selects the filter or filter-value variant.",
-                                      "enum": [
-                                        "property"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "property",
-                                    "propertyType",
-                                    "resultFilter"
-                                  ],
-                                  "type": "object"
-                                }
-                              ],
-                              "description": "Filter applied to a single property."
+                              "$ref": "#/$defs/workflowPropertyFilter"
                             },
                             {
                               "additionalProperties": false,
@@ -5130,2384 +4875,13 @@ export const manifest = {
                                 "filters": {
                                   "description": "Child filters combined by the Boolean group operator.",
                                   "items": {
-                                    "anyOf": [
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Checks whether a property has any value.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "is_empty",
-                                              "is_not_empty"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for text-like properties.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "string_is",
-                                              "string_is_not",
-                                              "string_contains",
-                                              "string_does_not_contain",
-                                              "string_starts_with",
-                                              "string_ends_with"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "title",
-                                              "text",
-                                              "url",
-                                              "email",
-                                              "phone_number"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "additionalProperties": false,
-                                            "description": "Literal or relative value used by the filter.",
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for number properties.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "number_equals",
-                                              "number_does_not_equal",
-                                              "number_greater_than",
-                                              "number_less_than",
-                                              "number_greater_than_or_equal_to",
-                                              "number_less_than_or_equal_to"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "number",
-                                              "auto_increment_id"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "additionalProperties": false,
-                                            "description": "Literal or relative value used by the filter.",
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "number"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "anyOf": [
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "operator": {
-                                                "description": "Comparison or Boolean operation applied by this filter.",
-                                                "enum": [
-                                                  "date_is",
-                                                  "date_is_before",
-                                                  "date_is_after",
-                                                  "date_is_on_or_before",
-                                                  "date_is_on_or_after"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "property": {
-                                                "description": "Exact data source property name to filter.",
-                                                "type": "string"
-                                              },
-                                              "propertyType": {
-                                                "description": "Notion property type used to select valid operators and value shapes.",
-                                                "enum": [
-                                                  "date",
-                                                  "created_time",
-                                                  "last_edited_time",
-                                                  "last_visited_time"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "property"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "use_end": {
-                                                "description": "For a date property, compare its end date instead of its start date.",
-                                                "type": "boolean"
-                                              },
-                                              "value": {
-                                                "anyOf": [
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "relative"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "enum": [
-                                                          "today",
-                                                          "tomorrow",
-                                                          "yesterday",
-                                                          "one_week_ago",
-                                                          "one_week_from_now",
-                                                          "one_month_ago",
-                                                          "one_month_from_now"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                ],
-                                                "description": "Literal or relative value used by the filter."
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "property",
-                                              "propertyType",
-                                              "operator",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "operator": {
-                                                "description": "Comparison or Boolean operation applied by this filter.",
-                                                "enum": [
-                                                  "date_is_within",
-                                                  "date_is_relative_to"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "property": {
-                                                "description": "Exact data source property name to filter.",
-                                                "type": "string"
-                                              },
-                                              "propertyType": {
-                                                "description": "Notion property type used to select valid operators and value shapes.",
-                                                "enum": [
-                                                  "date",
-                                                  "created_time",
-                                                  "last_edited_time",
-                                                  "last_visited_time"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "property"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "use_end": {
-                                                "description": "For a date property, compare its end date instead of its start date.",
-                                                "type": "boolean"
-                                              },
-                                              "value": {
-                                                "anyOf": [
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "additionalProperties": false,
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "properties": {
-                                                          "end_date": {
-                                                            "description": "ISO 8601 date or date-time at the end of the range.",
-                                                            "type": "string"
-                                                          },
-                                                          "start_date": {
-                                                            "description": "ISO 8601 date or date-time at the start of the range.",
-                                                            "type": "string"
-                                                          },
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "daterange"
-                                                            ],
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type"
-                                                        ],
-                                                        "type": "object"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "count": {
-                                                        "description": "Number of units in the custom relative range.",
-                                                        "type": "number"
-                                                      },
-                                                      "direction": {
-                                                        "description": "Whether the custom range extends into the past or future.",
-                                                        "enum": [
-                                                          "past",
-                                                          "future"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "relative"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "unit": {
-                                                        "description": "Time unit used to measure a relative date range.",
-                                                        "enum": [
-                                                          "year",
-                                                          "month",
-                                                          "week",
-                                                          "day"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "enum": [
-                                                          "custom"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value",
-                                                      "direction",
-                                                      "unit",
-                                                      "count"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "relative"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "unit": {
-                                                        "description": "Time unit used to measure a relative date range.",
-                                                        "enum": [
-                                                          "year",
-                                                          "month",
-                                                          "week",
-                                                          "day"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "enum": [
-                                                          "surrounding"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value",
-                                                      "unit"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "relative"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "enum": [
-                                                          "this_week",
-                                                          "the_past_week",
-                                                          "the_past_month",
-                                                          "the_past_year",
-                                                          "the_next_week",
-                                                          "the_next_month",
-                                                          "the_next_year"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                ],
-                                                "description": "Literal or relative value used by the filter."
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "property",
-                                              "propertyType",
-                                              "operator",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        ],
-                                        "description": "Property filter for date properties."
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for select properties by option name.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "enum_is",
-                                              "enum_is_not"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "select"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "exact"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "items": {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                "type": "array"
-                                              }
-                                            ],
-                                            "description": "Literal or relative value used by the filter."
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for multi-select properties.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "enum_contains",
-                                              "enum_does_not_contain"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "multi_select"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "exact"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "items": {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                "type": "array"
-                                              }
-                                            ],
-                                            "description": "Literal or relative value used by the filter."
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for checkbox properties.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "checkbox_is",
-                                              "checkbox_is_not"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "checkbox"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "additionalProperties": false,
-                                            "description": "Literal or relative value used by the filter.",
-                                            "properties": {
-                                              "type": {
-                                                "description": "Selects the filter or filter-value variant.",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Literal or relative value used by the filter.",
-                                                "type": "boolean"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for relation properties.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "relation_contains",
-                                              "relation_does_not_contain"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "relation"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "exact"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "items": {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                "type": "array"
-                                              }
-                                            ],
-                                            "description": "Literal or relative value used by the filter."
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for status properties by option name.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "status_is",
-                                              "status_is_not"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "status"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "is_group",
-                                                      "is_option"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "items": {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "is_group",
-                                                        "is_option"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                "type": "array"
-                                              }
-                                            ],
-                                            "description": "Literal or relative value used by the filter."
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for person-like properties. Exact values use user://, bot://, organization_bot://, or space_permission_group:// URIs; relative values use me.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "person_contains",
-                                              "person_does_not_contain"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "person",
-                                              "created_by",
-                                              "last_edited_by"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "anyOf": [
-                                              {
-                                                "anyOf": [
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "relative"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "enum": [
-                                                          "me"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                ]
-                                              },
-                                              {
-                                                "items": {
-                                                  "anyOf": [
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "exact"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    },
-                                                    {
-                                                      "additionalProperties": false,
-                                                      "properties": {
-                                                        "type": {
-                                                          "description": "Selects the filter or filter-value variant.",
-                                                          "enum": [
-                                                            "relative"
-                                                          ],
-                                                          "type": "string"
-                                                        },
-                                                        "value": {
-                                                          "description": "Literal or relative value used by the filter.",
-                                                          "enum": [
-                                                            "me"
-                                                          ],
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
-                                                      "type": "object"
-                                                    }
-                                                  ]
-                                                },
-                                                "type": "array"
-                                              }
-                                            ],
-                                            "description": "Literal or relative value used by the filter."
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Property filter for page verification state.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "verification_is",
-                                              "verification_is_not"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "verification"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "properties": {
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "exact"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "enum": [
-                                                      "verified",
-                                                      "expired",
-                                                      "none"
-                                                    ],
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "items": {
-                                                  "additionalProperties": false,
-                                                  "properties": {
-                                                    "type": {
-                                                      "description": "Selects the filter or filter-value variant.",
-                                                      "enum": [
-                                                        "exact"
-                                                      ],
-                                                      "type": "string"
-                                                    },
-                                                    "value": {
-                                                      "description": "Literal or relative value used by the filter.",
-                                                      "enum": [
-                                                        "verified",
-                                                        "expired",
-                                                        "none"
-                                                      ],
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "type",
-                                                    "value"
-                                                  ],
-                                                  "type": "object"
-                                                },
-                                                "type": "array"
-                                              }
-                                            ],
-                                            "description": "Literal or relative value used by the filter."
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "operator",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "description": "Filter applied to a formula property.",
-                                        "properties": {
-                                          "operator": {
-                                            "description": "Comparison or Boolean operation applied by this filter.",
-                                            "enum": [
-                                              "any",
-                                              "none",
-                                              "every"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "property": {
-                                            "description": "Exact data source property name to filter.",
-                                            "type": "string"
-                                          },
-                                          "propertyType": {
-                                            "description": "Notion property type used to select valid operators and value shapes.",
-                                            "enum": [
-                                              "formula"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "resultFilter": {
-                                            "anyOf": [
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Checks whether a property has any value.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "is_empty",
-                                                      "is_not_empty"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for text-like properties.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "string_is",
-                                                      "string_is_not",
-                                                      "string_contains",
-                                                      "string_does_not_contain",
-                                                      "string_starts_with",
-                                                      "string_ends_with"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "title",
-                                                      "text",
-                                                      "url",
-                                                      "email",
-                                                      "phone_number"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "additionalProperties": false,
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for number properties.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "number_equals",
-                                                      "number_does_not_equal",
-                                                      "number_greater_than",
-                                                      "number_less_than",
-                                                      "number_greater_than_or_equal_to",
-                                                      "number_less_than_or_equal_to"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "number",
-                                                      "auto_increment_id"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "additionalProperties": false,
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "number"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "anyOf": [
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "operator": {
-                                                        "description": "Comparison or Boolean operation applied by this filter.",
-                                                        "enum": [
-                                                          "date_is",
-                                                          "date_is_before",
-                                                          "date_is_after",
-                                                          "date_is_on_or_before",
-                                                          "date_is_on_or_after"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "property": {
-                                                        "description": "Exact data source property name to filter.",
-                                                        "type": "string"
-                                                      },
-                                                      "propertyType": {
-                                                        "description": "Notion property type used to select valid operators and value shapes.",
-                                                        "enum": [
-                                                          "date",
-                                                          "created_time",
-                                                          "last_edited_time",
-                                                          "last_visited_time"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "property"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "use_end": {
-                                                        "description": "For a date property, compare its end date instead of its start date.",
-                                                        "type": "boolean"
-                                                      },
-                                                      "value": {
-                                                        "anyOf": [
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "exact"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value"
-                                                            ],
-                                                            "type": "object"
-                                                          },
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "relative"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "enum": [
-                                                                  "today",
-                                                                  "tomorrow",
-                                                                  "yesterday",
-                                                                  "one_week_ago",
-                                                                  "one_week_from_now",
-                                                                  "one_month_ago",
-                                                                  "one_month_from_now"
-                                                                ],
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value"
-                                                            ],
-                                                            "type": "object"
-                                                          }
-                                                        ],
-                                                        "description": "Literal or relative value used by the filter."
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "property",
-                                                      "propertyType",
-                                                      "operator",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "operator": {
-                                                        "description": "Comparison or Boolean operation applied by this filter.",
-                                                        "enum": [
-                                                          "date_is_within",
-                                                          "date_is_relative_to"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "property": {
-                                                        "description": "Exact data source property name to filter.",
-                                                        "type": "string"
-                                                      },
-                                                      "propertyType": {
-                                                        "description": "Notion property type used to select valid operators and value shapes.",
-                                                        "enum": [
-                                                          "date",
-                                                          "created_time",
-                                                          "last_edited_time",
-                                                          "last_visited_time"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "property"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "use_end": {
-                                                        "description": "For a date property, compare its end date instead of its start date.",
-                                                        "type": "boolean"
-                                                      },
-                                                      "value": {
-                                                        "anyOf": [
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "exact"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "additionalProperties": false,
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "properties": {
-                                                                  "end_date": {
-                                                                    "description": "ISO 8601 date or date-time at the end of the range.",
-                                                                    "type": "string"
-                                                                  },
-                                                                  "start_date": {
-                                                                    "description": "ISO 8601 date or date-time at the start of the range.",
-                                                                    "type": "string"
-                                                                  },
-                                                                  "type": {
-                                                                    "description": "Selects the filter or filter-value variant.",
-                                                                    "enum": [
-                                                                      "daterange"
-                                                                    ],
-                                                                    "type": "string"
-                                                                  }
-                                                                },
-                                                                "required": [
-                                                                  "type"
-                                                                ],
-                                                                "type": "object"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value"
-                                                            ],
-                                                            "type": "object"
-                                                          },
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "count": {
-                                                                "description": "Number of units in the custom relative range.",
-                                                                "type": "number"
-                                                              },
-                                                              "direction": {
-                                                                "description": "Whether the custom range extends into the past or future.",
-                                                                "enum": [
-                                                                  "past",
-                                                                  "future"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "relative"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "unit": {
-                                                                "description": "Time unit used to measure a relative date range.",
-                                                                "enum": [
-                                                                  "year",
-                                                                  "month",
-                                                                  "week",
-                                                                  "day"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "enum": [
-                                                                  "custom"
-                                                                ],
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value",
-                                                              "direction",
-                                                              "unit",
-                                                              "count"
-                                                            ],
-                                                            "type": "object"
-                                                          },
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "relative"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "unit": {
-                                                                "description": "Time unit used to measure a relative date range.",
-                                                                "enum": [
-                                                                  "year",
-                                                                  "month",
-                                                                  "week",
-                                                                  "day"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "enum": [
-                                                                  "surrounding"
-                                                                ],
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value",
-                                                              "unit"
-                                                            ],
-                                                            "type": "object"
-                                                          },
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "relative"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "enum": [
-                                                                  "this_week",
-                                                                  "the_past_week",
-                                                                  "the_past_month",
-                                                                  "the_past_year",
-                                                                  "the_next_week",
-                                                                  "the_next_month",
-                                                                  "the_next_year"
-                                                                ],
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value"
-                                                            ],
-                                                            "type": "object"
-                                                          }
-                                                        ],
-                                                        "description": "Literal or relative value used by the filter."
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "property",
-                                                      "propertyType",
-                                                      "operator",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                ],
-                                                "description": "Property filter for date properties."
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for select properties by option name.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "enum_is",
-                                                      "enum_is_not"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "select"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "anyOf": [
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "exact"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      },
-                                                      {
-                                                        "items": {
-                                                          "additionalProperties": false,
-                                                          "properties": {
-                                                            "type": {
-                                                              "description": "Selects the filter or filter-value variant.",
-                                                              "enum": [
-                                                                "exact"
-                                                              ],
-                                                              "type": "string"
-                                                            },
-                                                            "value": {
-                                                              "description": "Literal or relative value used by the filter.",
-                                                              "type": "string"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "type",
-                                                            "value"
-                                                          ],
-                                                          "type": "object"
-                                                        },
-                                                        "type": "array"
-                                                      }
-                                                    ],
-                                                    "description": "Literal or relative value used by the filter."
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for multi-select properties.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "enum_contains",
-                                                      "enum_does_not_contain"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "multi_select"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "anyOf": [
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "exact"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      },
-                                                      {
-                                                        "items": {
-                                                          "additionalProperties": false,
-                                                          "properties": {
-                                                            "type": {
-                                                              "description": "Selects the filter or filter-value variant.",
-                                                              "enum": [
-                                                                "exact"
-                                                              ],
-                                                              "type": "string"
-                                                            },
-                                                            "value": {
-                                                              "description": "Literal or relative value used by the filter.",
-                                                              "type": "string"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "type",
-                                                            "value"
-                                                          ],
-                                                          "type": "object"
-                                                        },
-                                                        "type": "array"
-                                                      }
-                                                    ],
-                                                    "description": "Literal or relative value used by the filter."
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for checkbox properties.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "checkbox_is",
-                                                      "checkbox_is_not"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "checkbox"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "additionalProperties": false,
-                                                    "description": "Literal or relative value used by the filter.",
-                                                    "properties": {
-                                                      "type": {
-                                                        "description": "Selects the filter or filter-value variant.",
-                                                        "enum": [
-                                                          "exact"
-                                                        ],
-                                                        "type": "string"
-                                                      },
-                                                      "value": {
-                                                        "description": "Literal or relative value used by the filter.",
-                                                        "type": "boolean"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "value"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for relation properties.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "relation_contains",
-                                                      "relation_does_not_contain"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "relation"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "anyOf": [
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "exact"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      },
-                                                      {
-                                                        "items": {
-                                                          "additionalProperties": false,
-                                                          "properties": {
-                                                            "type": {
-                                                              "description": "Selects the filter or filter-value variant.",
-                                                              "enum": [
-                                                                "exact"
-                                                              ],
-                                                              "type": "string"
-                                                            },
-                                                            "value": {
-                                                              "description": "Literal or relative value used by the filter.",
-                                                              "type": "string"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "type",
-                                                            "value"
-                                                          ],
-                                                          "type": "object"
-                                                        },
-                                                        "type": "array"
-                                                      }
-                                                    ],
-                                                    "description": "Literal or relative value used by the filter."
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for status properties by option name.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "status_is",
-                                                      "status_is_not"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "status"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "anyOf": [
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "is_group",
-                                                              "is_option"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      },
-                                                      {
-                                                        "items": {
-                                                          "additionalProperties": false,
-                                                          "properties": {
-                                                            "type": {
-                                                              "description": "Selects the filter or filter-value variant.",
-                                                              "enum": [
-                                                                "is_group",
-                                                                "is_option"
-                                                              ],
-                                                              "type": "string"
-                                                            },
-                                                            "value": {
-                                                              "description": "Literal or relative value used by the filter.",
-                                                              "type": "string"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "type",
-                                                            "value"
-                                                          ],
-                                                          "type": "object"
-                                                        },
-                                                        "type": "array"
-                                                      }
-                                                    ],
-                                                    "description": "Literal or relative value used by the filter."
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for person-like properties. Exact values use user://, bot://, organization_bot://, or space_permission_group:// URIs; relative values use me.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "person_contains",
-                                                      "person_does_not_contain"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "person",
-                                                      "created_by",
-                                                      "last_edited_by"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "anyOf": [
-                                                      {
-                                                        "anyOf": [
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "exact"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value"
-                                                            ],
-                                                            "type": "object"
-                                                          },
-                                                          {
-                                                            "additionalProperties": false,
-                                                            "properties": {
-                                                              "type": {
-                                                                "description": "Selects the filter or filter-value variant.",
-                                                                "enum": [
-                                                                  "relative"
-                                                                ],
-                                                                "type": "string"
-                                                              },
-                                                              "value": {
-                                                                "description": "Literal or relative value used by the filter.",
-                                                                "enum": [
-                                                                  "me"
-                                                                ],
-                                                                "type": "string"
-                                                              }
-                                                            },
-                                                            "required": [
-                                                              "type",
-                                                              "value"
-                                                            ],
-                                                            "type": "object"
-                                                          }
-                                                        ]
-                                                      },
-                                                      {
-                                                        "items": {
-                                                          "anyOf": [
-                                                            {
-                                                              "additionalProperties": false,
-                                                              "properties": {
-                                                                "type": {
-                                                                  "description": "Selects the filter or filter-value variant.",
-                                                                  "enum": [
-                                                                    "exact"
-                                                                  ],
-                                                                  "type": "string"
-                                                                },
-                                                                "value": {
-                                                                  "description": "Literal or relative value used by the filter.",
-                                                                  "type": "string"
-                                                                }
-                                                              },
-                                                              "required": [
-                                                                "type",
-                                                                "value"
-                                                              ],
-                                                              "type": "object"
-                                                            },
-                                                            {
-                                                              "additionalProperties": false,
-                                                              "properties": {
-                                                                "type": {
-                                                                  "description": "Selects the filter or filter-value variant.",
-                                                                  "enum": [
-                                                                    "relative"
-                                                                  ],
-                                                                  "type": "string"
-                                                                },
-                                                                "value": {
-                                                                  "description": "Literal or relative value used by the filter.",
-                                                                  "enum": [
-                                                                    "me"
-                                                                  ],
-                                                                  "type": "string"
-                                                                }
-                                                              },
-                                                              "required": [
-                                                                "type",
-                                                                "value"
-                                                              ],
-                                                              "type": "object"
-                                                            }
-                                                          ]
-                                                        },
-                                                        "type": "array"
-                                                      }
-                                                    ],
-                                                    "description": "Literal or relative value used by the filter."
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              },
-                                              {
-                                                "additionalProperties": false,
-                                                "description": "Property filter for page verification state.",
-                                                "properties": {
-                                                  "operator": {
-                                                    "description": "Comparison or Boolean operation applied by this filter.",
-                                                    "enum": [
-                                                      "verification_is",
-                                                      "verification_is_not"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "property": {
-                                                    "description": "Exact data source property name to filter.",
-                                                    "type": "string"
-                                                  },
-                                                  "propertyType": {
-                                                    "description": "Notion property type used to select valid operators and value shapes.",
-                                                    "enum": [
-                                                      "verification"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Selects the filter or filter-value variant.",
-                                                    "enum": [
-                                                      "property"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "value": {
-                                                    "anyOf": [
-                                                      {
-                                                        "additionalProperties": false,
-                                                        "properties": {
-                                                          "type": {
-                                                            "description": "Selects the filter or filter-value variant.",
-                                                            "enum": [
-                                                              "exact"
-                                                            ],
-                                                            "type": "string"
-                                                          },
-                                                          "value": {
-                                                            "description": "Literal or relative value used by the filter.",
-                                                            "enum": [
-                                                              "verified",
-                                                              "expired",
-                                                              "none"
-                                                            ],
-                                                            "type": "string"
-                                                          }
-                                                        },
-                                                        "required": [
-                                                          "type",
-                                                          "value"
-                                                        ],
-                                                        "type": "object"
-                                                      },
-                                                      {
-                                                        "items": {
-                                                          "additionalProperties": false,
-                                                          "properties": {
-                                                            "type": {
-                                                              "description": "Selects the filter or filter-value variant.",
-                                                              "enum": [
-                                                                "exact"
-                                                              ],
-                                                              "type": "string"
-                                                            },
-                                                            "value": {
-                                                              "description": "Literal or relative value used by the filter.",
-                                                              "enum": [
-                                                                "verified",
-                                                                "expired",
-                                                                "none"
-                                                              ],
-                                                              "type": "string"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "type",
-                                                            "value"
-                                                          ],
-                                                          "type": "object"
-                                                        },
-                                                        "type": "array"
-                                                      }
-                                                    ],
-                                                    "description": "Literal or relative value used by the filter."
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type",
-                                                  "property",
-                                                  "propertyType",
-                                                  "operator",
-                                                  "value"
-                                                ],
-                                                "type": "object"
-                                              }
-                                            ],
-                                            "description": "Filter on the formula's result. The propertyType in the resultFilter should be the resultType of the formula."
-                                          },
-                                          "type": {
-                                            "description": "Selects the filter or filter-value variant.",
-                                            "enum": [
-                                              "property"
-                                            ],
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "property",
-                                          "propertyType",
-                                          "resultFilter"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    ],
-                                    "description": "Filter applied to a single property."
+                                    "$ref": "#/$defs/workflowPropertyFilter"
                                   },
                                   "maxItems": 100,
                                   "type": "array"
                                 },
                                 "operator": {
-                                  "description": "Comparison or Boolean operation applied by this filter.",
+                                  "description": "Filter operator.",
                                   "enum": [
                                     "and",
                                     "or"
@@ -7515,7 +4889,7 @@ export const manifest = {
                                   "type": "string"
                                 },
                                 "type": {
-                                  "description": "Selects the filter or filter-value variant.",
+                                  "description": "Filter or value variant.",
                                   "enum": [
                                     "group"
                                   ],
@@ -7535,7 +4909,7 @@ export const manifest = {
                         "type": "array"
                       },
                       "operator": {
-                        "description": "Comparison or Boolean operation applied by this filter.",
+                        "description": "Filter operator.",
                         "enum": [
                           "and",
                           "or"
@@ -7543,7 +4917,7 @@ export const manifest = {
                         "type": "string"
                       },
                       "type": {
-                        "description": "Selects the filter or filter-value variant.",
+                        "description": "Filter or value variant.",
                         "enum": [
                           "group"
                         ],
@@ -7605,7 +4979,15 @@ export const manifest = {
                 "type": "object"
               }
             ],
-            "description": "Mode parameter reference and examples.\n\nSQL mode:\n- Use single quotes for SQL string values, such as `\"Status\" = 'Done'`. Use double quotes for table and column names. In SQL, `''` is an empty string.\n- Prefer `?` placeholders for values. For text values, the `params` array uses JSON strings, so `[\"\"]` passes an empty string and `[\"__YES__\"]` passes a checked checkbox value. Do not add SQL quote marks around a bound value.\n- Checkbox SQL values: `'__YES__'` means checked; `'__NO__'` means unchecked.\n\n\nRows mode: Return up to 100 rows with faithful rich-text property values and optional structured filters and sorts.\n\nExample:\n<example>{\"mode\":\"rows\",\"data_source_url\":\"collection://f336d0bc-b841-465b-8045-024475c079dd\",\"filter\":{\"type\":\"group\",\"operator\":\"and\",\"filters\":[{\"type\":\"property\",\"property\":\"Status\",\"propertyType\":\"select\",\"operator\":\"enum_is\",\"value\":{\"type\":\"exact\",\"value\":\"In Progress\"}}]},\"limit\":20}</example>\n\nExamples:\n- Simple SQL: <example>{\"data_source_urls\":[\"collection://f336d0bc-b841-465b-8045-024475c079dd\"],\"query\":\"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] LIMIT 10\"}</example>\n- SQL parameters: <example>{\"mode\":\"sql\",\"data_source_urls\":[\"collection://abc123\"],\"query\":\"SELECT * FROM [collection://abc123] WHERE Status = ? AND Priority = ?\",\"params\":[\"In Progress\",\"High\"]}</example>\n- Checkbox query: <example>{\"data_source_urls\":[\"collection://def456\"],\"query\":\"SELECT * FROM [collection://def456] WHERE Completed = ?\",\"params\":[\"__YES__\"]}</example>\n\nView mode: Execute a specific database view's query with its filters and sorts. Omit \"is_archived\" or set it to false for non-archived rows. Set \"is_archived\": true to apply the view inside the archived partition. When the response has \"has_more\": true, pass its \"next_cursor\" as \"start_cursor\" in a follow-up view-mode request with the same \"is_archived\" value.\n\nExample:\n<example>{\"mode\":\"view\",\"view_url\":\"https://www.notion.so/workspace/Tasks-DB-abc123?v=def456\",\"is_archived\":false}</example>"
+            "description": "Mode parameter reference and examples.\n\nPut `mode`, `query`, `data_source_urls`, `data_source_url`, `params`, `limit`, filters (`filter`), sorts (`sort`), and view arguments (`view_url`, `start_cursor`, `page_size`, `archive_status`) inside `data`, never at the tool-argument root. All examples below are complete tool arguments with exactly one outer `data` wrapper. Pass them as shown; do not add another wrapper.\n\nSQL mode:\n- Use single quotes for SQL string values, such as `\"Status\" = 'Done'`. Use double quotes for table and column names. In SQL, `''` is an empty string.\n- Prefer `?` placeholders for values. For text values, the `params` array uses JSON strings, so `[\"\"]` passes an empty string and `[\"__YES__\"]` passes a checked checkbox value. Do not add SQL quote marks around a bound value.\n- Checkbox SQL values: `'__YES__'` means checked; `'__NO__'` means unchecked.\n\n\nRows mode: Return up to 100 rows with faithful rich-text property values and optional structured filters and sorts. For every property filter type, operator, and value shape, read the JSON Schema at `notion://docs/query-data-sources-filter-schema`.\n\nExample:\n<example>{\"data\":{\"mode\":\"rows\",\"data_source_url\":\"collection://f336d0bc-b841-465b-8045-024475c079dd\",\"filter\":{\"type\":\"group\",\"operator\":\"and\",\"filters\":[{\"type\":\"property\",\"property\":\"Status\",\"propertyType\":\"select\",\"operator\":\"enum_is\",\"value\":{\"type\":\"exact\",\"value\":\"In Progress\"}}]},\"limit\":20}}</example>\n\nExamples:\n- Simple SQL: <example>{\"data\":{\"data_source_urls\":[\"collection://f336d0bc-b841-465b-8045-024475c079dd\"],\"query\":\"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] LIMIT 10\"}}</example>\n- SQL parameters: <example>{\"data\":{\"mode\":\"sql\",\"data_source_urls\":[\"collection://f336d0bc-b841-465b-8045-024475c079dd\"],\"query\":\"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] WHERE Status = ? AND Priority = ?\",\"params\":[\"In Progress\",\"High\"]}}</example>\n- Checkbox query: <example>{\"data\":{\"data_source_urls\":[\"collection://f336d0bc-b841-465b-8045-024475c079dd\"],\"query\":\"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] WHERE Completed = ?\",\"params\":[\"__YES__\"]}}</example>\n\nView mode: Execute a specific database view's query with its filters and sorts. Omit \"archive_status\" or set it to \"active\" for active rows. Use \"archived\" for archived rows or \"all\" for both. Trash remains excluded. When the response has \"has_more\": true, pass its \"next_cursor\" as \"start_cursor\" in a follow-up view-mode request with the same \"archive_status\" value.\n\nExample:\n<example>{\"data\":{\"mode\":\"view\",\"view_url\":\"https://www.notion.so/f336d0bcb841465b8045024475c079dd?v=0123456789abcdef0123456789abcdef\",\"archive_status\":\"active\"}}</example>"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -7622,8 +5004,516 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Query the current user's meeting notes data source.\n\nUse search first to resolve people IDs for attendee filters. By default, results already include meetings where the current user is an attendee or creator; do not add a current-user filter.\n\nTreat words such as summaries, notes, todos, action items, and deliverables as requested meeting output, not title terms. Example: \"What are my meeting todos?\" needs no title filter for \"todos\". Add a title filter only when the user clearly names a meeting, such as \"standup\", \"sprint planning\", or \"1:1 with Alice\". Generic date phrases like \"recent meetings\", \"latest meetings\", \"meetings this week\", or \"yesterday's meetings\" should be interpreted as date range filters — never as title filters. Unless the user asks about a meeting whose title contains another person's name, treat that person as an attendee or creator. Use their name as a title fallback only after attendee filtering returns no results.\n\nTitle keyword matching is case-insensitive; capitalization does not matter. Matching is lexical, so simplify a filter to one term when it returns no results. The filter parameter contains the complete property, date, Boolean-combination, and example reference.\n\nRequires Notion AI. Admins can turn off AI Meeting Notes.",
+      "description": "Query the current user's meeting notes data source.\n\nUse search first to resolve people IDs for attendee filters. By default, results already include meetings where the current user is an attendee or creator; do not add a current-user filter.\n\nTreat words such as summaries, notes, todos, action items, and deliverables as requested meeting output, not title terms. Example: \"What are my meeting todos?\" needs no title filter for \"todos\". Add a title filter only when the user clearly names a meeting, such as \"standup\", \"sprint planning\", or \"1:1 with Alice\". Generic date phrases like \"recent meetings\", \"latest meetings\", \"meetings this week\", or \"yesterday's meetings\" should be interpreted as date range filters — never as title filters. Unless the user asks about a meeting whose title contains another person's name, treat that person as an attendee or creator. Use their name as a title fallback only after attendee filtering returns no results.\n\nTitle keyword matching is case-insensitive; capitalization does not matter. Matching is lexical, so simplify a filter to one term when it returns no results. The filter parameter contains the complete property, date, Boolean-combination, and example reference.\n\nRequires AI meeting notes access and workspace enablement. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
+        "$defs": {
+          "meetingNotesPropertyFilter": {
+            "additionalProperties": false,
+            "properties": {
+              "filter": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operator": {
+                        "description": "How to compare the text.",
+                        "enum": [
+                          "string_is",
+                          "string_is_not",
+                          "string_contains",
+                          "string_does_not_contain",
+                          "string_starts_with",
+                          "string_ends_with"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "additionalProperties": false,
+                        "description": "The text to compare against.",
+                        "properties": {
+                          "type": {
+                            "description": "Always `exact`",
+                            "enum": [
+                              "exact"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "description": "The literal text the operator compares against.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operator": {
+                        "description": "Whether the property must contain the people listed.",
+                        "enum": [
+                          "person_contains",
+                          "person_does_not_contain"
+                        ],
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The people to compare against.",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "type": {
+                                  "description": "Always `exact`",
+                                  "enum": [
+                                    "exact"
+                                  ],
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "additionalProperties": false,
+                                  "description": "Pointer to the Notion user to match.",
+                                  "properties": {
+                                    "id": {
+                                      "description": "The user's ID, as a UUID or the `user://<uuid>` form returned by user search.",
+                                      "type": "string"
+                                    },
+                                    "table": {
+                                      "description": "Always `notion_user`",
+                                      "enum": [
+                                        "notion_user"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "table",
+                                    "id"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "value"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "type": {
+                                  "description": "Always `relative`",
+                                  "enum": [
+                                    "relative"
+                                  ],
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "description": "Always `me`",
+                                  "enum": [
+                                    "me"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "value"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "maxItems": 100,
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operator": {
+                        "description": "How to compare the date.",
+                        "enum": [
+                          "date_is",
+                          "date_is_before",
+                          "date_is_after",
+                          "date_is_on_or_before",
+                          "date_is_on_or_after"
+                        ],
+                        "type": "string"
+                      },
+                      "use_end": {
+                        "description": "Compare against the end of a date range rather than its start.",
+                        "type": "boolean"
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "type": {
+                                "description": "Always `relative`",
+                                "enum": [
+                                  "relative"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "description": "One of: `today`, `tomorrow`, `yesterday`, `one_week_ago`, `one_week_from_now`, `one_month_ago`, `one_month_from_now`",
+                                "enum": [
+                                  "today",
+                                  "tomorrow",
+                                  "yesterday",
+                                  "one_week_ago",
+                                  "one_week_from_now",
+                                  "one_month_ago",
+                                  "one_month_from_now"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "type": {
+                                "description": "Always `exact`",
+                                "enum": [
+                                  "exact"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "start_date": {
+                                        "description": "The calendar date as an ISO 8601 date string.",
+                                        "format": "date",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "description": "Always `date`",
+                                        "enum": [
+                                          "date"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "start_date"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "start_date": {
+                                        "description": "The calendar date as an ISO 8601 date string.",
+                                        "format": "date",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                        "type": "string"
+                                      },
+                                      "start_time": {
+                                        "description": "The time of day in 24-hour HH:MM format.",
+                                        "type": "string"
+                                      },
+                                      "time_zone": {
+                                        "description": "The IANA time zone name the time is interpreted in.",
+                                        "type": "string"
+                                      },
+                                      "type": {
+                                        "description": "Always `datetime`",
+                                        "enum": [
+                                          "datetime"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "start_date",
+                                      "start_time",
+                                      "time_zone"
+                                    ],
+                                    "type": "object"
+                                  }
+                                ],
+                                "description": "Use the is_empty operator to match an unset date."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value"
+                            ],
+                            "type": "object"
+                          }
+                        ],
+                        "description": "The date to compare against."
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operator": {
+                        "description": "How to compare the date against the range.",
+                        "enum": [
+                          "date_is_within",
+                          "date_is_relative_to"
+                        ],
+                        "type": "string"
+                      },
+                      "use_end": {
+                        "description": "Compare against the end of a date range rather than its start.",
+                        "type": "boolean"
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "count": {
+                                "description": "How many units wide the window is.",
+                                "maximum": 9007199254740991,
+                                "minimum": 1,
+                                "type": "integer"
+                              },
+                              "direction": {
+                                "description": "Whether the window runs backwards or forwards from now.",
+                                "enum": [
+                                  "past",
+                                  "future"
+                                ],
+                                "type": "string"
+                              },
+                              "type": {
+                                "description": "Always `relative`",
+                                "enum": [
+                                  "relative"
+                                ],
+                                "type": "string"
+                              },
+                              "unit": {
+                                "description": "One of: `year`, `month`, `week`, `day`",
+                                "enum": [
+                                  "year",
+                                  "month",
+                                  "week",
+                                  "day"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "description": "Always `custom`",
+                                "enum": [
+                                  "custom"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value",
+                              "direction",
+                              "unit",
+                              "count"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "type": {
+                                "description": "Always `relative`",
+                                "enum": [
+                                  "relative"
+                                ],
+                                "type": "string"
+                              },
+                              "unit": {
+                                "description": "One of: `year`, `month`, `week`, `day`",
+                                "enum": [
+                                  "year",
+                                  "month",
+                                  "week",
+                                  "day"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "description": "Always `surrounding`",
+                                "enum": [
+                                  "surrounding"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value",
+                              "unit"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "type": {
+                                "description": "Always `relative`",
+                                "enum": [
+                                  "relative"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "description": "One of: `this_week`, `the_past_week`, `the_past_month`, `the_past_year`, `the_next_week`, `the_next_month`, `the_next_year`",
+                                "enum": [
+                                  "this_week",
+                                  "the_past_week",
+                                  "the_past_month",
+                                  "the_past_year",
+                                  "the_next_week",
+                                  "the_next_month",
+                                  "the_next_year"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "type": {
+                                "description": "Always `exact`",
+                                "enum": [
+                                  "exact"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "additionalProperties": false,
+                                "description": "Use the is_empty operator to match an unset date.",
+                                "properties": {
+                                  "end_date": {
+                                    "description": "Inclusive end of the range as an ISO 8601 date string, if any.",
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "start_date": {
+                                    "description": "Inclusive start of the range as an ISO 8601 date string, if any.",
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "description": "Always `daterange`",
+                                    "enum": [
+                                      "daterange"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "value"
+                            ],
+                            "type": "object"
+                          }
+                        ],
+                        "description": "The range to compare against."
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "value"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operator": {
+                        "description": "Whether the property must be empty or set.",
+                        "enum": [
+                          "is_empty",
+                          "is_not_empty"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operator"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "The comparison to apply. Use the arm matching the property's type."
+              },
+              "property": {
+                "description": "Which meeting-note property to filter on. Prefer the short names; the schema URI form is accepted for compatibility.",
+                "enum": [
+                  "title",
+                  "attendees",
+                  "created_time",
+                  "created_by",
+                  "last_edited_time",
+                  "last_edited_by",
+                  "notion://meeting_notes/attendees"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "property",
+              "filter"
+            ],
+            "type": "object"
+          }
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
@@ -7636,510 +5526,7 @@ export const manifest = {
                 "items": {
                   "anyOf": [
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "filter": {
-                          "anyOf": [
-                            {
-                              "additionalProperties": false,
-                              "properties": {
-                                "operator": {
-                                  "description": "How to compare the text.",
-                                  "enum": [
-                                    "string_is",
-                                    "string_is_not",
-                                    "string_contains",
-                                    "string_does_not_contain",
-                                    "string_starts_with",
-                                    "string_ends_with"
-                                  ],
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "additionalProperties": false,
-                                  "description": "The text to compare against.",
-                                  "properties": {
-                                    "type": {
-                                      "description": "Always `exact`",
-                                      "enum": [
-                                        "exact"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "value": {
-                                      "description": "The literal text the operator compares against.",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "value"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "operator",
-                                "value"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": false,
-                              "properties": {
-                                "operator": {
-                                  "description": "Whether the property must contain the people listed.",
-                                  "enum": [
-                                    "person_contains",
-                                    "person_does_not_contain"
-                                  ],
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "description": "The people to compare against.",
-                                  "items": {
-                                    "anyOf": [
-                                      {
-                                        "additionalProperties": false,
-                                        "properties": {
-                                          "type": {
-                                            "description": "Always `exact`",
-                                            "enum": [
-                                              "exact"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "additionalProperties": false,
-                                            "description": "Pointer to the Notion user to match.",
-                                            "properties": {
-                                              "id": {
-                                                "description": "The user's ID, as a UUID or the `user://<uuid>` form returned by user search.",
-                                                "type": "string"
-                                              },
-                                              "table": {
-                                                "description": "Always `notion_user`",
-                                                "enum": [
-                                                  "notion_user"
-                                                ],
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "table",
-                                              "id"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      },
-                                      {
-                                        "additionalProperties": false,
-                                        "properties": {
-                                          "type": {
-                                            "description": "Always `relative`",
-                                            "enum": [
-                                              "relative"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "description": "Always `me`",
-                                            "enum": [
-                                              "me"
-                                            ],
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    ]
-                                  },
-                                  "maxItems": 100,
-                                  "type": "array"
-                                }
-                              },
-                              "required": [
-                                "operator",
-                                "value"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": false,
-                              "properties": {
-                                "operator": {
-                                  "description": "How to compare the date.",
-                                  "enum": [
-                                    "date_is",
-                                    "date_is_before",
-                                    "date_is_after",
-                                    "date_is_on_or_before",
-                                    "date_is_on_or_after"
-                                  ],
-                                  "type": "string"
-                                },
-                                "use_end": {
-                                  "description": "Compare against the end of a date range rather than its start.",
-                                  "type": "boolean"
-                                },
-                                "value": {
-                                  "anyOf": [
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "type": {
-                                          "description": "Always `relative`",
-                                          "enum": [
-                                            "relative"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "One of: `today`, `tomorrow`, `yesterday`, `one_week_ago`, `one_week_from_now`, `one_month_ago`, `one_month_from_now`",
-                                          "enum": [
-                                            "today",
-                                            "tomorrow",
-                                            "yesterday",
-                                            "one_week_ago",
-                                            "one_week_from_now",
-                                            "one_month_ago",
-                                            "one_month_from_now"
-                                          ],
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "type": {
-                                          "description": "Always `exact`",
-                                          "enum": [
-                                            "exact"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "anyOf": [
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "start_date": {
-                                                  "description": "The calendar date as an ISO 8601 date string.",
-                                                  "format": "date",
-                                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                                  "type": "string"
-                                                },
-                                                "type": {
-                                                  "description": "Always `date`",
-                                                  "enum": [
-                                                    "date"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "start_date"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "start_date": {
-                                                  "description": "The calendar date as an ISO 8601 date string.",
-                                                  "format": "date",
-                                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                                  "type": "string"
-                                                },
-                                                "start_time": {
-                                                  "description": "The time of day in 24-hour HH:MM format.",
-                                                  "type": "string"
-                                                },
-                                                "time_zone": {
-                                                  "description": "The IANA time zone name the time is interpreted in.",
-                                                  "type": "string"
-                                                },
-                                                "type": {
-                                                  "description": "Always `datetime`",
-                                                  "enum": [
-                                                    "datetime"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "start_date",
-                                                "start_time",
-                                                "time_zone"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          ],
-                                          "description": "Use the is_empty operator to match an unset date."
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  ],
-                                  "description": "The date to compare against."
-                                }
-                              },
-                              "required": [
-                                "operator",
-                                "value"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": false,
-                              "properties": {
-                                "operator": {
-                                  "description": "How to compare the date against the range.",
-                                  "enum": [
-                                    "date_is_within",
-                                    "date_is_relative_to"
-                                  ],
-                                  "type": "string"
-                                },
-                                "use_end": {
-                                  "description": "Compare against the end of a date range rather than its start.",
-                                  "type": "boolean"
-                                },
-                                "value": {
-                                  "anyOf": [
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "count": {
-                                          "description": "How many units wide the window is.",
-                                          "maximum": 9007199254740991,
-                                          "minimum": 1,
-                                          "type": "integer"
-                                        },
-                                        "direction": {
-                                          "description": "Whether the window runs backwards or forwards from now.",
-                                          "enum": [
-                                            "past",
-                                            "future"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "type": {
-                                          "description": "Always `relative`",
-                                          "enum": [
-                                            "relative"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "unit": {
-                                          "description": "One of: `year`, `month`, `week`, `day`",
-                                          "enum": [
-                                            "year",
-                                            "month",
-                                            "week",
-                                            "day"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "Always `custom`",
-                                          "enum": [
-                                            "custom"
-                                          ],
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value",
-                                        "direction",
-                                        "unit",
-                                        "count"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "type": {
-                                          "description": "Always `relative`",
-                                          "enum": [
-                                            "relative"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "unit": {
-                                          "description": "One of: `year`, `month`, `week`, `day`",
-                                          "enum": [
-                                            "year",
-                                            "month",
-                                            "week",
-                                            "day"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "Always `surrounding`",
-                                          "enum": [
-                                            "surrounding"
-                                          ],
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value",
-                                        "unit"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "type": {
-                                          "description": "Always `relative`",
-                                          "enum": [
-                                            "relative"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "description": "One of: `this_week`, `the_past_week`, `the_past_month`, `the_past_year`, `the_next_week`, `the_next_month`, `the_next_year`",
-                                          "enum": [
-                                            "this_week",
-                                            "the_past_week",
-                                            "the_past_month",
-                                            "the_past_year",
-                                            "the_next_week",
-                                            "the_next_month",
-                                            "the_next_year"
-                                          ],
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "type": {
-                                          "description": "Always `exact`",
-                                          "enum": [
-                                            "exact"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "value": {
-                                          "additionalProperties": false,
-                                          "description": "Use the is_empty operator to match an unset date.",
-                                          "properties": {
-                                            "end_date": {
-                                              "description": "Inclusive end of the range as an ISO 8601 date string, if any.",
-                                              "format": "date",
-                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                              "type": "string"
-                                            },
-                                            "start_date": {
-                                              "description": "Inclusive start of the range as an ISO 8601 date string, if any.",
-                                              "format": "date",
-                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "description": "Always `daterange`",
-                                              "enum": [
-                                                "daterange"
-                                              ],
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "type"
-                                          ],
-                                          "type": "object"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  ],
-                                  "description": "The range to compare against."
-                                }
-                              },
-                              "required": [
-                                "operator",
-                                "value"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "additionalProperties": false,
-                              "properties": {
-                                "operator": {
-                                  "description": "Whether the property must be empty or set.",
-                                  "enum": [
-                                    "is_empty",
-                                    "is_not_empty"
-                                  ],
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          ],
-                          "description": "The comparison to apply. Use the arm matching the property's type."
-                        },
-                        "property": {
-                          "description": "Which meeting-note property to filter on. Prefer the short names; the schema URI form is accepted for compatibility.",
-                          "enum": [
-                            "title",
-                            "attendees",
-                            "created_time",
-                            "created_by",
-                            "last_edited_time",
-                            "last_edited_by",
-                            "notion://meeting_notes/attendees"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "property",
-                        "filter"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/meetingNotesPropertyFilter"
                     },
                     {
                       "additionalProperties": false,
@@ -8147,510 +5534,7 @@ export const manifest = {
                         "filters": {
                           "description": "The conditions in this group. A group with no conditions matches nothing, so send at least one.",
                           "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "filter": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "operator": {
-                                        "description": "How to compare the text.",
-                                        "enum": [
-                                          "string_is",
-                                          "string_is_not",
-                                          "string_contains",
-                                          "string_does_not_contain",
-                                          "string_starts_with",
-                                          "string_ends_with"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "value": {
-                                        "additionalProperties": false,
-                                        "description": "The text to compare against.",
-                                        "properties": {
-                                          "type": {
-                                            "description": "Always `exact`",
-                                            "enum": [
-                                              "exact"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "value": {
-                                            "description": "The literal text the operator compares against.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "value"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "operator",
-                                      "value"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "operator": {
-                                        "description": "Whether the property must contain the people listed.",
-                                        "enum": [
-                                          "person_contains",
-                                          "person_does_not_contain"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "value": {
-                                        "description": "The people to compare against.",
-                                        "items": {
-                                          "anyOf": [
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Always `exact`",
-                                                  "enum": [
-                                                    "exact"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "additionalProperties": false,
-                                                  "description": "Pointer to the Notion user to match.",
-                                                  "properties": {
-                                                    "id": {
-                                                      "description": "The user's ID, as a UUID or the `user://<uuid>` form returned by user search.",
-                                                      "type": "string"
-                                                    },
-                                                    "table": {
-                                                      "description": "Always `notion_user`",
-                                                      "enum": [
-                                                        "notion_user"
-                                                      ],
-                                                      "type": "string"
-                                                    }
-                                                  },
-                                                  "required": [
-                                                    "table",
-                                                    "id"
-                                                  ],
-                                                  "type": "object"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            },
-                                            {
-                                              "additionalProperties": false,
-                                              "properties": {
-                                                "type": {
-                                                  "description": "Always `relative`",
-                                                  "enum": [
-                                                    "relative"
-                                                  ],
-                                                  "type": "string"
-                                                },
-                                                "value": {
-                                                  "description": "Always `me`",
-                                                  "enum": [
-                                                    "me"
-                                                  ],
-                                                  "type": "string"
-                                                }
-                                              },
-                                              "required": [
-                                                "type",
-                                                "value"
-                                              ],
-                                              "type": "object"
-                                            }
-                                          ]
-                                        },
-                                        "maxItems": 100,
-                                        "type": "array"
-                                      }
-                                    },
-                                    "required": [
-                                      "operator",
-                                      "value"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "operator": {
-                                        "description": "How to compare the date.",
-                                        "enum": [
-                                          "date_is",
-                                          "date_is_before",
-                                          "date_is_after",
-                                          "date_is_on_or_before",
-                                          "date_is_on_or_after"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "use_end": {
-                                        "description": "Compare against the end of a date range rather than its start.",
-                                        "type": "boolean"
-                                      },
-                                      "value": {
-                                        "anyOf": [
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Always `relative`",
-                                                "enum": [
-                                                  "relative"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "One of: `today`, `tomorrow`, `yesterday`, `one_week_ago`, `one_week_from_now`, `one_month_ago`, `one_month_from_now`",
-                                                "enum": [
-                                                  "today",
-                                                  "tomorrow",
-                                                  "yesterday",
-                                                  "one_week_ago",
-                                                  "one_week_from_now",
-                                                  "one_month_ago",
-                                                  "one_month_from_now"
-                                                ],
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Always `exact`",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "anyOf": [
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "start_date": {
-                                                        "description": "The calendar date as an ISO 8601 date string.",
-                                                        "format": "date",
-                                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                                        "type": "string"
-                                                      },
-                                                      "type": {
-                                                        "description": "Always `date`",
-                                                        "enum": [
-                                                          "date"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "start_date"
-                                                    ],
-                                                    "type": "object"
-                                                  },
-                                                  {
-                                                    "additionalProperties": false,
-                                                    "properties": {
-                                                      "start_date": {
-                                                        "description": "The calendar date as an ISO 8601 date string.",
-                                                        "format": "date",
-                                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                                        "type": "string"
-                                                      },
-                                                      "start_time": {
-                                                        "description": "The time of day in 24-hour HH:MM format.",
-                                                        "type": "string"
-                                                      },
-                                                      "time_zone": {
-                                                        "description": "The IANA time zone name the time is interpreted in.",
-                                                        "type": "string"
-                                                      },
-                                                      "type": {
-                                                        "description": "Always `datetime`",
-                                                        "enum": [
-                                                          "datetime"
-                                                        ],
-                                                        "type": "string"
-                                                      }
-                                                    },
-                                                    "required": [
-                                                      "type",
-                                                      "start_date",
-                                                      "start_time",
-                                                      "time_zone"
-                                                    ],
-                                                    "type": "object"
-                                                  }
-                                                ],
-                                                "description": "Use the is_empty operator to match an unset date."
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        ],
-                                        "description": "The date to compare against."
-                                      }
-                                    },
-                                    "required": [
-                                      "operator",
-                                      "value"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "operator": {
-                                        "description": "How to compare the date against the range.",
-                                        "enum": [
-                                          "date_is_within",
-                                          "date_is_relative_to"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "use_end": {
-                                        "description": "Compare against the end of a date range rather than its start.",
-                                        "type": "boolean"
-                                      },
-                                      "value": {
-                                        "anyOf": [
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "count": {
-                                                "description": "How many units wide the window is.",
-                                                "maximum": 9007199254740991,
-                                                "minimum": 1,
-                                                "type": "integer"
-                                              },
-                                              "direction": {
-                                                "description": "Whether the window runs backwards or forwards from now.",
-                                                "enum": [
-                                                  "past",
-                                                  "future"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "type": {
-                                                "description": "Always `relative`",
-                                                "enum": [
-                                                  "relative"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "unit": {
-                                                "description": "One of: `year`, `month`, `week`, `day`",
-                                                "enum": [
-                                                  "year",
-                                                  "month",
-                                                  "week",
-                                                  "day"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Always `custom`",
-                                                "enum": [
-                                                  "custom"
-                                                ],
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value",
-                                              "direction",
-                                              "unit",
-                                              "count"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Always `relative`",
-                                                "enum": [
-                                                  "relative"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "unit": {
-                                                "description": "One of: `year`, `month`, `week`, `day`",
-                                                "enum": [
-                                                  "year",
-                                                  "month",
-                                                  "week",
-                                                  "day"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "Always `surrounding`",
-                                                "enum": [
-                                                  "surrounding"
-                                                ],
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value",
-                                              "unit"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Always `relative`",
-                                                "enum": [
-                                                  "relative"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "description": "One of: `this_week`, `the_past_week`, `the_past_month`, `the_past_year`, `the_next_week`, `the_next_month`, `the_next_year`",
-                                                "enum": [
-                                                  "this_week",
-                                                  "the_past_week",
-                                                  "the_past_month",
-                                                  "the_past_year",
-                                                  "the_next_week",
-                                                  "the_next_month",
-                                                  "the_next_year"
-                                                ],
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          },
-                                          {
-                                            "additionalProperties": false,
-                                            "properties": {
-                                              "type": {
-                                                "description": "Always `exact`",
-                                                "enum": [
-                                                  "exact"
-                                                ],
-                                                "type": "string"
-                                              },
-                                              "value": {
-                                                "additionalProperties": false,
-                                                "description": "Use the is_empty operator to match an unset date.",
-                                                "properties": {
-                                                  "end_date": {
-                                                    "description": "Inclusive end of the range as an ISO 8601 date string, if any.",
-                                                    "format": "date",
-                                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                                    "type": "string"
-                                                  },
-                                                  "start_date": {
-                                                    "description": "Inclusive start of the range as an ISO 8601 date string, if any.",
-                                                    "format": "date",
-                                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                                    "type": "string"
-                                                  },
-                                                  "type": {
-                                                    "description": "Always `daterange`",
-                                                    "enum": [
-                                                      "daterange"
-                                                    ],
-                                                    "type": "string"
-                                                  }
-                                                },
-                                                "required": [
-                                                  "type"
-                                                ],
-                                                "type": "object"
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "value"
-                                            ],
-                                            "type": "object"
-                                          }
-                                        ],
-                                        "description": "The range to compare against."
-                                      }
-                                    },
-                                    "required": [
-                                      "operator",
-                                      "value"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "operator": {
-                                        "description": "Whether the property must be empty or set.",
-                                        "enum": [
-                                          "is_empty",
-                                          "is_not_empty"
-                                        ],
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "operator"
-                                    ],
-                                    "type": "object"
-                                  }
-                                ],
-                                "description": "The comparison to apply. Use the arm matching the property's type."
-                              },
-                              "property": {
-                                "description": "Which meeting-note property to filter on. Prefer the short names; the schema URI form is accepted for compatibility.",
-                                "enum": [
-                                  "title",
-                                  "attendees",
-                                  "created_time",
-                                  "created_by",
-                                  "last_edited_time",
-                                  "last_edited_by",
-                                  "notion://meeting_notes/attendees"
-                                ],
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "property",
-                              "filter"
-                            ],
-                            "type": "object"
+                            "$ref": "#/$defs/meetingNotesPropertyFilter"
                           },
                           "maxItems": 100,
                           "type": "array"
@@ -8688,6 +5572,14 @@ export const manifest = {
               "operator"
             ],
             "type": "object"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -8701,7 +5593,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Query data across multiple Notion data sources using read-only SQLite SQL.\n\nUse this tool for JOINs, UNIONs, comparisons, and aggregations that need two or more data sources. Queries across multiple data sources require a Business or Enterprise plan with Notion AI. Use query_data_sources instead when you need one data source or a saved database view.\n\nPrerequisites:\n1. Use the \"fetch\" tool first to get each data source's schema and collection:// URL.\n2. Data source URLs are found in <data-source url=\"...\"> tags in fetch results.\n\n\nSQL:\n- Use each collection:// URL as a quoted SQLite table name in the query.\n- Bind untrusted values with ? placeholders and params; do not interpolate them into SQL.\n- Include every needed filter in WHERE. Saved-view filters and sorts are not automatically applied.\n- Checkbox values: use \"__YES__\" for checked and \"__NO__\" for unchecked.\n- Date properties expand to `date:<Name>:start`, `:end`, `:is_datetime`; `created_time` keeps its base name.\n\n\nReturns matching rows, the queried data source IDs, and whether results were truncated.",
+      "description": "Query data across multiple Notion data sources using read-only SQLite SQL.\n\nUse this tool for JOINs, UNIONs, comparisons, and aggregations that need two or more data sources. Queries across multiple data sources require a Business or Enterprise plan with Notion AI. Call this tool directly. If access is denied, follow the recovery guidance in the result. Use query_data_sources instead when you need one data source or a saved database view.\n\nPrerequisites:\n1. Use the \"fetch\" tool first to get each data source's schema and collection:// URL.\n2. Data source URLs are found in <data-source url=\"...\"> tags in fetch results.\n\n\nSQL:\n- Use each collection:// URL as a quoted SQLite table name in the query.\n- Bind untrusted values with ? placeholders and params; do not interpolate them into SQL.\n- Include every needed filter in WHERE. Saved-view filters and sorts are not automatically applied.\n- Checkbox values: use \"__YES__\" for checked and \"__NO__\" for unchecked.\n- Date properties expand to `date:<Name>:start`, `:end`, `:is_datetime`; `created_time` keeps its base name.\n\n\nReturns matching rows, the queried data source IDs, and whether results were truncated.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -8711,9 +5603,13 @@ export const manifest = {
             "items": {
               "type": "string"
             },
-            "maxItems": 100,
+            "maxItems": 10,
             "minItems": 2,
             "type": "array"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
           },
           "mode": {
             "description": "Optional SQL mode marker. This tool only supports SQL queries.",
@@ -8744,7 +5640,11 @@ export const manifest = {
             "type": "array"
           },
           "query": {
-            "description": "Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM \"collection://...\" WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.",
+            "description": "Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM \"collection://...\" WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Example: if the fetched schema has a date property `Due`, use `\"date:Due:start\"`, not `\"Due\"`. Properties of type `created_time` or `last_edited_time` keep their exact fetched base columns (e.g. `\"Created\"` only if listed). A formula or another property with a date-looking name or result does not automatically have `date:` columns or become queryable. Copy actual fetched columns, not property labels. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -8763,169 +5663,84 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List agent sessions available to the integration. Filter, sort, or search by title. A bounded page can be empty while has_more is true; follow next_cursor until has_more is false.\n\nRequires Notion AI.",
+      "description": "List agent sessions available to the integration. Filter, sort, or search by title. A bounded page can be empty while has_more is true; follow next_cursor until has_more is false.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "properties": {
-          "filter": {
+        "$defs": {
+          "sessionAgentIdFilter": {
+            "additionalProperties": false,
+            "properties": {
+              "property": {
+                "description": "Filter sessions by agent_id.",
+                "enum": [
+                  "agent_id"
+                ],
+                "type": "string"
+              },
+              "string": {
+                "additionalProperties": false,
+                "description": "An exact string comparison.",
+                "properties": {
+                  "equals": {
+                    "description": "Return sessions with this exact value.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "equals"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "property",
+              "string"
+            ],
+            "type": "object"
+          },
+          "sessionIdFilter": {
+            "additionalProperties": false,
+            "properties": {
+              "property": {
+                "description": "Filter sessions by id.",
+                "enum": [
+                  "id"
+                ],
+                "type": "string"
+              },
+              "string": {
+                "additionalProperties": false,
+                "description": "An exact string comparison.",
+                "properties": {
+                  "equals": {
+                    "description": "Return sessions with this exact value.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "equals"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "property",
+              "string"
+            ],
+            "type": "object"
+          },
+          "sessionNestedFilter": {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "properties": {
-                  "property": {
-                    "description": "Filter sessions by id.",
-                    "enum": [
-                      "id"
-                    ],
-                    "type": "string"
-                  },
-                  "string": {
-                    "additionalProperties": false,
-                    "description": "An exact string comparison.",
-                    "properties": {
-                      "equals": {
-                        "description": "Return sessions with this exact value.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "equals"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "property",
-                  "string"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/sessionIdFilter"
               },
               {
-                "additionalProperties": false,
-                "properties": {
-                  "property": {
-                    "description": "Filter sessions by agent_id.",
-                    "enum": [
-                      "agent_id"
-                    ],
-                    "type": "string"
-                  },
-                  "string": {
-                    "additionalProperties": false,
-                    "description": "An exact string comparison.",
-                    "properties": {
-                      "equals": {
-                        "description": "Return sessions with this exact value.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "equals"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "property",
-                  "string"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/sessionAgentIdFilter"
               },
               {
-                "additionalProperties": false,
-                "properties": {
-                  "property": {
-                    "description": "Filter sessions by status.",
-                    "enum": [
-                      "status"
-                    ],
-                    "type": "string"
-                  },
-                  "status": {
-                    "additionalProperties": false,
-                    "description": "A session status comparison.",
-                    "properties": {
-                      "equals": {
-                        "description": "Return sessions with this status.",
-                        "enum": [
-                          "queued",
-                          "in_progress",
-                          "requires_action",
-                          "completed",
-                          "failed",
-                          "canceled",
-                          "terminated"
-                        ],
-                        "type": "string"
-                      },
-                      "in": {
-                        "description": "Return sessions with any of these statuses.",
-                        "items": {
-                          "enum": [
-                            "queued",
-                            "in_progress",
-                            "requires_action",
-                            "completed",
-                            "failed",
-                            "canceled",
-                            "terminated"
-                          ],
-                          "type": "string"
-                        },
-                        "maxItems": 7,
-                        "type": "array"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "property",
-                  "status"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/sessionStatusFilter"
               },
               {
-                "additionalProperties": false,
-                "properties": {
-                  "property": {
-                    "description": "The session timestamp to compare.",
-                    "enum": [
-                      "created_at",
-                      "updated_at"
-                    ],
-                    "type": "string"
-                  },
-                  "timestamp": {
-                    "additionalProperties": false,
-                    "description": "A timestamp range.",
-                    "properties": {
-                      "after": {
-                        "description": "Return sessions after this time.",
-                        "type": "string"
-                      },
-                      "before": {
-                        "description": "Return sessions before this time.",
-                        "type": "string"
-                      },
-                      "on_or_after": {
-                        "description": "Return sessions at or after this time.",
-                        "type": "string"
-                      },
-                      "on_or_before": {
-                        "description": "Return sessions at or before this time.",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "property",
-                  "timestamp"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/sessionTimestampFilter"
               },
               {
                 "additionalProperties": false,
@@ -8935,511 +5750,16 @@ export const manifest = {
                     "items": {
                       "anyOf": [
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "Filter sessions by id.",
-                              "enum": [
-                                "id"
-                              ],
-                              "type": "string"
-                            },
-                            "string": {
-                              "additionalProperties": false,
-                              "description": "An exact string comparison.",
-                              "properties": {
-                                "equals": {
-                                  "description": "Return sessions with this exact value.",
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "equals"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "string"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionIdFilter"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "Filter sessions by agent_id.",
-                              "enum": [
-                                "agent_id"
-                              ],
-                              "type": "string"
-                            },
-                            "string": {
-                              "additionalProperties": false,
-                              "description": "An exact string comparison.",
-                              "properties": {
-                                "equals": {
-                                  "description": "Return sessions with this exact value.",
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "equals"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "string"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionAgentIdFilter"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "Filter sessions by status.",
-                              "enum": [
-                                "status"
-                              ],
-                              "type": "string"
-                            },
-                            "status": {
-                              "additionalProperties": false,
-                              "description": "A session status comparison.",
-                              "properties": {
-                                "equals": {
-                                  "description": "Return sessions with this status.",
-                                  "enum": [
-                                    "queued",
-                                    "in_progress",
-                                    "requires_action",
-                                    "completed",
-                                    "failed",
-                                    "canceled",
-                                    "terminated"
-                                  ],
-                                  "type": "string"
-                                },
-                                "in": {
-                                  "description": "Return sessions with any of these statuses.",
-                                  "items": {
-                                    "enum": [
-                                      "queued",
-                                      "in_progress",
-                                      "requires_action",
-                                      "completed",
-                                      "failed",
-                                      "canceled",
-                                      "terminated"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  "maxItems": 7,
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "status"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionStatusFilter"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "The session timestamp to compare.",
-                              "enum": [
-                                "created_at",
-                                "updated_at"
-                              ],
-                              "type": "string"
-                            },
-                            "timestamp": {
-                              "additionalProperties": false,
-                              "description": "A timestamp range.",
-                              "properties": {
-                                "after": {
-                                  "description": "Return sessions after this time.",
-                                  "type": "string"
-                                },
-                                "before": {
-                                  "description": "Return sessions before this time.",
-                                  "type": "string"
-                                },
-                                "on_or_after": {
-                                  "description": "Return sessions at or after this time.",
-                                  "type": "string"
-                                },
-                                "on_or_before": {
-                                  "description": "Return sessions at or before this time.",
-                                  "type": "string"
-                                }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "timestamp"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "additionalProperties": false,
-                          "properties": {
-                            "and": {
-                              "description": "Return sessions that match every child filter.",
-                              "items": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by id.",
-                                        "enum": [
-                                          "id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by agent_id.",
-                                        "enum": [
-                                          "agent_id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by status.",
-                                        "enum": [
-                                          "status"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "status": {
-                                        "additionalProperties": false,
-                                        "description": "A session status comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this status.",
-                                            "enum": [
-                                              "queued",
-                                              "in_progress",
-                                              "requires_action",
-                                              "completed",
-                                              "failed",
-                                              "canceled",
-                                              "terminated"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "in": {
-                                            "description": "Return sessions with any of these statuses.",
-                                            "items": {
-                                              "enum": [
-                                                "queued",
-                                                "in_progress",
-                                                "requires_action",
-                                                "completed",
-                                                "failed",
-                                                "canceled",
-                                                "terminated"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "maxItems": 7,
-                                            "type": "array"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "status"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "The session timestamp to compare.",
-                                        "enum": [
-                                          "created_at",
-                                          "updated_at"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "timestamp": {
-                                        "additionalProperties": false,
-                                        "description": "A timestamp range.",
-                                        "properties": {
-                                          "after": {
-                                            "description": "Return sessions after this time.",
-                                            "type": "string"
-                                          },
-                                          "before": {
-                                            "description": "Return sessions before this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_after": {
-                                            "description": "Return sessions at or after this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_before": {
-                                            "description": "Return sessions at or before this time.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "timestamp"
-                                    ],
-                                    "type": "object"
-                                  }
-                                ]
-                              },
-                              "maxItems": 100,
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "and"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "additionalProperties": false,
-                          "properties": {
-                            "or": {
-                              "description": "Return sessions that match any child filter.",
-                              "items": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by id.",
-                                        "enum": [
-                                          "id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by agent_id.",
-                                        "enum": [
-                                          "agent_id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by status.",
-                                        "enum": [
-                                          "status"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "status": {
-                                        "additionalProperties": false,
-                                        "description": "A session status comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this status.",
-                                            "enum": [
-                                              "queued",
-                                              "in_progress",
-                                              "requires_action",
-                                              "completed",
-                                              "failed",
-                                              "canceled",
-                                              "terminated"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "in": {
-                                            "description": "Return sessions with any of these statuses.",
-                                            "items": {
-                                              "enum": [
-                                                "queued",
-                                                "in_progress",
-                                                "requires_action",
-                                                "completed",
-                                                "failed",
-                                                "canceled",
-                                                "terminated"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "maxItems": 7,
-                                            "type": "array"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "status"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "The session timestamp to compare.",
-                                        "enum": [
-                                          "created_at",
-                                          "updated_at"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "timestamp": {
-                                        "additionalProperties": false,
-                                        "description": "A timestamp range.",
-                                        "properties": {
-                                          "after": {
-                                            "description": "Return sessions after this time.",
-                                            "type": "string"
-                                          },
-                                          "before": {
-                                            "description": "Return sessions before this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_after": {
-                                            "description": "Return sessions at or after this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_before": {
-                                            "description": "Return sessions at or before this time.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "timestamp"
-                                    ],
-                                    "type": "object"
-                                  }
-                                ]
-                              },
-                              "maxItems": 100,
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "or"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionTimestampFilter"
                         }
                       ]
                     },
@@ -9460,513 +5780,167 @@ export const manifest = {
                     "items": {
                       "anyOf": [
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "Filter sessions by id.",
-                              "enum": [
-                                "id"
-                              ],
-                              "type": "string"
-                            },
-                            "string": {
-                              "additionalProperties": false,
-                              "description": "An exact string comparison.",
-                              "properties": {
-                                "equals": {
-                                  "description": "Return sessions with this exact value.",
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "equals"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "string"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionIdFilter"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "Filter sessions by agent_id.",
-                              "enum": [
-                                "agent_id"
-                              ],
-                              "type": "string"
-                            },
-                            "string": {
-                              "additionalProperties": false,
-                              "description": "An exact string comparison.",
-                              "properties": {
-                                "equals": {
-                                  "description": "Return sessions with this exact value.",
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "equals"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "string"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionAgentIdFilter"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "Filter sessions by status.",
-                              "enum": [
-                                "status"
-                              ],
-                              "type": "string"
-                            },
-                            "status": {
-                              "additionalProperties": false,
-                              "description": "A session status comparison.",
-                              "properties": {
-                                "equals": {
-                                  "description": "Return sessions with this status.",
-                                  "enum": [
-                                    "queued",
-                                    "in_progress",
-                                    "requires_action",
-                                    "completed",
-                                    "failed",
-                                    "canceled",
-                                    "terminated"
-                                  ],
-                                  "type": "string"
-                                },
-                                "in": {
-                                  "description": "Return sessions with any of these statuses.",
-                                  "items": {
-                                    "enum": [
-                                      "queued",
-                                      "in_progress",
-                                      "requires_action",
-                                      "completed",
-                                      "failed",
-                                      "canceled",
-                                      "terminated"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  "maxItems": 7,
-                                  "type": "array"
-                                }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "status"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionStatusFilter"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "property": {
-                              "description": "The session timestamp to compare.",
-                              "enum": [
-                                "created_at",
-                                "updated_at"
-                              ],
-                              "type": "string"
-                            },
-                            "timestamp": {
-                              "additionalProperties": false,
-                              "description": "A timestamp range.",
-                              "properties": {
-                                "after": {
-                                  "description": "Return sessions after this time.",
-                                  "type": "string"
-                                },
-                                "before": {
-                                  "description": "Return sessions before this time.",
-                                  "type": "string"
-                                },
-                                "on_or_after": {
-                                  "description": "Return sessions at or after this time.",
-                                  "type": "string"
-                                },
-                                "on_or_before": {
-                                  "description": "Return sessions at or before this time.",
-                                  "type": "string"
-                                }
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "property",
-                            "timestamp"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "additionalProperties": false,
-                          "properties": {
-                            "and": {
-                              "description": "Return sessions that match every child filter.",
-                              "items": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by id.",
-                                        "enum": [
-                                          "id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by agent_id.",
-                                        "enum": [
-                                          "agent_id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by status.",
-                                        "enum": [
-                                          "status"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "status": {
-                                        "additionalProperties": false,
-                                        "description": "A session status comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this status.",
-                                            "enum": [
-                                              "queued",
-                                              "in_progress",
-                                              "requires_action",
-                                              "completed",
-                                              "failed",
-                                              "canceled",
-                                              "terminated"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "in": {
-                                            "description": "Return sessions with any of these statuses.",
-                                            "items": {
-                                              "enum": [
-                                                "queued",
-                                                "in_progress",
-                                                "requires_action",
-                                                "completed",
-                                                "failed",
-                                                "canceled",
-                                                "terminated"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "maxItems": 7,
-                                            "type": "array"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "status"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "The session timestamp to compare.",
-                                        "enum": [
-                                          "created_at",
-                                          "updated_at"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "timestamp": {
-                                        "additionalProperties": false,
-                                        "description": "A timestamp range.",
-                                        "properties": {
-                                          "after": {
-                                            "description": "Return sessions after this time.",
-                                            "type": "string"
-                                          },
-                                          "before": {
-                                            "description": "Return sessions before this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_after": {
-                                            "description": "Return sessions at or after this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_before": {
-                                            "description": "Return sessions at or before this time.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "timestamp"
-                                    ],
-                                    "type": "object"
-                                  }
-                                ]
-                              },
-                              "maxItems": 100,
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "and"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "additionalProperties": false,
-                          "properties": {
-                            "or": {
-                              "description": "Return sessions that match any child filter.",
-                              "items": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by id.",
-                                        "enum": [
-                                          "id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by agent_id.",
-                                        "enum": [
-                                          "agent_id"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "string": {
-                                        "additionalProperties": false,
-                                        "description": "An exact string comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this exact value.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "required": [
-                                          "equals"
-                                        ],
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "string"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "Filter sessions by status.",
-                                        "enum": [
-                                          "status"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "status": {
-                                        "additionalProperties": false,
-                                        "description": "A session status comparison.",
-                                        "properties": {
-                                          "equals": {
-                                            "description": "Return sessions with this status.",
-                                            "enum": [
-                                              "queued",
-                                              "in_progress",
-                                              "requires_action",
-                                              "completed",
-                                              "failed",
-                                              "canceled",
-                                              "terminated"
-                                            ],
-                                            "type": "string"
-                                          },
-                                          "in": {
-                                            "description": "Return sessions with any of these statuses.",
-                                            "items": {
-                                              "enum": [
-                                                "queued",
-                                                "in_progress",
-                                                "requires_action",
-                                                "completed",
-                                                "failed",
-                                                "canceled",
-                                                "terminated"
-                                              ],
-                                              "type": "string"
-                                            },
-                                            "maxItems": 7,
-                                            "type": "array"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "status"
-                                    ],
-                                    "type": "object"
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "properties": {
-                                      "property": {
-                                        "description": "The session timestamp to compare.",
-                                        "enum": [
-                                          "created_at",
-                                          "updated_at"
-                                        ],
-                                        "type": "string"
-                                      },
-                                      "timestamp": {
-                                        "additionalProperties": false,
-                                        "description": "A timestamp range.",
-                                        "properties": {
-                                          "after": {
-                                            "description": "Return sessions after this time.",
-                                            "type": "string"
-                                          },
-                                          "before": {
-                                            "description": "Return sessions before this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_after": {
-                                            "description": "Return sessions at or after this time.",
-                                            "type": "string"
-                                          },
-                                          "on_or_before": {
-                                            "description": "Return sessions at or before this time.",
-                                            "type": "string"
-                                          }
-                                        },
-                                        "type": "object"
-                                      }
-                                    },
-                                    "required": [
-                                      "property",
-                                      "timestamp"
-                                    ],
-                                    "type": "object"
-                                  }
-                                ]
-                              },
-                              "maxItems": 100,
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "or"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/sessionTimestampFilter"
                         }
                       ]
+                    },
+                    "maxItems": 100,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "or"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "sessionStatusFilter": {
+            "additionalProperties": false,
+            "properties": {
+              "property": {
+                "description": "Filter sessions by status.",
+                "enum": [
+                  "status"
+                ],
+                "type": "string"
+              },
+              "status": {
+                "additionalProperties": false,
+                "description": "A session status comparison.",
+                "properties": {
+                  "equals": {
+                    "description": "Return sessions with this status.",
+                    "enum": [
+                      "queued",
+                      "in_progress",
+                      "requires_action",
+                      "completed",
+                      "failed",
+                      "canceled",
+                      "terminated"
+                    ],
+                    "type": "string"
+                  },
+                  "in": {
+                    "description": "Return sessions with any of these statuses.",
+                    "items": {
+                      "enum": [
+                        "queued",
+                        "in_progress",
+                        "requires_action",
+                        "completed",
+                        "failed",
+                        "canceled",
+                        "terminated"
+                      ],
+                      "type": "string"
+                    },
+                    "maxItems": 7,
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "property",
+              "status"
+            ],
+            "type": "object"
+          },
+          "sessionTimestampFilter": {
+            "additionalProperties": false,
+            "properties": {
+              "property": {
+                "description": "The session timestamp to compare.",
+                "enum": [
+                  "created_at",
+                  "updated_at"
+                ],
+                "type": "string"
+              },
+              "timestamp": {
+                "additionalProperties": false,
+                "description": "A timestamp range.",
+                "properties": {
+                  "after": {
+                    "description": "Return sessions after this time.",
+                    "type": "string"
+                  },
+                  "before": {
+                    "description": "Return sessions before this time.",
+                    "type": "string"
+                  },
+                  "on_or_after": {
+                    "description": "Return sessions at or after this time.",
+                    "type": "string"
+                  },
+                  "on_or_before": {
+                    "description": "Return sessions at or before this time.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "property",
+              "timestamp"
+            ],
+            "type": "object"
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "filter": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/sessionIdFilter"
+              },
+              {
+                "$ref": "#/$defs/sessionAgentIdFilter"
+              },
+              {
+                "$ref": "#/$defs/sessionStatusFilter"
+              },
+              {
+                "$ref": "#/$defs/sessionTimestampFilter"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "and": {
+                    "description": "Return sessions that match every child filter.",
+                    "items": {
+                      "$ref": "#/$defs/sessionNestedFilter"
+                    },
+                    "maxItems": 100,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "and"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "or": {
+                    "description": "Return sessions that match any child filter.",
+                    "items": {
+                      "$ref": "#/$defs/sessionNestedFilter"
                     },
                     "maxItems": 100,
                     "type": "array"
@@ -9980,6 +5954,10 @@ export const manifest = {
             ],
             "description": "A session property filter, or an and/or compound filter nested up to two levels deep."
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_size": {
             "description": "The number of sessions to return. Maximum: 100.",
             "maximum": 100,
@@ -9989,6 +5967,10 @@ export const manifest = {
           "query": {
             "description": "A case-insensitive substring search over session titles.",
             "maxLength": 2000,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "sorts": {
@@ -10039,11 +6021,15 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Read the full visible content of one saved Custom Agent session event.\n\nRequires Notion AI.",
+      "description": "Read the full visible content of one saved Custom Agent session event.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "sequence": {
             "description": "Committed event sequence number to read.",
             "maximum": 9007199254740991,
@@ -10053,6 +6039,10 @@ export const manifest = {
           "session_url": {
             "description": "Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.",
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -10066,6 +6056,47 @@ export const manifest = {
     },
     {
       "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Accept or reject one pending suggested edit. Use the exact suggested_edit_url, inspect it with get_suggested_edit first, and call this only after the user explicitly chooses accept or reject.\n\nRequires a Business or Enterprise workspace plan. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Whether to apply or discard the suggestion.",
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "suggested_edit_url": {
+            "description": "Pending suggested-edit discussion URL returned by get_comments or create_suggested_edit.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggested_edit_url",
+          "action"
+        ],
+        "type": "object"
+      },
+      "name": "notion-resolve-suggested-edit"
+    },
+    {
+      "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false,
@@ -10076,6 +6107,10 @@ export const manifest = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_ids": {
             "description": "IDs of 1 to 20 pages or databases in Trash. Database rows are pages. Duplicate IDs are restored once.",
             "items": {
@@ -10084,6 +6119,10 @@ export const manifest = {
             "maxItems": 20,
             "minItems": 1,
             "type": "array"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -10095,12 +6134,76 @@ export const manifest = {
     },
     {
       "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Restore a whole Notion page or database to how it looked at a past time. This undoes every edit made after that time, including other people's, and removes comments added after it. To undo one change but keep later edits, edit the page instead. Before you call it, use get_version_changes from that time to now to see what will be undone, then list those changes for the user in your reply. The approval card does not list them. If the page has databases inside it and the user did not say whether to restore them, ask. If a restore is rejected or declined, do not make the same change another way, such as by editing the page. Tell the user what happened and ask what they want. Requires edit access. This tool only starts the restore, which then runs in the background, so the page can look unchanged for a short time. To undo a restore, restore the page to its started_at time.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "database_options": {
+            "additionalProperties": false,
+            "description": "For a database only: which parts to restore. Leave it out to restore all of them.",
+            "properties": {
+              "properties": {
+                "description": "Restore the database's properties (its schema). Defaults to true.",
+                "type": "boolean"
+              },
+              "row_property_values": {
+                "description": "Restore each row's property values. Defaults to true.",
+                "type": "boolean"
+              },
+              "row_titles": {
+                "description": "Restore each row's title. Defaults to true.",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "include_inline_databases": {
+            "description": "For a page only: also restore the databases inside the page. Defaults to false. If the page has databases and the user did not say whether to restore them, ask first.",
+            "type": "boolean"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "page": {
+            "description": "The page or database to restore: a page URL, database URL, or ID. Not a data source (collection://) URL.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "time": {
+            "description": "The past moment to restore to, as an ISO 8601 time with a time zone, such as \"2026-10-10T18:05:02Z\". The page keeps every edit made at or before it. To remove a change, use the last_edit_time of the change before it, not the change's own first_edit_time.",
+            "type": "string"
+          },
+          "user_confirmed": {
+            "description": "Set to true only after the user has seen what this restore will change and said yes. Without it, nothing is restored and the call returns what it would do.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "page",
+          "time"
+        ],
+        "type": "object"
+      },
+      "name": "notion-restore-version"
+    },
+    {
+      "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true,
         "readOnlyHint": true
       },
-      "description": "Search Notion and connected workspace sources available to you, such as Slack, Mail, and Calendar, with AI search. Use this tool for every content search: exact keywords, page titles, project names, and natural-language questions. Keywords are valid; a question is not required. Preserve distinctive names and identifiers. Prefer one topic per call, ideally under 50 words.\n\nStart with {\"query\":\"...\"} and omit optional parameters unless needed. For user lookup, set query_type=\"user\" and provide a name or email, and omit content filters and sort. Filters, sort other than relevance, and filter-only browsing return Notion-only keyword results with supported constraints applied; omit them to search Notion and connected sources together. Business or Enterprise is required for filters.edited_by_user_ids, filters.last_edited_date_range, filters.title_only=true, filters.content_status, more than one distinct teamspace across teamspace_id and filters.teamspace_ids, and sort other than relevance. On other plans, those options are dropped with a notice in the result, and results may be broader. Keep filters nested inside \"filters\". Use page_size, not limit.\n\n<example description=\"Find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"Find an exact identifier\">\n{\"query\":\"ACME-123\"}\n</example>\n<example description=\"Answer a question\">\n{\"query\":\"Why did we delay the launch?\"}\n</example>\n<example description=\"Browse Notion pages created in a date range\">\n{\"query\":\"\",\"filters\":{\"created_date_range\":{\"start_date\":\"2026-07-01\",\"end_date\":\"2026-08-01\"}}}\n</example>",
+      "description": "Search Notion pages and databases, or look up a user by name or email. Does not search connected apps; use connector_search, when listed, for sources such as Slack, Google Drive, GitHub, mail, or calendar. When connector_search is listed, call it in parallel with search on the first search for an information need, unless the user names a source, the request is a user lookup, or the request is about Notion pages or databases themselves, such as finding a page to read or edit. Decisions, status updates, and discussions often live in connected sources. Preserve distinctive names and identifiers.\n\nUse a non-empty query for content searches. Leave the query empty only when you also send filters or a non-relevance sort, as in the browse example below. Omit optional parameters unless needed. Do not add filters or sorting just to fill in defaults. Business or Enterprise is required for filters.edited_by_user_ids, filters.last_edited_date_range, filters.title_only=true, filters.content_status, more than one distinct teamspace across teamspace_id and filters.teamspace_ids, and sort other than relevance. On other plans, those options are dropped with a notice in the result, and results may be broader. Keep filters nested inside \"filters\". Use YYYY-MM-DD for start_date and end_date. Use page_size, not limit.\n\nFor user lookup, set query_type=\"user\" and provide a name or email. A document about a person is a content search, not a user lookup.\n\n<example description=\"Find a page by title\">\n{\"query\":\"Q3 roadmap\"}\n</example>\n<example description=\"Browse pages you edited most recently\">\n{\"query\":\"\",\"filters\":{\"edited_by_user_ids\":[\"me\"]},\"sort\":\"last_edited\"}\n</example>\n<example description=\"Find a user\">\n{\"query\":\"alex@example.com\",\"query_type\":\"user\"}\n</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -10192,14 +6295,18 @@ export const manifest = {
             },
             "type": "object"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "max_highlight_length": {
-            "description": "Maximum character length for result highlights (default 200). Set to 0 to omit highlights entirely.",
+            "description": "Maximum character length for result highlights (default 200). Set to 0 to omit highlights entirely. Values outside the range (minimum 0, maximum 500) are clamped.",
             "maximum": 500,
             "minimum": 0,
             "type": "integer"
           },
           "page_size": {
-            "description": "Maximum number of results to return (default 10). Lower values reduce response size.",
+            "description": "Maximum number of results to return (default 10). Lower values reduce response size. Values outside the range (minimum 1, maximum 50) are clamped.",
             "maximum": 50,
             "minimum": 1,
             "type": "integer"
@@ -10218,6 +6325,10 @@ export const manifest = {
               "internal",
               "user"
             ],
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "sort": {
@@ -10248,13 +6359,17 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search agents by name or description, or browse the current user's favorite agents and the workspace's newest agents. Queries return one page. Without a query, follow nextCursor until it is omitted, even when a bounded workspace page is empty. Use this instead of list_agents when personal favorites or relevance-ranked search are needed.\n\nRequires Notion AI.",
+      "description": "Search agents by name or description, or browse the current user's favorite agents and the workspace's newest agents. Queries return one page. Without a query, follow nextCursor until it is omitted, even when a bounded workspace page is empty. Use this instead of list_agents when personal favorites or relevance-ranked search are needed.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "cursor": {
             "description": "Opaque pagination cursor from the previous response.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
             "type": "string"
           },
           "limit": {
@@ -10272,6 +6387,10 @@ export const manifest = {
               "workspace"
             ],
             "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -10288,17 +6407,25 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search past agent sessions by topic in a periodically refreshed index and return matching session URLs and excerpts. Recently created or updated sessions may not appear; use query_sessions for recent sessions.\n\nRequires Notion AI.",
+      "description": "Search past agent sessions by topic in a periodically refreshed index and return matching session URLs and excerpts. Recently created or updated sessions may not appear; use query_sessions for recent sessions.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "lookback": {
             "description": "How far back to search, such as \"30d\" or \"1y\". Leave it out to search the past year.",
             "type": "string"
           },
           "question": {
             "description": "What you want to find in past sessions.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -10316,11 +6443,15 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Send a follow-up message to a Custom Agent session you can access.\n\nRequires Notion AI.",
+      "description": "Send a follow-up message to a Custom Agent session you can access.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "message": {
             "description": "Follow-up message to send.",
             "minLength": 1,
@@ -10329,6 +6460,10 @@ export const manifest = {
           "session_url": {
             "description": "Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.",
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -10347,7 +6482,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Add or remove your emoji reaction on a comment. Get the comment ID from get_comments or create_comment. Safe to repeat: setting the same state twice changes nothing.\n\nRequires a Business or Enterprise plan.",
+      "description": "Add or remove your emoji reaction on a comment. Get the comment ID from get_comments or create_comment. Safe to repeat: setting the same state twice changes nothing.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -10360,9 +6495,17 @@ export const manifest = {
             "description": "One standard Unicode emoji.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "reacted": {
             "description": "True to add the reaction, false to remove it.",
             "type": "boolean"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -10381,7 +6524,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Resolve or reopen a comment discussion. Get the discussion ID from get_comments or create_comment. Use this tool only when a human explicitly asks to resolve that discussion. Do not infer resolution from addressing feedback, replying, completing related work, passing checks, or changing task status.\n\nRequires a Business or Enterprise plan.",
+      "description": "Resolve or reopen a comment discussion. Get the discussion ID from get_comments or create_comment. Use this tool only when a human explicitly asks to resolve that discussion. Do not infer resolution from addressing feedback, replying, completing related work, passing checks, or changing task status.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -10390,9 +6533,17 @@ export const manifest = {
             "description": "The discussion ID or URL, such as the id of a <discussion> from get_comments (discussion://pageId/blockId/discussionId) or the discussion_id returned by create_comment.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "resolved": {
             "description": "True to resolve the discussion, false to reopen it.",
             "type": "boolean"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           }
         },
         "required": [
@@ -10405,63 +6556,12 @@ export const manifest = {
     },
     {
       "annotations": {
-        "destructiveHint": false,
-        "idempotentHint": false,
-        "openWorldHint": false,
-        "readOnlyHint": true
-      },
-      "description": "Use this exactly once at the end of a turn when query_multiple_data_sources requires the full version of Notion MCP. Call with no arguments. Do not call this once per failed query, and do not call it again if it has already been called in this turn. Use the card data to give the user the relevant next-step message and destination link in the final response. Use a compact, labeled Markdown link rather than a bare URL, and do not request or create a separate link preview.",
-      "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "default": {},
-        "properties": {},
-        "type": "object"
-      },
-      "name": "notion-show-advanced-analysis-next-steps",
-      "outputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "properties": {
-          "action": {
-            "enum": [
-              "start_trial",
-              "request_trial",
-              "learn_more"
-            ],
-            "type": "string"
-          },
-          "client_name": {
-            "maxLength": 64,
-            "minLength": 1,
-            "type": "string"
-          },
-          "destination_url": {
-            "format": "uri",
-            "type": "string"
-          },
-          "kind": {
-            "enum": [
-              "query_multiple_data_sources_full_version",
-              "query_multiple_data_sources_full_version_not_displayed"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind"
-        ],
-        "type": "object"
-      }
-    },
-    {
-      "annotations": {
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Start a session with a published Custom Agent. Use get_session_status or wait_session to check its progress.\n\nRequires Notion AI.",
+      "description": "Start a session with a published Custom Agent. Use get_session_status or wait_session to check its progress.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -10474,6 +6574,14 @@ export const manifest = {
           "initial_message": {
             "description": "Initial message for the new session.",
             "minLength": 1,
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -10492,14 +6600,22 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Stop a running Custom Agent session you can access.\n\nRequires Notion AI.",
+      "description": "Stop a running Custom Agent session you can access.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "session_url": {
             "description": "Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.",
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -10512,12 +6628,12 @@ export const manifest = {
     },
     {
       "annotations": {
-        "destructiveHint": false,
+        "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Replace the text of a comment you wrote. Get the comment ID from get_comments or create_comment. The new text replaces the whole comment, so send the full corrected text. To fix a comment, update it instead of deleting it and posting a new one. You can only edit your own comments.\n\nRequires a Business or Enterprise plan.",
+      "description": "Replace the text of a comment you wrote. Get the comment ID from get_comments or create_comment. The new text replaces the whole comment, so send the full corrected text. To fix a comment, update it instead of deleting it and posting a new one. You can only edit your own comments.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -10526,8 +6642,16 @@ export const manifest = {
             "description": "The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "markdown": {
             "description": "The full replacement text for the comment, as inline Markdown. It replaces the whole comment, so include any text you want to keep. Use the same inline syntax as create_comment. Lists, headings, and other block-level Markdown are not supported in comments.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -10548,6 +6672,142 @@ export const manifest = {
       },
       "description": "Update a Notion data source's schema, title, attributes, or page layout. Schema changes use SQL DDL statements. Returns Markdown showing updated structure and schema.\n\nAccepts a data source ID (collection ID from fetch response's <data-source> tag) or a single-source database ID. Multi-source databases require the specific data source ID.\n\nThe statements param accepts semicolon-separated DDL statements:\n- ADD COLUMN \"Name\" <type> - add a new property\n- DROP COLUMN \"Name\" - remove a property\n- RENAME COLUMN \"Old\" TO \"New\" - rename a property\n- ALTER COLUMN \"Name\" SET <type> - change type/options. For SELECT, MULTI_SELECT, and STATUS, list every option to keep; omitted options are removed. Existing options keep their id and can be recolored. STATUS options keep their group when the group is omitted.\n\n\nThe page_layout param replaces the layout every page in the data source uses (pinned properties, sidebar, property sections, and a content tab next to views). Fetch the data source first to get the current layout, then edit it. See notion://docs/database-page-layouts for the format.\n\nNotes: Cannot delete/create title properties. Max one unique_id property. Cannot update synced databases. Use \"fetch\" first to see current schema and get the data source ID from <data-source url=\"collection://...\"> tags.",
       "inputSchema": {
+        "$defs": {
+          "pageLayoutPropertiesModule": {
+            "additionalProperties": false,
+            "properties": {
+              "properties": {
+                "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
+                "items": {
+                  "$ref": "#/$defs/pageLayoutPropertyEntry"
+                },
+                "type": "array"
+              },
+              "type": {
+                "description": "The module type.",
+                "enum": [
+                  "properties"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "pageLayoutPropertiesSectionsModule": {
+            "additionalProperties": false,
+            "properties": {
+              "sections": {
+                "description": "Named sections in order. Unlisted properties go in the last section and show.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "The section name.",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "properties": {
+                      "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
+                      "items": {
+                        "$ref": "#/$defs/pageLayoutPropertyEntry"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "properties"
+                  ],
+                  "type": "object"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "type": {
+                "description": "The module type.",
+                "enum": [
+                  "properties"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "sections"
+            ],
+            "type": "object"
+          },
+          "pageLayoutPropertyEntry": {
+            "additionalProperties": false,
+            "properties": {
+              "property": {
+                "description": "The property name.",
+                "type": "string"
+              },
+              "visibility": {
+                "description": "Defaults to show. Changes how pages look, not who can see the value.",
+                "enum": [
+                  "show",
+                  "hide_if_empty",
+                  "hide"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "property"
+            ],
+            "type": "object"
+          },
+          "pageLayoutPropertyModule": {
+            "additionalProperties": false,
+            "properties": {
+              "config": {
+                "additionalProperties": false,
+                "description": "How the property looks.",
+                "properties": {
+                  "style": {
+                    "description": "Display style. Which styles apply depends on the property type.",
+                    "enum": [
+                      "compact",
+                      "large",
+                      "small",
+                      "landscape",
+                      "portrait",
+                      "square",
+                      "map",
+                      "text"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "style"
+                ],
+                "type": "object"
+              },
+              "property": {
+                "description": "The name of the property to show.",
+                "type": "string"
+              },
+              "type": {
+                "description": "The module type.",
+                "enum": [
+                  "property"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "property"
+            ],
+            "type": "object"
+          }
+        },
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
@@ -10562,6 +6822,10 @@ export const manifest = {
           "in_trash": {
             "description": "Move data source to trash. Cannot be undone without Notion UI.",
             "type": "boolean"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
           },
           "is_inline": {
             "description": "Whether the database should display inline (true) or as full page (false). Only applicable for single-source databases.",
@@ -10617,109 +6881,10 @@ export const manifest = {
                       "type": "object"
                     },
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "properties": {
-                          "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
-                          "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "property": {
-                                "description": "The property name.",
-                                "type": "string"
-                              },
-                              "visibility": {
-                                "description": "Defaults to show. Changes how pages look, not who can see the value.",
-                                "enum": [
-                                  "show",
-                                  "hide_if_empty",
-                                  "hide"
-                                ],
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "property"
-                            ],
-                            "type": "object"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "description": "The module type.",
-                          "enum": [
-                            "properties"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/pageLayoutPropertiesModule"
                     },
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "sections": {
-                          "description": "Named sections in order. Unlisted properties go in the last section and show.",
-                          "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "name": {
-                                "description": "The section name.",
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              "properties": {
-                                "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
-                                "items": {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "property": {
-                                      "description": "The property name.",
-                                      "type": "string"
-                                    },
-                                    "visibility": {
-                                      "description": "Defaults to show. Changes how pages look, not who can see the value.",
-                                      "enum": [
-                                        "show",
-                                        "hide_if_empty",
-                                        "hide"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "property"
-                                  ],
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "properties"
-                            ],
-                            "type": "object"
-                          },
-                          "minItems": 1,
-                          "type": "array"
-                        },
-                        "type": {
-                          "description": "The module type.",
-                          "enum": [
-                            "properties"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "sections"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/pageLayoutPropertiesSectionsModule"
                     },
                     {
                       "additionalProperties": false,
@@ -10753,49 +6918,7 @@ export const manifest = {
                       "type": "object"
                     },
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "config": {
-                          "additionalProperties": false,
-                          "description": "How the property looks.",
-                          "properties": {
-                            "style": {
-                              "description": "Display style. Which styles apply depends on the property type.",
-                              "enum": [
-                                "compact",
-                                "large",
-                                "small",
-                                "landscape",
-                                "portrait",
-                                "square",
-                                "map",
-                                "text"
-                              ],
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "style"
-                          ],
-                          "type": "object"
-                        },
-                        "property": {
-                          "description": "The name of the property to show.",
-                          "type": "string"
-                        },
-                        "type": {
-                          "description": "The module type.",
-                          "enum": [
-                            "property"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "property"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/pageLayoutPropertyModule"
                     },
                     {
                       "additionalProperties": false,
@@ -10827,154 +6950,13 @@ export const manifest = {
                 "items": {
                   "anyOf": [
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "properties": {
-                          "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
-                          "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "property": {
-                                "description": "The property name.",
-                                "type": "string"
-                              },
-                              "visibility": {
-                                "description": "Defaults to show. Changes how pages look, not who can see the value.",
-                                "enum": [
-                                  "show",
-                                  "hide_if_empty",
-                                  "hide"
-                                ],
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "property"
-                            ],
-                            "type": "object"
-                          },
-                          "type": "array"
-                        },
-                        "type": {
-                          "description": "The module type.",
-                          "enum": [
-                            "properties"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/pageLayoutPropertiesModule"
                     },
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "sections": {
-                          "description": "Named sections in order. Unlisted properties go in the last section and show.",
-                          "items": {
-                            "additionalProperties": false,
-                            "properties": {
-                              "name": {
-                                "description": "The section name.",
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              "properties": {
-                                "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
-                                "items": {
-                                  "additionalProperties": false,
-                                  "properties": {
-                                    "property": {
-                                      "description": "The property name.",
-                                      "type": "string"
-                                    },
-                                    "visibility": {
-                                      "description": "Defaults to show. Changes how pages look, not who can see the value.",
-                                      "enum": [
-                                        "show",
-                                        "hide_if_empty",
-                                        "hide"
-                                      ],
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "property"
-                                  ],
-                                  "type": "object"
-                                },
-                                "type": "array"
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "properties"
-                            ],
-                            "type": "object"
-                          },
-                          "minItems": 1,
-                          "type": "array"
-                        },
-                        "type": {
-                          "description": "The module type.",
-                          "enum": [
-                            "properties"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "sections"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/pageLayoutPropertiesSectionsModule"
                     },
                     {
-                      "additionalProperties": false,
-                      "properties": {
-                        "config": {
-                          "additionalProperties": false,
-                          "description": "How the property looks.",
-                          "properties": {
-                            "style": {
-                              "description": "Display style. Which styles apply depends on the property type.",
-                              "enum": [
-                                "compact",
-                                "large",
-                                "small",
-                                "landscape",
-                                "portrait",
-                                "square",
-                                "map",
-                                "text"
-                              ],
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "style"
-                          ],
-                          "type": "object"
-                        },
-                        "property": {
-                          "description": "The name of the property to show.",
-                          "type": "string"
-                        },
-                        "type": {
-                          "description": "The module type.",
-                          "enum": [
-                            "property"
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "property"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/pageLayoutPropertyModule"
                     }
                   ]
                 },
@@ -11011,154 +6993,13 @@ export const manifest = {
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "properties": {
-                              "description": "Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.",
-                              "items": {
-                                "additionalProperties": false,
-                                "properties": {
-                                  "property": {
-                                    "description": "The property name.",
-                                    "type": "string"
-                                  },
-                                  "visibility": {
-                                    "description": "Defaults to show. Changes how pages look, not who can see the value.",
-                                    "enum": [
-                                      "show",
-                                      "hide_if_empty",
-                                      "hide"
-                                    ],
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "property"
-                                ],
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            "type": {
-                              "description": "The module type.",
-                              "enum": [
-                                "properties"
-                              ],
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/pageLayoutPropertiesModule"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "sections": {
-                              "description": "Named sections in order. Unlisted properties go in the last section and show.",
-                              "items": {
-                                "additionalProperties": false,
-                                "properties": {
-                                  "name": {
-                                    "description": "The section name.",
-                                    "minLength": 1,
-                                    "type": "string"
-                                  },
-                                  "properties": {
-                                    "description": "Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.",
-                                    "items": {
-                                      "additionalProperties": false,
-                                      "properties": {
-                                        "property": {
-                                          "description": "The property name.",
-                                          "type": "string"
-                                        },
-                                        "visibility": {
-                                          "description": "Defaults to show. Changes how pages look, not who can see the value.",
-                                          "enum": [
-                                            "show",
-                                            "hide_if_empty",
-                                            "hide"
-                                          ],
-                                          "type": "string"
-                                        }
-                                      },
-                                      "required": [
-                                        "property"
-                                      ],
-                                      "type": "object"
-                                    },
-                                    "type": "array"
-                                  }
-                                },
-                                "required": [
-                                  "name",
-                                  "properties"
-                                ],
-                                "type": "object"
-                              },
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            "type": {
-                              "description": "The module type.",
-                              "enum": [
-                                "properties"
-                              ],
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "sections"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/pageLayoutPropertiesSectionsModule"
                         },
                         {
-                          "additionalProperties": false,
-                          "properties": {
-                            "config": {
-                              "additionalProperties": false,
-                              "description": "How the property looks.",
-                              "properties": {
-                                "style": {
-                                  "description": "Display style. Which styles apply depends on the property type.",
-                                  "enum": [
-                                    "compact",
-                                    "large",
-                                    "small",
-                                    "landscape",
-                                    "portrait",
-                                    "square",
-                                    "map",
-                                    "text"
-                                  ],
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "style"
-                              ],
-                              "type": "object"
-                            },
-                            "property": {
-                              "description": "The name of the property to show.",
-                              "type": "string"
-                            },
-                            "type": {
-                              "description": "The module type.",
-                              "enum": [
-                                "property"
-                              ],
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "property"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/pageLayoutPropertyModule"
                         }
                       ]
                     },
@@ -11176,8 +7017,12 @@ export const manifest = {
             ],
             "type": "object"
           },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "statements": {
-            "description": "Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- <example>ADD COLUMN \"Priority\" SELECT('High':red, 'Medium':yellow, 'Low':green); ADD COLUMN \"Due Date\" DATE</example>\n- <example>RENAME COLUMN \"Status\" TO \"Project Status\"</example>\n- <example>DROP COLUMN \"Old Property\"</example>\n- For a self-relation, add both relation properties in one call with matching DUAL names and IDs, such as <example>ADD COLUMN \"Parent\" RELATION('ds', DUAL 'Children' 'children')</example>.",
+            "description": "Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.\n\nProperty type syntax:\n- Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES\n- SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)\n- Option names can't contain commas: use '$1000+', not '$1,000+'. List separate options as 'A', 'B', not 'A, B'.\n- STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete\n- NUMBER [FORMAT 'dollar'] / FORMULA('expression')\n- RELATION('ds') for a one-way relation\n- RELATION('ds', DUAL) for a two-way relation\n- RELATION('ds', DUAL 'Children') with a synced property name\n- RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)\n- ROLLUP('rel_prop', 'target_prop', 'function')\n- UNIQUE_ID [PREFIX 'WEB-BUG'] / CREATED_TIME / LAST_EDITED_TIME\n- UNIQUE_ID PREFIX: 2-10 characters, a letter then letters, digits, or hyphens (e.g. 'TASK-ID', not 'TASK_ID' or 'T'). Each prefix can be used by only one data source per workspace, so prefer a specific prefix like 'WEB-BUG' over 'TASK'.\n- Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.\n\n\nExamples:\n- <example>ADD COLUMN \"Priority\" SELECT('High':red, 'Medium':yellow, 'Low':green); ADD COLUMN \"Due Date\" DATE</example>\n- <example>RENAME COLUMN \"Status\" TO \"Project Status\"</example>\n- <example>DROP COLUMN \"Old Property\"</example>\n- For a self-relation, add both relation properties in one call with matching DUAL names and IDs, such as <example>ADD COLUMN \"Parent\" RELATION('ds', DUAL 'Children' 'children')</example>.",
             "type": "string"
           },
           "title": {
@@ -11191,53 +7036,6 @@ export const manifest = {
         "type": "object"
       },
       "name": "notion-update-data-source"
-    },
-    {
-      "annotations": {
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": false,
-        "readOnlyHint": false
-      },
-      "description": "Enable or disable Notion Skills for external MCP clients, Notion AI, or both by adding or removing their page URLs. The surfaces option defaults to both and changes only the current user's Skill settings.",
-      "inputSchema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "properties": {
-          "add_skill_urls": {
-            "description": "Notion Skill page URLs to enable on the requested surfaces.",
-            "items": {
-              "description": "A Notion Skill page URL.",
-              "type": "string"
-            },
-            "maxItems": 50,
-            "type": "array"
-          },
-          "remove_skill_urls": {
-            "description": "Notion Skill page URLs to disable on the requested surfaces.",
-            "items": {
-              "description": "A Notion Skill page URL.",
-              "type": "string"
-            },
-            "maxItems": 50,
-            "type": "array"
-          },
-          "surfaces": {
-            "description": "Skill settings to update. Defaults to both external MCP and Notion AI.",
-            "items": {
-              "enum": [
-                "mcp",
-                "notion_ai"
-              ],
-              "type": "string"
-            },
-            "maxItems": 2,
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "name": "notion-update-enabled-skills"
     },
     {
       "annotations": {
@@ -11282,6 +7080,14 @@ export const manifest = {
             "description": "The ID of the Folder to update.",
             "type": "string"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
           "title": {
             "description": "Required for add_subfolder. The new Folder's title.",
             "type": "string"
@@ -11302,7 +7108,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Update a Notion page's properties or content.\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Do NOT guess or hallucinate Markdown syntax. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nBefore changing content, fetch unless already loaded. Match nearby headings, block types, nesting, list or table patterns, and prose style.\n\nMake the smallest edit. Use \"update_content\" for targeted search-and-replace and \"insert_content\" only to prepend or append. Avoid full-page \"replace_content\" when a targeted command is sufficient. Preserve unrelated wording, structure, order, and native references. Do not broadly rewrite unless asked.\n\nFor \"update_content\", use the smallest exact old_str that uniquely identifies the target. If the edit would remove material content the user did not identify, ask for confirmation first. After a multi-part or structural edit, fetch the page again and verify the requested content and nesting. Skip this extra read for a simple exact edit.\n\nFor \"replace_content\", preserve child pages and databases with their exact fetched tags. If validation reports that child content would be deleted, show the list and ask for confirmation. Never retry with \"allow_deleting_content\": true without confirmation. Report any \"warnings\" in the result.",
+      "description": "Update a Notion page's properties, content, icon, or cover. For only an icon or cover, use \"update_properties\" without \"properties\".\n\n## Core rules\n\n**IMPORTANT**: Before writing page content, read the MCP resource `notion://docs/notion-flavored-markdown-spec` through your MCP client's resource-reading interface, or call the Notion \"fetch\" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Don't guess Markdown syntax. By default, use native Notion mentions for references you add to existing Notion pages, databases, data sources, people, and dates. Use Markdown links only for external URLs or when the user requests a plain link. For a person, use a user mention with their user URL, found with search using query_type \"user\"; do not write \"@Name\" as plain text. For a specific date or time, such as a due date or meeting time, use a date mention. The Markdown specification gives the mention syntax.\n\nBefore changing content, fetch unless already loaded. Match nearby headings, block types, nesting, lists, tables, and prose style.\n\nMake the smallest edit. Use \"update_content\" for targeted search-and-replace and \"insert_content\" only to prepend or append. Avoid \"replace_content\" when a targeted command works. Preserve unrelated wording, structure, order, and native references. Do not broadly rewrite unless asked.\n\nFor \"update_content\", use the smallest exact old_str that uniquely matches the target. Ask before removing material content the user did not identify. Don't fetch just to verify an update that completed without warnings. Fetch to resolve warnings, or when a later step needs the page's exact saved state.\n\nFor \"replace_content\", preserve child pages and databases with their exact fetched tags. If validation says child content would be deleted, show the list and ask first. Never retry with \"allow_deleting_content\": true without confirmation. Report any \"warnings\" in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
@@ -11328,7 +7134,7 @@ export const manifest = {
             "type": "string"
           },
           "content": {
-            "description": "Required for \"insert_content\" command. The markdown content to insert into the page. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.",
+            "description": "Required for \"insert_content\" command. The markdown content to insert into the page. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.",
             "type": "string"
           },
           "content_updates": {
@@ -11337,7 +7143,7 @@ export const manifest = {
               "additionalProperties": {},
               "properties": {
                 "new_str": {
-                  "description": "The new content string to replace old_str with. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.",
+                  "description": "The new content string to replace old_str with. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.",
                   "type": "string"
                 },
                 "old_str": {
@@ -11360,23 +7166,31 @@ export const manifest = {
             "type": "array"
           },
           "cover": {
-            "description": "An external image URL for the page cover. Use \"none\" to remove the cover. Omit to leave unchanged. Can be set alongside any command.",
+            "description": "An external image URL for the page cover. Use \"none\" to remove the cover. Omit to leave unchanged. Can be set alongside any command. To change only the cover, use \"update_properties\" and omit \"properties\".",
             "type": "string"
           },
+          "full_width": {
+            "description": "With command update_properties, set a page to full width or the default width. For database pages, overrides the database layout for this page only.",
+            "type": "boolean"
+          },
           "icon": {
-            "description": "An emoji character (e.g. \"🚀\"), a custom emoji by name (e.g. \":rocket_ship:\"), a Notion icon identifier as returned by fetch (e.g. \"icons/pizza_blue\"), or an external image URL. Use \"none\" to remove the icon. Omit to leave unchanged. Can be set alongside any command. Keep the title free of a duplicate leading emoji because the icon renders separately.",
+            "description": "An emoji character (e.g. \"🚀\"), a custom emoji by name (e.g. \":rocket_ship:\"), a Notion icon identifier as returned by fetch (e.g. \"icons/pizza_blue\"), or an external image URL. Use \"none\" to remove the icon. Omit to leave unchanged. Can be set alongside any command. To change only the icon, use \"update_properties\" and omit \"properties\". Keep the title free of a duplicate leading emoji because the icon renders separately.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
             "type": "string"
           },
           "is_skill": {
-            "description": "Set to true to mark this page as a skill, or false to remove the skill designation. Can be set alongside any command. To change only skill status, use \"update_properties\" and omit \"properties\".",
+            "description": "Set to true to mark this page as a skill, or false to remove the skill designation. Can be set alongside any command. To change only skill status, use \"update_properties\" and omit \"properties\". Before creating a skill, read the MCP resource `notion://docs/skills` through your MCP client's resource-reading interface. If your client does not support reading MCP resources, call the Notion \"fetch\" tool with this URI instead. Do NOT pass this URI to any other URL-fetching tool.",
             "type": "boolean"
           },
           "new_str": {
-            "description": "Required for \"replace_content\" command. The new content string to replace the entire page content with. Preserve child pages and databases with their exact fetched <page url=\"...\"> or <database url=\"...\"> tags. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.",
+            "description": "Required for \"replace_content\" command. The new content string to replace the entire page content with. Preserve child pages and databases with their exact fetched <page url=\"...\"> or <database url=\"...\"> tags. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.",
             "type": "string"
           },
           "page_id": {
-            "description": "The ID of the page to update, with or without dashes.",
+            "description": "The page ID, with or without dashes, or a Notion page URL.",
             "type": "string"
           },
           "position": {
@@ -11472,11 +7286,15 @@ export const manifest = {
                 }
               ]
             },
-            "description": "Required for \"update_properties\" command. A JSON object that updates the page's properties.\nFor pages in a database, fetch the page or its data source first and use the exact property names and SQLite schema definition shown in <database>.\nFor pages outside of a database, the only allowed property is \"title\", which is the title of the page in inline markdown format.\nFor a Files property, an uploaded file can be provided as {\"type\":\"file_upload\",\"file_upload\":{\"id\":\"<file-upload-id>\"}} inside the property's array.\nUse null to remove a property's value.\n**IMPORTANT**: Some property types require specific formats:\n- Date properties: Split into \"date:{property}:start\", \"date:{property}:end\" (optional), and \"date:{property}:is_datetime\" (0 or 1)\n- Place properties: Split into \"place:{property}:name\", \"place:{property}:address\", \"place:{property}:latitude\", \"place:{property}:longitude\", and \"place:{property}:google_place_id\" (optional)\n- Number properties: Use JavaScript numbers (not strings)\n- Checkbox properties: Use \"__YES__\" for checked, \"__NO__\" for unchecked\n- Relation properties: Use an array of related page URLs or page IDs, e.g. [\"https://www.notion.so/26ab1f9f4c5f80b18d3bd10a6b1d2f4e\", \"26ab1f9f-4c5f-80b1-8d3b-d10a6b1d2f4e\"]\n- Person properties: Use an array of user IDs, user or agent URLs, or group references copied from fetch output (\"space_permission_group-<UUID>\"). Bare group UUIDs are also supported.\n- Files properties: Use a JSON array of file IDs, Notion Folder URLs, and/or <folder> tags copied from fetch output. Folders are stored as native Folder references, not ordinary links.\n\n\n**Special property naming**: Properties named \"id\" or \"url\" (case insensitive) must be prefixed with \"userDefined:\" (e.g., \"userDefined:URL\", \"userDefined:id\")",
+            "description": "Used by the \"update_properties\" command, and required unless \"icon\", \"cover\", \"is_skill\", or \"full_width\" is set. A JSON object that updates the page's properties.\nFor pages in a database, fetch the page or its data source first and use the exact property names and SQLite schema definition shown in <database>.\nFor page titles outside a database, use \"title\" in inline Markdown.\nFor a Files property, an uploaded file can be provided as {\"type\":\"file_upload\",\"file_upload\":{\"id\":\"<file-upload-id>\"}} inside the property's array.\nUse null to remove a property's value.\n**IMPORTANT**: Some property types require specific formats:\n- Date properties: Split into \"date:{property}:start\", \"date:{property}:end\" (optional), and \"date:{property}:is_datetime\" (0 or 1)\n- Place properties: Split into \"place:{property}:name\", \"place:{property}:address\", \"place:{property}:latitude\", \"place:{property}:longitude\", and \"place:{property}:google_place_id\" (optional)\n- Number properties: Use JavaScript numbers (not strings)\n- Checkbox properties: Use \"__YES__\" for checked, \"__NO__\" for unchecked\n- Relation properties: Use an array of related page URLs or page IDs, e.g. [\"https://www.notion.so/26ab1f9f4c5f80b18d3bd10a6b1d2f4e\", \"26ab1f9f-4c5f-80b1-8d3b-d10a6b1d2f4e\"]\n- Person properties: Use an array of user IDs, user or agent URLs, or group references copied from fetch output (\"space_permission_group-<UUID>\"). Bare group UUIDs are also supported.\n- Files properties: Use a JSON array of file IDs, Notion Folder URLs, and/or <folder> tags copied from fetch output. Folders are stored as native Folder references, not ordinary links.\n\n\n**Special property naming**: Properties named \"id\" or \"url\" (case insensitive) must be prefixed with \"userDefined:\" (e.g., \"userDefined:URL\", \"userDefined:id\")",
             "propertyNames": {
               "type": "string"
             },
             "type": "object"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
           },
           "template_id": {
             "description": "Required for \"apply_template\" command. The ID of a template to apply to this page; any page ID can be used as a template. Template content is appended to any existing page content asynchronously.",
@@ -11508,21 +7326,568 @@ export const manifest = {
     {
       "annotations": {
         "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Favorite or unfavorite 1 to 100 Notion pages or databases for the current user. Set favorited to true to add them or false to remove them. New favorites appear at the top in input order; existing favorites keep their position. To reorder, pass position (start, end, or after_page with another favorite's URL): the pages go there in input order, whether or not they were already favorites. Repeating the request is a no-op. All additions must be accessible in the current workspace; removals also work for inaccessible or deleted favorites. If additions are inaccessible, the error lists all failed URLs and nothing changes. Retry with the remaining URLs. This changes only the current user's Favorites, not page permissions.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "favorited": {
+            "description": "true to favorite these pages; false to unfavorite them.",
+            "type": "boolean"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "page_urls": {
+            "description": "Notion page or database URLs to favorite or unfavorite, in order.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "description": "Always `start`",
+                    "enum": [
+                      "start"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "description": "Always `end`",
+                    "enum": [
+                      "end"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "page_url": {
+                    "description": "URL of a current favorite. The pages go right after it.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Always `after_page`",
+                    "enum": [
+                      "after_page"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "page_url"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Where to put the pages, in input order: start, end, or after_page (right after another favorite). Moves pages that are already favorites. Only valid when favorited is true. Without it, new favorites go to the top and existing favorites stay where they are."
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page_urls",
+          "favorited"
+        ],
+        "type": "object"
+      },
+      "name": "notion-update-page-favorites"
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Update a view's name, filters, sorts, or display configuration.\n\nUse \"fetch\" to get view IDs from database responses. Only include fields\nyou want to change. The \"configure\" param uses the same DSL as create_view.\nUse CLEAR to remove settings:\n- CLEAR FILTER — remove all filters\n- CLEAR QUICK FILTER — remove all quick filters, or name properties to remove only theirs (CLEAR QUICK FILTER \"Status\")\n- CLEAR SORT — remove all sorts\n- CLEAR GROUP BY — remove grouping. Boards reject it; use GROUP BY with another property instead (CLEAR SUB GROUP BY still works).\n- CLEAR SUB GROUP BY — remove board sub-grouping\n\n\nSet board or gallery card layout with CARD LAYOUT default or CARD LAYOUT compact. Status sub-groups accept BY OPTION or BY GROUP.\n\nSee notion://docs/view-dsl-spec resource for full syntax (readable via your MCP client's resource-reading interface, or by passing the URI to the Notion \"fetch\" tool).\n\n<example description=\"Rename\">{\"view_id\": \"abc123\", \"name\": \"Sprint Board\"}</example>\n<example description=\"Update filter\">{\"view_id\": \"abc123\", \"configure\": \"FILTER \"Status\" = \"Done\"\"}</example>\n<example description=\"Add quick filters without criteria\">{\"view_id\": \"abc123\", \"configure\": \"QUICK FILTER \"Status\", \"Assignee\"\"}</example>\n<example description=\"Clear filter, add sort\">{\"view_id\": \"abc123\", \"configure\": \"CLEAR FILTER; SORT BY \"Created\" DESC\"}</example>\n<example description=\"Update grouping\">{\"view_id\": \"abc123\", \"configure\": \"GROUP BY \"Status\" BY GROUP SHOW EMPTY; SUB GROUP BY \"Priority\"; CARD LAYOUT compact\"}</example>",
+      "description": "Replace the current user's complete, ordered Notion sidebar tab list. Use it to organize the sidebar around how the user works, for example a tab per workflow with its databases, teamspaces, and New page shortcuts. First call get_sidebar_tabs, then send back every tab, shortcut, and section to keep with its id. Omit an existing item to remove it, and omit id only for a new tab, configured shortcut, or database view section. Removing a tab also removes its shortcut groups. Rich objects describe their complete desired state, so omitting an optional field such as label, templateUrl, customName, openIn, or itemLimit clears it. Database view sections need a view:// URL or a Notion URL with a v= view id. Teamspace sections need a teamspace:// URL or a teamspace id from get_teams, for a teamspace the user has joined. Tab icons are Notion icon names such as home, checkmark-square, calendar, book, briefcase, people, inbox, folder, rocket, or chart-line. Check the returned config, and do not claim success unless the requested items are present.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "tabs": {
+            "description": "The complete desired ordered tab list. Preserve an existing id to update it, omit id to create a tab, and omit an existing tab to remove it.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "icon": {
+                  "description": "A Notion icon name or picker alias. Existing tabs preserve their icon when omitted; new tabs default to circle-dashed.",
+                  "type": "string"
+                },
+                "id": {
+                  "description": "An id returned by get_sidebar_tabs. Omit only for a new tab.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "The tab label shown in the sidebar.",
+                  "type": "string"
+                },
+                "sections": {
+                  "description": "Ordered sections for the tab. Use ids or object forms from the sectionCatalog returned by get_sidebar_tabs.",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "itemLimit": {
+                            "description": "Maximum visible items for this section in this tab. Use the string form instead to use the default.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          "type": {
+                            "description": "The built-in section id.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "customName": {
+                            "description": "An optional sidebar-only name that replaces the underlying view name in this section's label. Omit it to use the view name.",
+                            "maxLength": 150,
+                            "type": "string"
+                          },
+                          "hidePageIcon": {
+                            "description": "Whether to hide page icons for rows in this section. Defaults to false.",
+                            "type": "boolean"
+                          },
+                          "id": {
+                            "description": "Stable occurrence id returned by get_sidebar_tabs. Omit only when adding a new database view section.",
+                            "type": "string"
+                          },
+                          "itemLimit": {
+                            "description": "Maximum visible rows. Defaults to 5 when omitted.",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          "openIn": {
+                            "description": "How pages opened from this section appear. Omit it to use the database view's setting.",
+                            "enum": [
+                              "side_peek",
+                              "center_peek",
+                              "full_page"
+                            ],
+                            "type": "string"
+                          },
+                          "templateUrl": {
+                            "description": "An optional template page URL in the view's data source used by the section's New button, or \"empty\" to create blank pages without the default template.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The database view section type.",
+                            "enum": [
+                              "database_view"
+                            ],
+                            "type": "string"
+                          },
+                          "viewUrl": {
+                            "description": "An explicit view:// URL or Notion URL containing a v= view id. A database page URL without a view id is ambiguous and invalid.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "viewUrl"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "teamspaceUrl": {
+                            "description": "The teamspace:// URL or id of a teamspace the current user has joined.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The teamspace item type.",
+                            "enum": [
+                              "teamspace"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "teamspaceUrl"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "enum": [
+                          "meeting_databases"
+                        ],
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "shortcuts": {
+                  "description": "Ordered shortcuts for the tab. Use ids or object forms from the shortcutCatalog returned by get_sidebar_tabs.",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "dataSourceUrl": {
+                            "description": "The collection:// URL of the destination data source. Use at most one of dataSourceUrl and pageUrl.",
+                            "type": "string"
+                          },
+                          "icon": {
+                            "description": "An optional custom icon override using tool-docs://notion/pages/notion-icons.md or a single emoji. Omit it to use the database icon, or the generic compose icon when the shortcut has no database. Set it only when the user requests an override or there is a clear semantic reason.",
+                            "maxLength": 2000,
+                            "type": "string"
+                          },
+                          "id": {
+                            "description": "Occurrence id from get_sidebar_tabs. Omit for a new shortcut.",
+                            "type": "string"
+                          },
+                          "label": {
+                            "description": "An optional custom label, limited to 150 characters. Prefer \"New {singular noun}\" when the database's created object is clear, for example \"New task\" for Tasks. Otherwise omit it to use the product default.",
+                            "type": "string"
+                          },
+                          "openIn": {
+                            "description": "How pages opened from this item appear. Omit it to use the product default.",
+                            "enum": [
+                              "side_peek",
+                              "center_peek",
+                              "full_page"
+                            ],
+                            "type": "string"
+                          },
+                          "pageUrl": {
+                            "description": "The Notion URL of a page to create subpages in. Use at most one of dataSourceUrl and pageUrl.",
+                            "type": "string"
+                          },
+                          "templateUrl": {
+                            "description": "An optional database template page URL that belongs to dataSourceUrl, or \"empty\" to create blank pages without the default template.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The new page item type.",
+                            "enum": [
+                              "new_page"
+                            ],
+                            "type": "string"
+                          },
+                          "viewId": {
+                            "description": "An optional database view id in dataSourceUrl. New pages are created in that view.",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "description": "Occurrence id from get_sidebar_tabs. Omit for a new shortcut.",
+                            "type": "string"
+                          },
+                          "openIn": {
+                            "description": "How pages opened from this item appear. Omit it to use the product default.",
+                            "enum": [
+                              "side_peek",
+                              "center_peek",
+                              "full_page"
+                            ],
+                            "type": "string"
+                          },
+                          "pageUrl": {
+                            "description": "The Notion URL of the page or database the shortcut navigates to. The shortcut always shows that target's own title and icon.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The page link item type.",
+                            "enum": [
+                              "page_link"
+                            ],
+                            "type": "string"
+                          },
+                          "viewId": {
+                            "description": "An optional database view id. It must identify a view parented by the database in pageUrl. Omit it to open the user's most recently visited view.",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "pageUrl"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "description": "Occurrence id from get_sidebar_tabs. Omit for a new shortcut.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The agent item type.",
+                            "enum": [
+                              "agent"
+                            ],
+                            "type": "string"
+                          },
+                          "workflowId": {
+                            "description": "The id of the custom agent the shortcut navigates to.",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "workflowId"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "description": "Occurrence id from get_sidebar_tabs. Omit for a new shortcut.",
+                            "type": "string"
+                          },
+                          "threadId": {
+                            "description": "The id of the AI chat thread the shortcut opens.",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The chat thread item type.",
+                            "enum": [
+                              "chat_thread"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "threadId"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "description": "Occurrence id from get_sidebar_tabs. Omit for a new shortcut.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The chat dashboard item type.",
+                            "enum": [
+                              "chat_dashboard"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "description": "Occurrence id from get_sidebar_tabs. Omit for a new shortcut.",
+                            "type": "string"
+                          },
+                          "panel": {
+                            "description": "An optional settings panel id. Omit it to open Settings without selecting a specific panel.",
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "The settings item type.",
+                            "enum": [
+                              "settings"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "name",
+                "shortcuts",
+                "sections"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "tabs"
+        ],
+        "type": "object"
+      },
+      "name": "notion-update-sidebar-tabs"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Update the current user's settings for one Notion Skill. Enable or disable the Skill, control automatic use, configure where it is shown, or enable use in connected MCP agents. Omitted settings remain unchanged. This does not run the Skill.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "description": "Change only the provided settings. Automatic use and placements require enabling the Skill first or in this request. Connected-agent use is independent of Notion Agent installation. Disabling the Skill also clears connected-agent use.",
+            "properties": {
+              "enabled": {
+                "description": "Enable or disable this Skill in Notion Agent. Disabling also clears placements and connected-agent use.",
+                "type": "boolean"
+              },
+              "show_after_meetings": {
+                "description": "Show this enabled Skill after AI meeting notes.",
+                "type": "boolean"
+              },
+              "show_during_meetings": {
+                "description": "Show this enabled Skill during AI meeting notes.",
+                "type": "boolean"
+              },
+              "show_in_chat": {
+                "description": "Show this enabled Skill in the Agent chat menu.",
+                "type": "boolean"
+              },
+              "show_in_editor": {
+                "description": "Show this enabled Skill in the text selection menu.",
+                "type": "boolean"
+              },
+              "use_automatically": {
+                "description": "Allow agents to use this enabled Skill automatically when relevant. Set false to require explicit invocation without disabling the Skill or changing its placements.",
+                "type": "boolean"
+              },
+              "use_in_connected_agents": {
+                "description": "Make this Skill available to agents connected over MCP, independently of its Notion Agent installation. Requires a non-empty Skill description.",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "skill_url": {
+            "description": "The URL of an existing Notion Skill in the current workspace.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_url",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "name": "notion-update-skill-settings"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Update a view's name, filters, sorts, or display configuration.\n\nUse \"fetch\" to get view IDs from database responses. Only include fields\nyou want to change. The \"configure\" param uses the same DSL as create_view.\nUse CLEAR to remove settings:\n- CLEAR FILTER — remove all filters\n- CLEAR QUICK FILTER — remove all quick filters, or name properties to remove only theirs (CLEAR QUICK FILTER \"Status\")\n- CLEAR SORT — remove all sorts\n- CLEAR GROUP BY — remove grouping. Boards reject it; use GROUP BY with another property instead (CLEAR SUB GROUP BY still works).\n- CLEAR SUB GROUP BY — remove board sub-grouping\n- CLEAR ICON — remove the view's tab icon\n- CLEAR SUBSET FILTER — remove an XL view's subset filter\n\n\nSet board or gallery card layout with CARD LAYOUT default or CARD LAYOUT compact. Set gallery card size without a cover property with CARD SIZE small, medium, or large. BY OPTION and BY GROUP apply only to status properties and rollups that return status values (Show original or Show unique). For select and multi_select properties, omit both modifiers, even if the property is named \"Status\" (for example, GROUP BY \"Status\").\n\nSee notion://docs/view-dsl-spec resource for full syntax (readable via your MCP client's resource-reading interface, or by passing the URI to the Notion \"fetch\" tool).\n\n<example description=\"Rename\">{\"view_id\": \"abc123\", \"name\": \"Sprint Board\"}</example>\n<example description=\"Update filter\">{\"view_id\": \"abc123\", \"configure\": \"FILTER \"Status\" = \"Done\"\"}</example>\n<example description=\"Add quick filters without criteria\">{\"view_id\": \"abc123\", \"configure\": \"QUICK FILTER \"Status\", \"Assignee\"\"}</example>\n<example description=\"Clear filter, add sort\">{\"view_id\": \"abc123\", \"configure\": \"CLEAR FILTER; SORT BY \"Created\" DESC\"}</example>\n<example description=\"Update grouping\">{\"view_id\": \"abc123\", \"configure\": \"GROUP BY \"Status\" BY GROUP SHOW EMPTY; SUB GROUP BY \"Priority\"; CARD LAYOUT compact\"}</example>",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
           "configure": {
-            "description": "View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, SUB GROUP BY, CARD LAYOUT, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, FREEZE COLUMNS, and CLEAR directives.",
+            "description": "View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, SUB GROUP BY, CARD LAYOUT, CARD SIZE, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, WRAP PROPERTIES, FREEZE COLUMNS, ICON, WIDTH, SUBSET, and CLEAR directives. BY OPTION and BY GROUP apply only to status properties and rollups that return status values (Show original or Show unique). For select and multi_select properties, omit both modifiers, even if the property is named \"Status\" (for example, GROUP BY \"Status\").",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
             "type": "string"
           },
           "name": {
             "description": "New name for the view.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "view_id": {
@@ -11567,10 +7932,18 @@ export const manifest = {
             "minimum": 1,
             "type": "integer"
           },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "page_id": {
             "description": "Target page in a Skills database. Create a new page first to import a new skill.",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           },
           "upload_token": {
@@ -11591,15 +7964,60 @@ export const manifest = {
     {
       "annotations": {
         "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read a Notion page or database as it looked at a past time. The open page and other reads show only current content, so use this for any question about what a page said, contained, or looked like at an earlier date, even when the page is already open. A page returns its Markdown and properties; each inline database is a database tag, and you can pass that tag's url to this tool to read the database at the same time. A database returns its data sources, views, and rows. A linked database leaves out the data sources, views, and rows that belong to another database. Requires edit access to the page.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "description": "A database's next_cursor, to read its next rows. Pass the same page and time as the call that returned it.",
+            "type": "string"
+          },
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
+          "page": {
+            "description": "The page or database to read: a page URL, database URL, data source (collection://) URL, or ID.",
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
+            "type": "string"
+          },
+          "time": {
+            "description": "The moment to read, as an ISO 8601 time with a time zone offset. Convert the user's date and time in their own time zone, such as \"2026-10-10T14:05:02-04:00\" for 2:05 PM in New York. If the user names only a date, pick a time on that date in their time zone and tell them which.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "time"
+        ],
+        "type": "object"
+      },
+      "name": "notion-view-version"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Wait for the latest turn in a Custom Agent session to stop running.\n\nRequires Notion AI.",
+      "description": "Wait for the latest turn in a Custom Agent session to stop running.\n\nRequires Notion AI and Custom Agents access. Call this tool directly. If access is denied, follow the recovery guidance in the result.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": {},
         "properties": {
+          "instructions_version": {
+            "description": "Notion setup instructions version, such as 0.0.2. Omit if unknown.",
+            "type": "string"
+          },
           "seconds": {
             "description": "Maximum number of seconds to wait.",
             "maximum": 60,
@@ -11609,6 +8027,10 @@ export const manifest = {
           "session_url": {
             "description": "Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.",
             "minLength": 1,
+            "type": "string"
+          },
+          "skill": {
+            "description": "For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.",
             "type": "string"
           }
         },
@@ -11652,6 +8074,14 @@ eventId: string
  */
 eventSummary?: string
 }[]
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionCalendarCreateEventsInput {
@@ -11788,6 +8218,14 @@ isOptional: boolean
 summary: string
 }[]
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * Date-times of returned events will be expressed in this time-zone
  */
 timeZone: string
@@ -11812,6 +8250,10 @@ calendarId: string
  */
 ignoreWorkingLocation?: boolean
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Maximum number of resources to return per time slot (default: 20, max: 40)
  */
 maxCount?: number
@@ -11819,6 +8261,10 @@ maxCount?: number
  * Minimum room capacity (number of people). MUST include the meeting organizer/user themselves in the count. For a 1-on-1, pass 2. For a meeting with N invitees besides the user, pass N+1.
  */
 minCapacity: number
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Specific time slots to check. Returns available resources for each time slot independently.
  * 
@@ -11851,18 +8297,34 @@ timeZone: string
 
 export interface NotionCalendarListCalendarsInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Return only accounts linked to these email addresses. Useful to get calendars from a work account only for example. Do not specify if you are interested in getting the whole picture of someone's agenda across work and personal accounts.
  */
 onlyAccountEmails?: string[]
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionCalendarListContactsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Optional search queries to filter contacts by name or email. Results matching any query are included.
  * 
  * @maxItems 50
  */
 queries?: string[]
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionCalendarListCoworkersEventsInput {
@@ -11870,6 +8332,14 @@ export interface NotionCalendarListCoworkersEventsInput {
  * Emails of relevant coworkers
  */
 coworkerEmails: string[]
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * End of the time range, as an ISO 8601 date-time.
  */
@@ -11890,6 +8360,14 @@ export interface NotionCalendarListEventsInput {
  */
 includeDeclinedInvites?: boolean
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * End of the time range, as an ISO 8601 date-time.
  */
 timeMax: string
@@ -11904,6 +8382,14 @@ timeZone: string
 }
 
 export interface NotionCalendarUpdateEventsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Date-times of returned events will be expressed in this time-zone
  */
@@ -12108,16 +8594,58 @@ updateType: "UPDATE"
 })[]
 }
 
-export interface NotionCheckMcpNextStepsInput {
-
+export interface NotionCompleteMcpSetupInput {
+/**
+ * Setup type you have just completed.
+ */
+completed_setup: ("skills" | "setup_prompt")
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionConvertPageToSkillInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * The full Notion URL of the page to mark as a skill.
  */
 page_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
+}
+
+export interface NotionConvertToMeetingsDatabaseInput {
+/**
+ * Name of an existing person property to use as the meeting attendees.
+ */
+attendeesProperty?: string
+/**
+ * URL of the database to convert, or of its data source or one of its views.
+ */
+databaseUrl: string
+/**
+ * Name of an existing date property to use as the meeting date.
+ */
+dateProperty?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionCreateAttachmentInput {
@@ -12136,6 +8664,14 @@ content_type?: string
  */
 filename?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * The ID of a file upload this exact integration already created. Use create_file_upload when available; otherwise run `ntn files create` or use the Notion File Upload API with this integration's token. Its status must be uploaded. An upload created with a different token is not visible. Example: <example>1e2f3a4b-5c6d-7e8f-9a0b-1c2d3e4f5a6b</example>.
  */
 source_file_id?: string
@@ -12152,11 +8688,15 @@ export interface NotionCreateCommentInput {
  */
 discussion_id?: string
 /**
- * The content of the comment as a Markdown string. Provide exactly one of markdown or rich_text. For exact syntax, read the MCP resource `notion://docs/enhanced-markdown-spec` through your MCP client's resource-reading interface, or call the Notion "fetch" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using $`Equation`$, and user/page/database/date mention tags such as <mention-date start="YYYY-MM-DD"/>. To attach a file created by create-file-upload or create-attachment, include its returned suggested_markdown on a separate line; up to three file attachments are supported. Do not use UI shortcuts like @today, @name, [[page]], or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real url where required by the spec. Other block-level Markdown such as fenced code blocks, headings, lists, tables, and blockquotes is stored as plain comment text rather than rendered as blocks. Example: <example>Looks good.</example>.
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * The content of the comment as a Markdown string. Provide exactly one of markdown or rich_text. For exact syntax, read the MCP resource `notion://docs/notion-flavored-markdown-spec` through your MCP client's resource-reading interface, or call the Notion "fetch" tool with this URI if your client does not support reading MCP resources. Do NOT pass this URI to any other URL-fetching tool. Use only the Rich text types and Mentions syntax that comments support. Comments support inline formatting (bold, italic, strikethrough, underline, code, links), inline math using $Equation$, user, page, and database mentions such as <mention url="user://..." />, and date mentions such as <date start="YYYY-MM-DD" />. To attach a file created by create-file-upload or create-attachment, include its returned suggested_markdown on a separate line; up to three file attachments are supported. Do not use UI shortcuts like @today, @name, [[page]], or autocomplete-style emoji syntax; those are editor affordances, not markdown syntax. Mention tags must include a real url where required by the spec. Other block-level Markdown such as fenced code blocks, headings, lists, tables, and blockquotes is stored as plain comment text rather than rendered as blocks. Example: <example>Looks good.</example>.
  */
 markdown?: string
 /**
- * The ID of the page to comment on (with or without dashes).
+ * The page ID, with or without dashes, or a Notion page URL.
  */
 page_id: string
 /**
@@ -12383,6 +8923,10 @@ type?: "equation"
  * Unique content snippet: ~10 characters from each end, joined by "...". A match within one block's text gets an inline comment on that text; otherwise, comment on the block where the match starts. No match returns an error.
  */
 selection_with_ellipsis?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
@@ -12395,6 +8939,10 @@ database_type?: ("tasks" | "projects" | "skills")
  * The description of the new database.
  */
 description?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * The parent under which to create the new database. If omitted, the database will be created as a private page at the workspace level.
  */
@@ -12415,6 +8963,7 @@ type?: "page_id"
  * Property type syntax:
  * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES
  * - SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)
+ * - Option names can't contain commas: use '$1000+', not '$1,000+'. List separate options as 'A', 'B', not 'A, B'.
  * - STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete
  * - NUMBER [FORMAT 'dollar'] / FORMULA('expression')
  * - RELATION('ds') for a one-way relation
@@ -12422,7 +8971,8 @@ type?: "page_id"
  * - RELATION('ds', DUAL 'Children') with a synced property name
  * - RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)
  * - ROLLUP('rel_prop', 'target_prop', 'function')
- * - UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME
+ * - UNIQUE_ID [PREFIX 'WEB-BUG'] / CREATED_TIME / LAST_EDITED_TIME
+ * - UNIQUE_ID PREFIX: 2-10 characters, a letter then letters, digits, or hyphens (e.g. 'TASK-ID', not 'TASK_ID' or 'T'). Each prefix can be used by only one data source per workspace, so prefer a specific prefix like 'WEB-BUG' over 'TASK'.
  * - Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.
  * 
  * 
@@ -12432,6 +8982,10 @@ type?: "page_id"
  * - Self-relations are a two-step flow: create the database, then use its data source ID with update_data_source to add paired properties such as RELATION('ds', DUAL 'Children' 'children').
  */
 schema?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * The title of the new database.
  */
@@ -12448,9 +9002,21 @@ content_type?: string
  * The filename to create in Notion, including a supported extension such as .pdf, .png, or .zip.
  */
 filename: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionCreateFolderInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Where to create the Folder.
  */
@@ -12466,10 +9032,95 @@ page_id: string
 folder_id: string
 })
 /**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * The title of the new Folder.
  */
 title: string
 [k: string]: unknown
+}
+
+export interface NotionCreateMeetingNoteInput {
+/**
+ * The calendar event to link the meeting note to. Copy calendar and eventId from the event returned by calendar tools.
+ */
+calendarEvent?: {
+/**
+ * The calendar the event belongs to.
+ */
+calendar: {
+/**
+ * ID of the calendar account.
+ */
+accountId: string
+/**
+ * ID of the calendar.
+ */
+calendarId: string
+}
+/**
+ * ID of the event.
+ */
+eventId: string
+}
+/**
+ * The meeting note's Notes, in Notion Markdown (tool-docs://notion/notion-markdown.md). Do not wrap them in <meeting-notes> tags.
+ */
+content?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * Where to file the meeting note. Pass only when the user names a destination; omit it to use the user's default meeting notes database. Pass a page to append the meeting note to the page content.
+ */
+parent?: ({
+/**
+ * Parent type.
+ */
+type: "user"
+/**
+ * URL of the user.
+ */
+url: string
+} | {
+/**
+ * Parent type.
+ */
+type: "page"
+/**
+ * URL of the page.
+ */
+url: string
+} | {
+/**
+ * Parent type.
+ */
+type: "dataSource"
+/**
+ * URL of the data source.
+ */
+url: string
+} | {
+/**
+ * Parent type.
+ */
+type: "teamspace"
+/**
+ * URL of the teamspace.
+ */
+url: string
+})
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * Meeting note title.
+ */
+title?: string
 }
 
 export interface NotionCreatePagesInput {
@@ -12482,19 +9133,27 @@ allow_async?: boolean
  */
 creation_mode?: "draft"
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * The pages to create.
  * 
  * @maxItems 100
  */
 pages: {
 /**
- * The content of the new page, using Notion Markdown. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.
+ * The content of the new page, using Notion Markdown. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.
  */
 content?: string
 /**
  * An external image URL for the page cover. Use "none" to explicitly set no cover. Omit to leave unchanged.
  */
 cover?: string
+/**
+ * Set to true for a full-width page, or false for the default width. Omit to use the default. For database pages, overrides the database layout for this page only.
+ */
+full_width?: boolean
 /**
  * An emoji character (e.g. "🚀"), a custom emoji by name (e.g. ":rocket_ship:"), a Notion icon identifier as returned by fetch (e.g. "icons/pizza_blue"), or an external image URL. Use "none" to explicitly set no icon. Omit to leave unchanged. Keep the title free of a duplicate leading emoji because the icon renders separately.
  */
@@ -12532,9 +9191,9 @@ properties?: {
 template_id?: string
 }[]
 /**
- * All pages in one call share this parent. Pass "memory" to save a personal memory; see notion://docs/memory. Otherwise use a page (page_id), database page (database_id), data source (data_source_id), or teamspace root (teamspace_id, from get_teams). Teamspace roots require a user-backed connection and permission to add top-level pages. A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit "creation_mode": "draft" over omitting the parent.
+ * All pages in one call share this parent. Otherwise use a page (page_id), database page (database_id), data source (data_source_id), or teamspace root (teamspace_id, from get_teams). Teamspace roots require a user-backed connection and permission to add top-level pages. A database_id cannot be used when the database has more than one data source; fetch it and use the right collection:// URL as data_source_id. If omitted, pages are private at the workspace level. When no destination is named, prefer explicit "creation_mode": "draft" over omitting the parent.
  */
-parent?: ("memory" | {
+parent?: ({
 /**
  * The ID of the parent page (with or without dashes), for example, 195de9221179449fab8075a27c979105
  */
@@ -12570,7 +9229,46 @@ type?: "data_source_id"
  */
 teamspace_id: string
 })
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
+}
+
+export interface NotionCreateSuggestedEditInput {
+/**
+ * Optional inline Markdown comment that starts the suggestion thread.
+ */
+comment?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * How to apply new_text relative to old_text. Defaults to replace.
+ */
+mode?: ("replace" | "insert_before" | "insert_after")
+/**
+ * Proposed Notion Markdown. With replace, it replaces old_text; use an empty string to suggest deletion. With insert_before or insert_after, it is only the text to insert and old_text remains unchanged.
+ */
+new_text: string
+/**
+ * Unique, non-empty exact text copied from the accepted Notion Markdown returned by fetch.
+ */
+old_text: string
+/**
+ * Page UUID or URL containing the target text.
+ */
+page_id: string
+/**
+ * Exact page title or database title/text property name. Omit for page body text.
+ */
+property_name?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionCreateViewInput {
@@ -12580,8 +9278,9 @@ export interface NotionCreateViewInput {
  * - QUICK FILTER "Property" — add a quick filter to the view's filter bar with no criteria; add a condition to preselect one (QUICK FILTER "Status" = "Done")
  * - SORT BY "Property" ASC — sort rows
  * - GROUP BY "Property" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — group by property (required for board views)
- * - SUB GROUP BY "Property" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — add board sub-grouping
+ * - SUB GROUP BY "Property" [BY OPTION | BY GROUP] [SHOW EMPTY | HIDE EMPTY] — add board sub-grouping BY OPTION and BY GROUP apply only to status properties and rollups that return status values (Show original or Show unique). For select and multi_select properties, omit both modifiers, even if the property is named "Status" (for example, GROUP BY "Status").
  * - CARD LAYOUT default | compact — set board or gallery card layout
+ * - CARD SIZE small|medium|large — set gallery card size independently of its cover
  * - CALENDAR BY "Property" — date property (required for calendar views)
  * - TIMELINE BY "Start" TO "End" — date range (required for timeline views)
  * - MAP BY "Property" — location property (required for map views)
@@ -12590,11 +9289,16 @@ export interface NotionCreateViewInput {
  * - FORM ANONYMOUS true|false — toggle anonymous submissions
  * - FORM PERMISSIONS none|reader|editor — set submission permissions
  * - SHOW "Prop1", "Prop2" — set visible properties
+ * - WIDTH "Prop1" 320, "Prop2" 120 — set table column widths in pixels
  * - COVER "Property" — cover image property
+ * - WRAP PROPERTIES true|false — wrap configured gallery property values
+ * - ICON "🚀" — view tab icon: an emoji, a Notion icon such as "icons/rocket_blue", or an image URL
+ * - SUBSET FILTER "Property" = "value"; SUBSET LIMIT 10000 — choose which XL database rows this view syncs (XL data sources only)
  * 
  * 
  * <example>SHOW "Name", "Status", "Due Date"</example>
  * <example>GROUP BY "Status" BY GROUP SHOW EMPTY; SUB GROUP BY "Priority"; CARD LAYOUT compact</example>
+ * <example>SHOW "Name", "Status"; CARD SIZE small; WRAP PROPERTIES true</example>
  * <example>FILTER "Status" = "In Progress"; SORT BY "Due Date" ASC</example>
  * <example>CALENDAR BY "Due Date"</example>
  * <example>TIMELINE BY "Start" TO "End"</example>
@@ -12610,6 +9314,10 @@ data_source_id: string
  */
 database_id?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * The name of the view.
  */
 name: string
@@ -12617,6 +9325,14 @@ name: string
  * A page to create an inline linked database view on, like the UI /linked command. Accepts a Notion URL or a bare UUID. The new linked view block is appended at the end of the page and references `data_source_id`. Mutually exclusive with `database_id`; exactly one must be provided.
  */
 parent_page_id?: string
+/**
+ * Whether the new linked view block shows its data source title above the view, like the Show data source title toggle in the Notion app. Defaults to true. Only valid with `parent_page_id`.
+ */
+show_data_source_title?: boolean
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * The type of view to create.
  */
@@ -12629,6 +9345,14 @@ export interface NotionDeleteCommentInput {
  * The comment ID, with or without dashes. Use the id of a <comment> from get_comments, or the id returned by create_comment.
  */
 comment_id: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionDeleteDatabasesInput {
@@ -12640,6 +9364,14 @@ export interface NotionDeleteDatabasesInput {
  */
 database_ids: [string]|[string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * Set to true only after the user explicitly asked to delete these exact databases, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.
  */
 user_confirmed?: boolean
@@ -12647,12 +9379,20 @@ user_confirmed?: boolean
 
 export interface NotionDeletePagesInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * IDs of the pages to move to Trash, 1 to 20. Database rows are pages. Duplicate IDs are processed once.
  * 
  * @minItems 1
  * @maxItems 20
  */
 page_ids: [string]|[string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Set to true only after the user explicitly asked to delete these exact pages, or confirmed after you showed them the list. If omitted or false, nothing is trashed and the error lists what would be moved to Trash so you can confirm with the user.
  */
@@ -12664,6 +9404,14 @@ export interface NotionDownloadAttachmentInput {
  * The FileUpload ID returned by the create-attachment tool.
  */
 file_upload_id: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
@@ -12672,19 +9420,35 @@ export interface NotionDownloadSkillInput {
  * Identifier for a Notion skill page.
  */
 id: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionDuplicatePageInput {
 /**
- * The ID of the page to duplicate. This is a v4 UUID, with or without dashes, and can be parsed from a Notion page URL.
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * The page ID, with or without dashes, or a Notion page URL.
  */
 page_id: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
 export interface NotionFetchInput {
 /**
- * The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass "memory" to fetch the connected user's About page and memory database in this workspace without creating them. Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/enhanced-markdown-spec</example>.
+ * The ID or URL of the Notion page, database, or data source to fetch. Supports notion.so URLs, Notion Sites URLs (*.notion.site), raw UUIDs, and data source URLs (collection://...). Pass a notion://docs/* URI to read that documentation resource. Also accepts an explicit saved view URL (view://...) from a database response. If a database block ID returns a validation error, use the collection:// URL from that error. Example: <example>notion://docs/notion-flavored-markdown-spec</example>.
  */
 id: string
 /**
@@ -12699,10 +9463,26 @@ include_file_urls?: boolean
  * Whether to include meeting note transcripts. Defaults to false. When true, full transcripts are included; when false, a placeholder with the meeting note URL is shown instead.
  */
 include_transcript?: boolean
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
 export interface NotionGetAsyncTaskInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * The ID of the async task to retrieve, as returned in the async_task response of the tool that started it.
  */
@@ -12712,29 +9492,48 @@ task_id: string
 
 export interface NotionGetCommentsInput {
 /**
+ * The `next-cursor` value from a discussion in an earlier response. Returns that discussion's older comments. Requires `discussion_id`.
+ */
+cursor?: string
+/**
  * Fetch a specific discussion by ID or discussion URL (e.g., discussion://pageId/blockId/discussionId).
  */
 discussion_id?: string
-/**
- * Include discussions on child blocks, not just page-level discussions. Defaults to false.
- */
-include_all_blocks?: boolean
 /**
  * Include resolved discussions in the response. Defaults to false.
  */
 include_resolved?: boolean
 /**
- * Identifier for a Notion page.
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * The page ID, with or without dashes, or a Notion page URL.
  */
 page_id: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
 export interface NotionGetEnabledSkillsInput {
-
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionGetFileDownloadUrlsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Stable notion-file-block:// file references, copied exactly from the Markdown returned by fetch. Up to 25 per call.
  * 
@@ -12742,36 +9541,116 @@ export interface NotionGetFileDownloadUrlsInput {
  * @maxItems 25
  */
 references: [string, ...(string)[]]
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionGetGroupsInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Optional group name to search for (case-insensitive), or a group ID from a People property value (`space_permission_group-<id>` or the bare ID) to look up that group.
  */
 query?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionGetSelfInput {
-
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionGetSessionStatusInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.
  */
 session_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
+}
+
+export interface NotionGetSetupGuideInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+}
+
+export interface NotionGetSidebarTabsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+}
+
+export interface NotionGetSuggestedEditInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * Pending suggested-edit discussion URL returned by get_comments or create_suggested_edit.
+ */
+suggested_edit_url: string
 }
 
 export interface NotionGetTeamsInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Optional search query to filter teams by name (case-insensitive).
  */
 query?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
 export interface NotionGetToolAccessInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Optional RunTool names to include, such as search and ai_search. Omit to return all tools visible to this connection. Unknown or unexposed names are omitted. An empty list returns an empty map.
  * 
@@ -12782,6 +9661,10 @@ tool_names?: string[]
 
 export interface NotionGetUsersInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Number of users to return per page (1–100; default 100).
  */
 page_size?: number
@@ -12789,6 +9672,10 @@ page_size?: number
  * Optional search query to filter users by name or email (case-insensitive).
  */
 query?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Cursor for pagination. Use the next_cursor value from the previous response to get the next page.
  */
@@ -12800,15 +9687,97 @@ user_id?: string
 [k: string]: unknown
 }
 
+export interface NotionGetVersionChangesInput {
+/**
+ * Only return records that these people or agents changed: user:// URLs or agent URLs. Each record's before and after still include everyone's edits in the range, and contributors lists everyone who edited it.
+ * 
+ * @minItems 1
+ * @maxItems 100
+ */
+authors?: [string, ...(string)[]]
+/**
+ * End of the time range, included, as an ISO 8601 time with a time zone, such as "2026-10-10T18:05:02Z". Must be after start_time. Leave it out unless the user names a time; it defaults to now.
+ */
+end_time?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * The page or database to read: a page URL, database URL, data source (collection://) URL, or ID.
+ */
+page: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * Only return records changed through these, such as ["notion_ai", "custom_agent", "mcp"] for changes made by AI. Each record's before and after still include every edit in the range, and contributors lists everyone who edited it.
+ * 
+ * @minItems 1
+ * @maxItems 4
+ */
+sources?: [("notion_ai" | "custom_agent" | "mcp" | "database_automation")]|[("notion_ai" | "custom_agent" | "mcp" | "database_automation"), ("notion_ai" | "custom_agent" | "mcp" | "database_automation")]|[("notion_ai" | "custom_agent" | "mcp" | "database_automation"), ("notion_ai" | "custom_agent" | "mcp" | "database_automation"), ("notion_ai" | "custom_agent" | "mcp" | "database_automation")]|[("notion_ai" | "custom_agent" | "mcp" | "database_automation"), ("notion_ai" | "custom_agent" | "mcp" | "database_automation"), ("notion_ai" | "custom_agent" | "mcp" | "database_automation"), ("notion_ai" | "custom_agent" | "mcp" | "database_automation")]
+/**
+ * Start of the time range, not included, as an ISO 8601 time with a time zone, such as "2026-10-10T18:05:02Z". Leave it out unless the user names a time; it defaults to 24 hours before end_time.
+ */
+start_time?: string
+}
+
+export interface NotionLinkMeetingNoteToCalendarEventInput {
+/**
+ * The calendar event to link the meeting note to. Copy calendar and eventId from the event returned by calendar tools.
+ */
+calendarEvent: {
+/**
+ * The calendar the event belongs to.
+ */
+calendar: {
+/**
+ * ID of the calendar account.
+ */
+accountId: string
+/**
+ * ID of the calendar.
+ */
+calendarId: string
+}
+/**
+ * ID of the event.
+ */
+eventId: string
+}
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * URL of the existing full-page meeting note to link.
+ */
+meetingNote: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+}
+
 export interface NotionListFavoritePagesInput {
 /**
  * Opaque pagination cursor from the previous response.
  */
 cursor?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Maximum results to return (1-200).
  */
 limit?: number
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionListPageBacklinksInput {
@@ -12817,6 +9786,10 @@ export interface NotionListPageBacklinksInput {
  */
 cursor?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * ID or URL of the page or database to find backlinks for.
  */
 page_id: string
@@ -12824,6 +9797,10 @@ page_id: string
  * Maximum backlinks to return (1-100; default 25).
  */
 page_size?: number
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Only return these kinds of backlinks. page_mention is an inline @-mention in text, a title, or a caption; link_to_page is a link-to-page block; property_mention is a mention in a database property; comment_mention is a mention in a comment. Omit for all kinds.
  * 
@@ -12838,9 +9815,17 @@ export interface NotionListPrivatePagesInput {
  */
 cursor?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Maximum results to return (1-200).
  */
 limit?: number
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionListRecentPagesInput {
@@ -12849,9 +9834,17 @@ export interface NotionListRecentPagesInput {
  */
 cursor?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Maximum results to return (1-200).
  */
 limit?: number
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionListSessionEventsInput {
@@ -12868,9 +9861,17 @@ before_sequence?: number
  */
 count: number
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.
  */
 session_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
@@ -12880,23 +9881,24 @@ export interface NotionListSharedPagesInput {
  */
 cursor?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Maximum results to return (1-200).
  */
 limit?: number
-}
-
-export interface NotionMemorySearchInput {
 /**
- * Maximum number of memories to return. Defaults to 10 and cannot exceed 50.
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
  */
-limit?: number
-/**
- * Words or a short phrase to find in personal memories.
- */
-query: string
+skill?: string
 }
 
 export interface NotionMovePagesInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * The new parent under which the pages will be moved. This can be a page, the workspace, a database, or a specific data source under a database when there are multiple. Moving pages to the workspace level adds them as private pages and should rarely be used.
  */
@@ -12944,12 +9946,160 @@ type: "workspace"
  * @maxItems 100
  */
 page_or_database_ids: [string, ...(string)[]]
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
+
+/**
+ * Filter applied to a single property.
+ */
+export type NotionQueryDataSourcesInputWorkflowPropertyFilter = (NotionQueryDataSourcesInputEmptyPropertyFilter | NotionQueryDataSourcesInputTextFilter | NotionQueryDataSourcesInputNumberFilter | NotionQueryDataSourcesInputDateFilter | NotionQueryDataSourcesInputSelectFilter | NotionQueryDataSourcesInputMultiSelectFilter | NotionQueryDataSourcesInputCheckboxFilter | NotionQueryDataSourcesInputRelationFilter | NotionQueryDataSourcesInputStatusFilter | NotionQueryDataSourcesInputPersonFilter | NotionQueryDataSourcesInputVerificationFilter | NotionQueryDataSourcesInputFormulaFilter | NotionQueryDataSourcesInputRollupFilter)
+/**
+ * Property filter for date properties.
+ */
+export type NotionQueryDataSourcesInputDateFilter = ({
+/**
+ * Filter operator.
+ */
+operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * For a date property, compare its end date instead of its start date.
+ */
+use_end?: boolean
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "relative"
+/**
+ * Value to compare.
+ */
+value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
+})
+} | {
+/**
+ * Filter operator.
+ */
+operator: ("date_is_within" | "date_is_relative_to")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * For a date property, compare its end date instead of its start date.
+ */
+use_end?: boolean
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: {
+/**
+ * ISO 8601 date or date-time at the end of the range.
+ */
+end_date?: string
+/**
+ * ISO 8601 date or date-time at the start of the range.
+ */
+start_date?: string
+/**
+ * Filter or value variant.
+ */
+type: "daterange"
+}
+} | {
+/**
+ * Number of units in the custom relative range.
+ */
+count: number
+/**
+ * Whether the custom range extends into the past or future.
+ */
+direction: ("past" | "future")
+/**
+ * Filter or value variant.
+ */
+type: "relative"
+/**
+ * Time unit used to measure a relative date range.
+ */
+unit: ("year" | "month" | "week" | "day")
+/**
+ * Value to compare.
+ */
+value: "custom"
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "relative"
+/**
+ * Time unit used to measure a relative date range.
+ */
+unit: ("year" | "month" | "week" | "day")
+/**
+ * Value to compare.
+ */
+value: "surrounding"
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "relative"
+/**
+ * Value to compare.
+ */
+value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
+})
+})
 
 export interface NotionQueryDataSourcesInput {
 /**
  * Mode parameter reference and examples.
+ * 
+ * Put `mode`, `query`, `data_source_urls`, `data_source_url`, `params`, `limit`, filters (`filter`), sorts (`sort`), and view arguments (`view_url`, `start_cursor`, `page_size`, `archive_status`) inside `data`, never at the tool-argument root. All examples below are complete tool arguments with exactly one outer `data` wrapper. Pass them as shown; do not add another wrapper.
  * 
  * SQL mode:
  * - Use single quotes for SQL string values, such as `"Status" = 'Done'`. Use double quotes for table and column names. In SQL, `''` is an empty string.
@@ -12957,30 +10107,30 @@ export interface NotionQueryDataSourcesInput {
  * - Checkbox SQL values: `'__YES__'` means checked; `'__NO__'` means unchecked.
  * 
  * 
- * Rows mode: Return up to 100 rows with faithful rich-text property values and optional structured filters and sorts.
+ * Rows mode: Return up to 100 rows with faithful rich-text property values and optional structured filters and sorts. For every property filter type, operator, and value shape, read the JSON Schema at `notion://docs/query-data-sources-filter-schema`.
  * 
  * Example:
- * <example>{"mode":"rows","data_source_url":"collection://f336d0bc-b841-465b-8045-024475c079dd","filter":{"type":"group","operator":"and","filters":[{"type":"property","property":"Status","propertyType":"select","operator":"enum_is","value":{"type":"exact","value":"In Progress"}}]},"limit":20}</example>
+ * <example>{"data":{"mode":"rows","data_source_url":"collection://f336d0bc-b841-465b-8045-024475c079dd","filter":{"type":"group","operator":"and","filters":[{"type":"property","property":"Status","propertyType":"select","operator":"enum_is","value":{"type":"exact","value":"In Progress"}}]},"limit":20}}</example>
  * 
  * Examples:
- * - Simple SQL: <example>{"data_source_urls":["collection://f336d0bc-b841-465b-8045-024475c079dd"],"query":"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] LIMIT 10"}</example>
- * - SQL parameters: <example>{"mode":"sql","data_source_urls":["collection://abc123"],"query":"SELECT * FROM [collection://abc123] WHERE Status = ? AND Priority = ?","params":["In Progress","High"]}</example>
- * - Checkbox query: <example>{"data_source_urls":["collection://def456"],"query":"SELECT * FROM [collection://def456] WHERE Completed = ?","params":["__YES__"]}</example>
+ * - Simple SQL: <example>{"data":{"data_source_urls":["collection://f336d0bc-b841-465b-8045-024475c079dd"],"query":"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] LIMIT 10"}}</example>
+ * - SQL parameters: <example>{"data":{"mode":"sql","data_source_urls":["collection://f336d0bc-b841-465b-8045-024475c079dd"],"query":"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] WHERE Status = ? AND Priority = ?","params":["In Progress","High"]}}</example>
+ * - Checkbox query: <example>{"data":{"data_source_urls":["collection://f336d0bc-b841-465b-8045-024475c079dd"],"query":"SELECT * FROM [collection://f336d0bc-b841-465b-8045-024475c079dd] WHERE Completed = ?","params":["__YES__"]}}</example>
  * 
- * View mode: Execute a specific database view's query with its filters and sorts. Omit "is_archived" or set it to false for non-archived rows. Set "is_archived": true to apply the view inside the archived partition. When the response has "has_more": true, pass its "next_cursor" as "start_cursor" in a follow-up view-mode request with the same "is_archived" value.
+ * View mode: Execute a specific database view's query with its filters and sorts. Omit "archive_status" or set it to "active" for active rows. Use "archived" for archived rows or "all" for both. Trash remains excluded. When the response has "has_more": true, pass its "next_cursor" as "start_cursor" in a follow-up view-mode request with the same "archive_status" value.
  * 
  * Example:
- * <example>{"mode":"view","view_url":"https://www.notion.so/workspace/Tasks-DB-abc123?v=def456","is_archived":false}</example>
+ * <example>{"data":{"mode":"view","view_url":"https://www.notion.so/f336d0bcb841465b8045024475c079dd?v=0123456789abcdef0123456789abcdef","archive_status":"active"}}</example>
  */
 data: ({
 /**
  * Notion data source URLs whose SQLite tables are available to the query; each data source is exposed as a table named by its URL. Obtain them from the fetch tool, in the format: collection://f336d0bc-b841-465b-8045-024475c079dd
  * 
- * @maxItems 100
+ * @maxItems 10
  */
-data_source_urls: string[]
+data_source_urls: []|[string]|[string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]
 /**
- * Optional mode parameter. Defaults to 'sql' if not specified. SQL mode does not accept is_archived; that parameter belongs only to view mode.
+ * Optional mode parameter. Defaults to 'sql' if not specified. Archive selectors belong only to view mode.
  */
 mode?: "sql"
 /**
@@ -12990,14 +10140,14 @@ mode?: "sql"
  */
 params?: (string | number | boolean | null)[]
 /**
- * Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM "collection://..." WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.
+ * Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM "collection://..." WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Example: if the fetched schema has a date property `Due`, use `"date:Due:start"`, not `"Due"`. Properties of type `created_time` or `last_edited_time` keep their exact fetched base columns (e.g. `"Created"` only if listed). A formula or another property with a date-looking name or result does not automatically have `date:` columns or become queryable. Copy actual fetched columns, not property labels. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.
  */
 query: string
 } | {
 /**
- * Optional archive selector. Omitted or false queries non-archived rows only; true queries archived rows only.
+ * Select active pages, archived pages, or both. Defaults to active. Takes precedence over is_archived. Trashed pages remain excluded, and permissions still apply.
  */
-is_archived?: boolean
+archive_status?: ("active" | "archived" | "all")
 /**
  * Mode for executing a database view's existing query
  */
@@ -13014,6 +10164,7 @@ start_cursor?: string
  * URL of a specific database view to query. Example: https://www.notion.so/workspace/db-id?v=view-id
  */
 view_url: string
+[k: string]: unknown
 } | {
 /**
  * One Notion data source URL obtained from a fetch result.
@@ -13028,2038 +10179,28 @@ filter?: {
  * 
  * @maxItems 100
  */
-filters: (({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("is_empty" | "is_not_empty")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("title" | "text" | "url" | "email" | "phone_number")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("number_equals" | "number_does_not_equal" | "number_greater_than" | "number_less_than" | "number_greater_than_or_equal_to" | "number_less_than_or_equal_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("number" | "auto_increment_id")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: number
-}
-} | ({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
-})
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is_within" | "date_is_relative_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * ISO 8601 date or date-time at the end of the range.
- */
-end_date?: string
-/**
- * ISO 8601 date or date-time at the start of the range.
- */
-start_date?: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "daterange"
-}
-} | {
-/**
- * Number of units in the custom relative range.
- */
-count: number
-/**
- * Whether the custom range extends into the past or future.
- */
-direction: ("past" | "future")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "custom"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "surrounding"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
-})
-}) | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_is" | "enum_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_contains" | "enum_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "multi_select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("checkbox_is" | "checkbox_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "checkbox"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: boolean
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("relation_contains" | "relation_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "relation"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("status_is" | "status_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "status"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("person_contains" | "person_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("person" | "created_by" | "last_edited_by")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: (({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-}) | ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-})[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("verification_is" | "verification_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "verification"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator?: ("any" | "none" | "every")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "formula"
-/**
- * Filter on the formula's result. The propertyType in the resultFilter should be the resultType of the formula.
- */
-resultFilter: ({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("is_empty" | "is_not_empty")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("title" | "text" | "url" | "email" | "phone_number")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("number_equals" | "number_does_not_equal" | "number_greater_than" | "number_less_than" | "number_greater_than_or_equal_to" | "number_less_than_or_equal_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("number" | "auto_increment_id")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: number
-}
-} | ({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
-})
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is_within" | "date_is_relative_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * ISO 8601 date or date-time at the end of the range.
- */
-end_date?: string
-/**
- * ISO 8601 date or date-time at the start of the range.
- */
-start_date?: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "daterange"
-}
-} | {
-/**
- * Number of units in the custom relative range.
- */
-count: number
-/**
- * Whether the custom range extends into the past or future.
- */
-direction: ("past" | "future")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "custom"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "surrounding"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
-})
-}) | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_is" | "enum_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_contains" | "enum_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "multi_select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("checkbox_is" | "checkbox_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "checkbox"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: boolean
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("relation_contains" | "relation_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "relation"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("status_is" | "status_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "status"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("person_contains" | "person_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("person" | "created_by" | "last_edited_by")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: (({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-}) | ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-})[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("verification_is" | "verification_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "verification"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-}[])
-})
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-}) | {
+filters: (NotionQueryDataSourcesInputWorkflowPropertyFilter | {
 /**
  * Child filters combined by the Boolean group operator.
  * 
  * @maxItems 100
  */
-filters: ({
+filters: NotionQueryDataSourcesInputWorkflowPropertyFilter[]
 /**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("is_empty" | "is_not_empty")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("title" | "text" | "url" | "email" | "phone_number")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("number_equals" | "number_does_not_equal" | "number_greater_than" | "number_less_than" | "number_greater_than_or_equal_to" | "number_less_than_or_equal_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("number" | "auto_increment_id")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: number
-}
-} | ({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
-})
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is_within" | "date_is_relative_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * ISO 8601 date or date-time at the end of the range.
- */
-end_date?: string
-/**
- * ISO 8601 date or date-time at the start of the range.
- */
-start_date?: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "daterange"
-}
-} | {
-/**
- * Number of units in the custom relative range.
- */
-count: number
-/**
- * Whether the custom range extends into the past or future.
- */
-direction: ("past" | "future")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "custom"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "surrounding"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
-})
-}) | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_is" | "enum_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_contains" | "enum_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "multi_select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("checkbox_is" | "checkbox_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "checkbox"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: boolean
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("relation_contains" | "relation_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "relation"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("status_is" | "status_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "status"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("person_contains" | "person_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("person" | "created_by" | "last_edited_by")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: (({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-}) | ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-})[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("verification_is" | "verification_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "verification"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator?: ("any" | "none" | "every")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "formula"
-/**
- * Filter on the formula's result. The propertyType in the resultFilter should be the resultType of the formula.
- */
-resultFilter: ({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("is_empty" | "is_not_empty")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("title" | "text" | "url" | "email" | "phone_number")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("number_equals" | "number_does_not_equal" | "number_greater_than" | "number_less_than" | "number_greater_than_or_equal_to" | "number_less_than_or_equal_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("number" | "auto_increment_id")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: number
-}
-} | ({
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
-})
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("date_is_within" | "date_is_relative_to")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("date" | "created_time" | "last_edited_time" | "last_visited_time")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * For a date property, compare its end date instead of its start date.
- */
-use_end?: boolean
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * ISO 8601 date or date-time at the end of the range.
- */
-end_date?: string
-/**
- * ISO 8601 date or date-time at the start of the range.
- */
-start_date?: string
-/**
- * Selects the filter or filter-value variant.
- */
-type: "daterange"
-}
-} | {
-/**
- * Number of units in the custom relative range.
- */
-count: number
-/**
- * Whether the custom range extends into the past or future.
- */
-direction: ("past" | "future")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "custom"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Time unit used to measure a relative date range.
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Literal or relative value used by the filter.
- */
-value: "surrounding"
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
-})
-}) | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_is" | "enum_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("enum_contains" | "enum_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "multi_select"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("checkbox_is" | "checkbox_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "checkbox"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: boolean
-}
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("relation_contains" | "relation_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "relation"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("status_is" | "status_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "status"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: ("is_group" | "is_option")
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-}[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("person_contains" | "person_does_not_contain")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: ("person" | "created_by" | "last_edited_by")
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: (({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-}) | ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: string
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "relative"
-/**
- * Literal or relative value used by the filter.
- */
-value: "me"
-})[])
-} | {
-/**
- * Comparison or Boolean operation applied by this filter.
- */
-operator: ("verification_is" | "verification_is_not")
-/**
- * Exact data source property name to filter.
- */
-property: string
-/**
- * Notion property type used to select valid operators and value shapes.
- */
-propertyType: "verification"
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-/**
- * Literal or relative value used by the filter.
- */
-value: ({
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-} | {
-/**
- * Selects the filter or filter-value variant.
- */
-type: "exact"
-/**
- * Literal or relative value used by the filter.
- */
-value: ("verified" | "expired" | "none")
-}[])
-})
-/**
- * Selects the filter or filter-value variant.
- */
-type: "property"
-})[]
-/**
- * Comparison or Boolean operation applied by this filter.
+ * Filter operator.
  */
 operator: ("and" | "or")
 /**
- * Selects the filter or filter-value variant.
+ * Filter or value variant.
  */
 type: "group"
 })[]
 /**
- * Comparison or Boolean operation applied by this filter.
+ * Filter operator.
  */
 operator: ("and" | "or")
 /**
- * Selects the filter or filter-value variant.
+ * Filter or value variant.
  */
 type: "group"
 }
@@ -15087,7 +10228,461 @@ direction: ("ascending" | "descending")
 property: string
 }[]
 })
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
+}
+/**
+ * Checks whether a property has any value.
+ */
+export interface NotionQueryDataSourcesInputEmptyPropertyFilter {
+/**
+ * Filter operator.
+ */
+operator: ("is_empty" | "is_not_empty")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: string
+/**
+ * Filter or value variant.
+ */
+type: "property"
+}
+/**
+ * Property filter for text-like properties.
+ */
+export interface NotionQueryDataSourcesInputTextFilter {
+/**
+ * Filter operator.
+ */
+operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: ("title" | "text" | "url" | "email" | "phone_number")
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+}
+}
+/**
+ * Property filter for number properties.
+ */
+export interface NotionQueryDataSourcesInputNumberFilter {
+/**
+ * Filter operator.
+ */
+operator: ("number_equals" | "number_does_not_equal" | "number_greater_than" | "number_less_than" | "number_greater_than_or_equal_to" | "number_less_than_or_equal_to")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: ("number" | "auto_increment_id")
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: number
+}
+}
+/**
+ * Property filter for select properties by option name.
+ */
+export interface NotionQueryDataSourcesInputSelectFilter {
+/**
+ * Filter operator.
+ */
+operator: ("enum_is" | "enum_is_not")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "select"
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+}[])
+}
+/**
+ * Property filter for multi-select properties.
+ */
+export interface NotionQueryDataSourcesInputMultiSelectFilter {
+/**
+ * Filter operator.
+ */
+operator: ("enum_contains" | "enum_does_not_contain")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "multi_select"
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+}[])
+}
+/**
+ * Property filter for checkbox properties.
+ */
+export interface NotionQueryDataSourcesInputCheckboxFilter {
+/**
+ * Filter operator.
+ */
+operator: ("checkbox_is" | "checkbox_is_not")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "checkbox"
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: boolean
+}
+}
+/**
+ * Property filter for relation properties.
+ */
+export interface NotionQueryDataSourcesInputRelationFilter {
+/**
+ * Filter operator.
+ */
+operator: ("relation_contains" | "relation_does_not_contain")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "relation"
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+}[])
+}
+/**
+ * Property filter for status properties by option name.
+ */
+export interface NotionQueryDataSourcesInputStatusFilter {
+/**
+ * Filter operator.
+ */
+operator: ("status_is" | "status_is_not")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "status"
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: ("is_group" | "is_option")
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: ("is_group" | "is_option")
+/**
+ * Value to compare.
+ */
+value: string
+}[])
+}
+/**
+ * Property filter for person-like properties. Exact values use user://, bot://, organization_bot://, or space_permission_group:// URIs; relative values use me.
+ */
+export interface NotionQueryDataSourcesInputPersonFilter {
+/**
+ * Filter operator.
+ */
+operator: ("person_contains" | "person_does_not_contain")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: ("person" | "created_by" | "last_edited_by")
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: (({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "relative"
+/**
+ * Value to compare.
+ */
+value: "me"
+}) | ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: string
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "relative"
+/**
+ * Value to compare.
+ */
+value: "me"
+})[])
+}
+/**
+ * Property filter for page verification state.
+ */
+export interface NotionQueryDataSourcesInputVerificationFilter {
+/**
+ * Filter operator.
+ */
+operator: ("verification_is" | "verification_is_not")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "verification"
+/**
+ * Filter or value variant.
+ */
+type: "property"
+/**
+ * Value to compare.
+ */
+value: ({
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: ("verified" | "expired" | "none")
+} | {
+/**
+ * Filter or value variant.
+ */
+type: "exact"
+/**
+ * Value to compare.
+ */
+value: ("verified" | "expired" | "none")
+}[])
+}
+/**
+ * Filter applied to a formula property.
+ */
+export interface NotionQueryDataSourcesInputFormulaFilter {
+/**
+ * Filter operator.
+ */
+operator?: ("any" | "none" | "every")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "formula"
+/**
+ * Filter on the formula's result. The propertyType in the resultFilter should be the resultType of the formula.
+ */
+resultFilter: (NotionQueryDataSourcesInputEmptyPropertyFilter | NotionQueryDataSourcesInputTextFilter | NotionQueryDataSourcesInputNumberFilter | NotionQueryDataSourcesInputDateFilter | NotionQueryDataSourcesInputSelectFilter | NotionQueryDataSourcesInputMultiSelectFilter | NotionQueryDataSourcesInputCheckboxFilter | NotionQueryDataSourcesInputRelationFilter | NotionQueryDataSourcesInputStatusFilter | NotionQueryDataSourcesInputPersonFilter | NotionQueryDataSourcesInputVerificationFilter)
+/**
+ * Filter or value variant.
+ */
+type: "property"
+}
+export interface NotionQueryDataSourcesInputRollupFilter {
+/**
+ * Required for original or unique values. Omit for aggregated values.
+ */
+operator?: ("any" | "none" | "every")
+/**
+ * Exact data source property name to filter.
+ */
+property: string
+/**
+ * Notion property type used to select valid operators and value shapes.
+ */
+propertyType: "rollup"
+/**
+ * Filter on the rollup result. Use the same property name as the outer filter.
+ */
+resultFilter: (NotionQueryDataSourcesInputEmptyPropertyFilter | NotionQueryDataSourcesInputTextFilter | NotionQueryDataSourcesInputNumberFilter | NotionQueryDataSourcesInputDateFilter | NotionQueryDataSourcesInputSelectFilter | NotionQueryDataSourcesInputMultiSelectFilter | NotionQueryDataSourcesInputCheckboxFilter | NotionQueryDataSourcesInputRelationFilter | NotionQueryDataSourcesInputStatusFilter | NotionQueryDataSourcesInputPersonFilter | NotionQueryDataSourcesInputVerificationFilter)
+/**
+ * Filter or value variant.
+ */
+type: "property"
 }
 
 export interface NotionQueryMeetingNotesInput {
@@ -15139,423 +10734,13 @@ filter?: {
  * 
  * @maxItems 100
  */
-filters?: ({
-/**
- * The comparison to apply. Use the arm matching the property's type.
- */
-filter: ({
-/**
- * How to compare the text.
- */
-operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
-/**
- * The text to compare against.
- */
-value: {
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * The literal text the operator compares against.
- */
-value: string
-}
-} | {
-/**
- * Whether the property must contain the people listed.
- */
-operator: ("person_contains" | "person_does_not_contain")
-/**
- * The people to compare against.
- * 
- * @maxItems 100
- */
-value: ({
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * Pointer to the Notion user to match.
- */
-value: {
-/**
- * The user's ID, as a UUID or the `user://<uuid>` form returned by user search.
- */
-id: string
-/**
- * Always `notion_user`
- */
-table: "notion_user"
-}
-} | {
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * Always `me`
- */
-value: "me"
-})[]
-} | {
-/**
- * How to compare the date.
- */
-operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
-/**
- * Compare against the end of a date range rather than its start.
- */
-use_end?: boolean
-/**
- * The date to compare against.
- */
-value: ({
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `today`, `tomorrow`, `yesterday`, `one_week_ago`, `one_week_from_now`, `one_month_ago`, `one_month_from_now`
- */
-value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
-} | {
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * Use the is_empty operator to match an unset date.
- */
-value: ({
-/**
- * The calendar date as an ISO 8601 date string.
- */
-start_date: string
-/**
- * Always `date`
- */
-type: "date"
-} | {
-/**
- * The calendar date as an ISO 8601 date string.
- */
-start_date: string
-/**
- * The time of day in 24-hour HH:MM format.
- */
-start_time: string
-/**
- * The IANA time zone name the time is interpreted in.
- */
-time_zone: string
-/**
- * Always `datetime`
- */
-type: "datetime"
-})
-})
-} | {
-/**
- * How to compare the date against the range.
- */
-operator: ("date_is_within" | "date_is_relative_to")
-/**
- * Compare against the end of a date range rather than its start.
- */
-use_end?: boolean
-/**
- * The range to compare against.
- */
-value: ({
-/**
- * How many units wide the window is.
- */
-count: number
-/**
- * Whether the window runs backwards or forwards from now.
- */
-direction: ("past" | "future")
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `year`, `month`, `week`, `day`
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Always `custom`
- */
-value: "custom"
-} | {
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `year`, `month`, `week`, `day`
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Always `surrounding`
- */
-value: "surrounding"
-} | {
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `this_week`, `the_past_week`, `the_past_month`, `the_past_year`, `the_next_week`, `the_next_month`, `the_next_year`
- */
-value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
-} | {
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * Use the is_empty operator to match an unset date.
- */
-value: {
-/**
- * Inclusive end of the range as an ISO 8601 date string, if any.
- */
-end_date?: string
-/**
- * Inclusive start of the range as an ISO 8601 date string, if any.
- */
-start_date?: string
-/**
- * Always `daterange`
- */
-type: "daterange"
-}
-})
-} | {
-/**
- * Whether the property must be empty or set.
- */
-operator: ("is_empty" | "is_not_empty")
-})
-/**
- * Which meeting-note property to filter on. Prefer the short names; the schema URI form is accepted for compatibility.
- */
-property: ("title" | "attendees" | "created_time" | "created_by" | "last_edited_time" | "last_edited_by" | "notion://meeting_notes/attendees")
-} | {
+filters?: (NotionQueryMeetingNotesInputMeetingNotesPropertyFilter | {
 /**
  * The conditions in this group. A group with no conditions matches nothing, so send at least one.
  * 
  * @maxItems 100
  */
-filters: {
-/**
- * The comparison to apply. Use the arm matching the property's type.
- */
-filter: ({
-/**
- * How to compare the text.
- */
-operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
-/**
- * The text to compare against.
- */
-value: {
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * The literal text the operator compares against.
- */
-value: string
-}
-} | {
-/**
- * Whether the property must contain the people listed.
- */
-operator: ("person_contains" | "person_does_not_contain")
-/**
- * The people to compare against.
- * 
- * @maxItems 100
- */
-value: ({
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * Pointer to the Notion user to match.
- */
-value: {
-/**
- * The user's ID, as a UUID or the `user://<uuid>` form returned by user search.
- */
-id: string
-/**
- * Always `notion_user`
- */
-table: "notion_user"
-}
-} | {
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * Always `me`
- */
-value: "me"
-})[]
-} | {
-/**
- * How to compare the date.
- */
-operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
-/**
- * Compare against the end of a date range rather than its start.
- */
-use_end?: boolean
-/**
- * The date to compare against.
- */
-value: ({
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `today`, `tomorrow`, `yesterday`, `one_week_ago`, `one_week_from_now`, `one_month_ago`, `one_month_from_now`
- */
-value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
-} | {
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * Use the is_empty operator to match an unset date.
- */
-value: ({
-/**
- * The calendar date as an ISO 8601 date string.
- */
-start_date: string
-/**
- * Always `date`
- */
-type: "date"
-} | {
-/**
- * The calendar date as an ISO 8601 date string.
- */
-start_date: string
-/**
- * The time of day in 24-hour HH:MM format.
- */
-start_time: string
-/**
- * The IANA time zone name the time is interpreted in.
- */
-time_zone: string
-/**
- * Always `datetime`
- */
-type: "datetime"
-})
-})
-} | {
-/**
- * How to compare the date against the range.
- */
-operator: ("date_is_within" | "date_is_relative_to")
-/**
- * Compare against the end of a date range rather than its start.
- */
-use_end?: boolean
-/**
- * The range to compare against.
- */
-value: ({
-/**
- * How many units wide the window is.
- */
-count: number
-/**
- * Whether the window runs backwards or forwards from now.
- */
-direction: ("past" | "future")
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `year`, `month`, `week`, `day`
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Always `custom`
- */
-value: "custom"
-} | {
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `year`, `month`, `week`, `day`
- */
-unit: ("year" | "month" | "week" | "day")
-/**
- * Always `surrounding`
- */
-value: "surrounding"
-} | {
-/**
- * Always `relative`
- */
-type: "relative"
-/**
- * One of: `this_week`, `the_past_week`, `the_past_month`, `the_past_year`, `the_next_week`, `the_next_month`, `the_next_year`
- */
-value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
-} | {
-/**
- * Always `exact`
- */
-type: "exact"
-/**
- * Use the is_empty operator to match an unset date.
- */
-value: {
-/**
- * Inclusive end of the range as an ISO 8601 date string, if any.
- */
-end_date?: string
-/**
- * Inclusive start of the range as an ISO 8601 date string, if any.
- */
-start_date?: string
-/**
- * Always `daterange`
- */
-type: "daterange"
-}
-})
-} | {
-/**
- * Whether the property must be empty or set.
- */
-operator: ("is_empty" | "is_not_empty")
-})
-/**
- * Which meeting-note property to filter on. Prefer the short names; the schema URI form is accepted for compatibility.
- */
-property: ("title" | "attendees" | "created_time" | "created_by" | "last_edited_time" | "last_edited_by" | "notion://meeting_notes/attendees")
-}[]
+filters: NotionQueryMeetingNotesInputMeetingNotesPropertyFilter[]
 /**
  * Whether every child must match, or any of them.
  */
@@ -15567,7 +10752,221 @@ operator: ("and" | "or")
 operator: ("and" | "or")
 [k: string]: unknown
 }
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
+}
+export interface NotionQueryMeetingNotesInputMeetingNotesPropertyFilter {
+/**
+ * The comparison to apply. Use the arm matching the property's type.
+ */
+filter: ({
+/**
+ * How to compare the text.
+ */
+operator: ("string_is" | "string_is_not" | "string_contains" | "string_does_not_contain" | "string_starts_with" | "string_ends_with")
+/**
+ * The text to compare against.
+ */
+value: {
+/**
+ * Always `exact`
+ */
+type: "exact"
+/**
+ * The literal text the operator compares against.
+ */
+value: string
+}
+} | {
+/**
+ * Whether the property must contain the people listed.
+ */
+operator: ("person_contains" | "person_does_not_contain")
+/**
+ * The people to compare against.
+ * 
+ * @maxItems 100
+ */
+value: ({
+/**
+ * Always `exact`
+ */
+type: "exact"
+/**
+ * Pointer to the Notion user to match.
+ */
+value: {
+/**
+ * The user's ID, as a UUID or the `user://<uuid>` form returned by user search.
+ */
+id: string
+/**
+ * Always `notion_user`
+ */
+table: "notion_user"
+}
+} | {
+/**
+ * Always `relative`
+ */
+type: "relative"
+/**
+ * Always `me`
+ */
+value: "me"
+})[]
+} | {
+/**
+ * How to compare the date.
+ */
+operator: ("date_is" | "date_is_before" | "date_is_after" | "date_is_on_or_before" | "date_is_on_or_after")
+/**
+ * Compare against the end of a date range rather than its start.
+ */
+use_end?: boolean
+/**
+ * The date to compare against.
+ */
+value: ({
+/**
+ * Always `relative`
+ */
+type: "relative"
+/**
+ * One of: `today`, `tomorrow`, `yesterday`, `one_week_ago`, `one_week_from_now`, `one_month_ago`, `one_month_from_now`
+ */
+value: ("today" | "tomorrow" | "yesterday" | "one_week_ago" | "one_week_from_now" | "one_month_ago" | "one_month_from_now")
+} | {
+/**
+ * Always `exact`
+ */
+type: "exact"
+/**
+ * Use the is_empty operator to match an unset date.
+ */
+value: ({
+/**
+ * The calendar date as an ISO 8601 date string.
+ */
+start_date: string
+/**
+ * Always `date`
+ */
+type: "date"
+} | {
+/**
+ * The calendar date as an ISO 8601 date string.
+ */
+start_date: string
+/**
+ * The time of day in 24-hour HH:MM format.
+ */
+start_time: string
+/**
+ * The IANA time zone name the time is interpreted in.
+ */
+time_zone: string
+/**
+ * Always `datetime`
+ */
+type: "datetime"
+})
+})
+} | {
+/**
+ * How to compare the date against the range.
+ */
+operator: ("date_is_within" | "date_is_relative_to")
+/**
+ * Compare against the end of a date range rather than its start.
+ */
+use_end?: boolean
+/**
+ * The range to compare against.
+ */
+value: ({
+/**
+ * How many units wide the window is.
+ */
+count: number
+/**
+ * Whether the window runs backwards or forwards from now.
+ */
+direction: ("past" | "future")
+/**
+ * Always `relative`
+ */
+type: "relative"
+/**
+ * One of: `year`, `month`, `week`, `day`
+ */
+unit: ("year" | "month" | "week" | "day")
+/**
+ * Always `custom`
+ */
+value: "custom"
+} | {
+/**
+ * Always `relative`
+ */
+type: "relative"
+/**
+ * One of: `year`, `month`, `week`, `day`
+ */
+unit: ("year" | "month" | "week" | "day")
+/**
+ * Always `surrounding`
+ */
+value: "surrounding"
+} | {
+/**
+ * Always `relative`
+ */
+type: "relative"
+/**
+ * One of: `this_week`, `the_past_week`, `the_past_month`, `the_past_year`, `the_next_week`, `the_next_month`, `the_next_year`
+ */
+value: ("this_week" | "the_past_week" | "the_past_month" | "the_past_year" | "the_next_week" | "the_next_month" | "the_next_year")
+} | {
+/**
+ * Always `exact`
+ */
+type: "exact"
+/**
+ * Use the is_empty operator to match an unset date.
+ */
+value: {
+/**
+ * Inclusive end of the range as an ISO 8601 date string, if any.
+ */
+end_date?: string
+/**
+ * Inclusive start of the range as an ISO 8601 date string, if any.
+ */
+start_date?: string
+/**
+ * Always `daterange`
+ */
+type: "daterange"
+}
+})
+} | {
+/**
+ * Whether the property must be empty or set.
+ */
+operator: ("is_empty" | "is_not_empty")
+})
+/**
+ * Which meeting-note property to filter on. Prefer the short names; the schema URI form is accepted for compatibility.
+ */
+property: ("title" | "attendees" | "created_time" | "created_by" | "last_edited_time" | "last_edited_by" | "notion://meeting_notes/attendees")
 }
 
 export interface NotionQueryMultipleDataSourcesInput {
@@ -15575,9 +10974,13 @@ export interface NotionQueryMultipleDataSourcesInput {
  * Notion data source URLs whose SQLite tables are available to the query; each data source is exposed as a table named by its URL. Obtain them from the fetch tool, in the format: collection://f336d0bc-b841-465b-8045-024475c079dd
  * 
  * @minItems 2
- * @maxItems 100
+ * @maxItems 10
  */
-data_source_urls: [string, string, ...(string)[]]
+data_source_urls: [string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Optional SQL mode marker. This tool only supports SQL queries.
  */
@@ -15589,576 +10992,54 @@ mode?: "sql"
  */
 params?: (string | number | boolean | null)[]
 /**
- * Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM "collection://..." WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.
+ * Read-only SQLite query to execute against the data sources. Use a data source URL as the table name, e.g. SELECT * FROM "collection://..." WHERE .... Use only table and column names shown in the fetched `<sqlite-table>` definition; date properties use the expanded column names listed there, not the base name. Example: if the fetched schema has a date property `Due`, use `"date:Due:start"`, not `"Due"`. Properties of type `created_time` or `last_edited_time` keep their exact fetched base columns (e.g. `"Created"` only if listed). A formula or another property with a date-looking name or result does not automatically have `date:` columns or become queryable. Copy actual fetched columns, not property labels. Include every needed filter in WHERE (filters on views of the data source are not automatically applied). For time comparisons or ordering, normalize text timestamps with datetime(...) or date(...). SQL text values can omit rich-text mentions and formatting, and links can lose their destination. Use faithful rows mode or fetch the page before rewriting a rich-text property.
  */
 query: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
+
+export type NotionQuerySessionsInputSessionNestedFilter = (NotionQuerySessionsInputSessionIdFilter | NotionQuerySessionsInputSessionAgentIdFilter | NotionQuerySessionsInputSessionStatusFilter | NotionQuerySessionsInputSessionTimestampFilter | {
+/**
+ * Return sessions that match every child filter.
+ * 
+ * @maxItems 100
+ */
+and: (NotionQuerySessionsInputSessionIdFilter | NotionQuerySessionsInputSessionAgentIdFilter | NotionQuerySessionsInputSessionStatusFilter | NotionQuerySessionsInputSessionTimestampFilter)[]
+} | {
+/**
+ * Return sessions that match any child filter.
+ * 
+ * @maxItems 100
+ */
+or: (NotionQuerySessionsInputSessionIdFilter | NotionQuerySessionsInputSessionAgentIdFilter | NotionQuerySessionsInputSessionStatusFilter | NotionQuerySessionsInputSessionTimestampFilter)[]
+})
 
 export interface NotionQuerySessionsInput {
 /**
  * A session property filter, or an and/or compound filter nested up to two levels deep.
  */
-filter?: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-} | {
+filter?: (NotionQuerySessionsInputSessionIdFilter | NotionQuerySessionsInputSessionAgentIdFilter | NotionQuerySessionsInputSessionStatusFilter | NotionQuerySessionsInputSessionTimestampFilter | {
 /**
  * Return sessions that match every child filter.
  * 
  * @maxItems 100
  */
-and: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-} | {
-/**
- * Return sessions that match every child filter.
- * 
- * @maxItems 100
- */
-and: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-})[]
+and: NotionQuerySessionsInputSessionNestedFilter[]
 } | {
 /**
  * Return sessions that match any child filter.
  * 
  * @maxItems 100
  */
-or: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-})[]
-})[]
-} | {
-/**
- * Return sessions that match any child filter.
- * 
- * @maxItems 100
- */
-or: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-} | {
-/**
- * Return sessions that match every child filter.
- * 
- * @maxItems 100
- */
-and: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-})[]
-} | {
-/**
- * Return sessions that match any child filter.
- * 
- * @maxItems 100
- */
-or: ({
-/**
- * Filter sessions by id.
- */
-property: "id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by agent_id.
- */
-property: "agent_id"
-/**
- * An exact string comparison.
- */
-string: {
-/**
- * Return sessions with this exact value.
- */
-equals: string
-}
-} | {
-/**
- * Filter sessions by status.
- */
-property: "status"
-/**
- * A session status comparison.
- */
-status: {
-/**
- * Return sessions with this status.
- */
-equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
-/**
- * Return sessions with any of these statuses.
- * 
- * @maxItems 7
- */
-in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
-}
-} | {
-/**
- * The session timestamp to compare.
- */
-property: ("created_at" | "updated_at")
-/**
- * A timestamp range.
- */
-timestamp: {
-/**
- * Return sessions after this time.
- */
-after?: string
-/**
- * Return sessions before this time.
- */
-before?: string
-/**
- * Return sessions at or after this time.
- */
-on_or_after?: string
-/**
- * Return sessions at or before this time.
- */
-on_or_before?: string
-}
-})[]
-})[]
+or: NotionQuerySessionsInputSessionNestedFilter[]
 })
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * The number of sessions to return. Maximum: 100.
  */
@@ -16167,6 +11048,10 @@ page_size?: number
  * A case-insensitive substring search over session titles.
  */
 query?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Ordered sort precedence. Defaults to updated_at descending.
  * 
@@ -16206,8 +11091,90 @@ property: ("created_at" | "updated_at")
  */
 start_cursor?: string
 }
+export interface NotionQuerySessionsInputSessionIdFilter {
+/**
+ * Filter sessions by id.
+ */
+property: "id"
+/**
+ * An exact string comparison.
+ */
+string: {
+/**
+ * Return sessions with this exact value.
+ */
+equals: string
+}
+}
+export interface NotionQuerySessionsInputSessionAgentIdFilter {
+/**
+ * Filter sessions by agent_id.
+ */
+property: "agent_id"
+/**
+ * An exact string comparison.
+ */
+string: {
+/**
+ * Return sessions with this exact value.
+ */
+equals: string
+}
+}
+export interface NotionQuerySessionsInputSessionStatusFilter {
+/**
+ * Filter sessions by status.
+ */
+property: "status"
+/**
+ * A session status comparison.
+ */
+status: {
+/**
+ * Return sessions with this status.
+ */
+equals?: ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")
+/**
+ * Return sessions with any of these statuses.
+ * 
+ * @maxItems 7
+ */
+in?: []|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]|[("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated"), ("queued" | "in_progress" | "requires_action" | "completed" | "failed" | "canceled" | "terminated")]
+}
+}
+export interface NotionQuerySessionsInputSessionTimestampFilter {
+/**
+ * The session timestamp to compare.
+ */
+property: ("created_at" | "updated_at")
+/**
+ * A timestamp range.
+ */
+timestamp: {
+/**
+ * Return sessions after this time.
+ */
+after?: string
+/**
+ * Return sessions before this time.
+ */
+before?: string
+/**
+ * Return sessions at or after this time.
+ */
+on_or_after?: string
+/**
+ * Return sessions at or before this time.
+ */
+on_or_before?: string
+}
+}
 
 export interface NotionReadSessionEventInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Committed event sequence number to read.
  */
@@ -16216,10 +11183,37 @@ sequence: number
  * Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.
  */
 session_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
+export interface NotionResolveSuggestedEditInput {
+/**
+ * Whether to apply or discard the suggestion.
+ */
+action: ("accept" | "reject")
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * Pending suggested-edit discussion URL returned by get_comments or create_suggested_edit.
+ */
+suggested_edit_url: string
+}
+
 export interface NotionRestorePagesInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * IDs of 1 to 20 pages or databases in Trash. Database rows are pages. Duplicate IDs are restored once.
  * 
@@ -16227,6 +11221,54 @@ export interface NotionRestorePagesInput {
  * @maxItems 20
  */
 page_ids: [string]|[string, string]|[string, string, string]|[string, string, string, string]|[string, string, string, string, string]|[string, string, string, string, string, string]|[string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]|[string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string]
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+}
+
+export interface NotionRestoreVersionInput {
+/**
+ * For a database only: which parts to restore. Leave it out to restore all of them.
+ */
+database_options?: {
+/**
+ * Restore the database's properties (its schema). Defaults to true.
+ */
+properties?: boolean
+/**
+ * Restore each row's property values. Defaults to true.
+ */
+row_property_values?: boolean
+/**
+ * Restore each row's title. Defaults to true.
+ */
+row_titles?: boolean
+}
+/**
+ * For a page only: also restore the databases inside the page. Defaults to false. If the page has databases and the user did not say whether to restore them, ask first.
+ */
+include_inline_databases?: boolean
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * The page or database to restore: a page URL, database URL, or ID. Not a data source (collection://) URL.
+ */
+page: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * The past moment to restore to, as an ISO 8601 time with a time zone, such as "2026-10-10T18:05:02Z". The page keeps every edit made at or before it. To remove a change, use the last_edit_time of the change before it, not the change's own first_edit_time.
+ */
+time: string
+/**
+ * Set to true only after the user has seen what this restore will change and said yes. Without it, nothing is restored and the call returns what it would do.
+ */
+user_confirmed?: boolean
 }
 
 export interface NotionSearchInput {
@@ -16293,11 +11335,15 @@ title_only?: boolean
 [k: string]: unknown
 }
 /**
- * Maximum character length for result highlights (default 200). Set to 0 to omit highlights entirely.
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * Maximum character length for result highlights (default 200). Set to 0 to omit highlights entirely. Values outside the range (minimum 0, maximum 500) are clamped.
  */
 max_highlight_length?: number
 /**
- * Maximum number of results to return (default 10). Lower values reduce response size.
+ * Maximum number of results to return (default 10). Lower values reduce response size. Values outside the range (minimum 1, maximum 50) are clamped.
  */
 page_size?: number
 /**
@@ -16312,6 +11358,10 @@ query: string
  * Specify type of the query as either "internal" or "user". Always include this input if performing "user" search.
  */
 query_type?: ("internal" | "user")
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Result ordering for Notion workspace search. Omit for the default "relevance" ordering. "last_edited" and "created" require Business access.
  */
@@ -16329,6 +11379,10 @@ export interface NotionSearchAgentsInput {
  */
 cursor?: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Maximum results to return (1-200).
  */
 limit?: number
@@ -16340,9 +11394,17 @@ query?: string
  * Which agents to list: "favorites" for the current user's favorite agents, or "workspace" for agents shared with the workspace.
  */
 scope: ("favorites" | "workspace")
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionSearchSessionsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * How far back to search, such as "30d" or "1y". Leave it out to search the past year.
  */
@@ -16351,10 +11413,18 @@ lookback?: string
  * What you want to find in past sessions.
  */
 question: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
 export interface NotionSendMessageToSessionInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Follow-up message to send.
  */
@@ -16363,6 +11433,10 @@ message: string
  * Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.
  */
 session_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
@@ -16376,9 +11450,17 @@ comment_id: string
  */
 emoji: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * True to add the reaction, false to remove it.
  */
 reacted: boolean
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionSetDiscussionResolvedInput {
@@ -16387,13 +11469,17 @@ export interface NotionSetDiscussionResolvedInput {
  */
 discussion_id: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * True to resolve the discussion, false to reopen it.
  */
 resolved: boolean
-}
-
-export interface NotionShowAdvancedAnalysisNextStepsInput {
-
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionSpawnSessionInput {
@@ -16405,14 +11491,30 @@ agent_url: string
  * Initial message for the new session.
  */
 initial_message: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
 export interface NotionStopSessionInput {
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.
  */
 session_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
 
@@ -16422,9 +11524,17 @@ export interface NotionUpdateCommentInput {
  */
 comment_id: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * The full replacement text for the comment, as inline Markdown. It replaces the whole comment, so include any text you want to keep. Use the same inline syntax as create_comment. Lists, headings, and other block-level Markdown are not supported in comments.
  */
 markdown: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 }
 
 export interface NotionUpdateDataSourceInput {
@@ -16440,6 +11550,10 @@ description?: string
  * Move data source to trash. Cannot be undone without Notion UI.
  */
 in_trash?: boolean
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Whether the database should display inline (true) or as full page (false). Only applicable for single-source databases.
  */
@@ -16469,72 +11583,7 @@ main: ({
  * The module type.
  */
 type: ("cover" | "editor" | "discussions" | "relations" | "backlinks" | "page_sections" | "bottom_controls")
-} | {
-/**
- * Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.
- */
-properties?: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-/**
- * The module type.
- */
-type: "properties"
-} | {
-/**
- * Named sections in order. Unlisted properties go in the last section and show.
- * 
- * @minItems 1
- */
-sections: [{
-/**
- * The section name.
- */
-name: string
-/**
- * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
- */
-properties: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-}, ...({
-/**
- * The section name.
- */
-name: string
-/**
- * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
- */
-properties: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-})[]]
-/**
- * The module type.
- */
-type: "properties"
-} | {
+} | NotionUpdateDataSourceInputPageLayoutPropertiesModule | NotionUpdateDataSourceInputPageLayoutPropertiesSectionsModule | {
 /**
  * Property names to show under the title.
  */
@@ -16547,25 +11596,7 @@ propertyLabels?: ("show" | "hide")
  * The module type.
  */
 type: "title"
-} | {
-/**
- * How the property looks.
- */
-config?: {
-/**
- * Display style. Which styles apply depends on the property type.
- */
-style: ("compact" | "large" | "small" | "landscape" | "portrait" | "square" | "map" | "text")
-}
-/**
- * The name of the property to show.
- */
-property: string
-/**
- * The module type.
- */
-type: "property"
-} | {
+} | NotionUpdateDataSourceInputPageLayoutPropertyModule | {
 /**
  * The name of a two-way relation property whose related pages show as a view.
  */
@@ -16578,90 +11609,7 @@ type: "views"
 /**
  * Sidebar modules in order. Only properties and property modules are allowed.
  */
-sidebar?: ({
-/**
- * Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.
- */
-properties?: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-/**
- * The module type.
- */
-type: "properties"
-} | {
-/**
- * Named sections in order. Unlisted properties go in the last section and show.
- * 
- * @minItems 1
- */
-sections: [{
-/**
- * The section name.
- */
-name: string
-/**
- * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
- */
-properties: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-}, ...({
-/**
- * The section name.
- */
-name: string
-/**
- * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
- */
-properties: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-})[]]
-/**
- * The module type.
- */
-type: "properties"
-} | {
-/**
- * How the property looks.
- */
-config?: {
-/**
- * Display style. Which styles apply depends on the property type.
- */
-style: ("compact" | "large" | "small" | "landscape" | "portrait" | "square" | "map" | "text")
-}
-/**
- * The name of the property to show.
- */
-property: string
-/**
- * The module type.
- */
-type: "property"
-})[]
+sidebar?: (NotionUpdateDataSourceInputPageLayoutPropertiesModule | NotionUpdateDataSourceInputPageLayoutPropertiesSectionsModule | NotionUpdateDataSourceInputPageLayoutPropertyModule)[]
 /**
  * Puts page content in a tab next to database views. Omit for a simple layout.
  */
@@ -16678,11 +11626,56 @@ modules: ({
  * The module type.
  */
 type: ("editor" | "discussions" | "relations")
-} | {
+} | NotionUpdateDataSourceInputPageLayoutPropertiesModule | NotionUpdateDataSourceInputPageLayoutPropertiesSectionsModule | NotionUpdateDataSourceInputPageLayoutPropertyModule)[]
+}
+}
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.
+ * 
+ * Property type syntax:
+ * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES
+ * - SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)
+ * - Option names can't contain commas: use '$1000+', not '$1,000+'. List separate options as 'A', 'B', not 'A, B'.
+ * - STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete
+ * - NUMBER [FORMAT 'dollar'] / FORMULA('expression')
+ * - RELATION('ds') for a one-way relation
+ * - RELATION('ds', DUAL) for a two-way relation
+ * - RELATION('ds', DUAL 'Children') with a synced property name
+ * - RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)
+ * - ROLLUP('rel_prop', 'target_prop', 'function')
+ * - UNIQUE_ID [PREFIX 'WEB-BUG'] / CREATED_TIME / LAST_EDITED_TIME
+ * - UNIQUE_ID PREFIX: 2-10 characters, a letter then letters, digits, or hyphens (e.g. 'TASK-ID', not 'TASK_ID' or 'T'). Each prefix can be used by only one data source per workspace, so prefer a specific prefix like 'WEB-BUG' over 'TASK'.
+ * - Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.
+ * 
+ * 
+ * Examples:
+ * - <example>ADD COLUMN "Priority" SELECT('High':red, 'Medium':yellow, 'Low':green); ADD COLUMN "Due Date" DATE</example>
+ * - <example>RENAME COLUMN "Status" TO "Project Status"</example>
+ * - <example>DROP COLUMN "Old Property"</example>
+ * - For a self-relation, add both relation properties in one call with matching DUAL names and IDs, such as <example>ADD COLUMN "Parent" RELATION('ds', DUAL 'Children' 'children')</example>.
+ */
+statements?: string
+/**
+ * The new title of the data source.
+ */
+title?: string
+[k: string]: unknown
+}
+export interface NotionUpdateDataSourceInputPageLayoutPropertiesModule {
 /**
  * Properties in order. Unlisted properties follow in their current order and show. Don't list the title or properties placed elsewhere in the layout.
  */
-properties?: {
+properties?: NotionUpdateDataSourceInputPageLayoutPropertyEntry[]
+/**
+ * The module type.
+ */
+type: "properties"
+}
+export interface NotionUpdateDataSourceInputPageLayoutPropertyEntry {
 /**
  * The property name.
  */
@@ -16691,12 +11684,8 @@ property: string
  * Defaults to show. Changes how pages look, not who can see the value.
  */
 visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
-/**
- * The module type.
- */
-type: "properties"
-} | {
+}
+export interface NotionUpdateDataSourceInputPageLayoutPropertiesSectionsModule {
 /**
  * Named sections in order. Unlisted properties go in the last section and show.
  * 
@@ -16710,16 +11699,7 @@ name: string
 /**
  * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
  */
-properties: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
+properties: NotionUpdateDataSourceInputPageLayoutPropertyEntry[]
 }, ...({
 /**
  * The section name.
@@ -16728,22 +11708,14 @@ name: string
 /**
  * Properties in this section, in order. Don't list the title or properties placed elsewhere in the layout.
  */
-properties: {
-/**
- * The property name.
- */
-property: string
-/**
- * Defaults to show. Changes how pages look, not who can see the value.
- */
-visibility?: ("show" | "hide_if_empty" | "hide")
-}[]
+properties: NotionUpdateDataSourceInputPageLayoutPropertyEntry[]
 })[]]
 /**
  * The module type.
  */
 type: "properties"
-} | {
+}
+export interface NotionUpdateDataSourceInputPageLayoutPropertyModule {
 /**
  * How the property looks.
  */
@@ -16761,59 +11733,6 @@ property: string
  * The module type.
  */
 type: "property"
-})[]
-}
-}
-/**
- * Semicolon-separated SQL DDL statements to update the schema. Supports ADD COLUMN, DROP COLUMN, RENAME COLUMN, and ALTER COLUMN SET.
- * 
- * Property type syntax:
- * - Simple: TITLE, RICH_TEXT, DATE, PEOPLE, CHECKBOX, URL, EMAIL, PHONE_NUMBER, FILES
- * - SELECT('opt':color, ...) / MULTI_SELECT('opt':color, ...)
- * - STATUS('Backlog':gray:to_do, 'Building':blue:in_progress, 'Shipped':green:complete); groups are to_do, in_progress, complete
- * - NUMBER [FORMAT 'dollar'] / FORMULA('expression')
- * - RELATION('ds') for a one-way relation
- * - RELATION('ds', DUAL) for a two-way relation
- * - RELATION('ds', DUAL 'Children') with a synced property name
- * - RELATION('ds', DUAL 'Children' 'children') with a synced name and synced_id (for self-relations)
- * - ROLLUP('rel_prop', 'target_prop', 'function')
- * - UNIQUE_ID [PREFIX 'X'] / CREATED_TIME / LAST_EDITED_TIME
- * - Any column: COMMENT 'description text' Colors: default, gray, brown, orange, yellow, green, blue, purple, pink, red.
- * 
- * 
- * Examples:
- * - <example>ADD COLUMN "Priority" SELECT('High':red, 'Medium':yellow, 'Low':green); ADD COLUMN "Due Date" DATE</example>
- * - <example>RENAME COLUMN "Status" TO "Project Status"</example>
- * - <example>DROP COLUMN "Old Property"</example>
- * - For a self-relation, add both relation properties in one call with matching DUAL names and IDs, such as <example>ADD COLUMN "Parent" RELATION('ds', DUAL 'Children' 'children')</example>.
- */
-statements?: string
-/**
- * The new title of the data source.
- */
-title?: string
-[k: string]: unknown
-}
-
-export interface NotionUpdateEnabledSkillsInput {
-/**
- * Notion Skill page URLs to enable on the requested surfaces.
- * 
- * @maxItems 50
- */
-add_skill_urls?: string[]
-/**
- * Notion Skill page URLs to disable on the requested surfaces.
- * 
- * @maxItems 50
- */
-remove_skill_urls?: string[]
-/**
- * Skill settings to update. Defaults to both external MCP and Notion AI.
- * 
- * @maxItems 2
- */
-surfaces?: []|[("mcp" | "notion_ai")]|[("mcp" | "notion_ai"), ("mcp" | "notion_ai")]
 }
 
 export interface NotionUpdateFolderInput {
@@ -16840,6 +11759,14 @@ file_urls?: [string, ...(string)[]]
  */
 folder_id: string
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * Required for add_subfolder. The new Folder's title.
  */
 title?: string
@@ -16859,7 +11786,7 @@ allow_deleting_content?: boolean
  */
 command: ("update_properties" | "update_content" | "replace_content" | "insert_content" | "apply_template" | "update_verification")
 /**
- * Required for "insert_content" command. The markdown content to insert into the page. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.
+ * Required for "insert_content" command. The markdown content to insert into the page. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.
  */
 content?: string
 /**
@@ -16869,7 +11796,7 @@ content?: string
  */
 content_updates?: {
 /**
- * The new content string to replace old_str with. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.
+ * The new content string to replace old_str with. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.
  */
 new_str: string
 /**
@@ -16883,23 +11810,31 @@ replace_all_matches?: boolean
 [k: string]: unknown
 }[]
 /**
- * An external image URL for the page cover. Use "none" to remove the cover. Omit to leave unchanged. Can be set alongside any command.
+ * An external image URL for the page cover. Use "none" to remove the cover. Omit to leave unchanged. Can be set alongside any command. To change only the cover, use "update_properties" and omit "properties".
  */
 cover?: string
 /**
- * An emoji character (e.g. "🚀"), a custom emoji by name (e.g. ":rocket_ship:"), a Notion icon identifier as returned by fetch (e.g. "icons/pizza_blue"), or an external image URL. Use "none" to remove the icon. Omit to leave unchanged. Can be set alongside any command. Keep the title free of a duplicate leading emoji because the icon renders separately.
+ * With command update_properties, set a page to full width or the default width. For database pages, overrides the database layout for this page only.
+ */
+full_width?: boolean
+/**
+ * An emoji character (e.g. "🚀"), a custom emoji by name (e.g. ":rocket_ship:"), a Notion icon identifier as returned by fetch (e.g. "icons/pizza_blue"), or an external image URL. Use "none" to remove the icon. Omit to leave unchanged. Can be set alongside any command. To change only the icon, use "update_properties" and omit "properties". Keep the title free of a duplicate leading emoji because the icon renders separately.
  */
 icon?: string
 /**
- * Set to true to mark this page as a skill, or false to remove the skill designation. Can be set alongside any command. To change only skill status, use "update_properties" and omit "properties".
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * Set to true to mark this page as a skill, or false to remove the skill designation. Can be set alongside any command. To change only skill status, use "update_properties" and omit "properties". Before creating a skill, read the MCP resource `notion://docs/skills` through your MCP client's resource-reading interface. If your client does not support reading MCP resources, call the Notion "fetch" tool with this URI instead. Do NOT pass this URI to any other URL-fetching tool.
  */
 is_skill?: boolean
 /**
- * Required for "replace_content" command. The new content string to replace the entire page content with. Preserve child pages and databases with their exact fetched <page url="..."> or <database url="..."> tags. For people and dates, use user and date mentions rather than plain text; notion://docs/enhanced-markdown-spec gives the syntax.
+ * Required for "replace_content" command. The new content string to replace the entire page content with. Preserve child pages and databases with their exact fetched <page url="..."> or <database url="..."> tags. For people and dates, use user and date mentions rather than plain text; notion://docs/notion-flavored-markdown-spec gives the syntax.
  */
 new_str?: string
 /**
- * The ID of the page to update, with or without dashes.
+ * The page ID, with or without dashes, or a Notion page URL.
  */
 page_id: string
 /**
@@ -16919,9 +11854,9 @@ type: "end"
 [k: string]: unknown
 })
 /**
- * Required for "update_properties" command. A JSON object that updates the page's properties.
+ * Used by the "update_properties" command, and required unless "icon", "cover", "is_skill", or "full_width" is set. A JSON object that updates the page's properties.
  * For pages in a database, fetch the page or its data source first and use the exact property names and SQLite schema definition shown in <database>.
- * For pages outside of a database, the only allowed property is "title", which is the title of the page in inline markdown format.
+ * For page titles outside a database, use "title" in inline Markdown.
  * For a Files property, an uploaded file can be provided as {"type":"file_upload","file_upload":{"id":"<file-upload-id>"}} inside the property's array.
  * Use null to remove a property's value.
  * **IMPORTANT**: Some property types require specific formats:
@@ -16956,6 +11891,10 @@ type: "file_upload"
 })[] | null)
 }
 /**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
  * Required for "apply_template" command. The ID of a template to apply to this page; any page ID can be used as a template. Template content is appended to any existing page content asynchronously.
  */
 template_id?: string
@@ -16970,15 +11909,489 @@ verification_status?: ("verified" | "unverified")
 [k: string]: unknown
 }
 
+export interface NotionUpdatePageFavoritesInput {
+/**
+ * true to favorite these pages; false to unfavorite them.
+ */
+favorited: boolean
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * Notion page or database URLs to favorite or unfavorite, in order.
+ * 
+ * @minItems 1
+ * @maxItems 100
+ */
+page_urls: [string, ...(string)[]]
+/**
+ * Where to put the pages, in input order: start, end, or after_page (right after another favorite). Moves pages that are already favorites. Only valid when favorited is true. Without it, new favorites go to the top and existing favorites stay where they are.
+ */
+position?: ({
+/**
+ * Always `start`
+ */
+type: "start"
+} | {
+/**
+ * Always `end`
+ */
+type: "end"
+} | {
+/**
+ * URL of a current favorite. The pages go right after it.
+ */
+page_url: string
+/**
+ * Always `after_page`
+ */
+type: "after_page"
+})
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+}
+
+export interface NotionUpdateSidebarTabsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * The complete desired ordered tab list. Preserve an existing id to update it, omit id to create a tab, and omit an existing tab to remove it.
+ * 
+ * @minItems 1
+ */
+tabs: [{
+/**
+ * A Notion icon name or picker alias. Existing tabs preserve their icon when omitted; new tabs default to circle-dashed.
+ */
+icon?: string
+/**
+ * An id returned by get_sidebar_tabs. Omit only for a new tab.
+ */
+id?: string
+/**
+ * The tab label shown in the sidebar.
+ */
+name: string
+/**
+ * Ordered sections for the tab. Use ids or object forms from the sectionCatalog returned by get_sidebar_tabs.
+ */
+sections: (string | {
+/**
+ * Maximum visible items for this section in this tab. Use the string form instead to use the default.
+ */
+itemLimit?: number
+/**
+ * The built-in section id.
+ */
+type: string
+} | {
+/**
+ * An optional sidebar-only name that replaces the underlying view name in this section's label. Omit it to use the view name.
+ */
+customName?: string
+/**
+ * Whether to hide page icons for rows in this section. Defaults to false.
+ */
+hidePageIcon?: boolean
+/**
+ * Stable occurrence id returned by get_sidebar_tabs. Omit only when adding a new database view section.
+ */
+id?: string
+/**
+ * Maximum visible rows. Defaults to 5 when omitted.
+ */
+itemLimit?: number
+/**
+ * How pages opened from this section appear. Omit it to use the database view's setting.
+ */
+openIn?: ("side_peek" | "center_peek" | "full_page")
+/**
+ * An optional template page URL in the view's data source used by the section's New button, or "empty" to create blank pages without the default template.
+ */
+templateUrl?: string
+/**
+ * The database view section type.
+ */
+type: "database_view"
+/**
+ * An explicit view:// URL or Notion URL containing a v= view id. A database page URL without a view id is ambiguous and invalid.
+ */
+viewUrl: string
+} | {
+/**
+ * The teamspace:// URL or id of a teamspace the current user has joined.
+ */
+teamspaceUrl: string
+/**
+ * The teamspace item type.
+ */
+type: "teamspace"
+} | "meeting_databases")[]
+/**
+ * Ordered shortcuts for the tab. Use ids or object forms from the shortcutCatalog returned by get_sidebar_tabs.
+ */
+shortcuts: (string | {
+/**
+ * The collection:// URL of the destination data source. Use at most one of dataSourceUrl and pageUrl.
+ */
+dataSourceUrl?: string
+/**
+ * An optional custom icon override using tool-docs://notion/pages/notion-icons.md or a single emoji. Omit it to use the database icon, or the generic compose icon when the shortcut has no database. Set it only when the user requests an override or there is a clear semantic reason.
+ */
+icon?: string
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * An optional custom label, limited to 150 characters. Prefer "New {singular noun}" when the database's created object is clear, for example "New task" for Tasks. Otherwise omit it to use the product default.
+ */
+label?: string
+/**
+ * How pages opened from this item appear. Omit it to use the product default.
+ */
+openIn?: ("side_peek" | "center_peek" | "full_page")
+/**
+ * The Notion URL of a page to create subpages in. Use at most one of dataSourceUrl and pageUrl.
+ */
+pageUrl?: string
+/**
+ * An optional database template page URL that belongs to dataSourceUrl, or "empty" to create blank pages without the default template.
+ */
+templateUrl?: string
+/**
+ * The new page item type.
+ */
+type: "new_page"
+/**
+ * An optional database view id in dataSourceUrl. New pages are created in that view.
+ */
+viewId?: string
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * How pages opened from this item appear. Omit it to use the product default.
+ */
+openIn?: ("side_peek" | "center_peek" | "full_page")
+/**
+ * The Notion URL of the page or database the shortcut navigates to. The shortcut always shows that target's own title and icon.
+ */
+pageUrl: string
+/**
+ * The page link item type.
+ */
+type: "page_link"
+/**
+ * An optional database view id. It must identify a view parented by the database in pageUrl. Omit it to open the user's most recently visited view.
+ */
+viewId?: string
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * The agent item type.
+ */
+type: "agent"
+/**
+ * The id of the custom agent the shortcut navigates to.
+ */
+workflowId: string
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * The id of the AI chat thread the shortcut opens.
+ */
+threadId: string
+/**
+ * The chat thread item type.
+ */
+type: "chat_thread"
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * The chat dashboard item type.
+ */
+type: "chat_dashboard"
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * An optional settings panel id. Omit it to open Settings without selecting a specific panel.
+ */
+panel?: string
+/**
+ * The settings item type.
+ */
+type: "settings"
+})[]
+}, ...({
+/**
+ * A Notion icon name or picker alias. Existing tabs preserve their icon when omitted; new tabs default to circle-dashed.
+ */
+icon?: string
+/**
+ * An id returned by get_sidebar_tabs. Omit only for a new tab.
+ */
+id?: string
+/**
+ * The tab label shown in the sidebar.
+ */
+name: string
+/**
+ * Ordered sections for the tab. Use ids or object forms from the sectionCatalog returned by get_sidebar_tabs.
+ */
+sections: (string | {
+/**
+ * Maximum visible items for this section in this tab. Use the string form instead to use the default.
+ */
+itemLimit?: number
+/**
+ * The built-in section id.
+ */
+type: string
+} | {
+/**
+ * An optional sidebar-only name that replaces the underlying view name in this section's label. Omit it to use the view name.
+ */
+customName?: string
+/**
+ * Whether to hide page icons for rows in this section. Defaults to false.
+ */
+hidePageIcon?: boolean
+/**
+ * Stable occurrence id returned by get_sidebar_tabs. Omit only when adding a new database view section.
+ */
+id?: string
+/**
+ * Maximum visible rows. Defaults to 5 when omitted.
+ */
+itemLimit?: number
+/**
+ * How pages opened from this section appear. Omit it to use the database view's setting.
+ */
+openIn?: ("side_peek" | "center_peek" | "full_page")
+/**
+ * An optional template page URL in the view's data source used by the section's New button, or "empty" to create blank pages without the default template.
+ */
+templateUrl?: string
+/**
+ * The database view section type.
+ */
+type: "database_view"
+/**
+ * An explicit view:// URL or Notion URL containing a v= view id. A database page URL without a view id is ambiguous and invalid.
+ */
+viewUrl: string
+} | {
+/**
+ * The teamspace:// URL or id of a teamspace the current user has joined.
+ */
+teamspaceUrl: string
+/**
+ * The teamspace item type.
+ */
+type: "teamspace"
+} | "meeting_databases")[]
+/**
+ * Ordered shortcuts for the tab. Use ids or object forms from the shortcutCatalog returned by get_sidebar_tabs.
+ */
+shortcuts: (string | {
+/**
+ * The collection:// URL of the destination data source. Use at most one of dataSourceUrl and pageUrl.
+ */
+dataSourceUrl?: string
+/**
+ * An optional custom icon override using tool-docs://notion/pages/notion-icons.md or a single emoji. Omit it to use the database icon, or the generic compose icon when the shortcut has no database. Set it only when the user requests an override or there is a clear semantic reason.
+ */
+icon?: string
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * An optional custom label, limited to 150 characters. Prefer "New {singular noun}" when the database's created object is clear, for example "New task" for Tasks. Otherwise omit it to use the product default.
+ */
+label?: string
+/**
+ * How pages opened from this item appear. Omit it to use the product default.
+ */
+openIn?: ("side_peek" | "center_peek" | "full_page")
+/**
+ * The Notion URL of a page to create subpages in. Use at most one of dataSourceUrl and pageUrl.
+ */
+pageUrl?: string
+/**
+ * An optional database template page URL that belongs to dataSourceUrl, or "empty" to create blank pages without the default template.
+ */
+templateUrl?: string
+/**
+ * The new page item type.
+ */
+type: "new_page"
+/**
+ * An optional database view id in dataSourceUrl. New pages are created in that view.
+ */
+viewId?: string
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * How pages opened from this item appear. Omit it to use the product default.
+ */
+openIn?: ("side_peek" | "center_peek" | "full_page")
+/**
+ * The Notion URL of the page or database the shortcut navigates to. The shortcut always shows that target's own title and icon.
+ */
+pageUrl: string
+/**
+ * The page link item type.
+ */
+type: "page_link"
+/**
+ * An optional database view id. It must identify a view parented by the database in pageUrl. Omit it to open the user's most recently visited view.
+ */
+viewId?: string
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * The agent item type.
+ */
+type: "agent"
+/**
+ * The id of the custom agent the shortcut navigates to.
+ */
+workflowId: string
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * The id of the AI chat thread the shortcut opens.
+ */
+threadId: string
+/**
+ * The chat thread item type.
+ */
+type: "chat_thread"
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * The chat dashboard item type.
+ */
+type: "chat_dashboard"
+} | {
+/**
+ * Occurrence id from get_sidebar_tabs. Omit for a new shortcut.
+ */
+id?: string
+/**
+ * An optional settings panel id. Omit it to open Settings without selecting a specific panel.
+ */
+panel?: string
+/**
+ * The settings item type.
+ */
+type: "settings"
+})[]
+})[]]
+}
+
+export interface NotionUpdateSkillSettingsInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * Change only the provided settings. Automatic use and placements require enabling the Skill first or in this request. Connected-agent use is independent of Notion Agent installation. Disabling the Skill also clears connected-agent use.
+ */
+settings: {
+/**
+ * Enable or disable this Skill in Notion Agent. Disabling also clears placements and connected-agent use.
+ */
+enabled?: boolean
+/**
+ * Show this enabled Skill after AI meeting notes.
+ */
+show_after_meetings?: boolean
+/**
+ * Show this enabled Skill during AI meeting notes.
+ */
+show_during_meetings?: boolean
+/**
+ * Show this enabled Skill in the Agent chat menu.
+ */
+show_in_chat?: boolean
+/**
+ * Show this enabled Skill in the text selection menu.
+ */
+show_in_editor?: boolean
+/**
+ * Allow agents to use this enabled Skill automatically when relevant. Set false to require explicit invocation without disabling the Skill or changing its placements.
+ */
+use_automatically?: boolean
+/**
+ * Make this Skill available to agents connected over MCP, independently of its Notion Agent installation. Requires a non-empty Skill description.
+ */
+use_in_connected_agents?: boolean
+}
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * The URL of an existing Notion Skill in the current workspace.
+ */
+skill_url: string
+}
+
 export interface NotionUpdateViewInput {
 /**
- * View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, SUB GROUP BY, CARD LAYOUT, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, FREEZE COLUMNS, and CLEAR directives.
+ * View configuration DSL string. Supports FILTER, QUICK FILTER, SORT BY, GROUP BY, SUB GROUP BY, CARD LAYOUT, CARD SIZE, CALENDAR BY, TIMELINE BY, MAP BY, CHART, FORM, SHOW, HIDE, COVER, WRAP CELLS, WRAP PROPERTIES, FREEZE COLUMNS, ICON, WIDTH, SUBSET, and CLEAR directives. BY OPTION and BY GROUP apply only to status properties and rollups that return status values (Show original or Show unique). For select and multi_select properties, omit both modifiers, even if the property is named "Status" (for example, GROUP BY "Status").
  */
 configure?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * New name for the view.
  */
 name?: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * The view to update. Accepts a view:// URI, a Notion URL with ?v= parameter, or a bare UUID.
  */
@@ -17000,16 +12413,51 @@ checksum_crc32?: string
  */
 content_length?: number
 /**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
  * Target page in a Skills database. Create a new page first to import a new skill.
  */
 page_id: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 /**
  * Required for complete. Opaque token from prepare. Bound to the integration, workspace, and page; expires after ten minutes.
  */
 upload_token?: string
 }
 
+export interface NotionViewVersionInput {
+/**
+ * A database's next_cursor, to read its next rows. Pass the same page and time as the call that returned it.
+ */
+cursor?: string
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
+/**
+ * The page or database to read: a page URL, database URL, data source (collection://) URL, or ID.
+ */
+page: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
+/**
+ * The moment to read, as an ISO 8601 time with a time zone offset. Convert the user's date and time in their own time zone, such as "2026-10-10T14:05:02-04:00" for 2:05 PM in New York. If the user names only a date, pick a time on that date in their time zone and tell them which.
+ */
+time: string
+}
+
 export interface NotionWaitSessionInput {
+/**
+ * Notion setup instructions version, such as 0.0.2. Omit if unknown.
+ */
+instructions_version?: string
 /**
  * Maximum number of seconds to wait.
  */
@@ -17018,5 +12466,9 @@ seconds: number
  * Use the complete session_url returned by session tools, unchanged. Format: session://<spaceId>/<sessionId>. Shorthand session://<sessionId> and thread://<sessionId> use the connected workspace. Fully qualified URLs must refer to that workspace.
  */
 session_url: string
+/**
+ * For tracking only: the name of the agent skill you are following for this task, such as notion-meeting-prep. Omit if you are not following a skill.
+ */
+skill?: string
 [k: string]: unknown
 }
