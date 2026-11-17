@@ -3,14 +3,13 @@ import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { runCli } from "./host";
 
 test("CLI and desktop share auth settings and token storage without silent browser fallback", async () => {
   const directory = await mkdtemp(join(tmpdir(), "auth-surfaces-"));
   const token = randomUUID();
   const invoke = async (args: string[], input?: unknown) => {
-    const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
-      cwd: fileURLToPath(new URL("../../../", import.meta.url)),
+    const { code, stdout, stderr } = await runCli(args, {
       env: {
         ...process.env,
         HOME: directory,
@@ -20,15 +19,8 @@ test("CLI and desktop share auth settings and token storage without silent brows
         DEMO_AUTH_TOKEN: "",
         DEMO_AUTH_BOT_TOKEN: "",
       },
-      stdin: input === undefined ? "ignore" : new Blob([JSON.stringify(input)]),
-      stdout: "pipe",
-      stderr: "pipe",
+      stdin: input === undefined ? "" : JSON.stringify(input),
     });
-    const [code, stdout, stderr] = await Promise.all([
-      child.exited,
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-    ]);
     expect(stdout + stderr).not.toContain(token);
     return { code, stdout, stderr };
   };
@@ -72,4 +64,4 @@ test("CLI and desktop share auth settings and token storage without silent brows
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
-}, 15000);
+});

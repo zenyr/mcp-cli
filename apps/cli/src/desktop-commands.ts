@@ -11,6 +11,7 @@ import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
 import { runtimeDependencies } from "./runtime";
+import type { Env } from "./host";
 
 const liveManifest = async (
   plugin: ServicePlugin,
@@ -29,7 +30,7 @@ const liveManifest = async (
   }
 };
 
-export const desktopCommandCatalog = async (input: unknown): Promise<CommandCatalog> => {
+export const desktopCommandCatalog = async (input: unknown, env: Env): Promise<CommandCatalog> => {
   if (
     !isRecord(input) ||
     typeof input.service !== "string" ||
@@ -37,7 +38,7 @@ export const desktopCommandCatalog = async (input: unknown): Promise<CommandCata
     (input.workspace !== undefined && typeof input.workspace !== "string")
   )
     throw new UsageError("Invalid desktop commands request");
-  const registry = await discover(await defaultContext(process.env));
+  const registry = await discover(await defaultContext(env));
   const found = findPlugin(registry, input.service);
   const plugin = await loadPlugin(found, registry.context);
   const discovery = plugin.discovery?.tools === "session";

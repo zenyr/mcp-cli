@@ -49,8 +49,8 @@ export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
       return EXIT.ok;
     }
     if (command === "workspaces") return yield* legacy(() => workspaceCommand(args));
-    if (command === "desktop") return yield* legacy(() => desktopCommand(args));
-    if (command === "auth") return yield* legacy(() => authSettingsCommand(args));
+    if (command === "desktop") return yield* Effect.as(desktopCommand(args), EXIT.ok);
+    if (command === "auth") return yield* Effect.as(authSettingsCommand(args), EXIT.ok);
     if (command === "daemon") return yield* legacy(() => daemonCommand(args));
     if (command === "generate") return yield* legacy(async () => generate(args, await registry()));
     if (command === "plugins") return yield* legacy(() => pluginsCommand(args));

@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { runCli } from "./host";
 
 test("desktop API key operations share CLI storage without printing secrets", async () => {
   const directory = await mkdtemp(join(tmpdir(), "mcp-desktop-auth-"));
@@ -23,9 +23,8 @@ test("desktop API key operations share CLI storage without printing secrets", as
   );
   const config = join(directory, "config.json");
   await Bun.write(config, JSON.stringify({ plugins: [pluginDir] }));
-  const run = async (action: string, input?: unknown, keepInputOpen = false) => {
-    const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", "desktop", action], {
-      cwd: fileURLToPath(new URL("../../../", import.meta.url)),
+  const run = (action: string, input?: unknown, framed = false) =>
+    runCli(["desktop", action], {
       env: {
         ...process.env,
         HOME: directory,
@@ -36,20 +35,8 @@ test("desktop API key operations share CLI storage without printing secrets", as
         DESKTOP_TEST_KEY: "",
         DESKTOP_TEST_BOT: "",
       },
-      stdin: "pipe",
-      stdout: "pipe",
-      stderr: "pipe",
+      stdin: JSON.stringify(input ?? {}) + (framed ? "\n" : ""),
     });
-    child.stdin.write(JSON.stringify(input ?? {}) + (keepInputOpen ? "\n" : ""));
-    if (keepInputOpen) await child.stdin.flush();
-    else child.stdin.end();
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ]);
-    return { stdout, stderr, code };
-  };
   try {
     const saved = await run("login", {
       service: "desktop-test",

@@ -48,6 +48,7 @@ test("desktop commands prints a complete catalog larger than one pipe buffer", a
     );
     const config = join(directory, "config.json");
     await Bun.write(config, JSON.stringify({ plugins: [plugin] }));
+    // Spawns a real process because the subject is stdout pipe framing beyond 64 KiB.
     const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", "desktop", "commands"], {
       cwd: fileURLToPath(new URL("../../../", import.meta.url)),
       env: { ...process.env, HOME: directory, XDG_CONFIG_HOME: directory, MCP_CLI_CONFIG: config },

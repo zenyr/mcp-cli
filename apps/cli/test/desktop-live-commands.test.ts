@@ -27,6 +27,7 @@ test("desktop commands lists a session plugin's live tools on request", async ()
     const config = join(root, "config.json");
     await writeFile(config, JSON.stringify({ plugins: [plugin] }));
     const run = async (input: unknown) => {
+      // Spawns a real process because runtimeDependencies still reads process.env to choose the daemon.
       const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", "desktop", "commands"], {
         cwd: fileURLToPath(new URL("../../../", import.meta.url)),
         env: {
