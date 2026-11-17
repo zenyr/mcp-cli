@@ -7,8 +7,14 @@ import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
 import { authenticationDetails, configureAuthentication } from "./auth-settings";
 import { marketplaceRequest, marketplaceView } from "./marketplace/entry";
+import { Effect } from "effect";
+import { CliHost, processHost } from "./host";
 import { desktopService } from "./desktop-services";
 import { desktopCommandCatalog } from "./desktop-commands";
+
+// Bridges marketplace Effects until the desktop command moves onto CliHost.
+const runOnProcessHost = <A>(effect: Effect.Effect<A, unknown, CliHost>): Promise<A> =>
+  Effect.runPromise(Effect.provideService(effect, CliHost, processHost));
 
 const readAuthInput = async (): Promise<string> => {
   const lines = createInterface({ input: process.stdin });
@@ -58,7 +64,7 @@ export const desktopCommand = async (args: string[]) => {
       "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>",
     );
   if (action === "plugins") {
-    await writeResult(await marketplaceView());
+    await writeResult(await runOnProcessHost(marketplaceView()));
     return;
   }
   if (action === "commands") {
@@ -66,7 +72,9 @@ export const desktopCommand = async (args: string[]) => {
     return;
   }
   if (action === "plugin-action") {
-    await writeResult(await marketplaceRequest(JSON.parse(await readAuthInput())));
+    await writeResult(
+      await runOnProcessHost(marketplaceRequest(JSON.parse(await readAuthInput()))),
+    );
     return;
   }
   const registry = await discover(await defaultContext(process.env));
@@ -138,6 +146,6 @@ export const desktopCommand = async (args: string[]) => {
   } finally {
     process.removeListener("SIGTERM", abort);
   }
-  await resetDaemonIfRunning();
+  await resetDaemonIfRunning(process.env);
   await writeResult(null);
 };

@@ -28,7 +28,7 @@ export const authenticationDetails = async (plugin: ServicePlugin, check = false
 export const configureAuthentication = async (plugin: ServicePlugin, value: unknown) => {
   if (!plugin.authSupport) throw new UsageError("This service has no authentication settings.");
   await plugin.authSupport.configure(authenticationContext(process.env, plugin), value);
-  await resetDaemonIfRunning();
+  await resetDaemonIfRunning(process.env);
 };
 export const authSettingsCommand = async (argv: string[]) => {
   const selected = extractWorkspace(argv);

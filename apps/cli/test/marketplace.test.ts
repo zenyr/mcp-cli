@@ -14,6 +14,7 @@ import { desktopService } from "../src/desktop-services";
 import { defaultStore } from "../src/auth";
 import { gunzipSync } from "node:zlib";
 import { runMarketplace } from "../src/marketplace/entry";
+import { runCli } from "./host";
 import { manage, type ManagerContext } from "../src/marketplace/manager";
 import { marketView } from "../src/marketplace/catalog";
 import { packDirectory, safePath, unpack } from "../src/marketplace/archive";
@@ -24,6 +25,7 @@ import {
   readState,
   writeState,
   transaction,
+  type MarketplaceError,
 } from "../src/marketplace/storage";
 import {
   Catalog,
@@ -33,6 +35,8 @@ import {
   type PackageManifest,
 } from "../src/marketplace/schema";
 
+const market = <A>(operation: Effect.Effect<A, MarketplaceError>) =>
+  Effect.runPromise(runMarketplace(operation));
 const roots: string[] = [];
 afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
@@ -107,7 +111,7 @@ const fixture = async () => {
     });
   };
   const revision = await commit(catalog);
-  const run = (action: unknown) => runMarketplace(manage(context, action));
+  const run = (action: unknown) => market(manage(context, action));
   await run({ type: "source.add", url: repository });
   const sourceId = (await readState(context)).sources[0]?.id ?? "";
   const key = pluginKey(sourceId, plugin.id);
@@ -152,7 +156,7 @@ test("catalog and installation never execute plugin code; only enabled discovery
 test("installation with consent activates and creates commands without importing code", async () => {
   const f = await fixture();
   let resets = 0;
-  const result = await runMarketplace(
+  const result = await market(
     manage(
       {
         ...f.context,
@@ -370,6 +374,7 @@ test("starter links and executes through the same service command as an installe
     ".local/bin",
     process.platform === "win32" ? "starter.cmd" : "starter",
   );
+  // The generated command file and its shell launcher are the subject, so this stays a real process.
   const child = Bun.spawn(
     process.platform === "win32"
       ? ["cmd.exe", "/d", "/c", command, "message", "echo", "--text", "hello"]
@@ -387,6 +392,31 @@ test("starter links and executes through the same service command as an installe
   ]);
   expect(code, stderr).toBe(0);
   expect(stdout).toBe("hello\n");
+});
+
+test("plugins command resolves relative folders against the host directory", async () => {
+  const f = await fixture();
+  const options = { env: f.context.env, cwd: f.root };
+  const created = await runCli(["plugins", "init", "starter", "starter"], options);
+  expect(created).toEqual({
+    stdout: `Created ${join(f.root, "starter")}. Link the folder from the app to test it.\n`,
+    stderr: "",
+    code: 0,
+  });
+  expect((await runCli(["plugins", "link", "starter"], options)).code).toBe(0);
+  const listed = await runCli(["plugins", "list", "--json"], options);
+  const view: unknown = JSON.parse(listed.stdout);
+  expect(view).toMatchObject({
+    plugins: expect.arrayContaining([
+      expect.objectContaining({ service: "starter", enabled: false }),
+    ]),
+  });
+  expect(await runCli(["plugins", "enable", "missing"], options)).toEqual({
+    stdout: "",
+    stderr: "Installed plugin not found.\n",
+    code: 2,
+  });
+  expect((await runCli(["plugins", "unknown"], options)).code).toBe(2);
 });
 
 test("link validation rejects undeclared code execution", async () => {
@@ -495,7 +525,7 @@ test("viewing recommendations does not register a catalog or create state", asyn
     env: { ...f.context.env, MCP_CLI_CONFIG: join(f.root, "fresh/config.json") },
   };
   const stateFile = join(marketRoot(context), "state.json");
-  const view = await runMarketplace(marketView(context));
+  const view = await market(marketView(context));
   expect(view.sources).toEqual([]);
   expect(view.plugins).toEqual([]);
   expect(await Bun.file(stateFile).exists()).toBe(false);
@@ -513,7 +543,7 @@ test("legacy builtin installations remain enabled without forcing their catalog 
     installed: [{ ...installed, sourceId: "builtin" }],
   };
   await writeState(f.context, state);
-  const view = await runMarketplace(marketView(f.context));
+  const view = await market(marketView(f.context));
   expect(view.sources).toEqual([]);
   expect(view.plugins).toHaveLength(1);
   expect(view.plugins[0]?.enabled).toBe(true);

@@ -51,9 +51,9 @@ export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
     if (command === "workspaces") return yield* legacy(() => workspaceCommand(args));
     if (command === "desktop") return yield* legacy(() => desktopCommand(args));
     if (command === "auth") return yield* legacy(() => authSettingsCommand(args));
-    if (command === "daemon") return yield* legacy(() => daemonCommand(args));
+    if (command === "daemon") return yield* Effect.as(daemonCommand(args), EXIT.ok);
     if (command === "generate") return yield* legacy(async () => generate(args, await registry()));
-    if (command === "plugins") return yield* legacy(() => pluginsCommand(args));
+    if (command === "plugins") return yield* Effect.as(pluginsCommand(args), EXIT.ok);
     if (command === "login" || command === "logout") {
       const writeError = (text: string) => host.writeError(`${text}\n`);
       const run = command === "login" ? loginCommand : logoutCommand;
@@ -67,7 +67,7 @@ export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
           manual: host.onStdinLine,
           readSecret: host.readSecret,
         });
-        await resetDaemonIfRunning();
+        await resetDaemonIfRunning(host.env);
       });
     }
     return yield* attempt(async () => {

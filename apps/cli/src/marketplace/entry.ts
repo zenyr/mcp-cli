@@ -1,8 +1,9 @@
 import { formatOutput } from "@mcp-cli/runtime";
-import { Cause, Effect, Exit } from "effect";
+import { Effect } from "effect";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { UsageError } from "@mcp-cli/core";
+import { UsageError, type MarketplaceView } from "@mcp-cli/core";
+import { CliHost, printLine } from "../host";
 import { defaultContext } from "../paths";
 import { resetDaemonIfRunning } from "../daemon/client";
 import { listPlugins } from "../list";
@@ -14,34 +15,39 @@ import { marketView } from "./catalog";
 import { MarketplaceError, digest } from "./storage";
 import { scaffold } from "./scaffold";
 
-export const runMarketplace = async <A>(
-  operation: Effect.Effect<A, MarketplaceError>,
-): Promise<A> => {
-  const exit = await Effect.runPromiseExit(operation);
-  if (Exit.isSuccess(exit)) return exit.value;
-  const error = Cause.squash(exit.cause);
-  if (error instanceof MarketplaceError) throw new UsageError(error.message);
-  throw error;
-};
-export const marketplaceRequest = async (input: unknown) => {
-  const controller = new AbortController();
-  const abort = () => controller.abort();
-  process.once("SIGTERM", abort);
-  process.once("SIGINT", abort);
-  try {
-    const context = {
-      ...(await defaultContext(process.env)),
-      signal: controller.signal,
-      reset: () => resetDaemonIfRunning(),
-    };
-    return await runMarketplace(manage(context, input));
-  } finally {
-    process.removeListener("SIGTERM", abort);
-    process.removeListener("SIGINT", abort);
-  }
-};
-export const marketplaceView = async () =>
-  runMarketplace(marketView(await defaultContext(process.env)));
+const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
+  Effect.tryPromise({ try: operation, catch: (error) => error });
+
+/** Reports marketplace failures as usage errors and leaves defects untouched. */
+export const runMarketplace = <A, R>(
+  operation: Effect.Effect<A, MarketplaceError, R>,
+): Effect.Effect<A, UsageError, R> =>
+  Effect.mapError(operation, (error) => new UsageError(error.message));
+
+/** Applies one plugin action, aborting its work when the host receives a termination signal. */
+export const marketplaceRequest = (input: unknown) =>
+  Effect.scoped(
+    Effect.gen(function* () {
+      const host = yield* CliHost;
+      const controller = new AbortController();
+      yield* Effect.acquireRelease(
+        Effect.sync(() => host.onTermination(["SIGTERM", "SIGINT"], () => controller.abort())),
+        (remove) => Effect.sync(remove),
+      );
+      const context = {
+        ...(yield* attempt(() => defaultContext(host.env))),
+        signal: controller.signal,
+        reset: () => resetDaemonIfRunning(host.env),
+      };
+      return yield* runMarketplace(manage(context, input));
+    }),
+  );
+
+export const marketplaceView = (): Effect.Effect<MarketplaceView, unknown, CliHost> =>
+  Effect.gen(function* () {
+    const host = yield* CliHost;
+    return yield* runMarketplace(marketView(yield* attempt(() => defaultContext(host.env))));
+  });
 
 const usage = `Usage: mcp-cli plugins [list [--json]]
        mcp-cli plugins catalog <recommended|add URL|refresh ID|remove ID>
@@ -52,139 +58,143 @@ const usage = `Usage: mcp-cli plugins [list [--json]]
        mcp-cli plugins pack <directory> <output.tar.gz>
        mcp-cli plugins commands [directory]`;
 
-export const pluginsCommand = async (args: string[]): Promise<void> => {
-  const json = args.includes("--json");
-  const [action, ...rest] = args.filter((arg) => arg !== "--json");
-  if (action === "--help" || action === "-h") {
-    console.log(usage);
-    return;
-  }
-  if (!action || action === "list") {
-    if (rest.length) throw new UsageError(usage);
-    const view = await marketplaceView();
-    if (json) {
-      console.log(JSON.stringify(view));
+const stateLabel = (plugin: MarketplaceView["plugins"][number]): string =>
+  plugin.revoked
+    ? "revoked"
+    : plugin.enabled
+      ? "enabled"
+      : plugin.installed
+        ? "disabled"
+        : "available";
+
+export const pluginsCommand = (args: string[]): Effect.Effect<void, unknown, CliHost> =>
+  Effect.gen(function* () {
+    const host = yield* CliHost;
+    const absolute = (path: string) => resolve(host.cwd, path);
+    const json = args.includes("--json");
+    const [action, ...rest] = args.filter((arg) => arg !== "--json");
+    const invalid = Effect.fail(new UsageError(usage));
+    if (action === "--help" || action === "-h") return yield* printLine(usage);
+    if (!action || action === "list") {
+      if (rest.length) return yield* invalid;
+      const view = yield* marketplaceView();
+      if (json) return yield* printLine(JSON.stringify(view));
+      yield* printLine("SERVICE\tSTATE\tVERSION\tCATALOG\tPLUGIN ID");
+      for (const plugin of view.plugins)
+        yield* printLine(
+          [
+            plugin.service,
+            stateLabel(plugin),
+            plugin.installedVersion ?? plugin.version,
+            plugin.sourceId,
+            plugin.id,
+          ].join("\t"),
+        );
+      const registry = yield* attempt(async () => discover(await defaultContext(host.env)));
+      const development = {
+        ...registry,
+        plugins: registry.plugins.filter((item) => !item.installed),
+      };
+      if (development.plugins.length)
+        yield* printLine(yield* attempt(() => listPlugins(development, [])));
       return;
     }
-    console.log("SERVICE\tSTATE\tVERSION\tCATALOG\tPLUGIN ID");
-    for (const plugin of view.plugins)
-      console.log(
-        [
-          plugin.service,
-          plugin.revoked
-            ? "revoked"
-            : plugin.enabled
-              ? "enabled"
-              : plugin.installed
-                ? "disabled"
-                : "available",
-          plugin.installedVersion ?? plugin.version,
-          plugin.sourceId,
-          plugin.id,
-        ].join("\t"),
+    if (action === "pack") {
+      const [directory, output] = rest;
+      if (rest.length !== 2 || !directory || !output) return yield* invalid;
+      const bytes = yield* attempt(() => packDirectory(absolute(directory)));
+      const manifest = packageManifest(unpack(bytes));
+      yield* attempt(async () => {
+        await mkdir(dirname(absolute(output)), { recursive: true });
+        await writeFile(absolute(output), bytes, { flag: "wx" });
+      });
+      return yield* printLine(
+        formatOutput(
+          {
+            id: manifest.id,
+            service: manifest.service,
+            name: manifest.name,
+            description: manifest.description,
+            version: manifest.version,
+            permissions: manifest.permissions,
+            artifacts: [
+              {
+                url: "https://REPLACE-WITH-DOWNLOAD-URL",
+                sha256: digest(bytes),
+                platform: "any",
+                arch: "any",
+              },
+            ],
+          },
+          json,
+        ),
       );
-    const registry = await discover(await defaultContext(process.env));
-    const development = {
-      ...registry,
-      plugins: registry.plugins.filter((item) => !item.installed),
-    };
-    if (development.plugins.length) console.log(await listPlugins(development, []));
-    return;
-  }
-  if (action === "pack") {
-    if (rest.length !== 2) throw new UsageError(usage);
-    const [directory, output] = rest;
-    if (!directory || !output) throw new UsageError(usage);
-    const bytes = await packDirectory(resolve(directory));
-    const manifest = packageManifest(unpack(bytes));
-    await mkdir(dirname(resolve(output)), { recursive: true });
-    await writeFile(resolve(output), bytes, { flag: "wx" });
-    console.log(
-      formatOutput(
-        {
-          id: manifest.id,
-          service: manifest.service,
-          name: manifest.name,
-          description: manifest.description,
-          version: manifest.version,
-          permissions: manifest.permissions,
-          artifacts: [
-            {
-              url: "https://REPLACE-WITH-DOWNLOAD-URL",
-              sha256: digest(bytes),
-              platform: "any",
-              arch: "any",
-            },
-          ],
-        },
-        json,
-      ),
-    );
-    return;
-  }
-  let request: Action;
-  if (action === "init") {
-    if (rest.length !== 2 || !rest[0] || !rest[1]) throw new UsageError(usage);
-    await scaffold(rest[0], resolve(rest[1]));
-    console.log(`Created ${resolve(rest[1])}. Link the folder from the app to test it.`);
-    return;
-  }
-  if (action === "catalog") {
-    const [operation, value] = rest;
-    if (operation === "recommended" && rest.length === 1) {
-      const view = await marketplaceView();
-      for (const item of view.recommendations) console.log(`${item.name}\t${item.url}`);
-      return;
     }
-    if (rest.length !== 2 || !value) throw new UsageError(usage);
-    if (operation === "add")
-      request = { type: "source.add", url: value.startsWith(".") ? resolve(value) : value };
-    else if (operation === "refresh" || operation === "remove")
-      request = { type: `source.${operation}`, id: value };
-    else throw new UsageError(usage);
-  } else if (action === "install") {
-    if (
-      !rest[0] ||
-      !rest[1] ||
-      rest.length < 2 ||
-      rest.length > 3 ||
-      (rest[2] !== undefined && rest[2] !== "--allow-local-code")
-    )
-      throw new UsageError(usage);
-    request = {
-      type: "plugin.install",
-      sourceId: rest[0],
-      pluginId: rest[1],
-      enable: rest[2] === "--allow-local-code",
-      allowLocalCode: rest[2] === "--allow-local-code",
-    };
-  } else if (["enable", "disable", "remove"].includes(action)) {
-    if (
-      !rest[0] ||
-      rest.length > 2 ||
-      (rest[1] !== undefined && (action !== "enable" || rest[1] !== "--allow-local-code"))
-    )
-      throw new UsageError(usage);
-    const view = await marketplaceView();
-    const plugin = view.plugins.find(
-      (item) => item.installed && (item.key === rest[0] || item.service === rest[0]),
-    );
-    if (!plugin) throw new UsageError("Installed plugin not found.");
-    request =
-      action === "remove"
-        ? { type: "plugin.remove", key: plugin.key }
-        : {
-            type: "plugin.enable",
-            key: plugin.key,
-            enabled: action === "enable",
-            allowLocalCode: rest[1] === "--allow-local-code",
-          };
-  } else if (action === "link") {
-    if (rest.length !== 1 || !rest[0]) throw new UsageError(usage);
-    request = { type: "plugin.link", directory: resolve(rest[0]) };
-  } else if (action === "commands") {
-    if (rest.length > 1) throw new UsageError(usage);
-    request = { type: "commands.install", ...(rest[0] ? { directory: resolve(rest[0]) } : {}) };
-  } else throw new UsageError(usage);
-  console.log((await marketplaceRequest(request)).message);
-};
+    if (action === "init") {
+      const [service, directory] = rest;
+      if (rest.length !== 2 || !service || !directory) return yield* invalid;
+      yield* attempt(() => scaffold(service, absolute(directory)));
+      return yield* printLine(
+        `Created ${absolute(directory)}. Link the folder from the app to test it.`,
+      );
+    }
+    let request: Action;
+    if (action === "catalog") {
+      const [operation, value] = rest;
+      if (operation === "recommended" && rest.length === 1) {
+        const view = yield* marketplaceView();
+        for (const item of view.recommendations) yield* printLine(`${item.name}\t${item.url}`);
+        return;
+      }
+      if (rest.length !== 2 || !value) return yield* invalid;
+      if (operation === "add")
+        request = { type: "source.add", url: value.startsWith(".") ? absolute(value) : value };
+      else if (operation === "refresh" || operation === "remove")
+        request = { type: `source.${operation}`, id: value };
+      else return yield* invalid;
+    } else if (action === "install") {
+      if (
+        !rest[0] ||
+        !rest[1] ||
+        rest.length < 2 ||
+        rest.length > 3 ||
+        (rest[2] !== undefined && rest[2] !== "--allow-local-code")
+      )
+        return yield* invalid;
+      request = {
+        type: "plugin.install",
+        sourceId: rest[0],
+        pluginId: rest[1],
+        enable: rest[2] === "--allow-local-code",
+        allowLocalCode: rest[2] === "--allow-local-code",
+      };
+    } else if (["enable", "disable", "remove"].includes(action)) {
+      if (
+        !rest[0] ||
+        rest.length > 2 ||
+        (rest[1] !== undefined && (action !== "enable" || rest[1] !== "--allow-local-code"))
+      )
+        return yield* invalid;
+      const view = yield* marketplaceView();
+      const plugin = view.plugins.find(
+        (item) => item.installed && (item.key === rest[0] || item.service === rest[0]),
+      );
+      if (!plugin) return yield* Effect.fail(new UsageError("Installed plugin not found."));
+      request =
+        action === "remove"
+          ? { type: "plugin.remove", key: plugin.key }
+          : {
+              type: "plugin.enable",
+              key: plugin.key,
+              enabled: action === "enable",
+              allowLocalCode: rest[1] === "--allow-local-code",
+            };
+    } else if (action === "link") {
+      if (rest.length !== 1 || !rest[0]) return yield* invalid;
+      request = { type: "plugin.link", directory: absolute(rest[0]) };
+    } else if (action === "commands") {
+      if (rest.length > 1) return yield* invalid;
+      request = { type: "commands.install", ...(rest[0] ? { directory: absolute(rest[0]) } : {}) };
+    } else return yield* invalid;
+    yield* printLine((yield* marketplaceRequest(request)).message);
+  });
