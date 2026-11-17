@@ -2,38 +2,25 @@ import { expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { NotGeneratedError, RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { EXIT, exitCodeFor } from "../src/main";
 import { discover, findPlugin, loadPlugin } from "../src/discovery";
 import { defaultContext } from "../src/paths";
 import { loadManifest, packageFiles } from "../src/plugins";
-const root = fileURLToPath(new URL("../../../", import.meta.url));
+import { repositoryRoot, runCli } from "./host";
 // Points config and cache lookups away from the real home directory.
 const sandbox = mkdtempSync(join(tmpdir(), "mcp-cli-test-"));
 const isolatedEnv = {
-  ...process.env,
   HOME: "/nonexistent-home",
   XDG_CONFIG_HOME: join(sandbox, "config"),
   XDG_CACHE_HOME: join(sandbox, "cache"),
   XDG_STATE_HOME: join(sandbox, "state"),
   MCP_CLI_CONFIG: "",
   MCP_CLI_DAEMON: "0",
+  MCP_CLI_INTERNAL_PLUGINS: "only",
 };
-const runWith = async (env: Record<string, string>, ...args: string[]) => {
-  const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
-    cwd: root,
-    env: { ...isolatedEnv, ...env },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [stdout, stderr, code] = await Promise.all([
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-    child.exited,
-  ]);
-  return { stdout, stderr, code };
-};
+const runWith = (env: Record<string, string>, ...args: string[]) =>
+  runCli(args, { env: { ...isolatedEnv, ...env } });
 const run = (...args: string[]) => runWith({}, ...args);
 test("CLI generates from MCP and checks the frozen snapshot", async () => {
   expect((await run("generate", "demo", "--check")).code).toBe(0);
@@ -64,12 +51,23 @@ test("discovered services match plugin names and resolve package files", async (
     await defaultContext({ HOME: "/nonexistent-home", MCP_CLI_INTERNAL_PLUGINS: "only" }),
   );
   const plugin = findPlugin(registry, "demo");
-  expect((await loadPlugin(plugin)).name).toBe("demo");
+  expect((await loadPlugin(plugin, registry.context)).name).toBe("demo");
   expect(packageFiles(plugin).module).toEndWith("plugins/demo/src/generated.ts");
   expect((await loadManifest(registry, findPlugin(registry, "demo"))).service).toBe("demo");
 });
+// Spawns because `plugins` still prints through console until its slice moves onto CliHost.
+const spawnCli = async (...args: string[]) => {
+  const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
+    cwd: repositoryRoot,
+    env: { ...process.env, ...isolatedEnv },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, code] = await Promise.all([new Response(child.stdout).text(), child.exited]);
+  return { stdout, code };
+};
 test("plugins lists discovered services with generated status", async () => {
-  const listing = await run("plugins");
+  const listing = await spawnCli("plugins");
   expect(listing.code).toBe(0);
   expect(listing.stdout).toMatch(/demo\s+workspace\s+generated \(package\)/);
   expect((await run("plugins", "extra")).code).toBe(2);

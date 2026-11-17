@@ -285,13 +285,14 @@ const openers: Partial<Record<NodeJS.Platform, string[]>> = {
   win32: ["cmd", "/c", "start", ""],
 };
 
+/** Prints the login URL and launches a browser only when stderr is an interactive terminal. */
 export const openInBrowser =
-  (writeError: (text: string) => void) => (url: string, browser: boolean) => {
+  (writeError: (text: string) => void, stderrIsTTY: boolean) => (url: string, browser: boolean) => {
     writeError(
       `Open this URL in any browser to log in:\n${url}\n\nAfter approval the browser goes to http://127.0.0.1:.../callback.\nIf that page does not load (for example on another device), copy its full address and paste it here.`,
     );
     const opener = openers[process.platform];
-    if (!browser || !opener || !process.stderr.isTTY) return;
+    if (!browser || !opener || !stderrIsTTY) return;
     try {
       Bun.spawn([...opener, url], { stdio: ["ignore", "ignore", "ignore"] });
     } catch {

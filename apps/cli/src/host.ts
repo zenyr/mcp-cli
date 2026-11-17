@@ -9,6 +9,8 @@ export type TerminationSignal = "SIGINT" | "SIGTERM";
 export type Host = {
   env: Env;
   cwd: string;
+  /** True when stderr is a terminal, so a login may launch a local browser. */
+  stderrIsTTY?: boolean;
   /** Writes text verbatim and resolves once it is flushed. */
   write: (text: string) => Promise<void>;
   writeError: (text: string) => void;
@@ -44,6 +46,7 @@ const onStdinLine = (handler: (line: string) => void): (() => void) => {
 export const processHost: Host = {
   env: process.env,
   cwd: process.cwd(),
+  stderrIsTTY: Boolean(process.stderr.isTTY),
   // Bun truncates piped console.log output at 64 KiB once process.stdout exists.
   write: (text) =>
     new Promise<void>((resolve, reject) =>

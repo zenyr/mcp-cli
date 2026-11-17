@@ -1,10 +1,13 @@
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isRecord, UsageError, type ServicePlugin } from "@mcp-cli/core";
+import { Effect } from "effect";
+import { attempt } from "./attempt";
+import { CliHost } from "./host";
 import { bundledPlugins, type BundledPlugin } from "./bundled";
 import { readConfig, type PluginReference, type UserConfig } from "./config";
 import { nodeModulePackages, readPackage, workspacePackages, type PackageInfo } from "./packages";
-import { configPath, type DiscoveryContext } from "./paths";
+import { configPath, defaultContext, type DiscoveryContext } from "./paths";
 import { readState, objectPath } from "./marketplace/storage";
 import { loadManagedPlugin } from "./marketplace/runtime";
 import type { Installed } from "./marketplace/schema";
@@ -186,6 +189,12 @@ export const discover = async (context: DiscoveryContext): Promise<Registry> => 
   return { context, plugins: plugins.sort((a, b) => a.service.localeCompare(b.service)) };
 };
 
+/** Discovers plugins from the host environment. */
+export const hostRegistry: Effect.Effect<Registry, unknown, CliHost> = Effect.flatMap(
+  CliHost,
+  (host) => attempt(async () => discover(await defaultContext(host.env))),
+);
+
 export const findPlugin = (registry: Registry, name: string): DiscoveredPlugin => {
   const found = registry.plugins.find((plugin) => plugin.service === name);
   if (!found) throw new UsageError(`Unknown service: ${name}`);
@@ -194,15 +203,10 @@ export const findPlugin = (registry: Registry, name: string): DiscoveredPlugin =
 
 export const loadPlugin = async (
   plugin: DiscoveredPlugin,
-  context?: DiscoveryContext,
+  context: DiscoveryContext,
 ): Promise<ServicePlugin> => {
   if (plugin.installed)
-    return loadManagedPlugin(
-      plugin.installed,
-      plugin.dir,
-      context?.env ?? process.env,
-      plugin.runtimeDirectory,
-    );
+    return loadManagedPlugin(plugin.installed, plugin.dir, context.env, plugin.runtimeDirectory);
   const loaded = plugin.bundled?.plugin ?? (await importPlugin(plugin.entry));
   if (loaded.name !== plugin.service)
     throw new Error(

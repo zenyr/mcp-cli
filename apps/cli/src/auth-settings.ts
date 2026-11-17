@@ -46,8 +46,9 @@ export const authSettingsCommand = async (argv: string[]) => {
     );
   const registry = await discover(await defaultContext(process.env));
   const plugin = await selectWorkspace(
-    await loadPlugin(findPlugin(registry, service)),
+    await loadPlugin(findPlugin(registry, service), registry.context),
     selected.workspace,
+    defaultSettings(process.env),
   );
   if (!plugin.authSupport) throw new UsageError("This service has no authentication settings.");
   if (action === "configure") {

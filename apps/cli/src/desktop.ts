@@ -1,7 +1,7 @@
 import { decodeWorkspaceAction, selectWorkspace, updateWorkspace } from "./workspaces";
 import { createInterface } from "node:readline";
 import { isRecord, UsageError } from "@mcp-cli/core";
-import { defaultStore, loginCommand, logoutCommand } from "./auth";
+import { defaultSettings, defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
@@ -73,7 +73,7 @@ export const desktopCommand = async (args: string[]) => {
   if (action === "workspace-action") {
     const request = decodeWorkspaceAction(JSON.parse(await readAuthInput()));
     const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
-    await writeResult(await updateWorkspace(plugin, request));
+    await writeResult(await updateWorkspace(plugin, request, defaultSettings(process.env)));
     return;
   }
   const store = defaultStore(process.env);
@@ -96,6 +96,7 @@ export const desktopCommand = async (args: string[]) => {
   const plugin = await selectWorkspace(
     await loadPlugin(findPlugin(registry, service), registry.context),
     typeof value.workspace === "string" ? value.workspace : undefined,
+    defaultSettings(process.env),
   );
   if (action === "auth-config" || action === "auth-status") {
     if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
@@ -125,7 +126,7 @@ export const desktopCommand = async (args: string[]) => {
       store,
       signal: controller.signal,
       target: typeof value.target === "string" ? value.target : undefined,
-      plugin: async (name) => loadPlugin(findPlugin(registry, name)),
+      plugin: async (name) => loadPlugin(findPlugin(registry, name), registry.context),
       writeError: () => undefined,
       open: (url) => {
         console.log(JSON.stringify({ event: "open-url", url }));

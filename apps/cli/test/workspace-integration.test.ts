@@ -31,7 +31,7 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
   );
   await Bun.write(
     join(pluginDir, "index.ts"),
-    `import demoAuth from ${JSON.stringify(join(root, "plugins/demo-auth/src/index.ts"))}; import {updateWorkspace} from ${JSON.stringify(join(root, "apps/cli/src/workspaces.ts"))}; export default {...demoAuth,name:"auth-workspace-test",extensions:{commands:[{path:["workspace-probe"],kind:"workflow",summary:"Probe inheritance",inputSchema:{type:"object"},run:async(_,context)=>{await updateWorkspace({...demoAuth,name:"auth-workspace-test"},{type:"default",service:"auth-workspace-test",workspace:"default"});const a=await context.runCommand(["auth","check"]);const b=await context.runCommand(["auth","check","-w","default"]);return {result:{content:[{type:"text",text:JSON.stringify([a.exitCode,b.exitCode])}]}}}}]}};`,
+    `import demoAuth from ${JSON.stringify(join(root, "plugins/demo-auth/src/index.ts"))}; import {updateWorkspace} from ${JSON.stringify(join(root, "apps/cli/src/workspaces.ts"))}; import {defaultSettings} from ${JSON.stringify(join(root, "apps/cli/src/auth.ts"))}; export default {...demoAuth,name:"auth-workspace-test",extensions:{commands:[{path:["workspace-probe"],kind:"workflow",summary:"Probe inheritance",inputSchema:{type:"object"},run:async(_,context)=>{await updateWorkspace({...demoAuth,name:"auth-workspace-test"},{type:"default",service:"auth-workspace-test",workspace:"default"},defaultSettings(process.env));const a=await context.runCommand(["auth","check"]);const b=await context.runCommand(["auth","check","-w","default"]);return {result:{content:[{type:"text",text:JSON.stringify([a.exitCode,b.exitCode])}]}}}}]}};`,
   );
   await mkdir(join(pluginDir, "src"));
   await Bun.write(

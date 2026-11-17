@@ -1,21 +1,18 @@
 import { expect, test } from "bun:test";
-import { fileURLToPath } from "node:url";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { runCli } from "./host";
 
-const root = fileURLToPath(new URL("../../../", import.meta.url));
-const run = async (...args: string[]) => {
-  const child = Bun.spawn(["bun", "apps/cli/src/main.ts", "demo", ...args], {
-    cwd: root,
-    env: { ...process.env, MCP_CLI_DAEMON: "0" },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [stdout, stderr, code] = await Promise.all([
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-    child.exited,
-  ]);
-  return { stdout, stderr, code };
+const sandbox = mkdtempSync(join(tmpdir(), "mcp-cli-resources-"));
+const env = {
+  HOME: sandbox,
+  XDG_CONFIG_HOME: join(sandbox, "config"),
+  XDG_STATE_HOME: join(sandbox, "state"),
+  MCP_CLI_DAEMON: "0",
+  MCP_CLI_INTERNAL_PLUGINS: "only",
 };
+const run = (...args: string[]) => runCli(["demo", ...args], { env });
 
 test("demo resources list and read over stdio", async () => {
   expect(await run("resources", "list")).toEqual({

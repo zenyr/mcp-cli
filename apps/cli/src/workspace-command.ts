@@ -1,27 +1,43 @@
 import { UsageError, type WorkspaceAction } from "@mcp-cli/core";
 import { formatOutput } from "@mcp-cli/runtime";
-import { discover, findPlugin, loadPlugin } from "./discovery";
-import { defaultContext } from "./paths";
-import { readWorkspaces, updateWorkspace } from "./workspaces";
+import { Effect } from "effect";
+import { attempt, attemptSync } from "./attempt";
+import { defaultSettings } from "./auth";
+import { findPlugin, hostRegistry, loadPlugin } from "./discovery";
+import { CliHost, printLine } from "./host";
+import { readWorkspaces, workspaceUpdate } from "./workspaces";
 
 const usage =
   "Usage: mcp-cli workspaces <list SERVICE|add SERVICE NAME|rename SERVICE WORKSPACE NAME|default SERVICE WORKSPACE> [--json]";
-export const workspaceCommand = async (argv: string[]) => {
-  const json = argv.includes("--json");
-  const [action, service, workspace, name, ...rest] = argv.filter((arg) => arg !== "--json");
-  if (!service || rest.length) throw new UsageError(usage);
-  const registry = await discover(await defaultContext(process.env));
-  const plugin = await loadPlugin(findPlugin(registry, service), registry.context);
-  if (action === "list" && !workspace && !name) {
-    console.log(formatOutput(await readWorkspaces(plugin), json));
-    return;
-  }
-  let request: WorkspaceAction;
-  if (action === "add" && workspace && !name) request = { type: "add", service, name: workspace };
-  else if (action === "default" && workspace && !name)
-    request = { type: "default", service, workspace };
-  else if (action === "rename" && workspace && name)
-    request = { type: "rename", service, workspace, name };
-  else throw new UsageError(usage);
-  console.log(formatOutput(await updateWorkspace(plugin, request), json));
+
+const workspaceAction = (
+  action: string | undefined,
+  service: string,
+  workspace: string | undefined,
+  name: string | undefined,
+): WorkspaceAction => {
+  if (action === "add" && workspace && !name) return { type: "add", service, name: workspace };
+  if (action === "default" && workspace && !name) return { type: "default", service, workspace };
+  if (action === "rename" && workspace && name) return { type: "rename", service, workspace, name };
+  throw new UsageError(usage);
 };
+
+export const workspaceCommand = (argv: string[]): Effect.Effect<void, unknown, CliHost> =>
+  Effect.gen(function* () {
+    const host = yield* CliHost;
+    const json = argv.includes("--json");
+    const [action, service, workspace, name, ...rest] = argv.filter((arg) => arg !== "--json");
+    if (!service || rest.length) return yield* Effect.fail(new UsageError(usage));
+    const registry = yield* hostRegistry;
+    const found = yield* attemptSync(() => findPlugin(registry, service));
+    const plugin = yield* attempt(() => loadPlugin(found, registry.context));
+    const settings = defaultSettings(host.env);
+    const result =
+      action === "list" && !workspace && !name
+        ? yield* attempt(() => readWorkspaces(plugin, settings))
+        : yield* Effect.flatMap(
+            attemptSync(() => workspaceAction(action, service, workspace, name)),
+            (request) => workspaceUpdate(plugin, request, settings),
+          );
+    yield* printLine(formatOutput(result, json));
+  });

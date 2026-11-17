@@ -3,12 +3,15 @@ import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NotGeneratedError, UsageError } from "@mcp-cli/core";
-import { discover, findPlugin, loadPlugin } from "../src/discovery";
+import { Effect } from "effect";
+import { discover, findPlugin, loadPlugin, type Registry } from "../src/discovery";
 import { generate } from "../src/generate";
 import { listPlugins } from "../src/list";
 import type { DiscoveryContext } from "../src/paths";
 import { configPath, defaultContext } from "../src/paths";
 import { existingFiles, loadManifest, outputFiles } from "../src/plugins";
+import { CliHost } from "../src/host";
+import { memoryHost } from "./host";
 
 let root = "";
 const write = async (path: string, value: unknown): Promise<void> => {
@@ -40,6 +43,8 @@ const context = (overrides: Partial<DiscoveryContext> = {}): DiscoveryContext =>
   ...overrides,
 });
 const userConfig = (ctx: DiscoveryContext) => configPath(ctx);
+const runGenerate = (args: string[], registry: Registry): Promise<void> =>
+  Effect.runPromise(Effect.provideService(generate(args, registry), CliHost, memoryHost().host));
 
 beforeAll(async () => {
   root = await realpath(await mkdtemp(join(tmpdir(), "mcp-cli-discovery-")));
@@ -86,7 +91,7 @@ test("discovers workspace, node_modules and config plugins", async () => {
     ["beta", "node_modules", "@ext/beta"],
     ["gamma", "config", "gamma-plugin"],
   ]);
-  expect((await loadPlugin(findPlugin(registry, "beta"))).name).toBe("beta");
+  expect((await loadPlugin(findPlugin(registry, "beta"), registry.context)).name).toBe("beta");
   expect(() => findPlugin(registry, "constructor")).toThrow(UsageError);
   await rm(userConfig(ctx));
 });
@@ -108,7 +113,9 @@ test("reserved service names and mismatched plugin names are rejected", async ()
   await expect(discover(ctx)).rejects.toThrow("reserved mcp-cli command");
   await write(userConfig(ctx), { plugins: [join(root, "ext", "liar")] });
   const registry = await discover(ctx);
-  await expect(loadPlugin(findPlugin(registry, "delta"))).rejects.toThrow("exports plugin other");
+  await expect(loadPlugin(findPlugin(registry, "delta"), registry.context)).rejects.toThrow(
+    "exports plugin other",
+  );
   await rm(userConfig(ctx));
 });
 
@@ -147,10 +154,10 @@ test("generated files fall back to the cache when the package is not writable", 
 
   const snapshot = join(root, "snapshot.json");
   await write(snapshot, { tools: [{ name: "ping", inputSchema: { type: "object" } }] });
-  await generate(["alpha", "--snapshot", snapshot], registry);
+  await runGenerate(["alpha", "--snapshot", snapshot], registry);
   expect((await existingFiles(registry, alpha))?.location).toBe("cache");
   expect((await loadManifest(registry, alpha)).tools.map((tool) => tool.name)).toEqual(["ping"]);
-  await generate(["alpha", "--snapshot", snapshot, "--check"], registry);
+  await runGenerate(["alpha", "--snapshot", snapshot, "--check"], registry);
   expect(await listPlugins(registry, [])).toContain("generated (cache)");
 });
 

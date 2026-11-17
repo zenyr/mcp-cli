@@ -1,6 +1,6 @@
 import { credentialSwitches, type ServicePlugin, type TokenStore } from "@mcp-cli/core";
 import { readWorkspaces, selectWorkspace } from "./workspaces";
-import { authCredentialName } from "./auth";
+import { authCredentialName, defaultSettings } from "./auth";
 import { authenticationDetails } from "./auth-settings";
 import { loadPlugin, type DiscoveredPlugin, type Registry } from "./discovery";
 import { pluginEnvironment, pluginStore } from "./plugin-credentials";
@@ -12,8 +12,9 @@ export const desktopService = async (
 ) => {
   try {
     const plugin = await loadPlugin(found, registry.context);
-    const workspaces = await readWorkspaces(plugin);
-    const selected = await selectWorkspace(plugin);
+    const settings = defaultSettings(process.env);
+    const workspaces = await readWorkspaces(plugin, settings);
+    const selected = await selectWorkspace(plugin, undefined, settings);
     return {
       ...(await serviceDetails(selected, registry, store)),
       supportsWorkspaces: Boolean(plugin.workspaces),
