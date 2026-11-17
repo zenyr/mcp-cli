@@ -10,15 +10,15 @@ import { commandTree, sessionManifest } from "@mcp-cli/runtime";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { loadManifest } from "./plugins";
-import { processHost } from "./host";
 import { runtimeDependencies } from "./runtime";
-import type { Env } from "./host";
+import type { Host } from "./host";
 
 const liveManifest = async (
   plugin: ServicePlugin,
   workspace: string | undefined,
+  host: Host,
 ): Promise<{ manifest: GeneratedManifest; workspace?: string }> => {
-  const selected = await runtimeDependencies(plugin, processHost).forWorkspace?.(workspace);
+  const selected = await runtimeDependencies(plugin, host).forWorkspace?.(workspace);
   if (!selected) throw new UsageError("This runtime does not support workspace selection");
   const session = await selected.open();
   try {
@@ -31,7 +31,10 @@ const liveManifest = async (
   }
 };
 
-export const desktopCommandCatalog = async (input: unknown, env: Env): Promise<CommandCatalog> => {
+export const desktopCommandCatalog = async (
+  input: unknown,
+  host: Host,
+): Promise<CommandCatalog> => {
   if (
     !isRecord(input) ||
     typeof input.service !== "string" ||
@@ -39,7 +42,7 @@ export const desktopCommandCatalog = async (input: unknown, env: Env): Promise<C
     (input.workspace !== undefined && typeof input.workspace !== "string")
   )
     throw new UsageError("Invalid desktop commands request");
-  const registry = await discover(await defaultContext(env));
+  const registry = await discover(await defaultContext(host.env));
   const found = findPlugin(registry, input.service);
   const plugin = await loadPlugin(found, registry.context);
   const discovery = plugin.discovery?.tools === "session";
@@ -47,6 +50,7 @@ export const desktopCommandCatalog = async (input: unknown, env: Env): Promise<C
     const live = await liveManifest(
       plugin,
       typeof input.workspace === "string" ? input.workspace : undefined,
+      host,
     );
     return {
       service: plugin.name,

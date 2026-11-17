@@ -7,7 +7,7 @@ import { createPool } from "../src/daemon/pool";
 import { startDaemon } from "../src/daemon/server";
 import { daemonRequest, daemonStatus } from "../src/daemon/client";
 import { request } from "node:http";
-import { daemonSocket } from "../src/daemon/endpoint";
+import { daemonDirectory, daemonSocket } from "../src/daemon/endpoint";
 import { UsageError, type ToolSession, type ToolResult } from "@mcp-cli/core";
 import { execute } from "../src/main";
 import { memoryHost, runCli } from "./host";
@@ -353,4 +353,9 @@ test("CLI does not switch to direct execution after a daemon tool request fails"
     );
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("the daemon directory follows the host HOME unless MCP_CLI_DAEMON_DIR is set", () => {
+  expect(daemonDirectory({ HOME: "/sandbox" })).toBe(join("/sandbox", ".mcp-cli", "daemon"));
+  expect(daemonDirectory({ HOME: "/sandbox", MCP_CLI_DAEMON_DIR: "/d" })).toBe("/d");
 });
