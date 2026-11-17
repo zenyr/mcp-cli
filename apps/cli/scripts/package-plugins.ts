@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isRecord, type ServicePlugin } from "@mcp-cli/core";
-import { workspacePackages } from "../src/packages";
+import { workspacePackages, type PackageInfo } from "../src/packages";
 import { packDirectory } from "../src/marketplace/archive";
 import { digest } from "../src/marketplace/storage";
 import {
@@ -13,10 +13,24 @@ import {
   type PackageManifest,
 } from "../src/marketplace/schema";
 
-export const packageWorkspacePlugins = async (root: string, output: string): Promise<void> => {
+/** Selects visible plugins for a release, or exactly the named services when `only` is given. */
+export const selectPackages = (infos: PackageInfo[], only?: string[]): PackageInfo[] => {
+  const selected = infos.filter((info) =>
+    only ? only.includes(info.service ?? "") : !info.hidden,
+  );
+  if (only && selected.length !== only.length)
+    throw new Error(`Unknown plugins in MCP_CLI_BUNDLE_PLUGINS: ${only.join(", ")}`);
+  return selected;
+};
+
+export const packageWorkspacePlugins = async (
+  root: string,
+  output: string,
+  only?: string[],
+): Promise<void> => {
   await mkdir(output, { recursive: true });
   const catalog: CatalogPlugin[] = [];
-  for (const info of await workspacePackages(root)) {
+  for (const info of selectPackages(await workspacePackages(root), only)) {
     const plugin: ServicePlugin = (await import(pathToFileURL(info.entry).href)).default;
     const generated = (await import(pathToFileURL(join(info.dir, "src/generated.ts")).href))
       .manifest;

@@ -139,7 +139,7 @@ test("logout removes stored credentials and rejects bad arguments", async () => 
 const cli = async (env: Record<string, string>, ...args: string[]) => {
   const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
     cwd: fileURLToPath(new URL("../../../", import.meta.url)),
-    env: { ...process.env, NOTION_MCP_TOKEN: "", ...env },
+    env: { ...process.env, DEMO_AUTH_TOKEN: "", ...env },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -148,11 +148,11 @@ const cli = async (env: Record<string, string>, ...args: string[]) => {
 };
 
 test("CLI logout deletes the credentials file under XDG_CONFIG_HOME", async () => {
-  await store.write("notion", { accessToken: "a" });
-  const result = await cli({ XDG_CONFIG_HOME: root }, "logout", "notion");
-  expect(result).toEqual({ stderr: "Logged out of notion\n", code: 0 });
+  await store.write("demo-auth", { accessToken: "a" });
+  const result = await cli({ XDG_CONFIG_HOME: root }, "logout", "demo-auth");
+  expect(result).toEqual({ stderr: "Logged out of demo-auth\n", code: 0 });
   // The empty flock file stays so concurrent holders never lock different inodes.
-  expect(await readdir(join(root, "mcp-cli", "credentials"))).toEqual(["notion.lock"]);
+  expect(await readdir(join(root, "mcp-cli", "credentials"))).toEqual(["demo-auth.lock"]);
   expect((await cli({ XDG_CONFIG_HOME: root }, "login", "demo")).code).toBe(2);
   expect((await cli({ XDG_CONFIG_HOME: root }, "logout")).code).toBe(2);
 });
@@ -165,14 +165,14 @@ test("browser launch is skipped for SSH, missing displays and MCP_CLI_NO_BROWSER
   expect(canOpenBrowser({ DISPLAY: ":0" }, "linux")).toBe(true);
 });
 
-test("Slack explicit user selection uses the base credential and environment bypasses broken storage", async () => {
-  const { default: slack } = await import("../../../plugins/slack/src");
-  await store.write("slack", { accessToken: "xoxp-stored-fixture" });
-  await store.write("slack--xoxb", { accessToken: "xoxb-stored-fixture" });
-  const user = await resolveConnection(slack, {}, store, "xoxp");
-  const bot = await resolveConnection(slack, {}, store, "xoxb");
-  expect(user.type === "http" && user.headers?.Authorization).toBe("Bearer xoxp-stored-fixture");
-  expect(bot.type === "http" && bot.headers?.Authorization).toBe("Bearer xoxb-stored-fixture");
+test("explicit base credential selection uses the base slot and environment bypasses broken storage", async () => {
+  const { default: demoAuth } = await import("../../../plugins/demo-auth/src");
+  await store.write("demo-auth", { accessToken: "user-stored-fixture" });
+  await store.write("demo-auth--bot", { accessToken: "bot-stored-fixture" });
+  const user = await resolveConnection(demoAuth, {}, store, "user");
+  const bot = await resolveConnection(demoAuth, {}, store, "bot");
+  expect(user.type === "http" && user.headers?.Authorization).toBe("Bearer user-stored-fixture");
+  expect(bot.type === "http" && bot.headers?.Authorization).toBe("Bearer bot-stored-fixture");
   const broken = {
     ...store,
     read: async () => {
@@ -180,10 +180,10 @@ test("Slack explicit user selection uses the base credential and environment byp
     },
   };
   const env = await resolveConnection(
-    slack,
-    { SLACK_MCP_TOKEN: "xoxp-env-fixture" },
+    demoAuth,
+    { DEMO_AUTH_TOKEN: "user-env-fixture" },
     broken,
-    "xoxp",
+    "user",
   );
-  expect(env.type === "http" && env.headers?.Authorization).toBe("Bearer xoxp-env-fixture");
+  expect(env.type === "http" && env.headers?.Authorization).toBe("Bearer user-env-fixture");
 });

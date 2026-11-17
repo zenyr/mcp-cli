@@ -25,8 +25,11 @@ The CLI creates the configuration directory on first use. The default location i
 If you set `XDG_CONFIG_HOME` or `MCP_CLI_CONFIG`, it creates the parent directory of the corresponding configuration file.
 It does not change existing configuration files.
 
+`demo` is a hidden contract plugin. Set `MCP_CLI_INTERNAL_PLUGINS=1` to use it in the examples below.
+
 ```bash
 bun install
+export MCP_CLI_INTERNAL_PLUGINS=1
 bun run generate demo
 bun run cli --help
 bun run cli demo --help

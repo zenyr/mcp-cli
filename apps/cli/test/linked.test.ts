@@ -31,13 +31,11 @@ test("linked commands share daemon selection and fall back when it is absent", a
     };
   };
   try {
-    for (const bin of ["mcp-cli", "slack", "notion", "linear", "fish-audio"]) {
-      const args = bin === "mcp-cli" ? ["demo", "resources", "list"] : ["resources", "list"];
-      const result = await execute(bin, args, "invalid");
-      expect(result.code).toBe(2);
-      expect(result.error).toContain("MCP_CLI_DAEMON must be 0 or 1");
-      expect((await execute(bin, ["--help"])).code).toBe(0);
-    }
+    // Service bins are generated wrappers of this entry point; lint checks them with sync-bins.
+    const invalid = await execute("mcp-cli", ["demo", "resources", "list"], "invalid");
+    expect(invalid.code).toBe(2);
+    expect(invalid.error).toContain("MCP_CLI_DAEMON must be 0 or 1");
+    expect((await execute("mcp-cli", ["--help"])).code).toBe(0);
     const fallback = await execute("mcp-cli", ["demo", "resources", "list"]);
     expect(fallback.code).toBe(0);
     expect(fallback.output).toContain("demo://readme");
@@ -47,4 +45,4 @@ test("linked commands share daemon selection and fall back when it is absent", a
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
-}, 20_000);
+});

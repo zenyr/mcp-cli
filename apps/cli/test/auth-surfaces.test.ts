@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-test("CLI and desktop share Slack settings and token storage without silent browser fallback", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "slack-surfaces-"));
+test("CLI and desktop share auth settings and token storage without silent browser fallback", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "auth-surfaces-"));
   const token = randomUUID();
   const invoke = async (args: string[], input?: unknown) => {
     const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
@@ -17,8 +17,8 @@ test("CLI and desktop share Slack settings and token storage without silent brow
         XDG_CONFIG_HOME: directory,
         MCP_CLI_CONFIG: "",
         MCP_CLI_DAEMON_DIR: join(directory, "daemon"),
-        SLACK_MCP_TOKEN: "",
-        SLACK_MCP_BOT_TOKEN: "",
+        DEMO_AUTH_TOKEN: "",
+        DEMO_AUTH_BOT_TOKEN: "",
       },
       stdin: input === undefined ? "ignore" : new Blob([JSON.stringify(input)]),
       stdout: "pipe",
@@ -33,29 +33,18 @@ test("CLI and desktop share Slack settings and token storage without silent brow
     return { code, stdout, stderr };
   };
   try {
-    const configuration = {
-      mcp: { method: "token" },
-      web: {
-        method: "pkce",
-        clientId: "123.456",
-        appId: "ATEST",
-        teamId: "TTEST",
-        redirectUri: "http://localhost:8765/callback",
-        scopes: ["channels:read"],
-        pkceEnabled: false,
-      },
-    };
-    expect((await invoke(["auth", "configure", "slack"], configuration)).code).toBe(0);
-    const cli = await invoke(["auth", "status", "slack", "--json"]);
+    const configuration = { mcp: { method: "token" }, web: { method: "pkce", pkceEnabled: false } };
+    expect((await invoke(["auth", "configure", "demo-auth"], configuration)).code).toBe(0);
+    const cli = await invoke(["auth", "status", "demo-auth", "--json"]);
     expect(cli.code).toBe(0);
     const desktop = await invoke(["desktop", "services"]);
     expect(desktop.code).toBe(0);
     const services = JSON.parse(desktop.stdout).result;
-    expect(services.find((item: { name: string }) => item.name === "slack").authentication).toEqual(
-      JSON.parse(cli.stdout),
-    );
+    expect(
+      services.find((item: { name: string }) => item.name === "demo-auth").authentication,
+    ).toEqual(JSON.parse(cli.stdout));
     const rejected = await invoke(["desktop", "login"], {
-      service: "slack",
+      service: "demo-auth",
       target: "web",
       method: "browser",
     });
@@ -63,16 +52,21 @@ test("CLI and desktop share Slack settings and token storage without silent brow
     expect(rejected.stdout).not.toContain("open-url");
     expect(rejected.stderr).toContain("PKCE");
     expect(
-      (await invoke(["desktop", "login"], { service: "slack", credential: "xoxb", secret: token }))
-        .code,
+      (
+        await invoke(["desktop", "login"], {
+          service: "demo-auth",
+          credential: "bot",
+          secret: token,
+        })
+      ).code,
     ).toBe(0);
     expect(
-      JSON.parse(await readFile(join(directory, "mcp-cli/credentials/slack--xoxb.json"), "utf8"))
+      JSON.parse(await readFile(join(directory, "mcp-cli/credentials/demo-auth--bot.json"), "utf8"))
         .accessToken,
     ).toBe(token);
-    expect((await invoke(["logout", "slack", "--web"])).code).toBe(0);
+    expect((await invoke(["logout", "demo-auth", "--web"])).code).toBe(0);
     expect(
-      JSON.parse(await readFile(join(directory, "mcp-cli/credentials/slack--xoxb.json"), "utf8"))
+      JSON.parse(await readFile(join(directory, "mcp-cli/credentials/demo-auth--bot.json"), "utf8"))
         .accessToken,
     ).toBe(token);
   } finally {

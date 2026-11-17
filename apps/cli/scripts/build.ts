@@ -8,7 +8,8 @@ const root = fileURLToPath(new URL("../../../", import.meta.url));
 const output = resolve(process.argv[2] || join(root, "apps/cli/dist/mcp-cli"));
 const directory = await mkdtemp(join(tmpdir(), "mcp-cli-build-"));
 try {
-  await packageWorkspacePlugins(root, `${output}.plugins`);
+  const only = process.env.MCP_CLI_BUNDLE_PLUGINS?.split(",").filter(Boolean);
+  await packageWorkspacePlugins(root, `${output}.plugins`, only);
   const entry = join(directory, "main.ts");
   await Bun.write(
     entry,

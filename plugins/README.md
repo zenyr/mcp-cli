@@ -12,11 +12,14 @@ independent releases, managed runtimes, and local development.
 - [Slack](slack/README.md): messaging tools and token settings
 - [Fish Audio](fish-audio/README.md): speech generation, transcription, and media operations
 - [Fast Semble](fast-semble/README.md): local code search through a reusable Semble MCP session
-- `demo`: a local stdio MCP server that requires no external account
+- `demo` and `demo-auth`: hidden plugins for tests and host contract checks. Set `MCP_CLI_INTERNAL_PLUGINS=1` to use them.
+  `demo` is a local stdio MCP server. `demo-auth` covers API key alternates, `AuthSupport` and a Web API.
 
 ## Static generation
 
 ```bash
+export MCP_CLI_INTERNAL_PLUGINS=1
+
 # Read tool definitions from the server.
 bun run generate demo
 
@@ -49,6 +52,8 @@ Per-tool input types, such as `DemoEchoInput`, are exported for type references.
    Point `exports["."]` to the plugin module.
 2. Declare `"mcp-cli": { "plugin": true, "service": "<service>" }` in `package.json`.
    If `service` is omitted, the CLI reads the plugin module and uses its `name`.
+   Add `"hidden": true` to keep a test plugin out of end-user discovery and release catalogs.
+   `MCP_CLI_INTERNAL_PLUGINS=1` shows hidden plugins, and `only` shows nothing else.
 3. Create the default export with `definePlugin` from `@mcp-cli/core`. Its `name` must match `service`.
 4. Run `bun run generate <service>` to generate static definitions.
 5. Run `bun run cli plugins` to check discovery and generation status.

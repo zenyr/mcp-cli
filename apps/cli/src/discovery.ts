@@ -80,7 +80,13 @@ const configCandidate = async (
 
 const candidates = async (context: DiscoveryContext): Promise<Candidate[]> => {
   const root = context.workspaceRoot;
-  const workspace = root ? await workspacePackages(root) : [];
+  // "1" adds hidden contract plugins; "only" keeps just them so CLI tests never load real plugins.
+  const internal = context.env.MCP_CLI_INTERNAL_PLUGINS;
+  const workspace = root
+    ? (await workspacePackages(root)).filter((info) =>
+        internal === "only" ? info.hidden : internal === "1" || !info.hidden,
+      )
+    : [];
   const installed = await Promise.all(
     context.nodeModules.map(async (dir) =>
       (await nodeModulePackages(dir)).map((info): Candidate => ({

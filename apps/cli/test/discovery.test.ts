@@ -161,10 +161,23 @@ test("plugins listing rejects arguments", async () => {
 });
 
 test("the default context finds the repository plugins", async () => {
-  const registry = await discover(
-    await defaultContext({ HOME: join(root, "home"), XDG_CACHE_HOME: join(root, "cache") }),
-  );
-  const services = registry.plugins.map((plugin) => plugin.service);
-  expect(services).toContain("demo");
-  expect(findPlugin(registry, "demo").source).toBe("workspace");
+  const env = { HOME: join(root, "home"), XDG_CACHE_HOME: join(root, "cache") };
+  const services = async (flag: string) =>
+    (await discover(await defaultContext({ ...env, MCP_CLI_INTERNAL_PLUGINS: flag }))).plugins.map(
+      (plugin) => plugin.service,
+    );
+  const all = await services("1");
+  expect(all).toEqual(expect.arrayContaining(["demo", "demo-auth"]));
+  expect(all.length).toBeGreaterThan(2);
+  expect((await services("only")).sort()).toEqual(["demo", "demo-auth"]);
+});
+
+test("hidden workspace plugins stay out of discovery unless internal plugins are enabled", async () => {
+  const env = { HOME: join(root, "home"), XDG_CACHE_HOME: join(root, "cache") };
+  for (const flag of [undefined, "0", "true"]) {
+    const context = await defaultContext({ ...env, MCP_CLI_INTERNAL_PLUGINS: flag });
+    const services = (await discover(context)).plugins.map((plugin) => plugin.service);
+    expect(services).not.toContain("demo");
+    expect(services).not.toContain("demo-auth");
+  }
 });

@@ -65,7 +65,7 @@ Open the management window from the tray.
 Start the daemon in the app, then run this in a terminal:
 
 ```sh
-bun run cli demo message echo --text hello
+MCP_CLI_INTERNAL_PLUGINS=1 bun run cli demo message echo --text hello
 ```
 
 Development mode uses the configured Bun executable and source CLI path.

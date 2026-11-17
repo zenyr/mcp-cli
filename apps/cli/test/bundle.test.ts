@@ -12,6 +12,7 @@ test("installed binary activates independent plugin packages without Bun or the 
   const installed = join(directory, "installed", name);
   const build = Bun.spawn([process.execPath, join(root, "apps/cli/scripts/build.ts"), built], {
     cwd: root,
+    env: { ...process.env, MCP_CLI_BUNDLE_PLUGINS: "demo,demo-auth" },
     stdout: "ignore",
     stderr: "pipe",
   });
@@ -54,13 +55,13 @@ test("installed binary activates independent plugin packages without Bun or the 
     expect(await run("plugins", "catalog", "recommended")).toContain("builtin");
     await run("plugins", "catalog", "add", "builtin");
     const plugins = await run("plugins");
-    for (const name of ["demo", "notion", "linear", "slack", "fish-audio"])
-      expect(plugins).toContain(name);
+    for (const name of ["demo", "demo-auth"]) expect(plugins).toContain(name);
+    expect(plugins).not.toContain("notion");
     expect(plugins).toContain("available");
     expect(plugins).not.toContain(root);
     await run("plugins", "install", "builtin", "builtin.demo", "--allow-local-code");
-    await run("plugins", "install", "builtin", "builtin.notion");
-    await run("plugins", "enable", "notion", "--allow-local-code");
+    await run("plugins", "install", "builtin", "builtin.demo-auth");
+    await run("plugins", "enable", "demo-auth", "--allow-local-code");
     expect(await run("demo", "message", "echo", "--text", "설치 없이 실행")).toBe(
       "설치 없이 실행\n",
     );
@@ -83,7 +84,7 @@ test("installed binary activates independent plugin packages without Bun or the 
       expect(await direct.exited, await new Response(direct.stderr).text()).toBe(0);
       expect(await new Response(direct.stdout).text()).toBe("한 인수 $HOME ; literal\n");
     }
-    expect(await run("notion", "--help")).toContain("page");
+    expect(await run("demo-auth", "--help")).toContain("--bot");
     await run("generate", "demo");
     expect(await run("demo", "message", "echo", "--text", "캐시 정의 사용")).toBe(
       "캐시 정의 사용\n",
@@ -117,7 +118,7 @@ test("installed binary activates independent plugin packages without Bun or the 
         "대몬 없이 실행\n",
       );
       await run("plugins", "remove", "demo");
-      await run("plugins", "remove", "notion");
+      await run("plugins", "remove", "demo-auth");
       await run("plugins", "catalog", "remove", "builtin");
       const removed = JSON.parse(await run("plugins", "list", "--json"));
       expect(removed.sources).toEqual([]);

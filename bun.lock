@@ -120,6 +120,13 @@
         "@mcp-cli/core": "workspace:*",
       },
     },
+    "plugins/demo-auth": {
+      "name": "@mcp-cli/plugin-demo-auth",
+      "version": "0.1.0",
+      "dependencies": {
+        "@mcp-cli/core": "workspace:*",
+      },
+    },
     "plugins/fast-semble": {
       "name": "@mcp-cli/plugin-fast-semble",
       "version": "0.1.1",
@@ -216,6 +223,8 @@
     "@mcp-cli/mem": ["@mcp-cli/mem@workspace:apps/mem"],
 
     "@mcp-cli/plugin-demo": ["@mcp-cli/plugin-demo@workspace:plugins/demo"],
+
+    "@mcp-cli/plugin-demo-auth": ["@mcp-cli/plugin-demo-auth@workspace:plugins/demo-auth"],
 
     "@mcp-cli/plugin-fast-semble": ["@mcp-cli/plugin-fast-semble@workspace:plugins/fast-semble"],
 

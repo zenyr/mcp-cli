@@ -17,6 +17,7 @@
   },
   "mcp-cli": {
     "plugin": true,
-    "service": "demo"
+    "service": "demo",
+    "hidden": true
   }
 }

@@ -6,14 +6,16 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/plugins/*/package.json",
-        "$TURBO_ROOT$/plugins/*/src/**"
+        "$TURBO_ROOT$/plugins/demo/src/**",
+        "$TURBO_ROOT$/plugins/demo-auth/src/**"
       ]
     },
     "test": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/plugins/*/package.json",
-        "$TURBO_ROOT$/plugins/*/src/**"
+        "$TURBO_ROOT$/plugins/demo/src/**",
+        "$TURBO_ROOT$/plugins/demo-auth/src/**"
       ]
     }
   }

@@ -23,20 +23,20 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
   await Bun.write(
     join(pluginDir, "package.json"),
     JSON.stringify({
-      name: "slack-workspace-test",
+      name: "auth-workspace-test",
       type: "module",
       exports: "./index.ts",
-      "mcp-cli": { plugin: true, service: "slack-workspace-test" },
+      "mcp-cli": { plugin: true, service: "auth-workspace-test" },
     }),
   );
   await Bun.write(
     join(pluginDir, "index.ts"),
-    `import slack from ${JSON.stringify(join(root, "plugins/slack/src/index.ts"))}; import {updateWorkspace} from ${JSON.stringify(join(root, "apps/cli/src/workspaces.ts"))}; export default {...slack,name:"slack-workspace-test",commands:{},groups:{},quickstart:[],extensions:{...slack.extensions,commands:[...slack.extensions.commands,{path:["workspace-probe"],kind:"workflow",summary:"Probe inheritance",inputSchema:{type:"object"},run:async(_,context)=>{await updateWorkspace({...slack,name:"slack-workspace-test"},{type:"default",service:"slack-workspace-test",workspace:"default"});const a=await context.runCommand(["auth","check"]);const b=await context.runCommand(["auth","check","-w","default"]);return {result:{content:[{type:"text",text:JSON.stringify([a.exitCode,b.exitCode])}]}}}}]},connection:async(env)=>{const config=await slack.connection(env);return {...config,url:"http://127.0.0.1:1/mcp",webApi:{...config.webApi,url:${JSON.stringify(String(server.url))}}}}};`,
+    `import demoAuth from ${JSON.stringify(join(root, "plugins/demo-auth/src/index.ts"))}; import {updateWorkspace} from ${JSON.stringify(join(root, "apps/cli/src/workspaces.ts"))}; export default {...demoAuth,name:"auth-workspace-test",extensions:{commands:[{path:["workspace-probe"],kind:"workflow",summary:"Probe inheritance",inputSchema:{type:"object"},run:async(_,context)=>{await updateWorkspace({...demoAuth,name:"auth-workspace-test"},{type:"default",service:"auth-workspace-test",workspace:"default"});const a=await context.runCommand(["auth","check"]);const b=await context.runCommand(["auth","check","-w","default"]);return {result:{content:[{type:"text",text:JSON.stringify([a.exitCode,b.exitCode])}]}}}}]}};`,
   );
   await mkdir(join(pluginDir, "src"));
   await Bun.write(
     join(pluginDir, "src/generated.ts"),
-    'export const manifest = {version:2, service:"slack-workspace-test", tools:[]};',
+    'export const manifest = {version:2, service:"auth-workspace-test", tools:[]};',
   );
   const config = join(directory, "config.json");
   await Bun.write(config, JSON.stringify({ plugins: [pluginDir] }));
@@ -47,8 +47,9 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
     XDG_STATE_HOME: directory,
     MCP_CLI_DAEMON_DIR: join(directory, "daemon"),
     MCP_CLI_DAEMON: "0",
-    SLACK_MCP_TOKEN: "xoxp-legacy-env",
-    SLACK_MCP_BOT_TOKEN: "",
+    DEMO_AUTH_TOKEN: "xoxp-legacy-env",
+    DEMO_AUTH_BOT_TOKEN: "",
+    DEMO_AUTH_WEB_URL: String(server.url),
   };
   const run = async (args: string[], input?: unknown) => {
     const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
@@ -69,23 +70,23 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
   const daemon = await startDaemon(join(directory, "daemon"));
   try {
     const added: WorkspaceRegistry = JSON.parse(
-      await run(["workspaces", "add", "slack-workspace-test", "company", "--json"]),
+      await run(["workspaces", "add", "auth-workspace-test", "company", "--json"]),
     );
     const id = added.workspaces.find((item) => item.name === "company")?.id;
     expect(id).toBeString();
     const saved = await run(["desktop", "login"], {
-      service: "slack-workspace-test",
+      service: "auth-workspace-test",
       workspace: id,
       secret: "xoxp-company",
     });
     expect(saved).not.toContain("xoxp-company");
     // Login resets the daemon, so subsequent calls start with an empty pool.
-    await run(["slack-workspace-test", "-w", "company", "auth", "check"]);
-    await run(["--workspace", "company", "slack-workspace-test", "auth", "check"]);
-    await run(["slack-workspace-test", "auth", "check"]);
+    await run(["auth-workspace-test", "-w", "company", "auth", "check"]);
+    await run(["--workspace", "company", "auth-workspace-test", "auth", "check"]);
+    await run(["auth-workspace-test", "auth", "check"]);
     expect(seen).toEqual(["Bearer xoxp-company", "Bearer xoxp-company", "Bearer xoxp-legacy-env"]);
     const context = {
-      service: "slack-workspace-test",
+      service: "auth-workspace-test",
       cwd: directory,
       env,
       name: "web.auth.test",
@@ -108,13 +109,13 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
     const listed = await run(["desktop", "services"]);
     expect(listed).toContain('"name":"company"');
     expect(listed).not.toContain("xoxp-company");
-    await run(["workspaces", "default", "slack-workspace-test", "company"]);
-    await run(["slack-workspace-test", "auth", "check"]);
+    await run(["workspaces", "default", "auth-workspace-test", "company"]);
+    await run(["auth-workspace-test", "auth", "check"]);
     expect(seen.at(-1)).toBe("Bearer xoxp-company");
-    await run(["slack-workspace-test", "workspace-probe", "-w", "company"]);
+    await run(["auth-workspace-test", "workspace-probe", "-w", "company"]);
     expect(seen.slice(-2)).toEqual(["Bearer xoxp-company", "Bearer xoxp-legacy-env"]);
-    await run(["desktop", "logout"], { service: "slack-workspace-test", workspace: id });
-    await run(["slack-workspace-test", "auth", "check", "-w", "default"]);
+    await run(["desktop", "logout"], { service: "auth-workspace-test", workspace: id });
+    await run(["auth-workspace-test", "auth", "check", "-w", "default"]);
     expect(seen.at(-1)).toBe("Bearer xoxp-legacy-env");
   } finally {
     await daemon.stop();

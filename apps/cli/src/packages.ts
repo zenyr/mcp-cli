@@ -8,6 +8,8 @@ export type PackageInfo = {
   name: string;
   marked: boolean;
   service?: string;
+  /** Hidden plugins exist for tests and contract checks and stay out of end-user runs. */
+  hidden?: boolean;
   entry: string;
 };
 
@@ -44,10 +46,13 @@ export const readPackage = async (dir: string): Promise<PackageInfo | undefined>
     throw markerError(dir, 'expected { "plugin": true }');
   if (marker.service !== undefined && typeof marker.service !== "string")
     throw markerError(dir, "service must be a string");
+  if (marker.hidden !== undefined && typeof marker.hidden !== "boolean")
+    throw markerError(dir, "hidden must be a boolean");
   return {
     ...base,
     marked: true,
     ...(marker.service !== undefined && { service: marker.service }),
+    ...(marker.hidden === true && { hidden: true }),
   };
 };
 

@@ -173,9 +173,8 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
 }, 20_000);
 
 test("Web API direct and daemon calls share auth, isolate tokens, and never require MCP", async () => {
-  const { writeFile, mkdir } = await import("node:fs/promises");
   const { connect } = await import("@mcp-cli/mcp");
-  const { webTools } = await import("../../../plugins/slack/src/web-methods");
+  const { default: demoAuth } = await import("../../../plugins/demo-auth/src");
   const directory = await mkdtemp(join(tmpdir(), "mcp-web-daemon-"));
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   const seen: string[] = [];
@@ -189,41 +188,29 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
       return Response.json({ ok: true, user_id: "U0123456789" });
     },
   });
-  const pluginDir = join(directory, "plugin");
-  await mkdir(pluginDir);
-  await writeFile(
-    join(pluginDir, "package.json"),
-    JSON.stringify({
-      name: "slack-test",
-      type: "module",
-      exports: "./index.ts",
-      "mcp-cli": { plugin: true, service: "slack-test" },
-    }),
-  );
-  await writeFile(
-    join(pluginDir, "index.ts"),
-    `import slack from ${JSON.stringify(join(root, "plugins/slack/src/index.ts"))};\nexport default {...slack,name:"slack-test",connection:async(env)=>{const config=await slack.connection(env);return {...config,url:"http://127.0.0.1:1/mcp",webApi:{...config.webApi,url:${JSON.stringify(String(api.url))}}}}};\n`,
-  );
-  const configFile = join(directory, "config.json");
-  await writeFile(configFile, JSON.stringify({ plugins: [pluginDir] }));
+  const pluginEnv = { DEMO_AUTH_WEB_URL: String(api.url) };
+  const configured = await demoAuth.connection(pluginEnv);
+  if (configured.type !== "http" || !configured.webApi)
+    throw new Error("demo-auth needs a Web API");
   const daemon = await startDaemon(directory);
   const context = {
-    service: "slack-test",
+    service: "demo-auth",
     cwd: directory,
     name: "web.auth.test",
     input: {},
     env: {
-      MCP_CLI_CONFIG: configFile,
+      ...pluginEnv,
+      MCP_CLI_INTERNAL_PLUGINS: "1",
       XDG_CONFIG_HOME: directory,
-      SLACK_MCP_TOKEN: "xoxp-fixture",
-      SLACK_MCP_BOT_TOKEN: "xoxb-fixture",
+      DEMO_AUTH_TOKEN: "user-fixture",
+      DEMO_AUTH_BOT_TOKEN: "bot-fixture",
     },
   };
   const direct = await connect({
     type: "http",
     url: "http://127.0.0.1:1/mcp",
-    headers: { Authorization: "Bearer xoxp-fixture" },
-    webApi: { url: String(api.url), tools: webTools },
+    headers: { Authorization: "Bearer user-fixture" },
+    webApi: configured.webApi,
   });
   try {
     const expected = await direct.callTool("web.auth.test", {});
@@ -233,7 +220,7 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
       "callTool",
       {
         ...context,
-        credential: "xoxp",
+        credential: "user",
         cwd: root,
         env: { ...context.env, TERM: "different-shell" },
       },
@@ -241,13 +228,13 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
     );
     expect(daemon.status()).toHaveLength(1);
     expect(daemon.status()[0]?.id).toBe(first?.id);
-    expect(daemon.status()[0]?.credential).toBe("xoxp");
-    await daemonRequest("callTool", { ...context, credential: "xoxb" }, directory);
+    expect(daemon.status()[0]?.credential).toBe("user");
+    await daemonRequest("callTool", { ...context, credential: "bot" }, directory);
     expect(seen).toEqual([
-      "Bearer xoxp-fixture",
-      "Bearer xoxp-fixture",
-      "Bearer xoxp-fixture",
-      "Bearer xoxb-fixture",
+      "Bearer user-fixture",
+      "Bearer user-fixture",
+      "Bearer user-fixture",
+      "Bearer bot-fixture",
     ]);
     expect(daemon.status()).toHaveLength(2);
     const input = { query: 'in:general "배포 완료" & +', count: 1, page: 2 };

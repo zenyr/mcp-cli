@@ -60,7 +60,9 @@ test("unknown and prototype service names are usage errors", async () => {
   expect((await run("__proto__")).code).toBe(2);
 });
 test("discovered services match plugin names and resolve package files", async () => {
-  const registry = await discover(await defaultContext({ HOME: "/nonexistent-home" }));
+  const registry = await discover(
+    await defaultContext({ HOME: "/nonexistent-home", MCP_CLI_INTERNAL_PLUGINS: "only" }),
+  );
   const plugin = findPlugin(registry, "demo");
   expect((await loadPlugin(plugin)).name).toBe("demo");
   expect(packageFiles(plugin).module).toEndWith("plugins/demo/src/generated.ts");
