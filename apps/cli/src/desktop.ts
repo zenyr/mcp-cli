@@ -1,143 +1,163 @@
 import { decodeWorkspaceAction, selectWorkspace, updateWorkspace } from "./workspaces";
-import { createInterface } from "node:readline";
 import { isRecord, UsageError } from "@mcp-cli/core";
-import { defaultStore, loginCommand, logoutCommand } from "./auth";
-import { discover, findPlugin, loadPlugin } from "./discovery";
+import { Effect } from "effect";
+import { defaultSettings, defaultStore, loginCommand, logoutCommand } from "./auth";
+import { discover, findPlugin, loadPlugin, type Registry } from "./discovery";
 import { defaultContext } from "./paths";
-import { resetDaemonIfRunning } from "./daemon/client";
-import { authenticationDetails, configureAuthentication } from "./auth-settings";
+import { authenticationDetails, configureAuthentication, resetDaemonFor } from "./auth-settings";
 import { marketplaceRequest, marketplaceView } from "./marketplace/entry";
 import { desktopService } from "./desktop-services";
 import { desktopCommandCatalog } from "./desktop-commands";
+import { CliHost, printLine, type Host } from "./host";
 
-const readAuthInput = async (): Promise<string> => {
-  const lines = createInterface({ input: process.stdin });
-  const input: string[] = [];
-  try {
-    for await (const line of lines) {
+const ACTIONS = [
+  "services",
+  "login",
+  "logout",
+  "auth-config",
+  "auth-status",
+  "plugins",
+  "plugin-action",
+  "workspace-action",
+  "commands",
+];
+const USAGE =
+  "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>";
+
+const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
+  Effect.tryPromise({ try: operation, catch: (error) => error });
+
+// The desktop app may keep stdin open, so one request ends at the first line set that parses as JSON.
+const readRequest = (host: Host): Effect.Effect<unknown> =>
+  Effect.callback<unknown>((resume) => {
+    const input: string[] = [];
+    let done = false;
+    let release = (): void => undefined;
+    const finish = () => {
+      done = true;
+      release();
+    };
+    release = host.onStdinLine((line) => {
+      if (done) return;
       input.push(line);
       try {
-        JSON.parse(input.join("\n"));
-        return input.join("\n");
+        const value: unknown = JSON.parse(input.join("\n"));
+        finish();
+        resume(Effect.succeed(value));
       } catch {
-        continue;
+        return;
       }
-    }
-    return input.join("\n");
-  } finally {
-    lines.close();
-    process.stdin.destroy();
-  }
-};
-
-// Bun truncates piped console.log output at 64 KiB once process.stdout exists.
-const writeResult = (result: unknown) =>
-  new Promise<void>((resolve, reject) =>
-    process.stdout.write(`${JSON.stringify({ result })}\n`, (error) =>
-      error ? reject(error) : resolve(),
-    ),
-  );
-
-export const desktopCommand = async (args: string[]) => {
-  const [action, ...rest] = args;
-  if (
-    rest.length ||
-    ![
-      "services",
-      "login",
-      "logout",
-      "auth-config",
-      "auth-status",
-      "plugins",
-      "plugin-action",
-      "workspace-action",
-      "commands",
-    ].includes(action ?? "")
-  )
-    throw new UsageError(
-      "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>",
-    );
-  if (action === "plugins") {
-    await writeResult(await marketplaceView());
-    return;
-  }
-  if (action === "commands") {
-    await writeResult(await desktopCommandCatalog(JSON.parse(await readAuthInput())));
-    return;
-  }
-  if (action === "plugin-action") {
-    await writeResult(await marketplaceRequest(JSON.parse(await readAuthInput())));
-    return;
-  }
-  const registry = await discover(await defaultContext(process.env));
-  if (action === "workspace-action") {
-    const request = decodeWorkspaceAction(JSON.parse(await readAuthInput()));
-    const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
-    await writeResult(await updateWorkspace(plugin, request));
-    return;
-  }
-  const store = defaultStore(process.env);
-  if (action === "services") {
-    const services = await Promise.all(
-      registry.plugins.map((found) => desktopService(found, registry, store)),
-    );
-    await writeResult(services);
-    return;
-  }
-  const value: unknown = JSON.parse(await readAuthInput());
-  if (
-    !isRecord(value) ||
-    typeof value.service !== "string" ||
-    (value.credential !== undefined && typeof value.credential !== "string") ||
-    (value.workspace !== undefined && typeof value.workspace !== "string")
-  )
-    throw new UsageError("Invalid desktop auth request");
-  const service = value.service;
-  const plugin = await selectWorkspace(
-    await loadPlugin(findPlugin(registry, service), registry.context),
-    typeof value.workspace === "string" ? value.workspace : undefined,
-  );
-  if (action === "auth-config" || action === "auth-status") {
-    if (action === "auth-config") await configureAuthentication(plugin, value.configuration);
-    await writeResult(await authenticationDetails(plugin, action === "auth-status"));
-    return;
-  }
-  const credential =
-    typeof value.credential === "string" && value.credential ? value.credential : undefined;
-  const flags = credential ? [`--${credential}`] : [];
-  if (plugin.workspace) flags.push("--workspace", plugin.workspace.id);
-  if (value.method === "browser") flags.push("--browser");
-  if (value.target !== undefined) {
-    const details = await authenticationDetails(plugin);
-    if (
-      typeof value.target !== "string" ||
-      !details?.states.some((state) => state.target === value.target)
-    )
-      throw new UsageError("Invalid authentication target");
-  }
-  const run = action === "login" ? loginCommand : logoutCommand;
-  const controller = new AbortController();
-  const abort = () => controller.abort();
-  process.once("SIGTERM", abort);
-  try {
-    await run([service, ...flags], {
-      env: process.env,
-      store,
-      signal: controller.signal,
-      target: typeof value.target === "string" ? value.target : undefined,
-      plugin: async (name) => loadPlugin(findPlugin(registry, name)),
-      writeError: () => undefined,
-      open: (url) => {
-        console.log(JSON.stringify({ event: "open-url", url }));
-      },
-      readSecret: async () => {
-        if (typeof value.secret !== "string") throw new UsageError("API key is required");
-        return value.secret;
-      },
     });
-  } finally {
-    process.removeListener("SIGTERM", abort);
-  }
-  await resetDaemonIfRunning();
-  await writeResult(null);
+    if (done) release();
+    return Effect.sync(finish);
+  });
+
+const writeResult = (result: unknown) => printLine(JSON.stringify({ result }));
+
+type AuthRequest = {
+  service: string;
+  credential?: string;
+  workspace?: string;
+  method?: unknown;
+  target?: unknown;
+  secret?: unknown;
+  configuration?: unknown;
 };
+
+const decodeAuthRequest = (value: unknown): Effect.Effect<AuthRequest, UsageError> =>
+  isRecord(value) &&
+  typeof value.service === "string" &&
+  (value.credential === undefined || typeof value.credential === "string") &&
+  (value.workspace === undefined || typeof value.workspace === "string")
+    ? Effect.succeed({
+        ...value,
+        service: value.service,
+        credential: typeof value.credential === "string" ? value.credential : undefined,
+        workspace: typeof value.workspace === "string" ? value.workspace : undefined,
+      })
+    : Effect.fail(new UsageError("Invalid desktop auth request"));
+
+const authAction = (action: string, registry: Registry, request: AuthRequest) =>
+  Effect.gen(function* () {
+    const host = yield* CliHost;
+    const { env } = registry.context;
+    const plugin = yield* attempt(async () =>
+      selectWorkspace(
+        await loadPlugin(findPlugin(registry, request.service), registry.context),
+        request.workspace,
+        defaultSettings(env),
+      ),
+    );
+    if (action === "auth-config" || action === "auth-status") {
+      if (action === "auth-config")
+        yield* attempt(() => configureAuthentication(plugin, env, request.configuration));
+      return yield* attempt(() => authenticationDetails(plugin, env, action === "auth-status"));
+    }
+    const flags = request.credential ? [`--${request.credential}`] : [];
+    if (plugin.workspace) flags.push("--workspace", plugin.workspace.id);
+    if (request.method === "browser") flags.push("--browser");
+    if (request.target !== undefined) {
+      const details = yield* attempt(() => authenticationDetails(plugin, env));
+      if (
+        typeof request.target !== "string" ||
+        !details?.states.some((state) => state.target === request.target)
+      )
+        return yield* Effect.fail(new UsageError("Invalid authentication target"));
+    }
+    const run = action === "login" ? loginCommand : logoutCommand;
+    const controller = new AbortController();
+    const removeTermination = host.onTermination(["SIGTERM"], () => controller.abort());
+    yield* attempt(() =>
+      run([request.service, ...flags], {
+        env,
+        store: defaultStore(env),
+        settings: defaultSettings(env),
+        signal: controller.signal,
+        target: typeof request.target === "string" ? request.target : undefined,
+        plugin: async (name) => loadPlugin(findPlugin(registry, name), registry.context),
+        writeError: () => undefined,
+        open: (url) => host.write(`${JSON.stringify({ event: "open-url", url })}\n`),
+        readSecret: async () => {
+          if (typeof request.secret !== "string") throw new UsageError("API key is required");
+          return request.secret;
+        },
+      }),
+    ).pipe(Effect.ensuring(Effect.sync(removeTermination)));
+    yield* attempt(() => resetDaemonFor(env));
+    return null;
+  });
+
+export const desktopCommand = (args: string[]): Effect.Effect<void, unknown, CliHost> =>
+  Effect.gen(function* () {
+    const host = yield* CliHost;
+    const [action = "", ...rest] = args;
+    if (rest.length || !ACTIONS.includes(action)) return yield* Effect.fail(new UsageError(USAGE));
+    if (action === "plugins") return yield* writeResult(yield* attempt(() => marketplaceView()));
+    if (action === "commands") {
+      const input = yield* readRequest(host);
+      return yield* writeResult(yield* attempt(() => desktopCommandCatalog(input, host.env)));
+    }
+    if (action === "plugin-action") {
+      const input = yield* readRequest(host);
+      return yield* writeResult(yield* attempt(() => marketplaceRequest(input)));
+    }
+    const registry = yield* attempt(async () => discover(await defaultContext(host.env)));
+    if (action === "workspace-action") {
+      const input = yield* readRequest(host);
+      const result = yield* attempt(async () => {
+        const request = decodeWorkspaceAction(input);
+        const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
+        return updateWorkspace(plugin, request, defaultSettings(host.env));
+      });
+      return yield* writeResult(result);
+    }
+    if (action === "services") {
+      const store = defaultStore(host.env);
+      const services = yield* attempt(() =>
+        Promise.all(registry.plugins.map((found) => desktopService(found, registry, store))),
+      );
+      return yield* writeResult(services);
+    }
+    const request = yield* decodeAuthRequest(yield* readRequest(host));
+    yield* writeResult(yield* authAction(action, registry, request));
+  });
