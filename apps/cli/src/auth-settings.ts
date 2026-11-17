@@ -1,27 +1,17 @@
 import { selectWorkspace } from "./workspaces";
 import { extractWorkspace } from "./workspace-arguments";
 import { formatOutput } from "@mcp-cli/runtime";
-import { isRecord, UsageError, type ServicePlugin } from "@mcp-cli/core";
+import { UsageError, type ServicePlugin } from "@mcp-cli/core";
 import { Effect } from "effect";
 import { defaultSettings, defaultStore } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
-import { daemonRequest } from "./daemon/client";
-import { daemonDirectory } from "./daemon/endpoint";
+import { resetDaemonIfRunning } from "./daemon/client";
 import { CliHost, printLine, type Env } from "./host";
 import { pluginEnvironment, pluginSettings, pluginStore } from "./plugin-credentials";
 
 const attempt = <A>(operation: () => Promise<A>): Effect.Effect<A, unknown> =>
   Effect.tryPromise({ try: operation, catch: (error) => error });
-
-/** Resets the daemon that serves this environment, ignoring a daemon that is not running. */
-export const resetDaemonFor = async (env: Env): Promise<void> => {
-  try {
-    await daemonRequest("reset", {}, daemonDirectory(env));
-  } catch (error) {
-    if (!isRecord(error) || !["ENOENT", "ECONNREFUSED"].includes(String(error.code))) throw error;
-  }
-};
 
 export const authenticationContext = (env: Env, plugin?: ServicePlugin) => ({
   env: plugin ? pluginEnvironment(plugin, env) : env,
@@ -40,7 +30,7 @@ export const authenticationDetails = async (plugin: ServicePlugin, env: Env, che
 export const configureAuthentication = async (plugin: ServicePlugin, env: Env, value: unknown) => {
   if (!plugin.authSupport) throw new UsageError("This service has no authentication settings.");
   await plugin.authSupport.configure(authenticationContext(env, plugin), value);
-  await resetDaemonFor(env);
+  await resetDaemonIfRunning(env);
 };
 
 const USAGE =

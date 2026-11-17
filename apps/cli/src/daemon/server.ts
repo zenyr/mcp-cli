@@ -10,7 +10,7 @@ import { defaultSettings, defaultStore, resolveConnection } from "../auth";
 import { extensionCacheScope } from "../cache-scope";
 import { discover, findPlugin, loadPlugin } from "../discovery";
 import { defaultContext } from "../paths";
-import { daemonDirectory, daemonSocket } from "./endpoint";
+import { daemonSocket } from "./endpoint";
 import { prepareOwnership } from "./ownership";
 import { connectionKey } from "./connection-key";
 import { createPool } from "./pool";
@@ -40,7 +40,7 @@ const execute = (session: ToolSession, request: SessionRequest): Promise<unknown
   }
 };
 
-export const startDaemon = async (directory = daemonDirectory(process.env), idleMs = 60_000) => {
+export const startDaemon = async (directory: string, idleMs = 60_000) => {
   if (!isAbsolute(directory)) throw new UsageError("MCP_CLI_DAEMON_DIR must be absolute");
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await chmod(directory, 0o700);
@@ -50,6 +50,11 @@ export const startDaemon = async (directory = daemonDirectory(process.env), idle
   const pool = createPool(idleMs);
   const startedAt = Date.now();
   let stopping: Promise<void> | undefined;
+  let requestStop = () => {};
+  // Resolves once stopping begins; the failure itself surfaces from stop().
+  const stopRequested = new Promise<void>((resolve) => {
+    requestStop = resolve;
+  });
   const sessionIds = new WeakMap<ToolSession, string>();
   const leases = new Map<Socket, { session: ToolSession; release: () => void }>();
   const run = async (value: unknown, socket: Socket): Promise<unknown> => {
@@ -70,7 +75,7 @@ export const startDaemon = async (directory = daemonDirectory(process.env), idle
     }
     if (value.operation === "stop") {
       setImmediate(() => {
-        void stop().catch((error: unknown) => console.error(error));
+        void stop().catch(() => undefined);
       });
       return null;
     }
@@ -176,6 +181,7 @@ export const startDaemon = async (directory = daemonDirectory(process.env), idle
     await rm(ownership, { force: true });
   };
   const stop = (): Promise<void> => {
+    requestStop();
     stopping ??= (async () => {
       const closed = new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),
@@ -198,5 +204,5 @@ export const startDaemon = async (directory = daemonDirectory(process.env), idle
     await cleanup();
     throw error;
   }
-  return { stop, status: () => pool.status() };
+  return { stop, stopRequested, status: () => pool.status() };
 };

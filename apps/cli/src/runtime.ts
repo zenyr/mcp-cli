@@ -28,6 +28,7 @@ export const runtimeDependencies = (
               credential,
               selected.workspace?.id,
               selected.discovery?.tools === "session",
+              { env: process.env, cwd: process.cwd() },
             );
           } catch (error) {
             if (!(error instanceof DaemonUnavailableError)) throw error;

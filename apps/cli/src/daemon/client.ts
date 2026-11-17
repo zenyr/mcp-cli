@@ -1,13 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { Agent, request } from "node:http";
 import { AuthRequiredError, isRecord, UsageError, type ToolSession } from "@mcp-cli/core";
+import type { Env } from "../host";
 import { daemonDirectory, daemonSocket } from "./endpoint";
 import type { DaemonStatus, Operation } from "./protocol";
 
 export const daemonRequest = async <T>(
   operation: string,
-  payload: Record<string, unknown> = {},
-  directory = daemonDirectory(process.env),
+  payload: Record<string, unknown>,
+  directory: string,
   agent?: Agent,
 ): Promise<T> => {
   const token = await readFile(`${directory}/token`, "utf8");
@@ -60,34 +61,39 @@ export class DaemonUnavailableError extends Error {
   override name = "DaemonUnavailableError";
 }
 
-export const usesDaemon = (env: Record<string, string | undefined>): boolean => {
+export const usesDaemon = (env: Env): boolean => {
   const mode = env.MCP_CLI_DAEMON;
   if (mode === undefined || mode === "" || mode === "1") return true;
   if (mode === "0") return false;
   throw new UsageError("MCP_CLI_DAEMON must be 0 or 1");
 };
 
+/** The calling shell's environment and directory, forwarded so stdio servers start where the CLI ran. */
+export type DaemonCaller = { env: Env; cwd: string };
+
 export const openDaemonSession = async (
   service: string,
-  credential?: string,
-  workspace?: string,
-  requireBinding = false,
+  credential: string | undefined,
+  workspace: string | undefined,
+  requireBinding: boolean,
+  caller: DaemonCaller,
 ): Promise<ToolSession> => {
   const agent = new Agent({ keepAlive: true, maxSockets: 1 });
+  const directory = daemonDirectory(caller.env);
   const context = {
     service,
     credential,
     workspace,
-    cwd: process.cwd(),
+    cwd: caller.cwd,
     env: Object.fromEntries(
-      Object.entries(process.env).filter(
+      Object.entries(caller.env).filter(
         (entry): entry is [string, string] => entry[1] !== undefined,
       ),
     ),
   };
   let connectionId: string | undefined;
   const call = <T>(operation: Operation, name = "", input: Record<string, unknown> = {}) =>
-    daemonRequest<T>(operation, { ...context, connectionId, name, input }, undefined, agent);
+    daemonRequest<T>(operation, { ...context, connectionId, name, input }, directory, agent);
   try {
     const opened: unknown = await call("ensure");
     if (requireBinding && isRecord(opened) && typeof opened.connectionId === "string")
@@ -115,12 +121,12 @@ export const openDaemonSession = async (
     },
   };
 };
-export const daemonStatus = (directory?: string) =>
+export const daemonStatus = (directory: string) =>
   daemonRequest<DaemonStatus>("status", {}, directory);
 
-export const resetDaemonIfRunning = async () => {
+export const resetDaemonIfRunning = async (env: Env) => {
   try {
-    await daemonRequest("reset");
+    await daemonRequest("reset", {}, daemonDirectory(env));
   } catch (error) {
     if (!isRecord(error) || !["ENOENT", "ECONNREFUSED"].includes(String(error.code))) throw error;
   }

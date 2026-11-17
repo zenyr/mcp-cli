@@ -9,6 +9,8 @@ import { daemonRequest, daemonStatus } from "../src/daemon/client";
 import { request } from "node:http";
 import { daemonSocket } from "../src/daemon/endpoint";
 import { UsageError, type ToolSession, type ToolResult } from "@mcp-cli/core";
+import { execute } from "../src/main";
+import { memoryHost, runCli } from "./host";
 
 const session = (close: () => Promise<void>): ToolSession => ({
   listTools: async () => [],
@@ -122,6 +124,7 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
     MCP_CLI_DAEMON_DIR: directory,
     MCP_CLI_DAEMON: "",
   };
+  // Service commands still read the daemon directory from process.env in runtime.ts, so they run as separate processes.
   const run = async (...args: string[]) => {
     const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
       cwd: fileURLToPath(new URL("../../../", import.meta.url)),
@@ -264,6 +267,51 @@ test("Web API direct and daemon calls share auth, isolate tokens, and never requ
   await expect(daemonRequest("callTool", context, directory)).rejects.toThrow();
 });
 
+test("daemon start serves until termination or IPC stop and cleans up through its finalizer", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "mcp-daemon-command-"));
+  const env = { HOME: directory, XDG_CONFIG_HOME: directory, MCP_CLI_DAEMON_DIR: directory };
+  const start = () => {
+    const memory = memoryHost({ env });
+    let ready = () => {};
+    const written = new Promise<void>((resolve) => {
+      ready = resolve;
+    });
+    const host = {
+      ...memory.host,
+      write: async (text: string) => {
+        await memory.host.write(text);
+        ready();
+      },
+    };
+    return { memory, written, exit: execute(["daemon", "start", "--json"], host) };
+  };
+  try {
+    const signalled = start();
+    await signalled.written;
+    expect(JSON.parse(signalled.memory.stdout())).toEqual({ event: "ready", pid: process.pid });
+    const status = await runCli(["daemon", "status", "--json"], { env });
+    expect(JSON.parse(status.stdout)).toMatchObject({ pid: process.pid, connections: [] });
+    signalled.memory.terminate("SIGTERM");
+    expect(await signalled.exit).toBe(0);
+    await expect(readFile(join(directory, "token"))).rejects.toThrow();
+    await expect(readFile(join(directory, "owner"))).rejects.toThrow();
+    const stopped = start();
+    await stopped.written;
+    expect(await runCli(["daemon", "stop", "--json"], { env })).toEqual({
+      stdout: "null\n",
+      stderr: "",
+      code: 0,
+    });
+    expect(await stopped.exit).toBe(0);
+    expect(stopped.memory.stderr()).toBe("");
+    await expect(readFile(join(directory, "owner"))).rejects.toThrow();
+    expect((await runCli(["daemon", "recover"], { env })).code).toBe(0);
+    expect((await runCli(["daemon", "bogus"], { env })).code).toBe(2);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("daemon mode defaults on and requires an explicit zero to bypass", async () => {
   const { usesDaemon } = await import("../src/daemon/client");
   expect(usesDaemon({})).toBe(true);
@@ -295,6 +343,7 @@ test("CLI does not switch to direct execution after a daemon tool request fails"
   });
   await new Promise<void>((resolve) => server.listen(daemonSocket(directory), resolve));
   try {
+    // Service commands still read the daemon directory from process.env in runtime.ts, so this runs as a separate process.
     const child = Bun.spawn(
       [
         process.execPath,

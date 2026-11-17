@@ -4,7 +4,8 @@ import { Effect } from "effect";
 import { defaultSettings, defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin, type Registry } from "./discovery";
 import { defaultContext } from "./paths";
-import { authenticationDetails, configureAuthentication, resetDaemonFor } from "./auth-settings";
+import { authenticationDetails, configureAuthentication } from "./auth-settings";
+import { resetDaemonIfRunning } from "./daemon/client";
 import { marketplaceRequest, marketplaceView } from "./marketplace/entry";
 import { desktopService } from "./desktop-services";
 import { desktopCommandCatalog } from "./desktop-commands";
@@ -123,7 +124,7 @@ const authAction = (action: string, registry: Registry, request: AuthRequest) =>
         },
       }),
     ).pipe(Effect.ensuring(Effect.sync(removeTermination)));
-    yield* attempt(() => resetDaemonFor(env));
+    yield* attempt(() => resetDaemonIfRunning(env));
     return null;
   });
 
@@ -132,14 +133,14 @@ export const desktopCommand = (args: string[]): Effect.Effect<void, unknown, Cli
     const host = yield* CliHost;
     const [action = "", ...rest] = args;
     if (rest.length || !ACTIONS.includes(action)) return yield* Effect.fail(new UsageError(USAGE));
-    if (action === "plugins") return yield* writeResult(yield* attempt(() => marketplaceView()));
+    if (action === "plugins") return yield* writeResult(yield* marketplaceView());
     if (action === "commands") {
       const input = yield* readRequest(host);
       return yield* writeResult(yield* attempt(() => desktopCommandCatalog(input, host.env)));
     }
     if (action === "plugin-action") {
       const input = yield* readRequest(host);
-      return yield* writeResult(yield* attempt(() => marketplaceRequest(input)));
+      return yield* writeResult(yield* marketplaceRequest(input));
     }
     const registry = yield* attempt(async () => discover(await defaultContext(host.env)));
     if (action === "workspace-action") {

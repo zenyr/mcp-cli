@@ -7,12 +7,21 @@ import { prepareOwnership } from "../src/daemon/ownership";
 import { startDaemon } from "../src/daemon/server";
 import { daemonStatus } from "../src/daemon/client";
 
+// A dead owner needs the PID of a real exited process, so one short-lived child serves every test.
+let exited: Promise<number> | undefined;
+const deadPid = () => {
+  exited ??= (async () => {
+    const child = Bun.spawn([process.execPath, "-e", ""], { stdout: "ignore" });
+    await child.exited;
+    return child.pid;
+  })();
+  return exited;
+};
+
 const fixture = async (run: (directory: string, deadPid: number) => Promise<void>) => {
   const directory = await mkdtemp(join(tmpdir(), "mcp-owner-"));
-  const child = Bun.spawn([process.execPath, "-e", ""], { stdout: "ignore" });
-  await child.exited;
   try {
-    await run(directory, child.pid);
+    await run(directory, await deadPid());
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -77,6 +86,7 @@ test("concurrent claims never both acquire ownership", async () => {
 
 test("restart recovers socket and credentials left by an abruptly terminated daemon", async () => {
   await fixture(async (directory) => {
+    // Only a separate process can own the directory and then die without running cleanup.
     const child = Bun.spawn(
       [
         process.execPath,

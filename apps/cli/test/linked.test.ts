@@ -18,6 +18,7 @@ test("linked commands share daemon selection and fall back when it is absent", a
     };
     delete env.MCP_CLI_DAEMON;
     if (mode !== undefined) env.MCP_CLI_DAEMON = mode;
+    // The generated bin entry point is the subject, and service commands still read process.env in runtime.ts.
     const child = Bun.spawn([process.execPath, join(root, "bin", `${bin}.ts`), ...args], {
       cwd: root,
       env,
