@@ -126,12 +126,18 @@
       "dependencies": {
         "@mcp-cli/core": "workspace:*",
       },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
+      },
     },
     "plugins/fish-audio": {
       "name": "@mcp-cli/plugin-fish-audio",
       "version": "0.1.0",
       "dependencies": {
         "@mcp-cli/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
       },
     },
     "plugins/linear": {
@@ -140,12 +146,18 @@
       "dependencies": {
         "@mcp-cli/core": "workspace:*",
       },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
+      },
     },
     "plugins/notion": {
       "name": "@mcp-cli/plugin-notion",
       "version": "0.1.0",
       "dependencies": {
         "@mcp-cli/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
       },
     },
     "plugins/slack": {
@@ -154,6 +166,11 @@
       "dependencies": {
         "@mcp-cli/core": "workspace:*",
         "@mcp-cli/mcp": "workspace:*",
+      },
+      "devDependencies": {
+        "@mcp-cli/auth": "workspace:*",
+        "@mcp-cli/mcp": "workspace:*",
+        "@mcp-cli/runtime": "workspace:*",
       },
     },
   },

@@ -3,13 +3,13 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileSettingsStore, fileTokenStore } from "../../../packages/auth/src";
+import { fileSettingsStore, fileTokenStore } from "@mcp-cli/auth";
 import type { AuthLoginOptions, AuthSupportContext, Tokens } from "@mcp-cli/core";
 import { createSlackAuth } from "../src/auth-support";
 import { currentProfile, loginSlack, slackOAuthHeaders } from "../src/auth-oauth";
 import { decodeSlackConfiguration, readiness, slackSlot } from "../src/auth-config";
 import type { SlackConfiguration, SlackTarget } from "../src/auth-types";
-import { connectWebApi } from "../../../packages/mcp/src/web-api";
+import { connectWebApi } from "@mcp-cli/mcp";
 import slack from "../src";
 
 let directory: string;

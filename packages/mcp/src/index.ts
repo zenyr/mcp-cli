@@ -1,6 +1,7 @@
 import { sessionTools } from "./session-tools";
 import { validateTools } from "@mcp-cli/schema";
 import { connectWebApi } from "./web-api";
+export { connectWebApi };
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import type { CatalogSession, Connection, ResourceContent, ToolSession } from "@mcp-cli/core";

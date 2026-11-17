@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { formatSearchResult } from "../src/output";
-import { formatResult } from "../../../packages/runtime/src/output";
+import { formatResult } from "@mcp-cli/runtime";
 import type { ToolResult } from "@mcp-cli/core";
 
 const item = {

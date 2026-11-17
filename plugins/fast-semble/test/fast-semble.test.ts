@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { UsageError, type ToolSession } from "@mcp-cli/core";
-import { runService } from "../../../packages/runtime/src";
+import { runService } from "@mcp-cli/runtime";
 import plugin from "../src";
 import { manifest } from "../src/generated";
 

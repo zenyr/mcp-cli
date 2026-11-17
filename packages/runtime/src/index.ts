@@ -1,5 +1,5 @@
 import { formatOutput, formatResult } from "./output";
-export { formatOutput } from "./output";
+export { formatOutput, formatResult } from "./output";
 import {
   UsageError,
   CallNotStartedError,

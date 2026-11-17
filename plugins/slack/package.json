@@ -17,6 +17,11 @@
     "@mcp-cli/core": "workspace:*",
     "@mcp-cli/mcp": "workspace:*"
   },
+  "devDependencies": {
+    "@mcp-cli/auth": "workspace:*",
+    "@mcp-cli/mcp": "workspace:*",
+    "@mcp-cli/runtime": "workspace:*"
+  },
   "mcp-cli": {
     "plugin": true,
     "service": "slack",

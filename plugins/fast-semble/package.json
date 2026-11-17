@@ -16,6 +16,9 @@
   "dependencies": {
     "@mcp-cli/core": "workspace:*"
   },
+  "devDependencies": {
+    "@mcp-cli/runtime": "workspace:*"
+  },
   "mcp-cli": {
     "plugin": true,
     "service": "fast-semble",
