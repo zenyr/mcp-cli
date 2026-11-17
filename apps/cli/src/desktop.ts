@@ -1,7 +1,7 @@
-import { decodeWorkspaceAction, selectWorkspace, updateWorkspace } from "./workspaces";
+import { decodeWorkspaceAction, selectWorkspace, workspaceUpdate } from "./workspaces";
 import { isRecord, UsageError } from "@mcp-cli/core";
 import { Effect } from "effect";
-import { attempt } from "./attempt";
+import { attempt, attemptSync } from "./attempt";
 import { defaultSettings, defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin, type Registry } from "./discovery";
 import { defaultContext } from "./paths";
@@ -144,7 +144,7 @@ export const desktopCommand = (args: string[]): Effect.Effect<void, unknown, Cli
     if (action === "plugins") return yield* writeResult(yield* marketplaceView());
     if (action === "commands") {
       const input = yield* readRequest(host);
-      return yield* writeResult(yield* attempt(() => desktopCommandCatalog(input, host.env)));
+      return yield* writeResult(yield* attempt(() => desktopCommandCatalog(input, host)));
     }
     if (action === "plugin-action") {
       const input = yield* readRequest(host);
@@ -153,12 +153,11 @@ export const desktopCommand = (args: string[]): Effect.Effect<void, unknown, Cli
     const registry = yield* attempt(async () => discover(await defaultContext(host.env)));
     if (action === "workspace-action") {
       const input = yield* readRequest(host);
-      const result = yield* attempt(async () => {
-        const request = decodeWorkspaceAction(input);
-        const plugin = await loadPlugin(findPlugin(registry, request.service), registry.context);
-        return updateWorkspace(plugin, request, defaultSettings(host.env));
-      });
-      return yield* writeResult(result);
+      const request = yield* attemptSync(() => decodeWorkspaceAction(input));
+      const plugin = yield* attempt(() =>
+        loadPlugin(findPlugin(registry, request.service), registry.context),
+      );
+      return yield* writeResult(yield* workspaceUpdate(plugin, request, defaultSettings(host.env)));
     }
     if (action === "services") {
       const store = defaultStore(host.env);

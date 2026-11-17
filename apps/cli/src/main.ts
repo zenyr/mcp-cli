@@ -2,7 +2,7 @@
 import { leadingArguments } from "./workspace-arguments";
 import { RepeatedCallError, UsageError } from "@mcp-cli/core";
 import { Cause, Effect, Exit } from "effect";
-import { attempt } from "./attempt";
+import { attempt, attemptSync } from "./attempt";
 import { CliHost, printLine, processHost, type Host } from "./host";
 import { ensureConfigDirectory } from "./config";
 import { desktopCommand } from "./desktop";
@@ -31,7 +31,7 @@ export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
   Effect.gen(function* () {
     const host = yield* CliHost;
     yield* attempt(() => ensureConfigDirectory(host.env));
-    const { command, args } = leadingArguments(argv);
+    const { command, args } = yield* attemptSync(() => leadingArguments(argv));
     const registry = async () => discover(await defaultContext(host.env));
     if (!command || ["--help", "-h", "help"].includes(command)) {
       const names = (yield* attempt(registry)).plugins.map((plugin) => plugin.service);

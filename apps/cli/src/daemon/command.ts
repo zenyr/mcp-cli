@@ -17,12 +17,11 @@ const serve = (directory: string, ready: Effect.Effect<void, never, CliHost>) =>
         attempt(() => startDaemon(directory)),
         (owned) => Effect.ignore(attempt(() => owned.stop())),
       );
+      const terminated = Promise.withResolvers<void>();
+      const remove = host.onTermination(["SIGTERM", "SIGINT"], () => terminated.resolve());
+      yield* Effect.addFinalizer(() => Effect.sync(remove));
       yield* ready;
-      yield* Effect.callback<void>((resume) => {
-        const remove = host.onTermination(["SIGTERM", "SIGINT"], () => resume(Effect.void));
-        void daemon.stopRequested.then(() => resume(Effect.void));
-        return Effect.sync(remove);
-      });
+      yield* Effect.promise(() => Promise.race([terminated.promise, daemon.stopRequested]));
       yield* attempt(() => daemon.stop());
     }),
   );

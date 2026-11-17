@@ -3,7 +3,7 @@ import { extractWorkspace } from "./workspace-arguments";
 import { formatOutput } from "@mcp-cli/runtime";
 import { UsageError, type ServicePlugin } from "@mcp-cli/core";
 import { Effect } from "effect";
-import { attempt } from "./attempt";
+import { attempt, attemptSync } from "./attempt";
 import { defaultSettings, defaultStore } from "./auth";
 import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
@@ -37,7 +37,7 @@ const USAGE =
 export const authSettingsCommand = (argv: string[]): Effect.Effect<void, unknown, CliHost> =>
   Effect.gen(function* () {
     const host = yield* CliHost;
-    const selected = extractWorkspace(argv);
+    const selected = yield* attemptSync(() => extractWorkspace(argv));
     const json = selected.args.includes("--json");
     const args = selected.args.filter((arg) => arg !== "--json");
     const [action, service, flag, ...rest] = args;

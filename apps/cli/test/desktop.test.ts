@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runCli } from "./host";
+import { repositoryRoot, runCli } from "./host";
 
 test("desktop API key operations share CLI storage without printing secrets", async () => {
   const directory = await mkdtemp(join(tmpdir(), "mcp-desktop-auth-"));
@@ -79,6 +79,33 @@ test("desktop requests fail when stdin closes before a complete JSON request", a
         stderr: "JSON Parse error: Unexpected EOF\n",
         code: 1,
       });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+// A real process is required because the desktop app keeps stdin open after sending one request.
+test("desktop requests finish while the desktop app keeps stdin open", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "mcp-desktop-open-"));
+  try {
+    const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", "desktop", "auth-status"], {
+      cwd: repositoryRoot,
+      env: {
+        HOME: directory,
+        XDG_CONFIG_HOME: directory,
+        MCP_CLI_DAEMON: "0",
+        MCP_CLI_INTERNAL_PLUGINS: "only",
+        PATH: process.env.PATH ?? "",
+      },
+      stdin: "pipe",
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    child.stdin.write(`${JSON.stringify({ service: "demo-auth" })}\n`);
+    await child.stdin.flush();
+    const [stdout, code] = await Promise.all([new Response(child.stdout).text(), child.exited]);
+    expect(code).toBe(0);
+    expect(stdout).toStartWith('{"result":');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

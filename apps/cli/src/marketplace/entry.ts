@@ -1,6 +1,6 @@
 import { formatOutput } from "@mcp-cli/runtime";
 import { Effect } from "effect";
-import { attempt } from "../attempt";
+import { attempt, attemptSync } from "../attempt";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { UsageError, type MarketplaceView } from "@mcp-cli/core";
@@ -101,7 +101,7 @@ export const pluginsCommand = (args: string[]): Effect.Effect<void, unknown, Cli
       const [directory, output] = rest;
       if (rest.length !== 2 || !directory || !output) return yield* invalid;
       const bytes = yield* attempt(() => packDirectory(absolute(directory)));
-      const manifest = packageManifest(unpack(bytes));
+      const manifest = yield* attemptSync(() => packageManifest(unpack(bytes)));
       yield* attempt(async () => {
         await mkdir(dirname(absolute(output)), { recursive: true });
         await writeFile(absolute(output), bytes, { flag: "wx" });
