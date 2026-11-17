@@ -2,12 +2,11 @@ import { expect, test } from "bun:test";
 import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { startDaemon } from "../src/daemon/server";
 import { daemonRequest } from "../src/daemon/client";
 import type { WorkspaceRegistry } from "@mcp-cli/core";
+import { repositoryRoot as root, runCli } from "./host";
 
-const root = fileURLToPath(new URL("../../../", import.meta.url));
 test("CLI, desktop and daemon share workspace credentials without changing the default", async () => {
   const directory = await mkdtemp(join(tmpdir(), "workspace-integration-"));
   const pluginDir = join(directory, "plugin");
@@ -31,7 +30,7 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
   );
   await Bun.write(
     join(pluginDir, "index.ts"),
-    `import demoAuth from ${JSON.stringify(join(root, "plugins/demo-auth/src/index.ts"))}; import {updateWorkspace} from ${JSON.stringify(join(root, "apps/cli/src/workspaces.ts"))}; import {defaultSettings} from ${JSON.stringify(join(root, "apps/cli/src/auth.ts"))}; export default {...demoAuth,name:"auth-workspace-test",extensions:{commands:[{path:["workspace-probe"],kind:"workflow",summary:"Probe inheritance",inputSchema:{type:"object"},run:async(_,context)=>{await updateWorkspace({...demoAuth,name:"auth-workspace-test"},{type:"default",service:"auth-workspace-test",workspace:"default"},defaultSettings(process.env));const a=await context.runCommand(["auth","check"]);const b=await context.runCommand(["auth","check","-w","default"]);return {result:{content:[{type:"text",text:JSON.stringify([a.exitCode,b.exitCode])}]}}}}]}};`,
+    `import demoAuth from ${JSON.stringify(join(root, "plugins/demo-auth/src/index.ts"))}; import {updateWorkspace} from ${JSON.stringify(join(root, "apps/cli/src/workspaces.ts"))}; import {defaultSettings} from ${JSON.stringify(join(root, "apps/cli/src/auth.ts"))}; export default {...demoAuth,name:"auth-workspace-test",extensions:{commands:[{path:["workspace-probe"],kind:"workflow",summary:"Probe inheritance",inputSchema:{type:"object"},run:async(_,context)=>{await updateWorkspace({...demoAuth,name:"auth-workspace-test"},{type:"default",service:"auth-workspace-test",workspace:"default"},defaultSettings(${JSON.stringify({ HOME: directory, XDG_CONFIG_HOME: directory })}));const a=await context.runCommand(["auth","check"]);const b=await context.runCommand(["auth","check","-w","default"]);return {result:{content:[{type:"text",text:JSON.stringify([a.exitCode,b.exitCode])}]}}}}]}};`,
   );
   await mkdir(join(pluginDir, "src"));
   await Bun.write(
@@ -40,10 +39,13 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
   );
   const config = join(directory, "config.json");
   await Bun.write(config, JSON.stringify({ plugins: [pluginDir] }));
+  // HOME and every XDG base point at the temp directory so no run reaches the real home.
   const env = {
-    ...process.env,
+    HOME: directory,
     MCP_CLI_CONFIG: config,
+    MCP_CLI_INTERNAL_PLUGINS: "only",
     XDG_CONFIG_HOME: directory,
+    XDG_CACHE_HOME: directory,
     XDG_STATE_HOME: directory,
     MCP_CLI_DAEMON_DIR: join(directory, "daemon"),
     MCP_CLI_DAEMON: "0",
@@ -52,18 +54,8 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
     DEMO_AUTH_WEB_URL: String(server.url),
   };
   const run = async (args: string[], input?: unknown) => {
-    const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", ...args], {
-      cwd: root,
-      env,
-      stdin: input === undefined ? "ignore" : new Blob([JSON.stringify(input)]),
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const [stdout, stderr, code] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ]);
+    const stdin = input === undefined ? undefined : JSON.stringify(input);
+    const { stdout, stderr, code } = await runCli(args, { env, cwd: root, stdin });
     expect(code, stderr).toBe(0);
     return stdout;
   };
