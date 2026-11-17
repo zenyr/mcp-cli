@@ -66,6 +66,9 @@ export const commands: Record<string, CommandCustomization> = {
     path: ["account", "balance"],
     summary: "Show plan, remaining credits and the per-call TTS text budget",
     examples: ["fish-audio account balance"],
+    rules: [
+      "estimated_next_refill is a local estimate that assumes credits refill monthly on the package_cycle_ends_at day.",
+    ],
   },
   list_my_workspaces: {
     path: ["account", "workspaces"],
