@@ -7,7 +7,7 @@ import { EXIT, exitCodeFor } from "../src/main";
 import { discover, findPlugin, loadPlugin } from "../src/discovery";
 import { defaultContext } from "../src/paths";
 import { loadManifest, packageFiles } from "../src/plugins";
-import { repositoryRoot, runCli } from "./host";
+import { runCli } from "./host";
 // Points config and cache lookups away from the real home directory.
 const sandbox = mkdtempSync(join(tmpdir(), "mcp-cli-test-"));
 const isolatedEnv = {
@@ -55,19 +55,8 @@ test("discovered services match plugin names and resolve package files", async (
   expect(packageFiles(plugin).module).toEndWith("plugins/demo/src/generated.ts");
   expect((await loadManifest(registry, findPlugin(registry, "demo"))).service).toBe("demo");
 });
-// Spawns because `plugins` still prints through console until its slice moves onto CliHost.
-const spawnCli = async (...args: string[]) => {
-  const child = Bun.spawn(["bun", "apps/cli/src/main.ts", ...args], {
-    cwd: repositoryRoot,
-    env: { ...process.env, ...isolatedEnv },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [stdout, code] = await Promise.all([new Response(child.stdout).text(), child.exited]);
-  return { stdout, code };
-};
 test("plugins lists discovered services with generated status", async () => {
-  const listing = await spawnCli("plugins");
+  const listing = await run("plugins");
   expect(listing.code).toBe(0);
   expect(listing.stdout).toMatch(/demo\s+workspace\s+generated \(package\)/);
   expect((await run("plugins", "extra")).code).toBe(2);

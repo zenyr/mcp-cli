@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { CommandCatalog } from "@mcp-cli/core";
+import { runCli } from "./host";
 
 test("desktop commands lists a session plugin's live tools on request", async () => {
   const root = await mkdtemp(join(tmpdir(), "desktop-live-commands-"));
@@ -26,31 +26,20 @@ test("desktop commands lists a session plugin's live tools on request", async ()
     );
     const config = join(root, "config.json");
     await writeFile(config, JSON.stringify({ plugins: [plugin] }));
-    const run = async (input: unknown) => {
-      // Spawns a real process because runtimeDependencies still reads process.env to choose the daemon.
-      const child = Bun.spawn([process.execPath, "apps/cli/src/main.ts", "desktop", "commands"], {
-        cwd: fileURLToPath(new URL("../../../", import.meta.url)),
+    const run = (input: unknown) =>
+      runCli(["desktop", "commands"], {
         env: {
-          ...process.env,
           HOME: root,
           MCP_CLI_CONFIG: config,
+          MCP_CLI_INTERNAL_PLUGINS: "only",
           XDG_CONFIG_HOME: root,
+          XDG_CACHE_HOME: root,
           XDG_STATE_HOME: root,
           MCP_CLI_DAEMON: "0",
+          MCP_CLI_DAEMON_DIR: join(root, "daemon"),
         },
-        stdin: "pipe",
-        stdout: "pipe",
-        stderr: "pipe",
+        stdin: JSON.stringify(input),
       });
-      child.stdin.write(JSON.stringify(input));
-      child.stdin.end();
-      const [stdout, stderr, code] = await Promise.all([
-        new Response(child.stdout).text(),
-        new Response(child.stderr).text(),
-        child.exited,
-      ]);
-      return { stdout, stderr, code };
-    };
     const live = await run({ service: "live-test", live: true });
     expect(live.stderr).toBe("");
     const { result }: { result: CommandCatalog } = JSON.parse(live.stdout);
