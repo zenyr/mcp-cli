@@ -170,7 +170,7 @@ test("daemon preserves CLI output, reuses connections, rejects unauthenticated I
     await rm(directory, { recursive: true, force: true });
   }
   await expect(readFile(`${directory}/token`)).rejects.toThrow();
-}, 20_000);
+});
 
 test("Web API direct and daemon calls share auth, isolate tokens, and never require MCP", async () => {
   const { connect } = await import("@mcp-cli/mcp");

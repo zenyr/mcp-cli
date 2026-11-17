@@ -122,4 +122,4 @@ test("CLI, desktop and daemon share workspace credentials without changing the d
     server.stop(true);
     await rm(directory, { recursive: true, force: true });
   }
-}, 20000);
+});

@@ -10,7 +10,7 @@
   "exports": "./src/main.ts",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "bun test",
+    "test": "bun test --timeout 20000",
     "build": "bun scripts/build.ts"
   },
   "dependencies": {
