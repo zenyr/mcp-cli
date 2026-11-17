@@ -25,10 +25,15 @@ export const memoryHost = (options: MemoryHostOptions = {}): MemoryHost => {
     write: async (text) => void out.push(text),
     writeError: (text) => void err.push(text),
     readStdin: async () => stdin,
-    onStdinLine: (handler) => {
-      const lines = stdin.split("\n").filter(Boolean);
-      queueMicrotask(() => lines.forEach(handler));
-      return () => undefined;
+    onStdinLine: (handler, onEnd) => {
+      let active = true;
+      queueMicrotask(() => {
+        for (const line of stdin.split("\n").filter(Boolean)) if (active) handler(line);
+        if (active) onEnd?.();
+      });
+      return () => {
+        active = false;
+      };
     },
     readSecret: async () => stdin,
     onTermination: (signals, handler) => {

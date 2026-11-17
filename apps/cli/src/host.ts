@@ -15,8 +15,8 @@ export type Host = {
   write: (text: string) => Promise<void>;
   writeError: (text: string) => void;
   readStdin: () => Promise<string>;
-  /** Feeds each stdin line to the handler and returns the unsubscribe that releases stdin. */
-  onStdinLine: (handler: (line: string) => void) => () => void;
+  /** Feeds each stdin line to the handler, calls `onEnd` when stdin closes, and returns the unsubscribe. */
+  onStdinLine: (handler: (line: string) => void, onEnd?: () => void) => () => void;
   /** Prompts without echo on a terminal, or reads piped stdin. */
   readSecret: (prompt: string) => Promise<string>;
   /** Registers a termination handler and returns its removal. */
@@ -33,10 +33,12 @@ export const printLine = (text: string): Effect.Effect<void, never, CliHost> =>
 export const printError = (text: string): Effect.Effect<void, never, CliHost> =>
   Effect.map(CliHost, (host) => host.writeError(`${text}\n`));
 
-const onStdinLine = (handler: (line: string) => void): (() => void) => {
+const onStdinLine = (handler: (line: string) => void, onEnd?: () => void): (() => void) => {
   const lines = createInterface({ input: process.stdin, terminal: false });
   lines.on("line", handler);
+  if (onEnd) lines.on("close", onEnd);
   return () => {
+    if (onEnd) lines.off("close", onEnd);
     lines.close();
     process.stdin.pause();
   };

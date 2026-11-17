@@ -68,3 +68,18 @@ test("desktop API key operations share CLI storage without printing secrets", as
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("desktop requests fail when stdin closes before a complete JSON request", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "mcp-desktop-eof-"));
+  try {
+    const env = { HOME: directory, XDG_CONFIG_HOME: directory, MCP_CLI_DAEMON: "0" };
+    for (const stdin of ["", '{"service":'])
+      expect(await runCli(["desktop", "login"], { env, stdin })).toEqual({
+        stdout: "",
+        stderr: "JSON Parse error: Unexpected EOF\n",
+        code: 1,
+      });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

@@ -27,8 +27,8 @@ const USAGE =
   "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>";
 
 // The desktop app may keep stdin open, so one request ends at the first line set that parses as JSON.
-const readRequest = (host: Host): Effect.Effect<unknown> =>
-  Effect.callback<unknown>((resume) => {
+const readRequest = (host: Host): Effect.Effect<unknown, unknown> =>
+  Effect.callback<unknown, unknown>((resume) => {
     const input: string[] = [];
     let done = false;
     let release = (): void => undefined;
@@ -36,17 +36,27 @@ const readRequest = (host: Host): Effect.Effect<unknown> =>
       done = true;
       release();
     };
-    release = host.onStdinLine((line) => {
-      if (done) return;
-      input.push(line);
-      try {
-        const value: unknown = JSON.parse(input.join("\n"));
-        finish();
-        resume(Effect.succeed(value));
-      } catch {
-        return;
-      }
-    });
+    release = host.onStdinLine(
+      (line) => {
+        if (done) return;
+        input.push(line);
+        try {
+          const value: unknown = JSON.parse(input.join("\n"));
+          finish();
+          resume(Effect.succeed(value));
+        } catch {
+          return;
+        }
+      },
+      () => {
+        if (done) return;
+        done = true;
+        // Closed stdin without a complete request fails with the parser's own message.
+        resume(
+          Effect.try({ try: (): unknown => JSON.parse(input.join("\n")), catch: (error) => error }),
+        );
+      },
+    );
     if (done) release();
     return Effect.sync(finish);
   });
