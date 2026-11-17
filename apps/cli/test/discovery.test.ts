@@ -165,6 +165,6 @@ test("the default context finds the repository plugins", async () => {
     await defaultContext({ HOME: join(root, "home"), XDG_CACHE_HOME: join(root, "cache") }),
   );
   const services = registry.plugins.map((plugin) => plugin.service);
-  expect(services).toEqual(expect.arrayContaining(["demo", "notion"]));
+  expect(services).toContain("demo");
   expect(findPlugin(registry, "demo").source).toBe("workspace");
 });

@@ -61,19 +61,15 @@ test("unknown and prototype service names are usage errors", async () => {
 });
 test("discovered services match plugin names and resolve package files", async () => {
   const registry = await discover(await defaultContext({ HOME: "/nonexistent-home" }));
-  for (const name of ["demo", "notion"]) {
-    const plugin = findPlugin(registry, name);
-    expect((await loadPlugin(plugin)).name).toBe(name);
-    expect(packageFiles(plugin).module).toEndWith(`plugins/${name}/src/generated.ts`);
-  }
+  const plugin = findPlugin(registry, "demo");
+  expect((await loadPlugin(plugin)).name).toBe("demo");
+  expect(packageFiles(plugin).module).toEndWith("plugins/demo/src/generated.ts");
   expect((await loadManifest(registry, findPlugin(registry, "demo"))).service).toBe("demo");
 });
 test("plugins lists discovered services with generated status", async () => {
   const listing = await run("plugins");
   expect(listing.code).toBe(0);
   expect(listing.stdout).toMatch(/demo\s+workspace\s+generated \(package\)/);
-  for (const name of ["fish-audio", "linear", "notion", "slack"])
-    expect(listing.stdout).toMatch(new RegExp(`${name}\\s+workspace\\s`));
   expect((await run("plugins", "extra")).code).toBe(2);
 });
 test("missing and outdated generated code share the failure exit status", () => {

@@ -52,6 +52,8 @@ Per-tool input types, such as `DemoEchoInput`, are exported for type references.
 3. Create the default export with `definePlugin` from `@mcp-cli/core`. Its `name` must match `service`.
 4. Run `bun run generate <service>` to generate static definitions.
 5. Run `bun run cli plugins` to check discovery and generation status.
+6. Test command mappings in `plugins/<service>/test` with `recordingPorts` from `@mcp-cli/runtime/testing`.
+   Declare every imported workspace package in `devDependencies` so Turborepo reruns the tests when it changes.
 
 Do not add plugin dependencies to the CLI package. The CLI discovers marked packages in these locations:
 

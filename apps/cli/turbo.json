@@ -6,7 +6,6 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/plugins/*/package.json",
-        "$TURBO_ROOT$/plugins/*/README.md",
         "$TURBO_ROOT$/plugins/*/src/**"
       ]
     },
@@ -14,7 +13,6 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/plugins/*/package.json",
-        "$TURBO_ROOT$/plugins/*/README.md",
         "$TURBO_ROOT$/plugins/*/src/**"
       ]
     }
