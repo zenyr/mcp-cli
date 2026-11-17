@@ -57,4 +57,13 @@ test("plugin formatting covers named and raw calls while JSON preserves the enve
     ),
   ).toBe(0);
   expect(output.pop()).toBe("original");
+  expect(
+    await runService(
+      { ...plugin, formatResult: (value, hostFormat) => `${hostFormat(value)}\nextra` },
+      manifest,
+      ["message", "echo", "--text", "x"],
+      dependencies,
+    ),
+  ).toBe(0);
+  expect(output.pop()).toBe("original\nextra");
 });

@@ -228,8 +228,9 @@ const runStaticService = async (
         })
       : { result: await executor.callTool(command?.name ?? "", input) };
     const text =
-      (!json ? plugin.formatResult?.(outcome.result) : undefined) ??
-      formatResult(outcome.result, json);
+      (!json
+        ? plugin.formatResult?.(outcome.result, (result) => formatResult(result, false))
+        : undefined) ?? formatResult(outcome.result, json);
     if (outcome.result.isError && !json) dependencies.io.writeError(text);
     else dependencies.io.write(text);
     return outcome.exitCode ?? (outcome.result.isError ? 1 : 0);

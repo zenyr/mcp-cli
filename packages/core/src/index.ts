@@ -123,8 +123,11 @@ export type ServicePlugin = {
   /** Removes service-specific account data before tool definitions are persisted. */
   sanitizeTools?: (tools: ToolDefinition[]) => ToolDefinition[];
   beforeCall?: (command: CommandSpec, input: Record<string, unknown>) => Promise<void>;
-  /** Formats plain-text results; undefined preserves host output and --json always bypasses it. */
-  formatResult?: (result: ToolResult) => string | undefined;
+  /** Formats plain-text results with access to host formatting; undefined keeps host output, and --json bypasses it. */
+  formatResult?: (
+    result: ToolResult,
+    hostFormat: (result: ToolResult) => string,
+  ) => string | undefined;
   /** Uploads one local file through the given ports and returns the URL the tool should receive. */
   uploadFile?: (file: LocalFile, context: UploadContext) => Promise<string>;
 };
