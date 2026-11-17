@@ -50,6 +50,40 @@ const commentRanges = (source: ts.SourceFile): ts.CommentRange[] => {
   return [...seen.values()];
 };
 
+// CLI code reaches process state only through the CliHost implementation and the bootstrap files listed here.
+const hostBoundary = /(?:^|\/)apps\/cli\/src\/(?!(?:host|main|secret|marketplace\/scaffold)\.ts$)/;
+const processMembers = new Set([
+  "env",
+  "stdin",
+  "stdout",
+  "stderr",
+  "cwd",
+  "once",
+  "on",
+  "exit",
+  "exitCode",
+  "argv",
+]);
+const consoleMembers = new Set(["log", "error", "warn", "info"]);
+const ambientAccess = (node: ts.Node): boolean => {
+  if (!ts.isPropertyAccessExpression(node) || !ts.isIdentifier(node.expression)) return false;
+  const parent = node.parent;
+  // The plugin runtime bootstrap hands its entry module a fresh argv.
+  if (
+    node.name.text === "argv" &&
+    ts.isBinaryExpression(parent) &&
+    parent.left === node &&
+    parent.operatorToken.kind === ts.SyntaxKind.EqualsToken
+  )
+    return false;
+  const [owner, member] = [node.expression.text, node.name.text];
+  return (
+    (owner === "process" && processMembers.has(member)) ||
+    (owner === "console" && consoleMembers.has(member)) ||
+    (owner === "Bun" && member === "stdin")
+  );
+};
+
 const paths = process.argv.slice(2);
 const files = paths.length ? paths : await collect(".");
 let failures = 0;
@@ -98,7 +132,9 @@ for (const file of files) {
     failures += 1;
   };
   const report = (node: ts.Node, message: string) => reportAt(node.getStart(source), message);
+  const hostOnly = hostBoundary.test(file);
   const visit = (node: ts.Node): void => {
+    if (hostOnly && ambientAccess(node)) report(node, "Read process state through CliHost.");
     if ((ts.isFunctionExpression(node) && !effectGenerator(node)) || hasBody(node))
       report(node, "Use an arrow function.");
     if (ts.isNonNullExpression(node)) report(node, "Non-null assertions are prohibited.");
