@@ -10,7 +10,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Deprecated fallback for tiny files only. Accepts base64 file content, verifies SHA-256 checksum, and uploads it through the MCP worker.\nPrefer `prepare_attachment_upload` plus direct PUT plus `create_attachment_from_upload`.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nCRITICAL: Do not print base64Content and then copy it into this tool call.\nOpaque base64 copied through model-visible text is easy to corrupt.\n\nGenerate base64Content mechanically from the source bytes and pass it through a programmatic argument construction path whenever available. Before calling this tool, verify the values are consistent:\n\nUnix-like shells:\nfile=\"/path/to/file\"\nbase64Content=$(base64 < \"$file\" | tr -d '\\n\\r')\nsha256=$(shasum -a 256 \"$file\" | awk '{print $1}')\ndecodedSha256=$(printf '%s' \"$base64Content\" | base64 -d | shasum -a 256 | awk '{print $1}')\nsize=$(wc -c < \"$file\" | tr -d ' ') # optional; stat can also get file byte size\ndecodedSize=$(printf '%s' \"$base64Content\" | base64 -d | wc -c | tr -d ' ')\n\nPowerShell:\n$file = 'C:\\path\\to\\file'\n$bytes = [IO.File]::ReadAllBytes($file)\n$base64Content = [Convert]::ToBase64String($bytes)\n$sha256 = (Get-FileHash -Algorithm SHA256 -Path $file).Hash.ToLower()\n$size = $bytes.Length # optional\n$decoded = [Convert]::FromBase64String($base64Content)\n$decodedStream = [IO.MemoryStream]::new($decoded)\n$decodedSha256 = (Get-FileHash -Algorithm SHA256 -InputStream $decodedStream).Hash.ToLower()\n$decodedSize = $decoded.Length\n\ndecodedSha256 must equal sha256. If you pass size, decodedSize must equal size.\nPass `sha256`. Passing `size` is optional, but recommended for clearer mismatch errors.",
+      "description": "Deprecated fallback for tiny files only. Accepts base64 file content, verifies SHA-256 checksum, and uploads it through the MCP worker.\nPrefer `prepare_attachment_upload` plus direct PUT plus `create_attachment_from_upload`.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. To embed a file in Markdown without adding it to an issue's Resources, use prepare_file_upload instead. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nCRITICAL: Do not print base64Content and then copy it into this tool call.\nOpaque base64 copied through model-visible text is easy to corrupt.\n\nGenerate base64Content mechanically from the source bytes and pass it through a programmatic argument construction path whenever available. Before calling this tool, verify the values are consistent:\n\nUnix-like shells:\nfile=\"/path/to/file\"\nbase64Content=$(base64 < \"$file\" | tr -d '\\n\\r')\nsha256=$(shasum -a 256 \"$file\" | awk '{print $1}')\ndecodedSha256=$(printf '%s' \"$base64Content\" | base64 -d | shasum -a 256 | awk '{print $1}')\nsize=$(wc -c < \"$file\" | tr -d ' ') # optional; stat can also get file byte size\ndecodedSize=$(printf '%s' \"$base64Content\" | base64 -d | wc -c | tr -d ' ')\n\nPowerShell:\n$file = 'C:\\path\\to\\file'\n$bytes = [IO.File]::ReadAllBytes($file)\n$base64Content = [Convert]::ToBase64String($bytes)\n$sha256 = (Get-FileHash -Algorithm SHA256 -Path $file).Hash.ToLower()\n$size = $bytes.Length # optional\n$decoded = [Convert]::FromBase64String($base64Content)\n$decodedStream = [IO.MemoryStream]::new($decoded)\n$decodedSha256 = (Get-FileHash -Algorithm SHA256 -InputStream $decodedStream).Hash.ToLower()\n$decodedSize = $decoded.Length\n\ndecodedSha256 must equal sha256. If you pass size, decodedSize must equal size.\nPass `sha256`. Passing `size` is optional, but recommended for clearer mismatch errors.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -69,7 +69,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Link an already-uploaded Linear assetUrl to an existing issue as an attachment.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nUse this only after:\n1. prepare_attachment_upload returned an assetUrl and uploadRequest.\n2. The client successfully PUT raw file bytes to uploadRequest.url.\n\nThis tool does not upload file content. It only creates the Linear attachment row.\nIf the direct upload failed or the signed URL expired, rerun prepare_attachment_upload and upload again.",
+      "description": "Link an already-uploaded Linear assetUrl to an existing issue as an attachment.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. To embed a file in Markdown without adding it to an issue's Resources, use prepare_file_upload instead. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nUse this only after:\n1. prepare_attachment_upload returned an assetUrl and uploadRequest.\n2. The client successfully PUT raw file bytes to uploadRequest.url.\n\nThis tool does not upload file content. It only creates the Linear attachment row.\nIf the direct upload failed or the signed URL expired, rerun prepare_attachment_upload and upload again.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1088,7 +1088,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List comments on a Linear issue, project, initiative, document, project milestone, or project/initiative status update. Provide exactly one of `issueId`, `projectId`, `initiativeId`, `documentId`, `milestoneId`, or `statusUpdateId`. For issues, projects, and initiatives this returns both top-level discussion threads and inline description comments. Inline (anchored) comments carry a non-null `quotedText` set to the snippet of description text they reference. Returned comments include `author` and nullable `onBehalfOf`; when set, `onBehalfOf` identifies the user the agent author acted for. Files uploaded in comment bodies are returned in `attachments` with titles and download URLs, not issue attachment IDs. Signed upload URLs expire after five minutes; call list_comments again to refresh them. Download documents using these URLs and process them with your own file tools.",
+      "description": "List comments on a Linear issue, project, initiative, document, project milestone, or project/initiative status update. Provide exactly one of `issueId`, `projectId`, `initiativeId`, `documentId`, `milestoneId`, or `statusUpdateId`. `statusUpdateType` applies only to `statusUpdateId`; omit it for every other parent. For issues, projects, and initiatives this returns both top-level discussion threads and inline description comments. Inline (anchored) comments carry a non-null `quotedText` set to the snippet of description text they reference. Returned comments include `author` and nullable `onBehalfOf`; when set, `onBehalfOf` identifies the user the agent author acted for. Files uploaded in comment bodies are returned in `attachments` with titles and download URLs, not issue attachment IDs. Signed upload URLs expire after five minutes; call list_comments again to refresh them. Download documents using these URLs and process them with your own file tools.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1137,7 +1137,7 @@ export const manifest = {
             "type": "string"
           },
           "statusUpdateType": {
-            "description": "Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Only valid together with `statusUpdateId`; omit to check both project and initiative status updates.",
+            "description": "Set only together with `statusUpdateId`; omit for issue, project, initiative, document, and milestone comments. Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Omit to check both project and initiative status updates.",
             "enum": [
               "project",
               "initiative"
@@ -1213,7 +1213,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List customer needs (customer requests) for an issue, project, or initiative. Provide exactly one of `issue`, `project`, or `initiative`. Project results include requests linked to the project's issues; initiative results include requests on projects in the initiative or any of its sub-initiatives, and on their issues. Returns requests on closed work too; each need includes its issue's workflow state and its project's status so callers can filter. Paginated; pass `cursor` from the previous page to fetch the next.",
+      "description": "List accessible customer needs (customer requests), including unlinked requests. Optionally provide one of `issue`, `project`, or `initiative` to scope results. Project results include requests linked to the project's issues; initiative results include requests on projects in the initiative or any of its sub-initiatives, and on their issues. Returns requests on closed work too; each need includes its issue's workflow state and its project's status so callers can filter. Paginated; pass `cursor` from the previous page to fetch the next.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1350,7 +1350,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "teamId": {
-            "description": "Team UUID from list_teams or get_team; names and keys are not accepted",
+            "description": "Team name, key, or ID",
             "type": "string"
           },
           "type": {
@@ -1448,7 +1448,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List documents in the user's Linear workspace",
+      "description": "List or search documents in the user's Linear workspace by title and content",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1516,7 +1516,7 @@ export const manifest = {
             "type": "string"
           },
           "query": {
-            "description": "Search query",
+            "description": "Search document titles and content. Accepts keywords or a natural-language description; results are ordered by relevance",
             "type": "string"
           },
           "teamId": {
@@ -1539,7 +1539,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List available initiative labels in the Linear workspace. A retired label carries `retiredAt` and cannot be applied to new initiatives.",
+      "description": "List available initiative labels in the Linear workspace. Pass `includeGroups` to include groups, which return `groupType`; child labels return their `parent` and `parentGroupType`. A retired label carries `retiredAt` and cannot be applied to new initiatives.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -1795,6 +1795,10 @@ export const manifest = {
               "null"
             ]
           },
+          "completedAt": {
+            "description": "Completed after: ISO-8601 date/duration (e.g., -P1D). Excludes issues that are not completed",
+            "type": "string"
+          },
           "createdAt": {
             "description": "Created after: ISO-8601 date/duration (e.g., -P1D)",
             "type": "string"
@@ -1969,7 +1973,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List available project labels in a Linear workspace or team. Returns workspace labels by default; pass `team` to also include that team's labels. A team-scoped label carries a `team` field; different teams can hold same-named labels, so check it before acting on an ID. A retired label carries `retiredAt` and cannot be applied to new projects.",
+      "description": "List available project labels in a Linear workspace or team. Returns workspace labels by default; pass `team` to also include that team's labels. Pass `includeGroups` to include groups, which return `groupType`; child labels return their `parent` and `parentGroupType`. A team-scoped label carries a `team` field; different teams can hold same-named labels, so check it before acting on an ID. A retired label carries `retiredAt` and cannot be applied to new projects.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -2505,7 +2509,7 @@ export const manifest = {
             "type": "string"
           },
           "team": {
-            "description": "Team name or ID. Only return members of this team; omit to search the workspace",
+            "description": "Team name, key, or ID. Only return members of this team; omit to search the workspace",
             "type": "string"
           }
         },
@@ -2595,7 +2599,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Prepare a direct Linear file upload for an existing issue.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nWorkflow:\n1. Call this tool with issue, filename, contentType, and size.\n2. Upload raw bytes with PUT to uploadRequest.url outside MCP.\n3. All headers in uploadRequest.headers are part of the signed request, so send them verbatim.\n4. After PUT succeeds, call create_attachment_from_upload with assetUrl to link it to the issue.\n\nDo not base64-encode or transform the file. Use curl --data-binary @path or fetch(url, { method: 'PUT', body: blob }).\nOmitting or modifying any signed header, including casing, will return HTTP 403.\nThe signed URL must be used within 60 seconds or it will expire.\n\nUpload sequencing:\nPrepare, PUT, and finalize one file before calling this tool for another file.\nDo not batch multiple prepare_attachment_upload calls before starting the PUTs because earlier signed URLs can expire while later files are prepared.\n\nExample:\ncurl -X PUT --data-binary @file.png \\\n  -H \"content-type: image/png\" \\\n  -H \"x-goog-content-length-range: N,N\" \\\n  -H \"cache-control: public, max-age=31536000\" \\\n  -H 'Content-Disposition: attachment; filename=\"file.png\"' \\\n  \"<uploadRequest.url>\"",
+      "description": "Prepare a direct Linear file upload for an existing issue.\nUploaded files appear in the issue's Resources; they are not native Linear Documents. To embed a file in Markdown without adding it to an issue's Resources, use prepare_file_upload instead. For written findings or proposals, prefer updating the issue description or using save_document with issue to create an editable Linear Document, unless the user requests a file. The upload workflow creates the Resources link; do not also add the upload URL to save_issue's links field. To revise a file, upload a replacement. To remove its Resources link, use delete_attachment with the attachment ID returned by get_issue. These tools do not edit uploaded file contents, permanently delete stored files, or inspect or change per-file permissions. Explain these limits when relevant.\n\nWorkflow:\n1. Call this tool with issue, filename, contentType, and size.\n2. Upload raw bytes with PUT to uploadRequest.url outside MCP.\n3. All headers in uploadRequest.headers are part of the signed request, so send them verbatim.\n4. After PUT succeeds, call create_attachment_from_upload with assetUrl to link it to the issue.\n\nDo not base64-encode or transform the file. Use curl --data-binary @path or fetch(url, { method: 'PUT', body: blob }).\nOmitting or modifying any signed header, including casing, will return HTTP 403.\nThe signed URL must be used within 60 seconds or it will expire.\n\nUpload sequencing:\nPrepare, PUT, and finalize one file before calling this tool for another file.\nDo not batch multiple prepare_attachment_upload calls before starting the PUTs because earlier signed URLs can expire while later files are prepared.\n\nExample:\ncurl -X PUT --data-binary @file.png \\\n  -H \"content-type: image/png\" \\\n  -H \"x-goog-content-length-range: N,N\" \\\n  -H \"cache-control: public, max-age=31536000\" \\\n  -H 'Content-Disposition: attachment; filename=\"file.png\"' \\\n  \"<uploadRequest.url>\"",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -2636,6 +2640,42 @@ export const manifest = {
         "type": "object"
       },
       "name": "prepare_attachment_upload"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Prepare a direct Linear file upload to embed an image or file in a Markdown field.\nThe file is not added to any issue's Resources. To attach a file to an issue's Resources, use prepare_attachment_upload.\n\nWorkflow:\n1. Call this tool with filename, contentType, and size.\n2. Upload raw bytes with PUT to uploadRequest.url outside MCP.\n3. All headers in uploadRequest.headers are part of the signed request, so send them verbatim.\n4. After PUT succeeds, put markdown (or assetUrl) in the body of save_diff_comment, update_diff, submit_diff_review, save_comment, save_document, save_project, or another Markdown field.\n   For submit_diff_evidence, use assetUrl as an attachment url instead.\n\nDo not base64-encode or transform the file. Use curl --data-binary @path or fetch(url, { method: 'PUT', body: blob }).\nOmitting or modifying any signed header, including casing, will return HTTP 403.\nThe signed URL must be used within 60 seconds or it will expire.\n\nUpload sequencing:\nPrepare and PUT one file before calling this tool for another file.\nDo not batch multiple prepare_file_upload calls before starting the PUTs because earlier signed URLs can expire while later files are prepared.\n\nExample:\ncurl -X PUT --data-binary @file.png \\\n  -H \"content-type: image/png\" \\\n  -H \"x-goog-content-length-range: N,N\" \\\n  -H \"cache-control: public, max-age=31536000\" \\\n  -H 'Content-Disposition: attachment; filename=\"file.png\"' \\\n  \"<uploadRequest.url>\"",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "contentType": {
+            "description": "MIME type, e.g. image/png or application/pdf",
+            "type": "string"
+          },
+          "filename": {
+            "description": "Filename for the upload, e.g. screenshot.png",
+            "type": "string"
+          },
+          "size": {
+            "description": "Exact file size in bytes. Must be smaller than 2 GB.",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "filename",
+          "contentType",
+          "size"
+        ],
+        "type": "object"
+      },
+      "name": "prepare_file_upload"
     },
     {
       "annotations": {
@@ -2818,13 +2858,13 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Create or update a comment on a Linear issue, project, initiative, document, project milestone, or project/initiative status update. If `id` is provided, updates the existing comment; otherwise creates a new one. To start a new thread, pass `body` and exactly one of `issueId`, `projectId`, `initiativeId`, `documentId`, `milestoneId`, or `statusUpdateId` — comments on issues/projects/initiatives become top-level discussion threads; comments on documents/milestones become description comments. A status update holds a single thread, so a comment on an update that already has one is added to it as a reply. To reply to an existing thread, pass `parentId` and `body`; the reply inherits the parent's thread type, so no entity reference is needed. Parent reference fields are ignored when `id` or `parentId` is provided (`statusUpdateType` is rejected instead).",
+      "description": "Create or update a comment on a Linear issue, project, initiative, document, project milestone, or project/initiative status update. If `id` is provided, updates the existing comment; otherwise creates a new one. To start a new thread, pass `body` and exactly one of `issueId`, `projectId`, `initiativeId`, `documentId`, `milestoneId`, or `statusUpdateId` (`statusUpdateType` applies only to `statusUpdateId`; omit it for every other parent) — comments on issues/projects/initiatives become top-level discussion threads; comments on documents/milestones become description comments. A status update holds a single thread, so a comment on an update that already has one is added to it as a reply. To reply to an existing thread, pass `parentId` and `body`; the reply inherits the parent's thread type, so no entity reference is needed. Parent reference fields are ignored when `id` or `parentId` is provided (`statusUpdateType` is rejected instead). A new top-level comment starts a separate Linear thread and is not posted to a synced external thread. To post in a thread synced with Jira, Slack, or another service (for example, when asked to comment on the Jira thread), call `list_comments` on the issue, project, initiative, or status update that owns the thread. For project or initiative status updates, use `statusUpdateId`. Find the root comment (null `parentId`) whose body says the thread is synced with that service, and pass that root's `id` as `parentId`. When several threads match, such as an issue synced with more than one Jira issue, choose by the external link in the root's body. If no matching synced thread exists, do not post a top-level comment instead; report that no synced thread was found.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
         "properties": {
           "body": {
-            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)",
+            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). To embed an image or file, upload it with prepare_file_upload and insert the returned markdown",
             "type": "string"
           },
           "documentId": {
@@ -2848,7 +2888,7 @@ export const manifest = {
             "type": "string"
           },
           "parentId": {
-            "description": "Parent comment ID (for replies, only when creating)",
+            "description": "Parent comment ID (for replies, only when creating). To post in a thread synced with an external service such as Jira, pass the ID of that thread's root comment",
             "type": "string"
           },
           "projectId": {
@@ -2860,7 +2900,7 @@ export const manifest = {
             "type": "string"
           },
           "statusUpdateType": {
-            "description": "Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Only valid together with `statusUpdateId`; omit to check both project and initiative status updates.",
+            "description": "Set only together with `statusUpdateId`; omit for issue, project, initiative, document, and milestone comments. Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Omit to check both project and initiative status updates.",
             "enum": [
               "project",
               "initiative"
@@ -3005,7 +3045,7 @@ export const manifest = {
             "type": "string"
           },
           "body": {
-            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences",
+            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To embed an image or file, upload it with prepare_file_upload and insert the returned markdown",
             "minLength": 1,
             "type": "string"
           },
@@ -3056,7 +3096,7 @@ export const manifest = {
             "type": "string"
           },
           "content": {
-            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)",
+            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). To embed an image or file, upload it with prepare_file_upload and insert the returned markdown",
             "type": "string"
           },
           "cycle": {
@@ -3504,6 +3544,14 @@ export const manifest = {
               "string",
               "null"
             ]
+          },
+          "groupType": {
+            "description": "Selection mode for label groups. Defaults to singleSelect when creating; omit to keep it unchanged when updating",
+            "enum": [
+              "singleSelect",
+              "multiSelect"
+            ],
+            "type": "string"
           },
           "id": {
             "description": "Label name or ID. If provided, updates the existing label",
@@ -4050,7 +4098,7 @@ export const manifest = {
             "type": "string"
           },
           "description": {
-            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)",
+            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). To embed an image or file, upload it with prepare_file_upload and insert the returned markdown",
             "type": "string"
           },
           "icon": {
@@ -4375,6 +4423,14 @@ export const manifest = {
               "string",
               "null"
             ]
+          },
+          "groupType": {
+            "description": "Selection mode for label groups. Defaults to singleSelect when creating; omit to keep it unchanged when updating",
+            "enum": [
+              "singleSelect",
+              "multiSelect"
+            ],
+            "type": "string"
           },
           "id": {
             "description": "Label name or ID. If provided, updates the existing label",
@@ -4807,7 +4863,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "body": {
-            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. Required when requesting changes or commenting",
+            "description": "Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To embed an image or file, upload it with prepare_file_upload and insert the returned markdown. Required when requesting changes or commenting",
             "minLength": 1,
             "type": "string"
           },
@@ -4961,7 +5017,7 @@ export const manifest = {
             "type": "array"
           },
           "description": {
-            "description": "New description as Markdown; an empty string clears it",
+            "description": "New description as Markdown; an empty string clears it. To embed an image or file, upload it with prepare_file_upload and insert the returned markdown",
             "type": "string"
           },
           "removedIssueLinks": {
@@ -5055,6 +5111,27 @@ export const manifest = {
         "type": "object"
       },
       "name": "update_diff"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Retrieve the authenticated user, the connected workspace, and how this connection reaches Linear",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "description": "The skill or integration that makes the call, when its instructions name one. Omit otherwise",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "whoami"
     }
   ],
   "version": 2
@@ -5543,7 +5620,7 @@ projectId?: string
  */
 statusUpdateId?: string
 /**
- * Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Only valid together with `statusUpdateId`; omit to check both project and initiative status updates.
+ * Set only together with `statusUpdateId`; omit for issue, project, initiative, document, and milestone comments. Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Omit to check both project and initiative status updates.
  */
 statusUpdateType?: ("project" | "initiative")
 }
@@ -5665,7 +5742,7 @@ updatedAt?: string
 
 export interface ListCyclesInput {
 /**
- * Team UUID from list_teams or get_team; names and keys are not accepted
+ * Team name, key, or ID
  */
 teamId: string
 /**
@@ -5755,7 +5832,7 @@ orderBy?: ("createdAt" | "updatedAt")
  */
 projectId?: string
 /**
- * Search query
+ * Search document titles and content. Accepts keywords or a natural-language description; results are ordered by relevance
  */
 query?: string
 /**
@@ -5905,6 +5982,10 @@ export interface ListIssuesInput {
  * User ID, name, email, or "me"
  */
 assignee?: (string | null)
+/**
+ * Completed after: ISO-8601 date/duration (e.g., -P1D). Excludes issues that are not completed
+ */
+completedAt?: string
 /**
  * Created after: ISO-8601 date/duration (e.g., -P1D)
  */
@@ -6321,7 +6402,7 @@ orderBy?: ("createdAt" | "updatedAt")
  */
 query?: string
 /**
- * Team name or ID. Only return members of this team; omit to search the workspace
+ * Team name, key, or ID. Only return members of this team; omit to search the workspace
  */
 team?: string
 }
@@ -6379,6 +6460,21 @@ subtitle?: string
 title?: string
 }
 
+export interface PrepareFileUploadInput {
+/**
+ * MIME type, e.g. image/png or application/pdf
+ */
+contentType: string
+/**
+ * Filename for the upload, e.g. screenshot.png
+ */
+filename: string
+/**
+ * Exact file size in bytes. Must be smaller than 2 GB.
+ */
+size: number
+}
+
 export interface ResolveDiffThreadInput {
 /**
  * True to resolve the thread; false to reopen it
@@ -6434,7 +6530,7 @@ id: string
 
 export interface SaveCommentInput {
 /**
- * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)
+ * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). To embed an image or file, upload it with prepare_file_upload and insert the returned markdown
  */
 body: string
 /**
@@ -6458,7 +6554,7 @@ issueId?: string
  */
 milestoneId?: string
 /**
- * Parent comment ID (for replies, only when creating)
+ * Parent comment ID (for replies, only when creating). To post in a thread synced with an external service such as Jira, pass the ID of that thread's root comment
  */
 parentId?: string
 /**
@@ -6470,7 +6566,7 @@ projectId?: string
  */
 statusUpdateId?: string
 /**
- * Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Only valid together with `statusUpdateId`; omit to check both project and initiative status updates.
+ * Set only together with `statusUpdateId`; omit for issue, project, initiative, document, and milestone comments. Type of status update named by `statusUpdateId`, as returned by `get_status_updates`. Omit to check both project and initiative status updates.
  */
 statusUpdateType?: ("project" | "initiative")
 }
@@ -6557,7 +6653,7 @@ anchor?: {
  */
 anchorContent?: string
 /**
- * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences
+ * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To embed an image or file, upload it with prepare_file_upload and insert the returned markdown
  */
 body: string
 /**
@@ -6588,7 +6684,7 @@ export interface SaveDocumentInput {
  */
 color?: string
 /**
- * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)
+ * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). To embed an image or file, upload it with prepare_file_upload and insert the returned markdown
  */
 content?: string
 /**
@@ -6968,6 +7064,10 @@ color?: string
  */
 description?: (string | null)
 /**
+ * Selection mode for label groups. Defaults to singleSelect when creating; omit to keep it unchanged when updating
+ */
+groupType?: ("singleSelect" | "multiSelect")
+/**
  * Label name or ID. If provided, updates the existing label
  */
 id?: string
@@ -7327,7 +7427,7 @@ addTeams?: string[]
  */
 color?: string
 /**
- * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe)
+ * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To mention a user, use @displayName (e.g., @johndoe). To embed an image or file, upload it with prepare_file_upload and insert the returned markdown
  */
 description?: string
 /**
@@ -7560,6 +7660,10 @@ color?: string
  * Label description. Null to clear it
  */
 description?: (string | null)
+/**
+ * Selection mode for label groups. Defaults to singleSelect when creating; omit to keep it unchanged when updating
+ */
+groupType?: ("singleSelect" | "multiSelect")
 /**
  * Label name or ID. If provided, updates the existing label
  */
@@ -7858,7 +7962,7 @@ user: string
 
 export interface SubmitDiffReviewInput {
 /**
- * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. Required when requesting changes or commenting
+ * Content as Markdown. Do not escape the string — use literal newlines and special characters, not escape sequences. To embed an image or file, upload it with prepare_file_upload and insert the returned markdown. Required when requesting changes or commenting
  */
 body?: string
 /**
@@ -7946,7 +8050,7 @@ externalUserId: string
 githubTeamId: string
 }))[]]
 /**
- * New description as Markdown; an empty string clears it
+ * New description as Markdown; an empty string clears it. To embed an image or file, upload it with prepare_file_upload and insert the returned markdown
  */
 description?: string
 /**
@@ -8005,4 +8109,11 @@ title?: string
  * Linear review URL, diff slug, pull request ID, Linear full identifier, or GitHub PR URL
  */
 urlOrId: string
+}
+
+export interface WhoamiInput {
+/**
+ * The skill or integration that makes the call, when its instructions name one. Omit otherwise
+ */
+source?: string
 }
