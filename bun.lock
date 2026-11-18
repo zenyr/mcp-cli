@@ -113,6 +113,16 @@
         "ajv-formats": "^3.0.1",
       },
     },
+    "plugins/claudia": {
+      "name": "@mcp-cli/plugin-claudia",
+      "version": "0.1.0",
+      "dependencies": {
+        "@mcp-cli/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
+      },
+    },
     "plugins/demo": {
       "name": "@mcp-cli/plugin-demo",
       "version": "0.1.0",
@@ -232,6 +242,8 @@
     "@mcp-cli/mcp": ["@mcp-cli/mcp@workspace:packages/mcp"],
 
     "@mcp-cli/mem": ["@mcp-cli/mem@workspace:apps/mem"],
+
+    "@mcp-cli/plugin-claudia": ["@mcp-cli/plugin-claudia@workspace:plugins/claudia"],
 
     "@mcp-cli/plugin-demo": ["@mcp-cli/plugin-demo@workspace:plugins/demo"],
 

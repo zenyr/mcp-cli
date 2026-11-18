@@ -12,6 +12,7 @@ independent releases, managed runtimes, and local development.
 - [Slack](slack/README.md): messaging tools and token settings
 - [Fish Audio](fish-audio/README.md): speech generation, transcription, and media operations
 - [Fast Semble](fast-semble/README.md): local code search through a reusable Semble MCP session
+- [Claudia](claudia/README.md): read-only gallery, character canon, and filmmaking guides without an account
 - `demo` and `demo-auth`: hidden plugins for tests and host contract checks. Set `MCP_CLI_INTERNAL_PLUGINS=1` to use them.
   `demo` is a local stdio MCP server. `demo-auth` covers API key alternates, `AuthSupport` and a Web API.
 

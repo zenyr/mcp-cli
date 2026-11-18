@@ -3,6 +3,7 @@
   "private": true,
   "license": "MIT",
   "bin": {
+    "claudia": "bin/claudia.ts",
     "fast-semble": "bin/fast-semble.ts",
     "fish-audio": "bin/fish-audio.ts",
     "linear": "bin/linear.ts",

@@ -1,0 +1,27 @@
+{
+  "name": "@mcp-cli/plugin-claudia",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./generated": "./src/generated.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@mcp-cli/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mcp-cli/runtime": "workspace:*"
+  },
+  "mcp-cli": {
+    "plugin": true,
+    "service": "claudia",
+    "bin": "claudia"
+  }
+}
