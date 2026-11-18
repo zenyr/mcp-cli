@@ -46,6 +46,6 @@ Use `--input` or `--input-file` for larger structured inputs.
 - `claudia prompt` is this service's command group. `claudia prompts` lists MCP server prompts.
 - Server responses name MCP tools such as `list_films`. `claudia methods` maps each tool to its command.
 - Plain output replaces image data with a size line. Add `--json` to receive the base64 data.
-- The snapshot keeps `film` and `style` open, so films released after it still work.
+- The snapshot keeps `film`, `style`, `doc`, and `topic` open, so ids released after it still work.
 
 Regenerate the snapshot with `bun run generate claudia`.

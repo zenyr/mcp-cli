@@ -18,7 +18,7 @@ export const manifest = {
           },
           "film": {
             "default": "any",
-            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "framing": {
@@ -132,7 +132,7 @@ export const manifest = {
           },
           "style": {
             "default": "none",
-            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.",
+            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
             "type": "string"
           },
           "wardrobe": {
@@ -240,20 +240,7 @@ export const manifest = {
             "type": "string"
           },
           "topic": {
-            "enum": [
-              "recipe",
-              "start",
-              "consistency",
-              "song",
-              "storyboard",
-              "midjourney",
-              "seedance",
-              "motion",
-              "pipeline",
-              "toolkit",
-              "formats",
-              "failures"
-            ],
+            "description": "Known values: recipe, start, consistency, song, storyboard, midjourney, seedance, motion, pipeline, toolkit, formats, failures.",
             "type": "string"
           }
         },
@@ -334,15 +321,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "doc": {
-            "enum": [
-              "readme",
-              "prompts-midjourney",
-              "prompts-images",
-              "prompts-seedance",
-              "prompts-video",
-              "prompts-suno",
-              "xp-desktop-and-sound"
-            ],
+            "description": "Known values: readme, prompts-midjourney, prompts-images, prompts-seedance, prompts-video, prompts-suno, xp-desktop-and-sound.",
             "type": "string"
           },
           "film": {
@@ -492,7 +471,7 @@ export const manifest = {
         "properties": {
           "film": {
             "default": "any",
-            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "limit": {
@@ -669,7 +648,7 @@ export interface BrowseImagesInput {
  */
 batch?: string
 /**
- * Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
+ * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
  */
 film?: string
 /**
@@ -725,7 +704,7 @@ scene: string
  */
 sings?: boolean
 /**
- * Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.
+ * Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.
  */
 style?: string
 /**
@@ -764,7 +743,10 @@ offset?: number
  * Return only the section whose heading contains these words, e.g. 'lip sync from the song', 'six checkpoints', 'picked by ear', 'the bar map'. Without a match, the reply lists the sections.
  */
 section?: string
-topic: ("recipe" | "start" | "consistency" | "song" | "storyboard" | "midjourney" | "seedance" | "motion" | "pipeline" | "toolkit" | "formats" | "failures")
+/**
+ * Known values: recipe, start, consistency, song, storyboard, midjourney, seedance, motion, pipeline, toolkit, formats, failures.
+ */
+topic: string
 }
 
 export interface GetImageInput {
@@ -788,7 +770,10 @@ export interface GetRecipeInput {
 }
 
 export interface GetRecordInput {
-doc: ("readme" | "prompts-midjourney" | "prompts-images" | "prompts-seedance" | "prompts-video" | "prompts-suno" | "xp-desktop-and-sound")
+/**
+ * Known values: readme, prompts-midjourney, prompts-images, prompts-seedance, prompts-video, prompts-suno, xp-desktop-and-sound.
+ */
+doc: string
 /**
  * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.
  */
@@ -834,7 +819,7 @@ video_model?: ("seedance-2.5" | "grok-imagine" | "grok-imagine-lite")
 
 export interface SearchImagesInput {
 /**
- * Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
+ * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
  */
 film?: string
 limit?: number

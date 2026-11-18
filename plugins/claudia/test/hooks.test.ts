@@ -26,14 +26,16 @@ test("text-only results keep the host format", () => {
   expect(formatResult({ content: [{ type: "text", text: "ok" }] }, hostFormat)).toBeUndefined();
 });
 
-test("film and style ids stay open while other enums stay closed", () => {
+test("film, style, doc and topic ids stay open while other enums stay closed", () => {
   const once = sanitizeTools([
     {
       name: "list_films",
       inputSchema: {
         type: "object",
         properties: {
-          film: { type: "string", enum: ["bliss", "aero"], description: "Which film." },
+          film: { type: "string", enum: ["any", "bliss"], default: "any", description: "Film." },
+          doc: { type: "string", enum: ["readme"] },
+          topic: { type: "string", enum: ["recipe"] },
           style: { type: "string", enum: ["bliss"] },
           size: { type: "string", enum: ["small", "medium"] },
         },
@@ -42,7 +44,9 @@ test("film and style ids stay open while other enums stay closed", () => {
   ]);
   expect(sanitizeTools(once)).toEqual(once);
   expect(once[0]?.inputSchema.properties).toEqual({
-    film: { type: "string", description: "Which film. Known values: bliss, aero." },
+    film: { type: "string", default: "any", description: "Film. Known values: bliss." },
+    doc: { type: "string", description: "Known values: readme." },
+    topic: { type: "string", description: "Known values: recipe." },
     style: { type: "string", description: "Known values: bliss." },
     size: { type: "string", enum: ["small", "medium"] },
   });

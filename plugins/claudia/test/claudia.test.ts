@@ -77,6 +77,10 @@ test.each([
     args: ["film", "list", "--film", "a-film-released-after-the-snapshot"],
     call: { name: "list_films", input: { film: "a-film-released-after-the-snapshot" } },
   },
+  {
+    args: ["film", "record", "get", "--film", "new-film", "--doc", "new-doc"],
+    call: { name: "get_record", input: { film: "new-film", doc: "new-doc" } },
+  },
 ])("flags for $call.name reach the tool unchanged", async ({ args, call }) => {
   const f = recordingPorts();
   expect(await runService(plugin, manifest, [...args], f.ports)).toBe(0);
@@ -93,8 +97,13 @@ const documented = [
 
 test.each(documented)("documented example runs: %s", async (line) => {
   const f = recordingPorts();
-  expect(await runService(plugin, manifest, words(line).slice(1), f.ports)).toBe(0);
+  const args = words(line).slice(1);
+  const flags = args
+    .filter((arg) => arg.startsWith("--") && arg !== "--json")
+    .map((arg) => arg.slice(2).replaceAll("-", "_"));
+  expect(await runService(plugin, manifest, args, f.ports)).toBe(0);
   expect(f.calls).toHaveLength(1);
+  expect(Object.keys(f.calls[0]?.input ?? {}).sort()).toEqual(flags.sort());
 });
 
 test("all public tools are mapped and retain the server's read-only annotation", () => {

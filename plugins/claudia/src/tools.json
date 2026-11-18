@@ -15,7 +15,7 @@
           },
           "film": {
             "default": "any",
-            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "framing": {
@@ -115,7 +115,7 @@
           },
           "style": {
             "default": "none",
-            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.",
+            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
             "type": "string"
           },
           "wardrobe": {
@@ -206,20 +206,7 @@
             "type": "string"
           },
           "topic": {
-            "enum": [
-              "recipe",
-              "start",
-              "consistency",
-              "song",
-              "storyboard",
-              "midjourney",
-              "seedance",
-              "motion",
-              "pipeline",
-              "toolkit",
-              "formats",
-              "failures"
-            ],
+            "description": "Known values: recipe, start, consistency, song, storyboard, midjourney, seedance, motion, pipeline, toolkit, formats, failures.",
             "type": "string"
           }
         },
@@ -293,15 +280,7 @@
         "additionalProperties": false,
         "properties": {
           "doc": {
-            "enum": [
-              "readme",
-              "prompts-midjourney",
-              "prompts-images",
-              "prompts-seedance",
-              "prompts-video",
-              "prompts-suno",
-              "xp-desktop-and-sound"
-            ],
+            "description": "Known values: readme, prompts-midjourney, prompts-images, prompts-seedance, prompts-video, prompts-suno, xp-desktop-and-sound.",
             "type": "string"
           },
           "film": {
@@ -439,7 +418,7 @@
         "properties": {
           "film": {
             "default": "any",
-            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "limit": {
