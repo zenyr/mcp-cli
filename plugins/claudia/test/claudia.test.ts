@@ -83,6 +83,20 @@ test.each([
   expect(f.calls).toEqual([call]);
 });
 
+const words = (line: string): string[] =>
+  [...line.matchAll(/'([^']*)'|"([^"]*)"|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3] ?? "");
+const readme = await Bun.file(new URL("../README.md", import.meta.url)).text();
+const documented = [
+  ...(readme.match(/```sh\n([\s\S]*?)```/)?.[1] ?? "").split("\n"),
+  ...Object.values(plugin.commands ?? {}).flatMap((command) => command.examples ?? []),
+].filter((line) => line.startsWith("claudia "));
+
+test.each(documented)("documented example runs: %s", async (line) => {
+  const f = recordingPorts();
+  expect(await runService(plugin, manifest, words(line).slice(1), f.ports)).toBe(0);
+  expect(f.calls).toHaveLength(1);
+});
+
 test("all public tools are mapped and retain the server's read-only annotation", () => {
   expect(manifest.tools.map((tool) => tool.name).sort()).toEqual(
     Object.keys(plugin.commands ?? {}).sort(),

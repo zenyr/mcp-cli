@@ -27,7 +27,7 @@ test("text-only results keep the host format", () => {
 });
 
 test("film and style ids stay open while other enums stay closed", () => {
-  const [tool] = sanitizeTools([
+  const once = sanitizeTools([
     {
       name: "list_films",
       inputSchema: {
@@ -40,7 +40,8 @@ test("film and style ids stay open while other enums stay closed", () => {
       },
     },
   ]);
-  expect(tool?.inputSchema.properties).toEqual({
+  expect(sanitizeTools(once)).toEqual(once);
+  expect(once[0]?.inputSchema.properties).toEqual({
     film: { type: "string", description: "Which film. Known values: bliss, aero." },
     style: { type: "string", description: "Known values: bliss." },
     size: { type: "string", enum: ["small", "medium"] },

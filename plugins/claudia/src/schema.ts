@@ -1,10 +1,7 @@
-import type { JsonSchema, ToolDefinition } from "@mcp-cli/core";
+import { isRecord, type JsonSchema, type ToolDefinition } from "@mcp-cli/core";
 
 // Film and style ids grow with each release, so the snapshot keeps them as hints instead of a closed enum.
 const OPEN_KEYS = new Set(["film", "style"]);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const openEnum = (schema: Record<string, unknown>): Record<string, unknown> => {
   const { enum: values, ...rest } = schema;
