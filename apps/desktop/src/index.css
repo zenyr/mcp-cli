@@ -82,7 +82,8 @@ body {
 }
 .command-diagram {
   position: relative;
-  height: 560px;
+  flex: 1;
+  min-height: 240px;
   overflow: hidden;
   cursor: grab;
   touch-action: none;
@@ -121,4 +122,48 @@ body {
 .command-diagram .pele-node.selected > :first-child {
   stroke: var(--mantine-primary-color-filled);
   stroke-width: 2.5px;
+}
+.plugin-detail[data-fill] {
+  height: calc(100dvh - var(--app-shell-header-height) - 2 * var(--app-shell-padding));
+  min-height: 480px;
+}
+.plugin-detail[data-fill] .fill-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.command-panes {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.command-tree {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.command-detail {
+  flex: 1;
+  min-width: 0;
+}
+.pane-resize-handle {
+  position: relative;
+  flex-shrink: 0;
+  width: 12px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+.pane-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: calc(50% - 20px);
+  left: 4px;
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  background-color: var(--mantine-color-default-border);
+}
+.pane-resize-handle:where(:hover, :focus-visible, :active)::after {
+  background-color: var(--mantine-primary-color-filled);
 }

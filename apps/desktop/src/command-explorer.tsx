@@ -1,5 +1,6 @@
 import { t, useLocale } from "./i18n";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useElementSize, useLocalStorage } from "@mantine/hooks";
 import {
   ActionIcon,
   Anchor,
@@ -7,7 +8,6 @@ import {
   Breadcrumbs,
   Code,
   CopyButton,
-  Flex,
   Group,
   NavLink,
   Paper,
@@ -21,6 +21,8 @@ import {
 } from "@mantine/core";
 import { IconCheck, IconCopy, IconSearch } from "@tabler/icons-react";
 import type { CommandCatalog, CommandNode } from "@mcp-cli/core";
+import { PaneResizeHandle } from "./pane-resize";
+import { clampPaneWidth, paneWidth } from "./pane-width";
 
 type Select = (path: string[]) => void;
 const key = (path: string[]) => path.join(" ");
@@ -129,6 +131,12 @@ export const CommandExplorer = ({
 }) => {
   useLocale();
   const [query, setQuery] = useState("");
+  const [storedWidth, setStoredWidth] = useLocalStorage({
+    key: "mcp-cli.command-tree-width",
+    defaultValue: paneWidth.initial,
+  });
+  const { ref: panesRef, width: panesWidth } = useElementSize();
+  const treeWidth = panesWidth ? clampPaneWidth(storedWidth, panesWidth) : storedWidth;
   const nodes = useMemo(() => flatten(catalog.root), [catalog]);
   const current = nodes.find((node) => key(node.path) === key(path)) ?? catalog.root;
   // Ancestors of the selection open by default until the user toggles them.
@@ -148,6 +156,8 @@ export const CommandExplorer = ({
         .slice(0, 40)
     : [];
   const command = key([catalog.service, ...current.path]);
+  const detail = useRef<HTMLDivElement>(null);
+  useEffect(() => detail.current?.scrollTo({ top: 0 }), [command]);
   const pick = (next: string[]) => {
     setQuery("");
     setToggled((previous) => {
@@ -158,7 +168,7 @@ export const CommandExplorer = ({
     onSelect(next);
   };
   return (
-    <Stack gap="sm">
+    <Stack gap="sm" className="fill-pane">
       <TextInput
         leftSection={<IconSearch size={16} />}
         placeholder={t("명령, 도구 이름, 설명으로 검색")}
@@ -187,9 +197,9 @@ export const CommandExplorer = ({
           )}
         </Paper>
       )}
-      <Flex gap="md" align="flex-start" direction={{ base: "column", sm: "row" }}>
-        <Paper withBorder w={{ base: "100%", sm: 220 }} style={{ flexShrink: 0 }}>
-          <ScrollArea.Autosize mah={{ base: 220, sm: 560 }} type="auto">
+      <div className="command-panes" ref={panesRef}>
+        <Paper withBorder w={treeWidth} className="command-tree">
+          <ScrollArea h="100%" type="auto">
             <Stack gap={0} p={4}>
               <NavLink
                 label={catalog.service}
@@ -211,58 +221,70 @@ export const CommandExplorer = ({
                 />
               ))}
             </Stack>
-          </ScrollArea.Autosize>
+          </ScrollArea>
         </Paper>
-        <Stack gap="sm" style={{ flex: 1, minWidth: 0 }} w="100%">
-          <Breadcrumbs separatorMargin={4}>
-            {[catalog.service, ...current.path].map((part, index) => (
-              <Anchor
-                key={index}
-                size="sm"
-                ff="monospace"
-                onClick={() => pick(current.path.slice(0, index))}
-              >
-                {part}
-              </Anchor>
-            ))}
-          </Breadcrumbs>
-          <Group gap="xs">
-            <Badge variant="light">{kindLabel(current.kind)}</Badge>
-            {current.tool && current.tool !== key(current.path) && (
-              <Text size="xs" c="dimmed">
-                {t("도구")} <Code>{current.tool}</Code>
-              </Text>
-            )}
-          </Group>
-          <Text size="sm">{current.summary}</Text>
-          <Group gap={4} wrap="nowrap">
-            <Code
-              style={{ flex: 1, overflowX: "auto", whiteSpace: "nowrap" }}
-            >{`${command} --help`}</Code>
-            <Copy value={`${command} --help`} />
-          </Group>
-          {current.children.length > 0 && (
-            <SimpleGrid cols={{ base: 1, md: 2 }} spacing={4} verticalSpacing={4}>
-              {current.children.map((node) => (
-                <NodeRow key={key(node.path)} node={node} onSelect={pick} />
+        <PaneResizeHandle
+          width={treeWidth}
+          label={t("명령 목록 너비 조절")}
+          onResize={(width) => setStoredWidth(clampPaneWidth(width, panesWidth))}
+        />
+        <ScrollArea
+          className="command-detail"
+          type="auto"
+          offsetScrollbars="y"
+          viewportRef={detail}
+        >
+          <Stack gap="sm" pl="xs">
+            <Breadcrumbs separatorMargin={4}>
+              {[catalog.service, ...current.path].map((part, index) => (
+                <Anchor
+                  key={index}
+                  size="sm"
+                  ff="monospace"
+                  onClick={() => pick(current.path.slice(0, index))}
+                >
+                  {part}
+                </Anchor>
               ))}
-            </SimpleGrid>
-          )}
-          <Paper withBorder bg="var(--mantine-color-default-hover)">
-            <Group justify="space-between" px="sm" pt={6}>
-              <Text size="xs" c="dimmed" fw={500}>
-                {t("CLI 도움말")}
-              </Text>
-              <Copy value={current.help} />
+            </Breadcrumbs>
+            <Group gap="xs">
+              <Badge variant="light">{kindLabel(current.kind)}</Badge>
+              {current.tool && current.tool !== key(current.path) && (
+                <Text size="xs" c="dimmed">
+                  {t("도구")} <Code>{current.tool}</Code>
+                </Text>
+              )}
             </Group>
-            <ScrollArea.Autosize mah={420} type="auto">
-              <Text component="pre" className="command-help" px="sm" pb="sm" m={0}>
-                {current.help}
-              </Text>
-            </ScrollArea.Autosize>
-          </Paper>
-        </Stack>
-      </Flex>
+            <Text size="sm">{current.summary}</Text>
+            <Group gap={4} wrap="nowrap">
+              <Code
+                style={{ flex: 1, overflowX: "auto", whiteSpace: "nowrap" }}
+              >{`${command} --help`}</Code>
+              <Copy value={`${command} --help`} />
+            </Group>
+            {current.children.length > 0 && (
+              <SimpleGrid cols={{ base: 1, md: 2 }} spacing={4} verticalSpacing={4}>
+                {current.children.map((node) => (
+                  <NodeRow key={key(node.path)} node={node} onSelect={pick} />
+                ))}
+              </SimpleGrid>
+            )}
+            <Paper withBorder bg="var(--mantine-color-default-hover)">
+              <Group justify="space-between" px="sm" pt={6}>
+                <Text size="xs" c="dimmed" fw={500}>
+                  {t("CLI 도움말")}
+                </Text>
+                <Copy value={current.help} />
+              </Group>
+              <ScrollArea scrollbars="x" type="auto">
+                <Text component="pre" className="command-help" px="sm" pb="sm" m={0}>
+                  {current.help}
+                </Text>
+              </ScrollArea>
+            </Paper>
+          </Stack>
+        </ScrollArea>
+      </div>
     </Stack>
   );
 };

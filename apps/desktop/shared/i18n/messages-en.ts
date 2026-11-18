@@ -1,5 +1,6 @@
 export const messages = {
   "사이드바 너비 조절": "Resize sidebar",
+  "명령 목록 너비 조절": "Resize command list",
   "사이드바 접기": "Collapse sidebar",
   "사이드바 펼치기": "Expand sidebar",
   뒤로가기: "Back",

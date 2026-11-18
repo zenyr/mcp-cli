@@ -75,7 +75,7 @@ export const CommandDiagram = ({
       );
   }, [diagram, selectedId]);
   return (
-    <Stack gap="sm">
+    <Stack gap="sm" className="fill-pane">
       <Group justify="space-between">
         <SegmentedControl
           size="xs"

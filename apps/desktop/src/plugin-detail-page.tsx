@@ -90,8 +90,9 @@ export const PluginDetailPage = () => {
   const inactive = (
     <Alert color="gray">{t("플러그인을 활성화하면 명령과 인증을 확인할 수 있습니다.")}</Alert>
   );
+  const fill = active && (tab === "commands" || tab === "diagram");
   return (
-    <Stack gap="md">
+    <Stack gap="md" className="plugin-detail" data-fill={fill || undefined}>
       <Anchor component={Link} to="/plugins" size="sm">
         <Group gap={2}>
           <IconChevronLeft size={14} />
@@ -128,6 +129,7 @@ export const PluginDetailPage = () => {
           value={tab}
           onChange={(value) => isTab(value) && go({ tab: value })}
           keepMounted={false}
+          className="fill-pane"
         >
           <Tabs.List>
             {plugin && <Tabs.Tab value="overview">{t("개요")}</Tabs.Tab>}
@@ -135,7 +137,7 @@ export const PluginDetailPage = () => {
             <Tabs.Tab value="commands">{t("명령")}</Tabs.Tab>
             <Tabs.Tab value="diagram">{t("구조도")}</Tabs.Tab>
           </Tabs.List>
-          <Stack pt="md">
+          <Stack pt="md" className="fill-pane">
             {tab === "overview" && plugin && <Overview plugin={plugin} />}
             {tab === "auth" && (active && details ? <ServiceAuth service={details} /> : inactive)}
             {(tab === "commands" || tab === "diagram") && !active && inactive}
