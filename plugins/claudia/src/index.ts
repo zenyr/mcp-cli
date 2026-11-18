@@ -65,8 +65,8 @@ export default definePlugin({
     "film record": "Production documents of one film",
     shot: "Video shot prompts",
     prompt: "Image and video prompt building and checks",
-    image: "Gallery image search, browsing and prompts",
-    "agent-skill": "Claudia's own agent skill, separate from `claudia skill`",
+    image: "Gallery image search, browsing and original prompts",
+    "agent-skill": "Claudia's own agent skill, separate from claudia skill",
   },
   quickstart: [
     { command: "recipe get", summary: "Start with the current filmmaking method" },

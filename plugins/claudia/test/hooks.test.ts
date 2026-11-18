@@ -44,7 +44,7 @@ test("film, style, doc and topic ids stay open while other enums stay closed", (
   ]);
   expect(sanitizeTools(once)).toEqual(once);
   expect(once[0]?.inputSchema.properties).toEqual({
-    film: { type: "string", default: "any", description: "Film. Known values: bliss." },
+    film: { type: "string", default: "any", description: "Film. Known values: any, bliss." },
     doc: { type: "string", description: "Known values: readme." },
     topic: { type: "string", description: "Known values: recipe." },
     style: { type: "string", description: "Known values: bliss." },

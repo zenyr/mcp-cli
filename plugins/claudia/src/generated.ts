@@ -18,7 +18,7 @@ export const manifest = {
           },
           "film": {
             "default": "any",
-            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "framing": {
@@ -132,7 +132,7 @@ export const manifest = {
           },
           "style": {
             "default": "none",
-            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
+            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.",
             "type": "string"
           },
           "wardrobe": {
@@ -471,7 +471,7 @@ export const manifest = {
         "properties": {
           "film": {
             "default": "any",
-            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "limit": {
@@ -648,7 +648,7 @@ export interface BrowseImagesInput {
  */
 batch?: string
 /**
- * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
+ * Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
  */
 film?: string
 /**
@@ -704,7 +704,7 @@ scene: string
  */
 sings?: boolean
 /**
- * Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.
+ * Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.
  */
 style?: string
 /**
@@ -819,7 +819,7 @@ video_model?: ("seedance-2.5" | "grok-imagine" | "grok-imagine-lite")
 
 export interface SearchImagesInput {
 /**
- * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
+ * Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
  */
 film?: string
 limit?: number

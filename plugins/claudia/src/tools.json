@@ -15,7 +15,7 @@
           },
           "film": {
             "default": "any",
-            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "framing": {
@@ -115,7 +115,7 @@
           },
           "style": {
             "default": "none",
-            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
+            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.",
             "type": "string"
           },
           "wardrobe": {
@@ -418,7 +418,7 @@
         "properties": {
           "film": {
             "default": "any",
-            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "limit": {

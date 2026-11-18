@@ -6,7 +6,7 @@ const OPEN_KEYS = new Set(["film", "style", "doc", "topic"]);
 const openEnum = (schema: Record<string, unknown>): Record<string, unknown> => {
   const { enum: values, ...rest } = schema;
   if (!Array.isArray(values)) return schema;
-  const known = `Known values: ${values.filter((value) => value !== rest.default).join(", ")}.`;
+  const known = `Known values: ${values.join(", ")}.`;
   const description = typeof rest.description === "string" ? `${rest.description} ${known}` : known;
   return { ...rest, description };
 };
