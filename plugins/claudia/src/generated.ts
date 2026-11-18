@@ -18,18 +18,7 @@ export const manifest = {
           },
           "film": {
             "default": "any",
-            "enum": [
-              "any",
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero"
-            ],
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "framing": {
@@ -143,20 +132,7 @@ export const manifest = {
           },
           "style": {
             "default": "none",
-            "description": "Which film's family of style words to end with.",
-            "enum": [
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero",
-              "fable",
-              "none"
-            ],
+            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.",
             "type": "string"
           },
           "wardrobe": {
@@ -370,18 +346,7 @@ export const manifest = {
             "type": "string"
           },
           "film": {
-            "enum": [
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero",
-              "fable"
-            ],
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
             "type": "string"
           },
           "max_chars": {
@@ -427,18 +392,7 @@ export const manifest = {
         "additionalProperties": false,
         "properties": {
           "film": {
-            "enum": [
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero",
-              "fable"
-            ],
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
             "type": "string"
           }
         },
@@ -538,18 +492,7 @@ export const manifest = {
         "properties": {
           "film": {
             "default": "any",
-            "enum": [
-              "any",
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero"
-            ],
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "limit": {
@@ -725,7 +668,10 @@ export interface BrowseImagesInput {
  * A batch id such as ev-01, sp-02-open, xp-03-her, am-16, rh-02-plates, sc-02-perf, wp-02-board, cake-06-sb5-a1x or ae-10-plates.
  */
 batch?: string
-film?: ("any" | "escape-velocity" | "clodyssey" | "bliss" | "airplane-mode" | "downforce" | "dont-let-me-scroll" | "whitepill" | "the-cake-is-not-a-lie" | "aero")
+/**
+ * Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
+ */
+film?: string
 /**
  * ECU, CU, MCU, MS, MWS, full, WS, EWS, aerial, macro or sheet.
  */
@@ -779,9 +725,9 @@ scene: string
  */
 sings?: boolean
 /**
- * Which film's family of style words to end with.
+ * Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.
  */
-style?: ("escape-velocity" | "clodyssey" | "bliss" | "airplane-mode" | "downforce" | "dont-let-me-scroll" | "whitepill" | "the-cake-is-not-a-lie" | "aero" | "fable" | "none")
+style?: string
 /**
  * Your own wardrobe text; overrides look. Describe the garment, never a designer or celebrity.
  */
@@ -843,7 +789,10 @@ export interface GetRecipeInput {
 
 export interface GetRecordInput {
 doc: ("readme" | "prompts-midjourney" | "prompts-images" | "prompts-seedance" | "prompts-video" | "prompts-suno" | "xp-desktop-and-sound")
-film: ("escape-velocity" | "clodyssey" | "bliss" | "airplane-mode" | "downforce" | "dont-let-me-scroll" | "whitepill" | "the-cake-is-not-a-lie" | "aero" | "fable")
+/**
+ * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.
+ */
+film: string
 max_chars?: number
 offset?: number
 }
@@ -853,7 +802,10 @@ export interface GetSkillInput {
 }
 
 export interface ListFilmsInput {
-film?: ("escape-velocity" | "clodyssey" | "bliss" | "airplane-mode" | "downforce" | "dont-let-me-scroll" | "whitepill" | "the-cake-is-not-a-lie" | "aero" | "fable")
+/**
+ * Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.
+ */
+film?: string
 }
 
 export interface PlanFilmInput {
@@ -881,7 +833,10 @@ video_model?: ("seedance-2.5" | "grok-imagine" | "grok-imagine-lite")
 }
 
 export interface SearchImagesInput {
-film?: ("any" | "escape-velocity" | "clodyssey" | "bliss" | "airplane-mode" | "downforce" | "dont-let-me-scroll" | "whitepill" | "the-cake-is-not-a-lie" | "aero")
+/**
+ * Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.
+ */
+film?: string
 limit?: number
 query: string
 set?: ("in_film" | "her" | "all")

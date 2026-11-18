@@ -15,18 +15,7 @@
           },
           "film": {
             "default": "any",
-            "enum": [
-              "any",
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero"
-            ],
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "framing": {
@@ -126,20 +115,7 @@
           },
           "style": {
             "default": "none",
-            "description": "Which film's family of style words to end with.",
-            "enum": [
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero",
-              "fable",
-              "none"
-            ],
+            "description": "Which film's family of style words to end with. Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable, none.",
             "type": "string"
           },
           "wardrobe": {
@@ -329,18 +305,7 @@
             "type": "string"
           },
           "film": {
-            "enum": [
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero",
-              "fable"
-            ],
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
             "type": "string"
           },
           "max_chars": {
@@ -383,18 +348,7 @@
         "additionalProperties": false,
         "properties": {
           "film": {
-            "enum": [
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero",
-              "fable"
-            ],
+            "description": "Known values: escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero, fable.",
             "type": "string"
           }
         },
@@ -485,18 +439,7 @@
         "properties": {
           "film": {
             "default": "any",
-            "enum": [
-              "any",
-              "escape-velocity",
-              "clodyssey",
-              "bliss",
-              "airplane-mode",
-              "downforce",
-              "dont-let-me-scroll",
-              "whitepill",
-              "the-cake-is-not-a-lie",
-              "aero"
-            ],
+            "description": "Known values: any, escape-velocity, clodyssey, bliss, airplane-mode, downforce, dont-let-me-scroll, whitepill, the-cake-is-not-a-lie, aero.",
             "type": "string"
           },
           "limit": {
