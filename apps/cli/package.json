@@ -20,6 +20,6 @@
     "@mcp-cli/mcp": "workspace:*",
     "@mcp-cli/runtime": "workspace:*",
     "effect": "4.0.6",
-    "isomorphic-git": "1.37.4"
+    "isomorphic-git": "1.38.6"
   }
 }
