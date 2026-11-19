@@ -13,6 +13,10 @@ bun run format
 `bun run check` runs linting, code rules, type checking, and tests.
 Follow the [desktop guide](../apps/desktop/README.md) for desktop builds.
 
+GitHub Actions runs dependency auditing, `bun run check`, and the CLI build on
+pull requests and pushes to `main`. The `verify` check is required for `main`.
+Native desktop builds and signature verification run locally before integration.
+
 ## Package layout
 
 | Path               | Responsibility                                                                               |

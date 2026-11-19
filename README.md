@@ -29,6 +29,11 @@ It has its own configuration and storage and is neither an `mcp-cli` subcommand 
 - [mem guide](apps/mem/README.md): storing, searching, summarizing, and recovering memory
 - [Development guide](docs/development.md): package layout, worktrees, and quality checks
 
+## Security
+
+See the [security policy](SECURITY.md) for supported revisions and private
+vulnerability reporting.
+
 ## License
 
 Original project work is licensed under the [MIT License](LICENSE).
