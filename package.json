@@ -11,7 +11,8 @@
     "mem": "apps/mem/src/main.ts",
     "notion": "bin/notion.ts",
     "pplx": "bin/pplx.ts",
-    "slack": "bin/slack.ts"
+    "slack": "bin/slack.ts",
+    "suno": "bin/suno.ts"
   },
   "workspaces": [
     "packages/*",

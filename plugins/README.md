@@ -9,6 +9,7 @@ independent releases, managed runtimes, and local development.
 
 - [Notion](notion/README.md): pages, databases, calendars, and comments
 - [Linear](linear/README.md): issue management and authentication
+- [Suno](suno/README.md): music generation, library, voices and visuals
 - [Slack](slack/README.md): messaging tools and token settings
 - [Fish Audio](fish-audio/README.md): speech generation, transcription, and media operations
 - [Fast Semble](fast-semble/README.md): local code search through a reusable Semble MCP session
