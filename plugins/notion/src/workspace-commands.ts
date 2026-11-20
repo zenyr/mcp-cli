@@ -164,7 +164,7 @@ export const workspaceCommands: Record<string, CommandCustomization> = {
   "notion-convert-to-meetings-database": at(
     "meeting-notes convert-database",
     "Turn a regular database into a Meetings database",
-    ["notion meeting-notes convert-database --database-url <database-url>"],
+    ["notion meeting-notes convert-database --databaseUrl <database-url>"],
     ["Ask the user before converting a database."],
   ),
   "notion-link-meeting-note-to-calendar-event": at(
