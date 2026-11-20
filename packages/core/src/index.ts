@@ -5,6 +5,7 @@ import { errorBrand, hasErrorBrand } from "./error-brand";
 const usageBrand = errorBrand("UsageError");
 const repeatedBrand = errorBrand("RepeatedCallError");
 const notGeneratedBrand = errorBrand("NotGeneratedError");
+const callNotStartedBrand = errorBrand("CallNotStartedError");
 
 export type JsonSchema = Record<string, unknown>;
 export type {
@@ -239,4 +240,7 @@ export type {
 /** The requested tool was not dispatched, so a workflow may safely clear its pending state. */
 export class CallNotStartedError extends Error {
   override name = "CallNotStartedError";
+  readonly [callNotStartedBrand] = true;
+  static [Symbol.hasInstance] = (value: unknown): boolean =>
+    hasErrorBrand(value, callNotStartedBrand);
 }
