@@ -20,14 +20,13 @@ import { IconDotsVertical, IconKey, IconLogout } from "@tabler/icons-react";
 import { ServiceIcon } from "./service-icon";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
-import { useAction, useServices } from "./queries";
+import { useAction } from "./queries";
 import { workspaceRows, type Service } from "./ipc";
 import { AuthSettingsPanel } from "./auth-settings-panel";
 
 type Selection = { service: Service; credential: Service["credentials"][number] };
 export const ServiceAuth = ({ service: target }: { service: Service }) => {
   useLocale();
-  const { dataUpdatedAt } = useServices();
   const rows = workspaceRows([target]);
   const [selection, setSelection] = useState<Selection>();
   const [secret, setSecret] = useState("");
@@ -233,7 +232,7 @@ export const ServiceAuth = ({ service: target }: { service: Service }) => {
           (service) =>
             service.authentication && (
               <AuthSettingsPanel
-                key={`${service.name}:${service.workspace?.id ?? "default"}:${dataUpdatedAt}`}
+                key={`${service.name}:${service.workspace?.id ?? "default"}`}
                 service={service.name}
                 workspace={service.workspace?.id}
                 workspaceName={service.workspace?.name}

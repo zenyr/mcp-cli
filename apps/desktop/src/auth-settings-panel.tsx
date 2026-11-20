@@ -17,6 +17,13 @@ import {
 import { isRecord, type AuthSettingsField } from "@mcp-cli/core";
 import { useAction } from "./queries";
 import type { Authentication } from "./ipc";
+import {
+  authChanged,
+  formatStrings,
+  parseStrings,
+  stringsText,
+  syncDraft,
+} from "./auth-settings-form";
 
 const stateLabels = {
   missing: "로그인 필요",
@@ -45,6 +52,28 @@ const updateAt = (
     ...record,
     [key]: rest.length ? updateAt(isRecord(previous) ? previous : {}, rest, value) : value,
   };
+};
+
+const StringsField = ({
+  common,
+  value,
+  change,
+}: {
+  common: { label: string; description?: string; disabled: boolean };
+  value: unknown;
+  change: (value: unknown) => void;
+}) => {
+  const [text, setText] = useState(() => formatStrings(value));
+  return (
+    <Textarea
+      {...common}
+      value={stringsText(text, value)}
+      onChange={(event) => {
+        setText(event.currentTarget.value);
+        change(parseStrings(event.currentTarget.value));
+      }}
+    />
+  );
 };
 
 const SettingsField = ({
@@ -79,13 +108,7 @@ const SettingsField = ({
       />
     );
   if (field.type === "strings")
-    return (
-      <Textarea
-        {...common}
-        value={Array.isArray(value) ? value.join(", ") : ""}
-        onChange={(event) => change(event.currentTarget.value.split(/[,\s]+/).filter(Boolean))}
-      />
-    );
+    return <StringsField common={common} value={value} change={change} />;
   return (
     <TextInput
       {...common}
@@ -107,7 +130,10 @@ export const AuthSettingsPanel = ({
   authentication: Authentication;
 }) => {
   useLocale();
+  const [seen, setSeen] = useState(authentication);
+  const [base, setBase] = useState(authentication.configuration);
   const [configuration, setConfiguration] = useState(authentication.configuration);
+  const [checked, setChecked] = useState<Authentication>();
   const [group, setGroup] = useState(authentication.fields[0]?.path[0] ?? "");
   const save = useAction(
     "authConfig",
@@ -125,6 +151,24 @@ export const AuthSettingsPanel = ({
       }),
     [],
   );
+  if (seen !== authentication) {
+    setSeen(authentication);
+    if (authChanged(seen, authentication)) {
+      setConfiguration(syncDraft(base, authentication.configuration, configuration));
+      setBase(authentication.configuration);
+      setChecked(undefined);
+      if (!login.isPending) setUrl("");
+    }
+  }
+  const resetStatus = () => {
+    setChecked(undefined);
+    setUrl("");
+  };
+  const adopt = (result: Authentication) => {
+    setBase(result.configuration);
+    setConfiguration(result.configuration);
+    resetStatus();
+  };
   const groups = [
     ...new Set(
       authentication.fields
@@ -134,7 +178,7 @@ export const AuthSettingsPanel = ({
   ];
   const busy =
     save.isPending || verify.isPending || login.isPending || logout.isPending || cancel.isPending;
-  const dirty = JSON.stringify(configuration) !== JSON.stringify(authentication.configuration);
+  const dirty = JSON.stringify(configuration) !== JSON.stringify(base);
   return (
     <Paper withBorder p="md">
       <Stack gap="md">
@@ -147,7 +191,7 @@ export const AuthSettingsPanel = ({
             variant="default"
             loading={verify.isPending}
             disabled={busy && !verify.isPending}
-            onClick={() => verify.mutate({ service, workspace })}
+            onClick={() => verify.mutate({ service, workspace }, { onSuccess: setChecked })}
           >
             {t("연결 확인")}
           </Button>
@@ -157,7 +201,7 @@ export const AuthSettingsPanel = ({
             "서비스 관리자 화면에서 확인한 값을 입력하세요. PKCE 활성화와 등록한 Redirect URL을 먼저 확인하세요.",
           )}
         </Text>
-        {(verify.data?.states ?? authentication.states).map((state) => (
+        {(checked?.states ?? authentication.states).map((state) => (
           <Group key={state.target}>
             <Text size="sm" fw={500}>
               {state.target}
@@ -171,7 +215,10 @@ export const AuthSettingsPanel = ({
               variant="default"
               disabled={dirty || busy}
               onClick={() =>
-                login.mutate({ service, workspace, target: state.target, method: "browser" })
+                login.mutate(
+                  { service, workspace, target: state.target, method: "browser" },
+                  { onSettled: resetStatus },
+                )
               }
             >
               {t("브라우저 로그인")}
@@ -181,7 +228,12 @@ export const AuthSettingsPanel = ({
               color="red"
               variant="subtle"
               disabled={busy}
-              onClick={() => logout.mutate({ service, workspace, target: state.target })}
+              onClick={() =>
+                logout.mutate(
+                  { service, workspace, target: state.target },
+                  { onSuccess: resetStatus },
+                )
+              }
             >
               {t("인증 삭제")}
             </Button>
@@ -245,7 +297,7 @@ export const AuthSettingsPanel = ({
           <Button
             disabled={!dirty || busy}
             loading={save.isPending}
-            onClick={() => save.mutate({ service, workspace, configuration })}
+            onClick={() => save.mutate({ service, workspace, configuration }, { onSuccess: adopt })}
           >
             {t("설정 저장")}
           </Button>
