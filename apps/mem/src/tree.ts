@@ -1,8 +1,29 @@
 import { randomUUID } from "node:crypto";
-import type { Compressor, Node, Scope, Settings, Store, SummaryResult } from "./types";
-import { bytes, fail, nodeKey } from "./values";
+import type { Compressor, Node, Part, Scope, Settings, Store, SummaryResult } from "./types";
+import { bytes, isRecord, nodeKey, start } from "./values";
 
 const verbatim: SummaryResult = { text: "", inputTokens: 0, outputTokens: 0, model: "verbatim" };
+
+const prefix = (text: string, limit: number): string => {
+  let size = 0;
+  let result = "";
+  for (const char of text) {
+    size += bytes(char);
+    if (size > limit) break;
+    result += char;
+  }
+  return result;
+};
+
+// Deterministic stand-in for input the model can never shrink, so `start` is not blocked forever.
+const excerpt = (parts: string[], marker: string, limit: number): string => {
+  const share = Math.floor((limit - bytes(marker) - parts.length) / parts.length);
+  return [...parts.map((part) => prefix(part, Math.max(0, share))).filter(Boolean), marker].join(
+    "\n",
+  );
+};
+
+const codeOf = (error: unknown): unknown => (isRecord(error) ? error.code : undefined);
 
 export const summarize = async (
   store: Store,
@@ -28,70 +49,79 @@ export const summarize = async (
   try {
     const entries = store.entries(scope.id);
     const nodes = new Map(store.nodes(scope.id, generation).map((node) => [nodeKey(node), node]));
-    const build = async (
-      part: { l: number; i: number },
+    const errors: unknown[] = [];
+    let modelUnavailable = false;
+    const shrink = async (
+      part: Part,
       source: string,
-      raw?: string,
-      sourceBytes = bytes(source),
-    ) => {
-      if (nodes.has(nodeKey(part))) return;
-      let text = raw;
-      let usage = verbatim;
-      if (text === undefined || bytes(text) > settings.nodeBytes) {
-        if (bytes(source) > settings.inputBytes)
-          fail("INPUT_OVERFLOW", "Whole source exceeds inputBytes.", {
-            limit: settings.inputBytes,
-          });
-        text = undefined;
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-          renew();
-          const result = await compress({
+      raw: string,
+    ): Promise<SummaryResult | "excerpt" | "failed"> => {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        renew();
+        let result: SummaryResult;
+        try {
+          result = await compress({
             source,
             merge: part.l > 0,
             targetBytes: Math.max(1, Math.floor(settings.nodeBytes * (1 - attempt * 0.25))),
             ...(attempt > 0 ? { retry: true } : {}),
           });
-          store.recordUsage(scope.id, generation, result);
-          if (
-            result.text.trim().length > 0 &&
-            bytes(result.text) <= settings.nodeBytes * 1.25 &&
-            bytes(result.text) < (raw === undefined ? sourceBytes : bytes(raw))
-          ) {
-            text = result.text;
-            usage = result;
-            break;
-          }
+        } catch (error) {
+          if (codeOf(error) === "SUMMARY_INPUT_OVERFLOW") return "excerpt";
+          if (codeOf(error) === "MODEL_UNAVAILABLE") modelUnavailable = true;
+          errors.push(error);
+          return "failed";
+        }
+        store.recordUsage(scope.id, generation, result);
+        if (
+          result.text.trim().length > 0 &&
+          bytes(result.text) <= settings.nodeBytes * 1.25 &&
+          bytes(result.text) < bytes(raw)
+        )
+          return result;
+      }
+      return "excerpt";
+    };
+    const build = async (part: Part, source: string, parts: string[], marker: string) => {
+      if (nodes.has(nodeKey(part))) return;
+      const raw = parts.join("\n");
+      let usage = verbatim;
+      let text: string | undefined = raw;
+      if (bytes(raw) > settings.nodeBytes) {
+        if (bytes(source) > settings.inputBytes) text = undefined;
+        else if (modelUnavailable) return;
+        else {
+          const result = await shrink(part, source, raw);
+          if (result === "failed") return;
+          text = result === "excerpt" ? undefined : result.text;
+          usage = result === "excerpt" ? verbatim : result;
         }
       }
-      if (text === undefined)
-        return fail("SUMMARY_TOO_LARGE", "Summary did not shrink within three responses.");
       renew();
-      const node: Node = { ...part, text };
+      const node: Node = { ...part, text: text ?? excerpt(parts, marker, settings.nodeBytes) };
       store.publish(scope.id, generation, owner, node, usage);
       nodes.set(nodeKey(node), node);
     };
-    for (const entry of entries) {
+    for (const entry of entries)
       await build(
         { l: 0, i: entry.i },
         JSON.stringify({ kind: entry.kind, text: entry.text }),
-        `${entry.kind}: ${entry.text}`,
+        [`${entry.kind}: ${entry.text}`],
+        `[unsummarized; mem read ${scope.id}/${entry.i}]`,
       );
-      let l = 0;
-      let i = entry.i;
-      while (i % 2 === 1) {
-        const left = nodes.get(nodeKey({ l, i: i - 1 }));
-        const right = nodes.get(nodeKey({ l, i }));
-        if (!left || !right) break;
-        l += 1;
-        i = Math.floor(i / 2);
+    for (let l = 1; 2 ** l <= entries.length; l += 1)
+      for (let i = 0; (i + 1) * 2 ** l <= entries.length; i += 1) {
+        const left = nodes.get(nodeKey({ l: l - 1, i: i * 2 }));
+        const right = nodes.get(nodeKey({ l: l - 1, i: i * 2 + 1 }));
+        if (!left || !right) continue;
         await build(
           { l, i },
           JSON.stringify({ summaries: [left.text, right.text] }),
-          `${left.text}\n${right.text}`,
-          bytes(left.text) + bytes(right.text),
+          [left.text, right.text],
+          `[unsummarized; mem zoom ${scope.id}/${start({ l, i })} --count ${2 ** l}]`,
         );
       }
-    }
+    if (errors.length) throw errors[0];
   } catch (error) {
     store.failed(
       scope.id,

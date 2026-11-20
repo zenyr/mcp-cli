@@ -86,7 +86,12 @@ This policy does not guarantee freedom from hallucinations. Observations on synt
 The default node target is 512 UTF-8 bytes. The summarizer accepts responses at most 1.25 times the target and smaller than the input.
 There are at most three compression attempts. Retry targets decrease to 75% and 50% of the base target.
 The minimum target is 1 byte.
-The original source is preserved, and previous responses are not sent again. If the response remains oversized, the CLI preserves the original text and returns an error.
+The original source is preserved, and previous responses are not sent again.
+If the third response remains oversized, or the input exceeds `inputBytes`, the node becomes an excerpt.
+The excerpt holds a byte-bounded prefix of the original text and a marker such as `[unsummarized; mem read <scopeId/index>]`.
+Parent excerpts hold a prefix of each child and point to `mem zoom`. Excerpts keep `start` usable.
+Other summarizer failures do not stop the remaining nodes. `summarize` reports the first such failure after it builds every other node.
+An unreachable summarizer stops further model calls for that run.
 The current generation v3 uses the `range-only-v1` policy. Rebuild trees from existing caches with `mem summarize`.
 Changing summarization settings creates a tree in a new generation. Completed nodes in earlier generations remain unchanged.
 
