@@ -6,6 +6,7 @@ import { isSoundKind, type SoundKind } from "../shared/ui-sounds";
 import { observeDaemonSound, playUiSound, setSoundsEnabled } from "./ui-sounds";
 import { prepareTrayIcons } from "./tray-icon";
 import { cliCommand } from "./command";
+import { cliExitFailure, startDeadline } from "../shared/cli-exit";
 import { showManagementWindow, syncWindowPresence } from "./window-presence";
 
 const logins = createLoginController();
@@ -30,22 +31,14 @@ const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?:
     }
   };
   signal?.addEventListener("abort", terminate, { once: true });
-  const deadline = setTimeout(
-    () => {
-      try {
-        child.kill("SIGTERM");
-      } catch {
-        /* The process already exited. */
-      }
-    },
-    isLogin
-      ? 300_000
-      : ["reset", "logout", "auth-config", "plugin-action"].includes(args[1] ?? "")
-        ? 600_000
-        : args[1] === "auth-status" || args[1] === "commands"
-          ? 30000
-          : 10_000,
-  );
+  const timeout = isLogin
+    ? 300_000
+    : ["reset", "logout", "auth-config", "plugin-action"].includes(args[1] ?? "")
+      ? 600_000
+      : args[1] === "auth-status" || args[1] === "commands"
+        ? 30000
+        : 10_000;
+  const deadline = startDeadline(child, timeout);
   try {
     const writer = child.stdin?.getWriter();
     if (writer) {
@@ -88,12 +81,11 @@ const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?:
     }
     const status = await child.wait();
 
-    const error = await errors;
-    if (status.exit_status !== 0)
-      throw new Error(error?.trim() || `CLI exited with ${status.exit_status}`);
+    const failure = cliExitFailure(status, await errors, deadline.expired() ? timeout : undefined);
+    if (failure !== undefined) throw new Error(failure);
     return result;
   } finally {
-    clearTimeout(deadline);
+    deadline.clear();
     signal?.removeEventListener("abort", terminate);
   }
 };
@@ -148,19 +140,16 @@ export const api = {
         });
         const errors = child.stderr?.text();
         const reader = child.stdout?.getReader();
-        const deadline = setTimeout(() => {
-          try {
-            child.kill("SIGTERM");
-          } catch {
-            /* The process already exited. */
-          }
-        }, 10_000);
+        const deadline = startDeadline(child, 10_000);
         try {
           const chunk = await reader?.read();
           if (!chunk || chunk.done) {
             await child.wait();
+            const stderr = await errors;
             throw new Error(
-              (await errors)?.trim() || translate(locale, "대몬을 시작하지 못했습니다."),
+              deadline.expired()
+                ? translate(locale, "대몬이 {seconds}초 안에 시작하지 않았습니다.", { seconds: 10 })
+                : stderr?.trim() || translate(locale, "대몬을 시작하지 못했습니다."),
             );
           }
           const value: unknown = JSON.parse(new TextDecoder().decode(chunk.value));
@@ -174,7 +163,7 @@ export const api = {
           await reader?.cancel();
           await checkDaemonStatus(app);
         } finally {
-          clearTimeout(deadline);
+          deadline.clear();
         }
       } finally {
         starting = false;

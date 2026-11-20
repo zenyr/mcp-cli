@@ -178,6 +178,7 @@ export const messages = {
   "앱 종료": "Quit app",
   "대몬 시작을 기다려 주세요.": "Wait for the daemon to start.",
   "대몬을 시작하지 못했습니다.": "Could not start the daemon.",
+  "대몬이 {seconds}초 안에 시작하지 않았습니다.": "The daemon did not start within {seconds}s.",
   "대몬 시작 응답을 확인하지 못했습니다.": "Could not verify the daemon startup response.",
   "자동 시작 설정을 확인해 주세요.": "Check the automatic start setting.",
   "CLI 명령을 입력해 주세요.": "Enter a CLI command.",

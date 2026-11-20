@@ -3,6 +3,7 @@ import { i18nCases } from "./i18n";
 import { controllerCases } from "./controllers";
 import { effectCases } from "./effect";
 import { sembleOutputCases } from "./semble-output";
+import { cliExitCases } from "./cli-exit";
 
 export const runtimeCases = [
   ...controllerCases,
@@ -10,4 +11,5 @@ export const runtimeCases = [
   ...effectCases,
   ...i18nCases,
   ...sembleOutputCases,
+  ...cliExitCases,
 ];
