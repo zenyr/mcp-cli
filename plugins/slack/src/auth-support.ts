@@ -3,6 +3,7 @@ import {
   AuthRequiredError,
   UsageError,
   isRecord,
+  loginCommandText,
   type AuthStatus,
   type AuthSupport,
   type AuthSupportContext,
@@ -16,7 +17,13 @@ import {
   slackTarget,
   type SlackTarget,
 } from "./auth-config";
-import { currentProfile, loginSlack, requireMatching, slackOAuthHeaders } from "./auth-oauth";
+import {
+  currentProfile,
+  loginSlack,
+  requireMatching,
+  slackOAuthHeaders,
+  withLoginHint,
+} from "./auth-oauth";
 
 export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
   const headers = async (
@@ -30,11 +37,20 @@ export const createSlackAuth = (request: typeof fetch = fetch): AuthSupport => {
     const environment = context.env[variable];
     if (environment) return { Authorization: `Bearer ${environment}` };
     if (!bot && (await currentProfile(context, target)).config.method === "pkce")
-      return slackOAuthHeaders(context, target, refresh, request);
+      return slackOAuthHeaders(context, target, refresh, request).catch((error: unknown) => {
+        throw withLoginHint(error, context, target);
+      });
     const token = await context.store.read(bot ? "slack--xoxb" : "slack");
+    // A selected workspace gets its own login hint because named workspaces drop the host variable.
+    const login = loginCommandText("slack", {
+      workspace: context.workspace,
+      credential: bot ? "xoxb" : undefined,
+    });
     if (!token)
       throw new AuthRequiredError(
-        `Set ${variable} or paste a Slack ${bot ? "bot" : "user"} token.`,
+        context.workspace
+          ? `Run ${login} to paste a Slack ${bot ? "bot" : "user"} token.`
+          : `Set ${variable} or run ${login} to paste a Slack ${bot ? "bot" : "user"} token.`,
       );
     return { Authorization: `Bearer ${token.accessToken}` };
   };

@@ -10,6 +10,8 @@ export type AuthSupportContext = {
   env: Record<string, string | undefined>;
   store: TokenStore;
   settings: SettingsStore;
+  /** Host-selected workspace name, named in login hints so they target the same credentials. */
+  workspace?: string;
 };
 export type AuthSelection = { credential?: string; target?: string; method?: string };
 export type AuthLoginOptions = AuthSelection & {

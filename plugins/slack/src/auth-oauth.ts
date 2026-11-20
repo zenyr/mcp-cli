@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
   AuthRequiredError,
   isRecord,
+  loginCommandText,
   UsageError,
   type AuthLoginOptions,
   type AuthSupportContext,
@@ -40,6 +41,17 @@ const messages: Record<string, string> = {
   token_expired: "Slack expired this credential. Sign in again.",
 };
 export class SlackCredentialError extends AuthRequiredError {}
+/** Appends the browser login that replaces a missing or rejected credential for this workspace and target. */
+export const withLoginHint = (
+  error: unknown,
+  context: AuthSupportContext,
+  target: SlackTarget,
+): unknown =>
+  error instanceof AuthRequiredError
+    ? new AuthRequiredError(
+        `${error.message} Run ${loginCommandText("slack", { workspace: context.workspace, browser: true, target })}.`,
+      )
+    : error;
 export const postSlackToken = async (
   target: SlackTarget,
   body: URLSearchParams,

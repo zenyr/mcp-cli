@@ -51,6 +51,8 @@ export const perplexityAuth: AuthSupport = {
       service: SERVICE,
       url: connection.url,
       store: context.store,
+      // Without --browser the suggested login would ask for an API key instead of OAuth.
+      login: { workspace: context.workspace, browser: true },
     });
     return { ...connection, authorize };
   },

@@ -9,12 +9,18 @@ import { discover, findPlugin, loadPlugin } from "./discovery";
 import { defaultContext } from "./paths";
 import { resetDaemonIfRunning } from "./daemon/client";
 import { CliHost, printLine, type Env } from "./host";
-import { pluginEnvironment, pluginSettings, pluginStore } from "./plugin-credentials";
+import {
+  loginWorkspace,
+  pluginEnvironment,
+  pluginSettings,
+  pluginStore,
+} from "./plugin-credentials";
 
 export const authenticationContext = (env: Env, plugin?: ServicePlugin) => ({
   env: plugin ? pluginEnvironment(plugin, env) : env,
   store: plugin ? pluginStore(plugin, defaultStore(env)) : defaultStore(env),
   settings: plugin ? pluginSettings(plugin, defaultSettings(env)) : defaultSettings(env),
+  workspace: plugin ? loginWorkspace(plugin) : undefined,
 });
 export const authenticationDetails = async (plugin: ServicePlugin, env: Env, check = false) => {
   if (!plugin.authSupport) return undefined;

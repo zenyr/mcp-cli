@@ -10,6 +10,10 @@ export const workspaceEnvironment = (
   return Object.fromEntries(Object.entries(env).filter(([key]) => !secrets.has(key)));
 };
 
+/** Workspace name for login hints, only for plugins that support workspaces. */
+export const loginWorkspace = (plugin: ServicePlugin): string | undefined =>
+  plugin.workspaces && plugin.workspace ? plugin.workspace.name : undefined;
+
 export const pluginEnvironment = (
   plugin: ServicePlugin,
   env: Record<string, string | undefined>,

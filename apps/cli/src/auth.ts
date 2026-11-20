@@ -5,6 +5,7 @@ import {
   UsageError,
   credentialName,
   credentialSwitches,
+  loginCommandText,
   type ApiKeySpec,
   type Connection,
   type ServicePlugin,
@@ -14,7 +15,12 @@ import {
 import { login, oauthAuthorize } from "@mcp-cli/mcp";
 import { extractWorkspace } from "./workspace-arguments";
 import { selectWorkspace } from "./workspaces";
-import { pluginEnvironment, pluginStore, pluginSettings } from "./plugin-credentials";
+import {
+  loginWorkspace,
+  pluginEnvironment,
+  pluginStore,
+  pluginSettings,
+} from "./plugin-credentials";
 
 type Env = Record<string, string | undefined>;
 export type AuthContext = {
@@ -71,8 +77,7 @@ const apiKey = async (
   const key =
     env[choice.env] || (await store.read(credentialName(service, choice.credential)))?.accessToken;
   // Naming the selected workspace keeps the hint from storing the key in the default workspace.
-  const workspace = plugin.workspaces && plugin.workspace ? ` -w ${plugin.workspace.name}` : "";
-  const login = `mcp-cli login ${service}${workspace}${credential ? ` --${credential}` : ""}`;
+  const login = loginCommandText(service, { workspace: loginWorkspace(plugin), credential });
   const hint = readsEnvironment(plugin, choice.env)
     ? `Set ${choice.env} or run ${login}`
     : `Run ${login}`;
@@ -102,8 +107,9 @@ export const resolveConnection = async (
   if (credential && auth?.type !== "apiKey")
     throw new UsageError(`${plugin.name} has no --${credential} credential`);
   if (!auth || auth.type === "none") return connection;
+  const workspace = loginWorkspace(plugin);
   const custom = await plugin.authSupport?.resolve(
-    { env, store, settings },
+    { env, store, settings, workspace },
     connection,
     credential,
   );
@@ -129,7 +135,12 @@ export const resolveConnection = async (
     };
   return {
     ...connection,
-    authorize: oauthAuthorize({ service: plugin.name, url: connection.url, store }),
+    authorize: oauthAuthorize({
+      service: plugin.name,
+      url: connection.url,
+      store,
+      login: { workspace },
+    }),
   };
 };
 

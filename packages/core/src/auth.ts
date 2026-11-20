@@ -56,8 +56,32 @@ export class AuthRequiredError extends Error {
     hasErrorBrand(value, authRequiredBrand);
 }
 
-export const loginRequired = (service: string, reason: string): AuthRequiredError =>
-  new AuthRequiredError(`${reason}. Run mcp-cli login ${service}`);
+/** Selects which stored credential the suggested `mcp-cli login` command writes. */
+export type LoginTarget = {
+  workspace?: string;
+  credential?: string;
+  browser?: boolean;
+  /** Plugin-defined target flag, such as `mcp` or `web`. */
+  target?: string;
+};
+
+export const loginCommandText = (service: string, target: LoginTarget = {}): string =>
+  [
+    `mcp-cli login ${service}`,
+    target.workspace && `-w ${target.workspace}`,
+    target.credential && `--${target.credential}`,
+    target.browser && "--browser",
+    target.target && `--${target.target}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+export const loginRequired = (
+  service: string,
+  reason: string,
+  target?: LoginTarget,
+): AuthRequiredError =>
+  new AuthRequiredError(`${reason}. Run ${loginCommandText(service, target)}`);
 
 /** Credential store entry for a service, or for one of its alternate keys. */
 export const credentialName = (service: string, credential?: string): string =>

@@ -17,6 +17,13 @@ const plugin = definePlugin({
   auth: { type: "apiKey", env: "TEST_TOKEN" },
   connection: () => ({ type: "http", url: "https://example.test/mcp" }),
 });
+const oauthPlugin = definePlugin({
+  name: "oauth-test",
+  summary: "OAuth test",
+  workspaces: { credentialEnv: [] },
+  auth: { type: "oauth" },
+  connection: () => ({ type: "http", url: "https://example.test/mcp" }),
+});
 const fixture = async () => {
   const directory = await mkdtemp(join(tmpdir(), "workspace-test-"));
   return {
@@ -108,6 +115,28 @@ test("workspace credentials, environment, workflow cache and plugin namespaces s
     const legacy = await selectWorkspace(plugin, "default", f.settings);
     await expect(resolveConnection(legacy, {}, f.store, undefined, f.settings)).rejects.toThrow(
       "Set TEST_TOKEN or run mcp-cli login test -w default to use test",
+    );
+  } finally {
+    await rm(f.directory, { recursive: true, force: true });
+  }
+});
+
+test("OAuth re-login hints name the selected workspace", async () => {
+  const f = await fixture();
+  try {
+    await updateWorkspace(
+      oauthPlugin,
+      { type: "add", service: "oauth-test", name: "two" },
+      f.settings,
+    );
+    const two = await selectWorkspace(oauthPlugin, "two", f.settings);
+    const connection = await resolveConnection(two, {}, f.store, undefined, f.settings);
+    if (connection.type !== "http" || !connection.authorize) throw new Error("expected authorize");
+    await expect(connection.authorize({ refresh: false })).rejects.toThrow(
+      "Run mcp-cli login oauth-test -w two",
+    );
+    await expect(extensionCacheScope(two, {}, f.store)).rejects.toThrow(
+      "No credentials for workflow cache. Run mcp-cli login oauth-test -w two",
     );
   } finally {
     await rm(f.directory, { recursive: true, force: true });

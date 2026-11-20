@@ -230,6 +230,18 @@ test("missing, rejected and foreign credentials require login", async () => {
   await expect(authorizeFor()({ refresh: false })).rejects.toThrow(AuthRequiredError);
 });
 
+test("re-login errors name the selected login target", async () => {
+  const named = oauthAuthorize({
+    service: "svc",
+    url: fake.resource,
+    store,
+    login: { workspace: "two", browser: true },
+  });
+  await expect(named({ refresh: false })).rejects.toThrow(
+    "No credentials for svc. Run mcp-cli login svc -w two --browser",
+  );
+});
+
 test("a failed refresh reports the code and status without echoing secrets", async () => {
   await signIn();
   fake.echoToken = true;

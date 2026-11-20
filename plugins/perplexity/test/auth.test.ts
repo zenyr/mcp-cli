@@ -34,6 +34,18 @@ test("a stored browser login authorizes with its OAuth access token", async () =
   });
 });
 
+test("an unrefreshable browser login asks for a browser login in the selected workspace", async () => {
+  const expired = { ...oauth, refreshToken: undefined, expiresAt: 1 };
+  const resolved = await perplexityAuth.resolve(
+    { ...context(expired), workspace: "two" },
+    connection,
+  );
+  if (resolved?.type !== "http" || !resolved.authorize) throw new Error("expected authorize");
+  await expect(resolved.authorize({ refresh: false })).rejects.toThrow(
+    "Run mcp-cli login pplx -w two --browser",
+  );
+});
+
 test("API keys from the store or environment fall back to the host's key headers", async () => {
   expect(await perplexityAuth.resolve(context({ accessToken: "key" }), connection)).toBeUndefined();
   expect(await perplexityAuth.resolve(context(), connection)).toBeUndefined();

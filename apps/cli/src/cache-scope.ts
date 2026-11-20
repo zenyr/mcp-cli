@@ -1,7 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import { credentialName, loginRequired, type ServicePlugin, type TokenStore } from "@mcp-cli/core";
 import { defaultSettings } from "./auth";
-import { pluginEnvironment, pluginSettings, pluginStore } from "./plugin-credentials";
+import {
+  loginWorkspace,
+  pluginEnvironment,
+  pluginSettings,
+  pluginStore,
+} from "./plugin-credentials";
 
 export const extensionCacheScope = async (
   plugin: ServicePlugin,
@@ -22,13 +27,19 @@ export const extensionCacheScope = async (
   const auth = plugin.auth;
   let identity: unknown = name;
   if (plugin.authSupport) {
-    identity = await plugin.authSupport.identity({ env, store, settings }, credential);
+    identity = await plugin.authSupport.identity(
+      { env, store, settings, workspace: loginWorkspace(plugin) },
+      credential,
+    );
   } else if (connection.type === "http" && connection.authorize) {
     identity = await connection.authorize({ refresh: false });
   } else if (auth?.type === "oauth") {
     identity = await store.withLock(name, async () => {
       const tokens = await store.read(name);
-      if (!tokens) throw loginRequired(name, "No credentials for workflow cache");
+      if (!tokens)
+        throw loginRequired(name, "No credentials for workflow cache", {
+          workspace: loginWorkspace(plugin),
+        });
       if (tokens.cacheIdentity) return tokens.cacheIdentity;
       const cacheIdentity = randomUUID();
       await store.write(name, { ...tokens, cacheIdentity });

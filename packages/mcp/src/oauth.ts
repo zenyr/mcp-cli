@@ -8,6 +8,7 @@ import {
   AuthRequiredError,
   loginRequired,
   type Authorize,
+  type LoginTarget,
   type TokenStore,
   type Tokens,
 } from "@mcp-cli/core";
@@ -28,6 +29,8 @@ export type OAuthAuthorizeOptions = {
   now?: () => number;
   /** Tokens expiring within this window are refreshed before use. */
   skewMs?: number;
+  /** Selects the login command that re-login errors suggest. */
+  login?: LoginTarget;
 };
 
 const rejectedGrant = (error: unknown): boolean =>
@@ -47,17 +50,27 @@ export const oauthAuthorize = (options: OAuthAuthorizeOptions): Authorize => {
     tokens.expiresAt !== undefined && tokens.expiresAt - skew <= now();
   const load = async (): Promise<Tokens> => {
     const tokens = await store.read(service);
-    if (!tokens) throw loginRequired(service, `No credentials for ${service}`);
+    if (!tokens) throw loginRequired(service, `No credentials for ${service}`, options.login);
     // Never send a token to a server other than the one it was issued for.
     const issuedFor = decodeClient(tokens.client)?.serverUrl;
     if (issuedFor !== undefined && issuedFor !== url)
-      throw loginRequired(service, `Stored ${service} credentials belong to ${issuedFor}`);
+      throw loginRequired(
+        service,
+        `Stored ${service} credentials belong to ${issuedFor}`,
+        options.login,
+      );
     return tokens;
   };
   const refresh = async (tokens: Tokens): Promise<Tokens> => {
     const record = decodeClient(tokens.client);
-    if (!record) throw loginRequired(service, `Stored ${service} credentials cannot be refreshed`);
-    if (!tokens.refreshToken) throw loginRequired(service, `${service} access token expired`);
+    if (!record)
+      throw loginRequired(
+        service,
+        `Stored ${service} credentials cannot be refreshed`,
+        options.login,
+      );
+    if (!tokens.refreshToken)
+      throw loginRequired(service, `${service} access token expired`, options.login);
     const refreshToken = tokens.refreshToken;
     const refreshed = await tokenRequest(
       `${service} token refresh failed`,
@@ -71,7 +84,11 @@ export const oauthAuthorize = (options: OAuthAuthorizeOptions): Authorize => {
           fetchFn,
         }).catch((error: unknown) => {
           if (rejectedGrant(error))
-            throw loginRequired(service, `${service} rejected the stored refresh token`);
+            throw loginRequired(
+              service,
+              `${service} rejected the stored refresh token`,
+              options.login,
+            );
           throw error;
         }),
     );

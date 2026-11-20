@@ -317,6 +317,26 @@ test("manual credentials and environment precedence remain independent from brow
   expect(await support.identity(context)).toEqual(await support.identity(context, "xoxp"));
 });
 
+test("missing credentials name the login for the selected workspace and target", async () => {
+  const named = { ...context, workspace: "two" };
+  const support = createSlackAuth(request);
+  const connection = await slack.connection({});
+  const browserLogin = await support.resolve(named, connection);
+  if (browserLogin?.type !== "http") throw new Error("Expected HTTP");
+  await expect(browserLogin.authorize?.({ refresh: false })).rejects.toThrow(
+    "Sign in to this Slack target first. Run mcp-cli login slack -w two --browser --mcp.",
+  );
+  await expect(browserLogin.webApi?.authorize?.({ refresh: false })).rejects.toThrow(
+    "Run mcp-cli login slack -w two --browser --web.",
+  );
+  await support.configure(named, { mcp: { method: "token" }, web: { method: "token" } });
+  const tokenLogin = await support.resolve(named, connection, "xoxb");
+  if (tokenLogin?.type !== "http") throw new Error("Expected HTTP");
+  await expect(tokenLogin.webApi?.authorize?.({ refresh: false })).rejects.toThrow(
+    "Run mcp-cli login slack -w two --xoxb to paste a Slack bot token.",
+  );
+});
+
 test("Web API requests use only the web credential and recognize a rotating user token", async () => {
   await loginSlack(context, "web", { ui: browser }, request);
   const support = createSlackAuth(request);
