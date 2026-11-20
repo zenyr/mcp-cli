@@ -12,6 +12,7 @@ import { generateCommand } from "./generate";
 import { discover } from "./discovery";
 import { credentialCommand } from "./login-command";
 import { pluginsCommand } from "./marketplace/entry";
+import type { TopLevelCommand } from "./reserved";
 import { defaultContext } from "./paths";
 import { serviceCommand } from "./runtime";
 import { workspaceCommand } from "./workspace-command";
@@ -27,6 +28,20 @@ const USAGE = `Usage: mcp-cli <service> <command>
        mcp-cli logout <service>
        mcp-cli auth <configure|status> <service> [--check]`;
 
+type Route = (args: string[]) => Effect.Effect<void, unknown, CliHost>;
+// Keyed by the shared reserved list, so a new top-level command cannot skip the service-name check.
+const routes: Record<Exclude<TopLevelCommand, "help">, Route> = {
+  workspaces: workspaceCommand,
+  desktop: desktopCommand,
+  auth: authSettingsCommand,
+  daemon: daemonCommand,
+  generate: generateCommand,
+  plugins: pluginsCommand,
+  login: (args) => credentialCommand("login", args),
+  logout: (args) => credentialCommand("logout", args),
+};
+const routeTable = new Map<string, Route>(Object.entries(routes));
+
 export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
   Effect.gen(function* () {
     const host = yield* CliHost;
@@ -40,14 +55,8 @@ export const main = (argv: string[]): Effect.Effect<number, unknown, CliHost> =>
       );
       return EXIT.ok;
     }
-    if (command === "workspaces") return yield* Effect.as(workspaceCommand(args), EXIT.ok);
-    if (command === "desktop") return yield* Effect.as(desktopCommand(args), EXIT.ok);
-    if (command === "auth") return yield* Effect.as(authSettingsCommand(args), EXIT.ok);
-    if (command === "daemon") return yield* Effect.as(daemonCommand(args), EXIT.ok);
-    if (command === "generate") return yield* Effect.as(generateCommand(args), EXIT.ok);
-    if (command === "plugins") return yield* Effect.as(pluginsCommand(args), EXIT.ok);
-    if (command === "login" || command === "logout")
-      return yield* Effect.as(credentialCommand(command, args), EXIT.ok);
+    const route = routeTable.get(command);
+    if (route) return yield* Effect.as(route(args), EXIT.ok);
     return yield* serviceCommand(command, args);
   });
 

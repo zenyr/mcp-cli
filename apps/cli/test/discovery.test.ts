@@ -11,6 +11,7 @@ import type { DiscoveryContext } from "../src/paths";
 import { configPath, defaultContext } from "../src/paths";
 import { existingFiles, loadManifest, outputFiles } from "../src/plugins";
 import { CliHost } from "../src/host";
+import { RESERVED_SERVICES } from "../src/reserved";
 import { memoryHost } from "./host";
 
 let root = "";
@@ -117,6 +118,14 @@ test("reserved service names and mismatched plugin names are rejected", async ()
     "exports plugin other",
   );
   await rm(userConfig(ctx));
+});
+
+test("the plugin guide lists every reserved service name", async () => {
+  const guide = await Bun.file(join(import.meta.dir, "../../../plugins/README.md")).text();
+  const line = guide.split("\n").find((text) => text.startsWith("Service names cannot be"));
+  const listed = [...(line ?? "").matchAll(/`([^`]+)`/g)].map((match) => match[1]);
+  expect(new Set(listed)).toEqual(new Set(RESERVED_SERVICES));
+  expect(listed).toHaveLength(RESERVED_SERVICES.length);
 });
 
 test("invalid config files are usage errors that name the file", async () => {

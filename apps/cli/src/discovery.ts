@@ -12,20 +12,8 @@ import { readState, objectPath } from "./marketplace/storage";
 import { loadManagedPlugin } from "./marketplace/runtime";
 import type { Installed } from "./marketplace/schema";
 import { builtins } from "./marketplace/builtins";
+import { isReservedService } from "./reserved";
 
-/** Top-level CLI commands that a service name may not shadow. */
-export const TOP_LEVEL_COMMANDS: readonly string[] = [
-  "help",
-  "generate",
-  "plugins",
-  "workspaces",
-  "login",
-  "logout",
-  "auth",
-  "desktop",
-  "daemon",
-  "mcp-cli",
-];
 export type PluginSource =
   | "workspace"
   | "node_modules"
@@ -120,7 +108,7 @@ const serviceOf = async ({ info, origin }: Candidate): Promise<string> => {
   const where = `${info.name} (${origin})`;
   if (!/^[a-z][a-z0-9-]*$/.test(service))
     throw new Error(`Invalid service name ${JSON.stringify(service)} in ${where}`);
-  if (TOP_LEVEL_COMMANDS.includes(service))
+  if (isReservedService(service))
     throw new Error(`Service name ${service} in ${where} is a reserved mcp-cli command`);
   return service;
 };
@@ -155,7 +143,8 @@ export const discover = async (context: DiscoveryContext): Promise<Registry> => 
     const revoked = source?.catalog.revoked?.some(
       (item) => item.id === installed.metadata.id && item.sha256 === installed.artifact.sha256,
     );
-    if (!installed.enabled || revoked) continue;
+    // A record saved before its name became reserved can never be routed, so it is skipped.
+    if (!installed.enabled || revoked || isReservedService(installed.metadata.service)) continue;
     const dir = installed.developmentPath ?? objectPath(context, installed.artifact.sha256);
     plugins.push({
       service: installed.metadata.service,

@@ -8,6 +8,7 @@ import { builtins } from "./builtins";
 import { installPath, launcher, syncCommands, userBin } from "./commands";
 import { installPackage, packageManifest, prepareRuntime } from "./packages";
 import { safePath } from "./archive";
+import { assertUnreserved } from "../reserved";
 import { loadSource } from "./sources";
 import {
   digest,
@@ -45,17 +46,6 @@ export const Action = Schema.Union([
 ]);
 export type Action = MarketplaceAction;
 export type ManagerContext = MarketContext & { reset: () => Promise<void> };
-const reserved = new Set([
-  "mcp-cli",
-  "help",
-  "generate",
-  "plugins",
-  "login",
-  "logout",
-  "auth",
-  "desktop",
-  "daemon",
-]);
 const persist = async (context: ManagerContext, previous: State, next: State) => {
   const result = await syncCommands(previous, next, context);
   try {
@@ -68,7 +58,7 @@ const persist = async (context: ManagerContext, previous: State, next: State) =>
 };
 
 const assertService = (state: State, service: string, key: string) => {
-  if (reserved.has(service)) throw new UsageError(`Reserved command name: ${service}`);
+  assertUnreserved(service);
   if (state.installed.some((item) => item.key !== key && item.metadata.service === service))
     throw new UsageError(`Another installed plugin owns ${service}.`);
 };
@@ -224,6 +214,7 @@ export const manage = (context: ManagerContext, input: unknown) =>
       case "plugin.enable": {
         const plugin = state.installed.find((item) => item.key === action.key);
         if (!plugin) throw new UsageError("Installed plugin not found.");
+        if (action.enabled) assertUnreserved(plugin.metadata.service);
         if (action.enabled && revoked(sources, plugin))
           throw new UsageError("This package is revoked.");
         if (action.enabled && plugin.metadata.permissions.localCode && !action.allowLocalCode)

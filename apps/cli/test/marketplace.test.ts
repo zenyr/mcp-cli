@@ -594,3 +594,51 @@ test("session descriptors keep bootstrap catalogs despite generated caches; stat
   };
   expect((await loadManifest(registry, staticFound)).tools).toEqual([]);
 });
+
+test("catalog, linked and scaffolded plugins cannot take a reserved name like workspaces", async () => {
+  const f = await fixture();
+  const plugin = { ...f.plugin, id: "test.workspaces", service: "workspaces" };
+  await f.commit({ ...f.catalog, plugins: [plugin] });
+  await f.run({ type: "source.refresh", id: f.sourceId });
+  await expect(
+    f.run({ type: "plugin.install", sourceId: f.sourceId, pluginId: plugin.id }),
+  ).rejects.toThrow("Reserved command name: workspaces");
+  await writeFile(
+    join(f.source, "plugin.json"),
+    JSON.stringify({ ...f.manifest, service: "workspaces" }),
+  );
+  await writeFile(
+    join(f.source, "manifest.json"),
+    JSON.stringify({ version: 2, service: "workspaces", tools: [] }),
+  );
+  await expect(f.run({ type: "plugin.link", directory: f.source })).rejects.toThrow(
+    "Reserved command name: workspaces",
+  );
+  expect((await readState(f.context)).installed).toHaveLength(0);
+  await expect(scaffold("workspaces", join(f.root, "starter"))).rejects.toThrow(
+    "Reserved command name: workspaces",
+  );
+  expect(fs.existsSync(join(f.root, "starter"))).toBe(false);
+  expect(await Bun.file(join(f.root, ".local/bin/workspaces")).exists()).toBe(false);
+});
+
+test("an installed plugin that already holds a reserved name is neither enabled nor discovered", async () => {
+  const f = await fixture();
+  await f.run({ type: "plugin.install", sourceId: f.sourceId, pluginId: f.plugin.id });
+  const state = await readState(f.context);
+  const rename = (enabled: boolean) =>
+    state.installed.map((item) => ({
+      ...item,
+      enabled,
+      metadata: { ...item.metadata, service: "workspaces" },
+    }));
+  await writeState(f.context, { ...state, installed: rename(false) });
+  await expect(
+    f.run({ type: "plugin.enable", key: f.key, enabled: true, allowLocalCode: true }),
+  ).rejects.toThrow("Reserved command name: workspaces");
+  await writeState(f.context, { ...state, installed: rename(true) });
+  const context = { ...f.context, writable: async () => false, nodeModules: [] };
+  expect((await discover(context)).plugins).toHaveLength(0);
+  await f.run({ type: "plugin.remove", key: f.key });
+  expect((await readState(f.context)).installed).toHaveLength(0);
+});

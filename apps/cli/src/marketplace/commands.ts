@@ -2,6 +2,7 @@ import { chmod, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { UsageError } from "@mcp-cli/core";
+import { isReservedService } from "../reserved";
 import { atomicWrite, missing, readOptional, type MarketContext } from "./storage";
 import type { State } from "./schema";
 
@@ -55,7 +56,10 @@ export const syncCommands = async (
     receipts: {},
   };
   const receipts: Record<string, string> = {};
-  for (const plugin of next.installed.filter((item) => item.enabled)) {
+  const routable = next.installed.filter(
+    (item) => item.enabled && !isReservedService(item.metadata.service),
+  );
+  for (const plugin of routable) {
     const name = `${plugin.metadata.service}${process.platform === "win32" ? ".cmd" : ""}`;
     receipts[join(settings.directory, name)] = commandText(
       settings.launcher,

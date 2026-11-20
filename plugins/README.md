@@ -77,7 +77,8 @@ The default is `~/.config/mcp-cli/config.json`. Entries are package names, absol
 
 Invalid configuration produces a usage error (exit code 2) that includes the file path.
 If two locations provide the same service name, discovery fails and reports both locations.
-Service names cannot be `help`, `generate`, `plugins`, `workspaces`, `login`, or `logout`.
+Service names cannot be `help`, `generate`, `plugins`, `workspaces`, `login`, `logout`, `auth`, `desktop`, `daemon`, or `mcp-cli`.
+Discovery, `plugins init`, catalog installs, and linked plugins share this list (`apps/cli/src/reserved.ts`).
 
 When the package directory is writable, generated files go to `src/generated.ts` and `src/tools.json`.
 Otherwise, as with packages inside `node_modules`, they go to `$XDG_CACHE_HOME/mcp-cli/<service>/`.
