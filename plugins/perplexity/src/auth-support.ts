@@ -36,6 +36,7 @@ export const perplexityAuth: AuthSupport = {
       spec: { type: "oauth", scopes: SCOPES, clientName: "mcp-cli" },
       store: context.store,
       ui: options.ui,
+      ...(options.signal && { signal: options.signal }),
       ...(options.timeoutMs !== undefined && { timeoutMs: options.timeoutMs }),
     });
   },

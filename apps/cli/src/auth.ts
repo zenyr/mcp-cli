@@ -226,6 +226,7 @@ export const loginCommand = async (args: string[], context: AuthContext): Promis
     url: connection.url,
     spec: auth,
     store: context.store,
+    ...(context.signal && { signal: context.signal }),
     ui: {
       open: (url) => context.open(url, browser),
       ...(context.manual && { manual: context.manual }),

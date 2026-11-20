@@ -26,6 +26,8 @@ export type LoginOptions = {
   store: TokenStore;
   ui: LoginUi;
   fetchFn?: FetchLike;
+  /** Cancels the login, settling the loopback wait and skipping the token write. */
+  signal?: AbortSignal;
   timeoutMs?: number;
   now?: () => number;
 };
@@ -43,9 +45,20 @@ const resourceFor = (url: string, metadata: OAuthProtectedResourceMetadata | und
   return metadata.resource;
 };
 
+const abortable = (fetchFn: FetchLike | undefined, signal: AbortSignal | undefined) =>
+  signal
+    ? (url: string | URL, init?: RequestInit) =>
+        (fetchFn ?? fetch)(url, {
+          ...init,
+          signal: init?.signal ? AbortSignal.any([init.signal, signal]) : signal,
+        })
+    : fetchFn;
+
 /** Runs discovery, optional dynamic registration and a PKCE authorization code flow on a loopback redirect. */
 export const login = async (options: LoginOptions): Promise<Tokens> => {
-  const { service, url, spec, store, ui, fetchFn } = options;
+  const { service, url, spec, store, ui, signal } = options;
+  const fetchFn = abortable(options.fetchFn, signal);
+  signal?.throwIfAborted();
   const now = options.now ?? Date.now;
   const info = await discoverOAuthServerInfo(url, { fetchFn });
   const server = info.authorizationServerUrl;
@@ -54,7 +67,10 @@ export const login = async (options: LoginOptions): Promise<Tokens> => {
   const scope = (spec.scopes ?? info.resourceMetadata?.scopes_supported)?.join(" ") || undefined;
   const state = randomBytes(32).toString("base64url");
   const loopback = startLoopback(state, options.timeoutMs ?? 300000, spec.redirectPort);
+  const cancel = () => loopback.stop();
   try {
+    signal?.throwIfAborted();
+    signal?.addEventListener("abort", cancel, { once: true });
     const client: OAuthClientInformationMixed = spec.clientId
       ? { client_id: spec.clientId }
       : await registerClient(server, {
@@ -91,9 +107,13 @@ export const login = async (options: LoginOptions): Promise<Tokens> => {
       fetchFn,
     });
     const tokens = toTokens(issued, clientRecord(url, server, metadata, client, resource), now());
-    await store.withLock(service, () => store.write(service, tokens));
+    await store.withLock(service, () => {
+      signal?.throwIfAborted();
+      return store.write(service, tokens);
+    });
     return tokens;
   } finally {
+    signal?.removeEventListener("abort", cancel);
     loopback.stop();
   }
 };

@@ -136,6 +136,38 @@ test("logout removes stored credentials and rejects bad arguments", async () => 
   await expect(logoutCommand(["svc", "extra"], context)).rejects.toThrow(UsageError);
 });
 
+test("a cancelled OAuth login stops before discovery and stores no tokens", async () => {
+  let hits = 0;
+  const server = Bun.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+    fetch: () => {
+      hits += 1;
+      return new Response("not found", { status: 404 });
+    },
+  });
+  const controller = new AbortController();
+  controller.abort();
+  const context: AuthContext = {
+    env: {},
+    store,
+    signal: controller.signal,
+    plugin: async () =>
+      plugin({ type: "oauth", clientId: "c" }, { type: "http", url: `${server.url.origin}/mcp` }),
+    writeError: () => undefined,
+    open: () => {
+      throw new Error("Login reached the browser step");
+    },
+    readSecret: async () => "",
+  };
+  await expect(loginCommand(["svc", "--no-browser"], context)).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  await server.stop(true);
+  expect(hits).toBe(0);
+  expect(await store.read("svc")).toBeUndefined();
+});
+
 const cli = async (env: Record<string, string>, ...args: string[]) => {
   const { stderr, code } = await runCli(args, {
     env: { HOME: root, MCP_CLI_INTERNAL_PLUGINS: "only", DEMO_AUTH_TOKEN: "", ...env },

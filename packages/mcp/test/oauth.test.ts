@@ -107,6 +107,37 @@ test("login fails on denial, state mismatch and timeout without storing tokens",
   expect(await store.read("svc")).toBeUndefined();
 });
 
+test("aborting a pending login cancels the loopback wait and stores no tokens", async () => {
+  const controller = new AbortController();
+  await expect(
+    signIn({ signal: controller.signal, ui: { open: () => controller.abort() }, timeoutMs: 1000 }),
+  ).rejects.toThrow(new LoginError("Login was cancelled"));
+  expect(await store.read("svc")).toBeUndefined();
+});
+
+test("aborting during the token exchange or before the write stores no tokens", async () => {
+  const inExchange = new AbortController();
+  const fetchFn = (url: string | URL, init?: RequestInit) => {
+    if (String(url).endsWith("/token")) inExchange.abort();
+    return fetch(url, init);
+  };
+  await expect(signIn({ signal: inExchange.signal, fetchFn })).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  const beforeWrite = new AbortController();
+  const locking: TokenStore = {
+    ...store,
+    withLock: (name, run) => {
+      beforeWrite.abort();
+      return store.withLock(name, run);
+    },
+  };
+  await expect(signIn({ signal: beforeWrite.signal, store: locking })).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  expect(await store.read("svc")).toBeUndefined();
+});
+
 const authorizeFor = (now = Date.now) =>
   oauthAuthorize({ service: "svc", url: fake.resource, store, now });
 

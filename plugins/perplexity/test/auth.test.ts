@@ -58,3 +58,31 @@ test("browser logout removes only a browser login", async () => {
   await perplexityAuth.logout(browser, { target: "oauth" });
   expect(await browser.store.read("pplx")).toBeUndefined();
 });
+
+test("a cancelled browser login forwards the signal and stores nothing", async () => {
+  let hits = 0;
+  const server = Bun.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+    fetch: () => {
+      hits += 1;
+      return new Response("not found", { status: 404 });
+    },
+  });
+  const controller = new AbortController();
+  controller.abort();
+  const cancelled = context(undefined, { PERPLEXITY_MCP_URL: `${server.url.origin}/mcp` });
+  await expect(
+    perplexityAuth.login(cancelled, {
+      signal: controller.signal,
+      ui: {
+        open: () => {
+          throw new Error("Login reached the browser step");
+        },
+      },
+    }),
+  ).rejects.toMatchObject({ name: "AbortError" });
+  await server.stop(true);
+  expect(hits).toBe(0);
+  expect(await cancelled.store.read("pplx")).toBeUndefined();
+});
