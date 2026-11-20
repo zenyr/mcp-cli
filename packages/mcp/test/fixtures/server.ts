@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { appendFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { isRecord } from "@mcp-cli/core";
 
@@ -6,6 +6,10 @@ import { isRecord } from "@mcp-cli/core";
 const mode = process.argv[2] ?? "tools";
 const pidFile = process.argv[3];
 if (pidFile) writeFileSync(pidFile, String(process.pid));
+// FIXTURE_LOG records each spawn and every request method so tests can count launches and probes.
+const log = (line: string) =>
+  process.env.FIXTURE_LOG && appendFileSync(process.env.FIXTURE_LOG, `${line}\n`);
+log("spawn");
 
 type Message = { id?: number | string; method?: string; params?: Record<string, unknown> };
 const send = (message: Record<string, unknown>) =>
@@ -66,10 +70,10 @@ const slow = async (id: Message["id"], params: Record<string, unknown>) => {
 
 let changed = false;
 let lists = 0;
-let subscription: Message["id"];
 const handle = (message: Message) => {
   const { id, method, params = {} } = message;
   if (id === undefined) return;
+  log(String(method));
   if (method === "server/discover" && mode === "modern")
     return send({
       id,
@@ -80,16 +84,6 @@ const handle = (message: Message) => {
         cacheScope: "private",
       },
     });
-  if (method === "subscriptions/listen" && mode === "modern") {
-    subscription = id;
-    return send({
-      method: "notifications/subscriptions/acknowledged",
-      params: {
-        _meta: { "io.modelcontextprotocol/subscriptionId": id },
-        notifications: { toolsListChanged: true },
-      },
-    });
-  }
   if (method === "initialize")
     return send({
       id,
@@ -101,13 +95,7 @@ const handle = (message: Message) => {
     });
   if (method === "tools/call" && params.name === "change") {
     changed = true;
-    if (mode !== "modern" || subscription !== undefined)
-      send({
-        method: "notifications/tools/list_changed",
-        ...(subscription !== undefined && {
-          params: { _meta: { "io.modelcontextprotocol/subscriptionId": subscription } },
-        }),
-      });
+    send({ method: "notifications/tools/list_changed" });
     return send({ id, result: { content: [{ type: "text", text: String(lists) }] } });
   }
   if (method === "tools/list") {
@@ -151,6 +139,11 @@ const handle = (message: Message) => {
     const args = isRecord(params.arguments) ? params.arguments : {};
     const text = `Hello, ${String(args.who ?? "nobody")}`;
     return send({ id, result: { messages: [{ role: "user", content: { type: "text", text } }] } });
+  }
+  if (method === "tools/call" && params.name === "env") {
+    const { FIXTURE_PROBE = null, FIXTURE_CONFIG = null } = process.env;
+    const text = JSON.stringify({ FIXTURE_PROBE, FIXTURE_CONFIG, cwd: process.cwd() });
+    return send({ id, result: { content: [{ type: "text", text }] } });
   }
   if (method === "tools/call" && params.name === "slow") return void slow(id, params);
   if (method === "tools/call") {

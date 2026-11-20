@@ -7,6 +7,7 @@ import { isAbsolute } from "node:path";
 import { credentialSwitches, isRecord, UsageError, type ToolSession } from "@mcp-cli/core";
 import { connect } from "@mcp-cli/mcp";
 import { defaultSettings, defaultStore, resolveConnection } from "../auth";
+import { callerConnection } from "../caller-connection";
 import { extensionCacheScope } from "../cache-scope";
 import { discover, findPlugin, loadPlugin } from "../discovery";
 import { defaultContext } from "../paths";
@@ -99,14 +100,7 @@ export const startDaemon = async (directory: string, idleMs = 60_000) => {
     );
     const credential =
       request.credential ?? credentialSwitches(plugin.auth).find((item) => item.base)?.flag;
-    const connection =
-      config.type === "stdio"
-        ? {
-            ...config,
-            cwd: config.cwd ?? request.cwd,
-            env: config.isolatedEnv ? config.env : { ...request.env, ...config.env },
-          }
-        : config;
+    const connection = callerConnection(config, request);
     return pool.use(
       key,
       request.service,

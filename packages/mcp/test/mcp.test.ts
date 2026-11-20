@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Connection } from "@mcp-cli/core";
 import { connect, MissingToolsCapabilityError } from "../src";
+import { startModernHttpFixture } from "./fixtures/modern-http";
 
 const fixture = join(import.meta.dir, "fixtures", "server.ts");
 const stdio = (...args: string[]): Connection => ({
@@ -210,13 +211,40 @@ test("MCP notifications during a discovery supersede its result", async () => {
   }
 });
 
-test("modern MCP connections subscribe to tool-list changes", async () => {
-  const session = await connect(stdio("modern"), { sessionTools: true, timeoutMs: 1000 });
+test("modern HTTP MCP connections subscribe to tool-list changes", async () => {
+  const fixture = startModernHttpFixture();
+  const session = await connect(
+    { type: "http", url: fixture.url },
+    { sessionTools: true, timeoutMs: 1000 },
+  );
   try {
-    expect((await session.listTools()).map(({ name }) => name)).toEqual(["echo", "slow"]);
+    expect((await session.listTools()).map(({ name }) => name)).toEqual(["echo"]);
     await session.callTool("change", {});
     expect(await session.listTools()).toEqual([]);
   } finally {
     await session.close();
+    await fixture.stop();
   }
 }, 5000);
+
+test("stdio connect spawns the server once and sends no version probe", async () => {
+  await withTempDir(async (directory) => {
+    const log = join(directory, "log");
+    const session = await connect({
+      type: "stdio",
+      command: "bun",
+      args: [fixture, "modern"],
+      env: { FIXTURE_LOG: log },
+    });
+    try {
+      expect((await session.listTools()).map(({ name }) => name)).toEqual(["echo", "slow"]);
+    } finally {
+      await session.close();
+    }
+    expect((await readFile(log, "utf8")).trim().split("\n")).toEqual([
+      "spawn",
+      "initialize",
+      "tools/list",
+    ]);
+  });
+});

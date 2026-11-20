@@ -135,6 +135,7 @@ const openTransport = (config: Connection) => {
         command: config.command,
         args: config.args,
         cwd: config.cwd,
+        // The SDK always adds HOME, LOGNAME, PATH, SHELL, TERM and USER beneath this env, even for isolated plugins.
         env: config.env,
         stderr: "inherit",
       }),
@@ -162,7 +163,8 @@ const connectMcp = async (
   const client = new Client(
     { name: "mcp-cli", version: "0.1.0" },
     {
-      versionNegotiation: { mode: "auto" },
+      // Auto negotiation probes stdio servers on a second spawn, so stdio stays on the legacy handshake.
+      versionNegotiation: { mode: config.type === "stdio" ? "legacy" : "auto" },
       ...(options.sessionTools && {
         listChanged: {
           tools: { autoRefresh: false, debounceMs: 0, onChanged: discovery.invalidate },

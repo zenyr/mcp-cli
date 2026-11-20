@@ -5,6 +5,7 @@ import { runService, type RuntimeDependencies } from "@mcp-cli/runtime";
 import { Effect } from "effect";
 import { attempt, attemptSync } from "./attempt";
 import { defaultSettings, defaultStore, resolveConnection } from "./auth";
+import { callerConnection } from "./caller-connection";
 import { DaemonUnavailableError, openDaemonSession, usesDaemon } from "./daemon/client";
 import { extensionCacheScope } from "./cache-scope";
 import { findPlugin, hostRegistry, loadPlugin } from "./discovery";
@@ -50,10 +51,13 @@ export const runtimeDependencies = (
             if (!(error instanceof DaemonUnavailableError)) throw error;
           }
         }
-        return connect(
-          await resolveConnection(selected, host.env, defaultStore(host.env), credential),
-          { sessionTools },
+        const config = await resolveConnection(
+          selected,
+          host.env,
+          defaultStore(host.env),
+          credential,
         );
+        return connect(callerConnection(config, host), { sessionTools });
       },
       cacheScope: (credential) =>
         extensionCacheScope(selected, host.env, defaultStore(host.env), credential),

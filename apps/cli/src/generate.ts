@@ -8,8 +8,9 @@ import { connect } from "@mcp-cli/mcp";
 import { Effect } from "effect";
 import { attempt, attemptSync } from "./attempt";
 import { defaultSettings, defaultStore, resolveConnection } from "./auth";
+import { callerConnection, type Caller } from "./caller-connection";
 import { findPlugin, hostRegistry, loadPlugin, type Registry } from "./discovery";
-import { CliHost, printLine, type Env } from "./host";
+import { CliHost, printLine } from "./host";
 import { outputFiles } from "./plugins";
 
 const usage = "Usage: mcp-cli generate <service> [--snapshot <path>] [--check]";
@@ -45,9 +46,11 @@ const writeAtomically = async (path: string, text: string): Promise<void> => {
   }
 };
 
-const liveTools = async (plugin: ServicePlugin, workspace: string | undefined, env: Env) => {
+const liveTools = async (plugin: ServicePlugin, workspace: string | undefined, caller: Caller) => {
+  const { env } = caller;
   const scoped = await selectWorkspace(plugin, workspace, defaultSettings(env));
-  const session = await connect(await resolveConnection(scoped, env, defaultStore(env)));
+  const config = await resolveConnection(scoped, env, defaultStore(env));
+  const session = await connect(callerConnection(config, caller));
   try {
     return await session.listTools();
   } finally {
@@ -70,7 +73,7 @@ export const generate = (
     const tools = yield* attempt(async () =>
       snapshot
         ? decodeSnapshot(await Bun.file(snapshot).json())
-        : liveTools(plugin, selected.workspace, host.env),
+        : liveTools(plugin, selected.workspace, host),
     );
     const built = yield* attempt(() => buildArtifacts(plugin, tools));
     const output = yield* attempt(() => outputFiles(registry, discovered));
