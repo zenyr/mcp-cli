@@ -1,5 +1,6 @@
 import { readRecord } from "./commands";
-import type { Scope, Store } from "./types";
+import { excerptParent } from "./tree";
+import type { Node, Scope, Store } from "./types";
 import { bytes, fail, output, positive } from "./values";
 
 export type ZoomRequest = {
@@ -44,10 +45,17 @@ export const zoom = (store: Store, scopes: Scope[], request: ZoomRequest): unkno
     output(result, maxBytes);
     return result;
   }
+  const nodeAt = (l: number, i: number): Node | undefined => {
+    const node = store.node(scope, generation, l, i);
+    if (node || l === 0) return node;
+    const left = nodeAt(l - 1, i * 2);
+    const right = left && nodeAt(l - 1, i * 2 + 1);
+    return left && right ? excerptParent(scope, generation, left, right) : undefined;
+  };
   const width = count / 2;
   const level = Math.log2(width);
   const children = [index, index + width].map((start) => {
-    const node = store.node(scope, generation, level, start / width);
+    const node = nodeAt(level, start / width);
     if (!node)
       return fail("NODE_UNAVAILABLE", "Child node is unavailable in requested generation.", {
         generation,

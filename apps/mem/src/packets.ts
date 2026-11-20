@@ -1,4 +1,5 @@
 import type { Node, Scope, Store } from "./types";
+import { excerptParent } from "./tree";
 import { bytes, fail, nodeKey, positive, start } from "./values";
 
 const instructions =
@@ -59,13 +60,14 @@ export const startPacket = (
       view: view.map((node) => item(scope, node)),
     })),
   });
-  while (bytes(`${JSON.stringify(packet())}\n`) > maxBytes) {
-    const candidates = selected.flatMap((selection, scopeIndex) =>
+  const candidatesFor = (fallback: boolean) =>
+    selected.flatMap((selection, scopeIndex) =>
       selection.view.flatMap((left, index) => {
         const right = selection.view[index + 1];
         if (!right || left.l !== right.l || left.i % 2 !== 0 || right.i !== left.i + 1) return [];
-        const parent = selection.ready.get(nodeKey({ l: left.l + 1, i: left.i / 2 }));
-        if (!parent) return [];
+        const stored = selection.ready.get(nodeKey({ l: left.l + 1, i: left.i / 2 }));
+        if (!stored && !fallback) return [];
+        const parent = stored ?? excerptParent(selection.scope.id, generation, left, right);
         const cost =
           bytes(JSON.stringify(item(selection.scope, parent))) -
           bytes(JSON.stringify(item(selection.scope, left))) -
@@ -83,6 +85,9 @@ export const startPacket = (
         ];
       }),
     );
+  while (bytes(`${JSON.stringify(packet())}\n`) > maxBytes) {
+    const stored = candidatesFor(false);
+    const candidates = stored.length ? stored : candidatesFor(true);
     candidates.sort(
       (a, b) =>
         Number(a.cost >= 0) - Number(b.cost >= 0) || b.age - a.age || a.scopeIndex - b.scopeIndex,

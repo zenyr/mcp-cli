@@ -23,6 +23,24 @@ const excerpt = (parts: string[], marker: string, limit: number): string => {
   );
 };
 
+const zoomMarker = (scopeId: string, part: Part, generation: string): string =>
+  `[unsummarized; mem zoom ${scopeId}/${start(part)} --count ${2 ** part.l} --generation ${generation}]`;
+
+// Unstored stand-in for a missing parent so `start` and `zoom` work after failed merges.
+export const excerptParent = (
+  scopeId: string,
+  generation: string,
+  left: Node,
+  right: Node,
+): Node => {
+  const part = { l: left.l + 1, i: left.i / 2 };
+  const limit = Math.max(bytes(left.text), bytes(right.text));
+  return {
+    ...part,
+    text: excerpt([left.text, right.text], zoomMarker(scopeId, part, generation), limit),
+  };
+};
+
 const codeOf = (error: unknown): unknown => (isRecord(error) ? error.code : undefined);
 
 export const summarize = async (
@@ -118,7 +136,7 @@ export const summarize = async (
           { l, i },
           JSON.stringify({ summaries: [left.text, right.text] }),
           [left.text, right.text],
-          `[unsummarized; mem zoom ${scope.id}/${start({ l, i })} --count ${2 ** l}]`,
+          zoomMarker(scope.id, { l, i }, generation),
         );
       }
     if (errors.length) throw errors[0];

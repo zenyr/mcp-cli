@@ -89,7 +89,8 @@ The minimum target is 1 byte.
 The original source is preserved, and previous responses are not sent again.
 If the third response remains oversized, or the input exceeds `inputBytes`, the node becomes an excerpt.
 The excerpt holds a byte-bounded prefix of the original text and a marker such as `[unsummarized; mem read <scopeId/index>]`.
-Parent excerpts hold a prefix of each child and point to `mem zoom`. Excerpts keep `start` usable.
+Parent excerpts hold a prefix of each child and point to `mem zoom` with the generation. Excerpts keep `start` usable.
+If a parent summary is missing, `start` and `zoom` build the same excerpt without storing it. A later `summarize` can still store a real summary.
 Other summarizer failures do not stop the remaining nodes. `summarize` reports the first such failure after it builds every other node.
 An unreachable summarizer stops further model calls for that run.
 The current generation v3 uses the `range-only-v1` policy. Rebuild trees from existing caches with `mem summarize`.

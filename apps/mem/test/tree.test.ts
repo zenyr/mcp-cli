@@ -2,11 +2,13 @@ import { afterEach, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parse } from "../src/options";
 import { startPacket } from "../src/packets";
 import { generationFor, openStore } from "../src/store";
 import { summarize } from "../src/tree";
 import type { Compressor, Scope, Settings, Store } from "../src/types";
 import { bytes } from "../src/values";
+import { zoom } from "../src/zoom";
 
 const settings: Settings = {
   model: "test",
@@ -368,12 +370,64 @@ test("persistently oversized summaries publish excerpts so a large tree still fi
   await summarize(store, scope, generation, { ...settings, nodeBytes: 96 }, oversized);
   expect(store.nodes(scope.id, generation)).toHaveLength(31);
   expect(store.node(scope.id, generation, 1, 0)?.text).toEndWith(
-    `[unsummarized; mem zoom ${scope.id}/0 --count 2]`,
+    `[unsummarized; mem zoom ${scope.id}/0 --count 2 --generation ${generation}]`,
   );
   for (const node of store.nodes(scope.id, generation))
     expect(bytes(node.text)).toBeLessThanOrEqual(96);
   const packet = startPacket(store, [scope], generation, 1024);
   expect(bytes(`${JSON.stringify(packet)}\n`)).toBeLessThanOrEqual(1024);
+});
+
+test("a parent excerpt marker runs verbatim as zoom options", async () => {
+  const { store } = setup();
+  append(store, 2);
+  await summarize(store, scope, generation, { ...settings, inputBytes: 50 }, compact);
+  const marker = /\[unsummarized; mem (zoom .+)\]$/.exec(
+    store.node(scope.id, generation, 1, 0)?.text ?? "",
+  )?.[1];
+  const options = parse((marker ?? "").split(" "));
+  expect(options.generation).toBe(generation);
+  expect(
+    zoom(store, [scope], {
+      recordId: options.text[0] ?? "",
+      count: options.count ?? 0,
+      generation: options.generation ?? "",
+      maxBytes: options.maxBytes,
+    }),
+  ).toMatchObject({ ok: true, generation });
+});
+
+test("deterministic parent failures still leave start within budget", async () => {
+  const { store } = setup();
+  append(store, 16, "x".repeat(1000));
+  const rejected: Compressor = async () => {
+    throw Object.assign(new Error("Summarizer rejected the request."), {
+      code: "MODEL_HTTP_ERROR",
+    });
+  };
+  await expect(
+    summarize(store, scope, generation, { ...settings, inputBytes: 500 }, rejected),
+  ).rejects.toMatchObject({ code: "MODEL_HTTP_ERROR" });
+  expect(store.status([scope], generation)[0]?.pending).toBe(0);
+  expect(store.nodes(scope.id, generation).every((node) => node.l === 0)).toBe(true);
+  const packet = packetShape(startPacket(store, [scope], generation, 1024));
+  expect(bytes(`${JSON.stringify(packet)}\n`)).toBeLessThanOrEqual(1024);
+  const view = packet.scopes[0]?.view ?? [];
+  expect(view.reduce((sum, item) => sum + item.count, 0)).toBe(16);
+  const merged = view.filter((item) => item.count > 1);
+  expect(merged.some((item) => item.count > 2)).toBe(true);
+  for (const item of merged) {
+    expect(item.summary).toEndWith(
+      `[unsummarized; mem zoom ${item.id} --count ${item.count} --generation ${generation}]`,
+    );
+    const zoomed = zoom(store, [scope], {
+      recordId: item.id,
+      count: item.count,
+      generation,
+      maxBytes: 8192,
+    });
+    expect(zoomed).toMatchObject({ ok: true, generation });
+  }
 });
 
 test("unreachable summarizer is called once while model-free nodes are still built", async () => {
