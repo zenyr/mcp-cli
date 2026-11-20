@@ -54,19 +54,27 @@ export const authCredentialName = (plugin: ServicePlugin, credential?: string): 
       : credential,
   );
 
+// Catalog plugins and isolated workspaces never see the host variable, so hints must not suggest it.
+const readsEnvironment = (plugin: ServicePlugin, name: string): boolean =>
+  name in pluginEnvironment(plugin, { [name]: "" });
+
 // An explicit environment variable wins over the key stored by `mcp-cli login`.
 const apiKey = async (
   spec: ApiKeySpec,
   env: Env,
   store: TokenStore,
-  service: string,
+  plugin: ServicePlugin,
   credential?: string,
 ): Promise<string> => {
+  const service = plugin.name;
   const choice = keyChoice(spec, service, credential);
   const key =
     env[choice.env] || (await store.read(credentialName(service, choice.credential)))?.accessToken;
   const login = `mcp-cli login ${service}${credential ? ` --${credential}` : ""}`;
-  if (!key) throw new AuthRequiredError(`Set ${choice.env} or run ${login} to use ${service}`);
+  const hint = readsEnvironment(plugin, choice.env)
+    ? `Set ${choice.env} or run ${login}`
+    : `Run ${login}`;
+  if (!key) throw new AuthRequiredError(`${hint} to use ${service}`);
   return key;
 };
 
@@ -104,7 +112,7 @@ export const resolveConnection = async (
       ...connection,
       env: {
         ...connection.env,
-        [auth.env]: await apiKey(auth, env, store, plugin.name, credential),
+        [auth.env]: await apiKey(auth, env, store, plugin, credential),
       },
     };
   }
@@ -114,7 +122,7 @@ export const resolveConnection = async (
       ...connection,
       headers: {
         ...connection.headers,
-        ...apiKeyHeaders(auth, await apiKey(auth, env, store, plugin.name, credential)),
+        ...apiKeyHeaders(auth, await apiKey(auth, env, store, plugin, credential)),
       },
     };
   return {
@@ -164,7 +172,8 @@ const saveApiKey = async (
   if (!key) throw new UsageError("No key was entered");
   const name = credentialName(plugin.name, choice.credential);
   await context.store.withLock(name, () => context.store.write(name, { accessToken: key }));
-  context.writeError(`Saved ${choice.env} for ${plugin.name}; a set ${choice.env} still wins`);
+  const wins = readsEnvironment(plugin, choice.env) ? `; a set ${choice.env} still wins` : "";
+  context.writeError(`Saved ${choice.env} for ${plugin.name}${wins}`);
 };
 
 export const loginCommand = async (args: string[], context: AuthContext): Promise<void> => {

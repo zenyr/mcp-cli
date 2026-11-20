@@ -168,6 +168,7 @@ mcp-cli logout notion   # Delete the saved token.
 - Setting API key `header` sends only the key without a scheme. Use `scheme` to set a prefix.
 - For API key services, `mcp-cli login <service>` reads hidden input or piped stdin and saves the key.
   The environment variable takes precedence over the saved key. `mcp-cli logout <service>` deletes the saved key.
+  Catalog-installed and linked plugins ignore API key environment variables. Use `mcp-cli login` for them.
 - `apiKey.alternates` declares other keys for the same service. Select one with `--<flag>` at runtime
   and use the same flag for login and logout. Example: Slack's `--xoxb` (`SLACK_MCP_BOT_TOKEN`).
   stdio connections receive keys through environment variables with the same names.
@@ -203,7 +204,11 @@ Errors after sending a tool request do not trigger a retry through a direct conn
 The daemon maintains up to 32 connections and closes idle connections after 60 seconds.
 Reset and shutdown wait for active requests. Failed tool calls are not retried.
 The daemon uses authenticated local IPC. Set `MCP_CLI_DAEMON_DIR` to an absolute path to customize its directory.
-The current prototype does not automatically recover ownership files left after abnormal termination.
+After an abnormal daemon exit, the next `daemon start` recovers stale state.
+Run `mcp-cli daemon recover` to recover it without starting the daemon.
+Ownership, token, and socket files are removed only when the recorded PID is absent and the socket cannot be reached.
+If the PID is alive, the socket responds, or ownership cannot be verified, recovery preserves the state and stops.
+A lock protects concurrent recovery and startup. Stale locks are not deleted automatically.
 See the [desktop guide](../desktop/README.md) for the tray app.
 
 ## Current support

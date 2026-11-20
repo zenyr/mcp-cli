@@ -23,7 +23,7 @@ const USAGE = `Usage: mcp-cli <service> <command>
        mcp-cli generate <service> [--snapshot <path>] [--check]
        mcp-cli plugins
        mcp-cli workspaces <list|add|rename|default> <service>
-       mcp-cli daemon <start|status|reset|stop>
+       mcp-cli daemon <start|status|reset|stop|recover>
        mcp-cli login <service> [--no-browser]
        mcp-cli logout <service>
        mcp-cli auth <configure|status> <service> [--check]`;

@@ -12,6 +12,7 @@ independent releases, managed runtimes, and local development.
 - [Suno](suno/README.md): music generation, library, voices and visuals
 - [Slack](slack/README.md): messaging tools and token settings
 - [Fish Audio](fish-audio/README.md): speech generation, transcription, and media operations
+- [Perplexity](perplexity/README.md) (service `pplx`): web search, cited answers, and deep research with an API key or browser OAuth
 - [Fast Semble](fast-semble/README.md): local code search through a reusable Semble MCP session
 - [Claudia](claudia/README.md): read-only gallery, character canon, and filmmaking guides without an account
 - `demo` and `demo-auth`: hidden plugins for tests and host contract checks. Set `MCP_CLI_INTERNAL_PLUGINS=1` to use them.

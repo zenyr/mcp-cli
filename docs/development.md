@@ -2,6 +2,13 @@
 
 Run commands from the repository root. This project uses Bun workspaces and Turborepo.
 
+## Prerequisites
+
+- Bun at the version pinned by `packageManager` in `package.json` (currently `bun@1.4.2`). `bun scripts/worktree.ts init` warns on a mismatch.
+- For desktop native builds (`bun run --cwd apps/desktop native:build`): macOS, tinyjs, and its TxikiJS runtime `tjs`.
+  Install tinyjs with `curl -fsSL https://tinyjs.app/install | sh`. The installer also provides `tjs` inside the tinyjs installation.
+  Set `TJS_BIN` to use another TxikiJS executable. See the [desktop guide](../apps/desktop/README.md#shared-runtime-tests).
+
 ## Installation and verification
 
 ```sh

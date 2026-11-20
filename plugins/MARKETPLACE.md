@@ -112,8 +112,11 @@ hello message echo --text 'Hello'
 ```
 
 The template includes `plugin.json`, `manifest.json`, and a self-contained `server.mjs`.
-Code changes in a linked folder apply on the next CLI run. Relink after changing
-the descriptor or tool definitions. Source development requires Bun; end users do not.
+Code changes in a linked folder apply to new connections. A running daemon keeps
+reusing a pooled stdio process until it stays idle for 60 seconds. Run
+`mcp-cli daemon reset`, or set `MCP_CLI_DAEMON=0`, to load changes immediately.
+Relink after changing the descriptor or tool definitions. Source development
+requires Bun; end users do not.
 
 Pack the folder and print its catalog entry:
 

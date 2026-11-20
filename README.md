@@ -9,7 +9,8 @@ It generates code from server tool definitions. Service plugins provide command 
 - Read help and tool lists without connecting to a server. Connections and input validation happen when you run tools.
 - Call tools by their original server names or use command paths defined by plugins.
 - Use stdio and Streamable HTTP connections with OAuth or API key authentication.
-- Includes Notion, Linear, Slack, and Fish Audio plugins, plus a demo that requires no external account.
+- Includes Notion, Linear, Slack, Fish Audio, Suno, Perplexity (`pplx`), Claudia, and Fast Semble plugins.
+- Includes hidden `demo` and `demo-auth` plugins that need no external account. Set `MCP_CLI_INTERNAL_PLUGINS=1` to use them.
 
 ## Tools in this repository
 

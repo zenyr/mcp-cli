@@ -102,9 +102,9 @@ test("workspace credentials, environment, workflow cache and plugin namespaces s
     ).toBeUndefined();
     const named = await selectWorkspace(plugin, "two", f.settings);
     await pluginStore(named, f.store).delete("test");
-    await expect(resolveConnection(named, env, f.store, undefined, f.settings)).rejects.toThrow(
-      "Set TEST_TOKEN",
-    );
+    const missing = resolveConnection(named, env, f.store, undefined, f.settings);
+    await expect(missing).rejects.toThrow("Run mcp-cli login test");
+    await expect(missing).rejects.not.toThrow("TEST_TOKEN");
   } finally {
     await rm(f.directory, { recursive: true, force: true });
   }

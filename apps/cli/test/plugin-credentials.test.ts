@@ -7,8 +7,7 @@ import {
   type TokenStore,
   type Tokens,
 } from "@mcp-cli/core";
-import { resolveConnection } from "../src/auth";
-import { pluginStore } from "../src/plugin-credentials";
+import { loginCommand, resolveConnection } from "../src/auth";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -35,10 +34,23 @@ test("plugins sharing a service name cannot inherit another catalog's credential
   };
   const first = { ...base, credentialNamespace: "plugin-first" };
   const second = { ...base, credentialNamespace: "plugin-second" };
-  await expect(resolveConnection(first, { SECRET: "host-secret" }, store)).rejects.toBeInstanceOf(
-    AuthRequiredError,
+  const rejected = resolveConnection(first, { SECRET: "host-secret" }, store);
+  await expect(rejected).rejects.toBeInstanceOf(AuthRequiredError);
+  await expect(rejected).rejects.toThrow("Run mcp-cli login hello to use hello");
+  await expect(rejected).rejects.not.toThrow("SECRET");
+  const messages: string[] = [];
+  await loginCommand(["hello"], {
+    env: { SECRET: "host-secret" },
+    store,
+    plugin: async () => first,
+    writeError: (text) => messages.push(text),
+    open: () => undefined,
+    readSecret: async () => "first-token",
+  });
+  expect(messages).toEqual(["Saved SECRET for hello"]);
+  await expect(resolveConnection({ ...base, name: "other" }, {}, store)).rejects.toThrow(
+    "Set SECRET or run mcp-cli login other",
   );
-  await pluginStore(first, store).write("hello", { accessToken: "first-token" });
   await expect(resolveConnection(second, {}, store)).rejects.toBeInstanceOf(AuthRequiredError);
   expect(await resolveConnection(first, {}, store)).toMatchObject({
     headers: { Authorization: "Bearer first-token" },
