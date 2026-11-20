@@ -16,6 +16,7 @@ const documented: Documented[] = [
   ...Object.entries(pplx.commands ?? {}).flatMap(([tool, command]) =>
     (command.examples ?? []).map((line) => ({ line, tool })),
   ),
+  ...(pplx.quickstart ?? []).map(({ command }) => ({ line: `pplx ${command}` })),
 ];
 
 test.each(documented)("documented example runs: $line", async ({ line, tool }) => {
