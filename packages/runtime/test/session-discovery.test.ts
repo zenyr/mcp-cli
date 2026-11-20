@@ -133,6 +133,24 @@ test("workspace and credential selection precede discovery", async () => {
   ]);
 });
 
+test("a short workspace flag after a boolean flag selects that workspace before discovery", async () => {
+  const f = fixture();
+  await runService(plugin, bootstrap, ["set", "--enabled", "-w", "two"], {
+    ...f.ports,
+    forWorkspace: async (workspace) => {
+      f.events.push({ workspace });
+      return { ...f.ports, workspaceId: workspace };
+    },
+  });
+  expect(f.events).toEqual([
+    { workspace: "two" },
+    { open: undefined },
+    "list",
+    { name: "set", input: { enabled: true } },
+    "close",
+  ]);
+});
+
 test("missing live tools cannot be dispatched through bootstrap paths", async () => {
   const f = fixture([]);
   await expect(runService(plugin, bootstrap, ["old", "--input", "{}"], f.ports)).rejects.toThrow();

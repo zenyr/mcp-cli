@@ -86,3 +86,15 @@ test("workspace flags do not consume literal tool data", () => {
     { kind: "field", flag: "--text", path: ["text"], raw: "--workspace=literal" },
   ]);
 });
+
+test("value flags leave a standalone -w to the workspace selector", () => {
+  const parsed = parseArguments(
+    ["message", "echo", "--text", "-w", "company", "--note=-w"],
+    () => ({ properties: { text: { type: "string" }, note: { type: "string" } } }),
+  );
+  expect(parsed.workspace).toBe("company");
+  expect(parsed.tokens).toEqual([
+    { kind: "invalid", message: "Missing value for --text" },
+    { kind: "field", flag: "--note", path: ["note"], raw: "-w" },
+  ]);
+});

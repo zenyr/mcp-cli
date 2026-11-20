@@ -99,7 +99,9 @@ export const parseArguments = (
     const next = argv[index + 1];
     const takeValue = (): string | undefined => {
       if (inline !== undefined) return inline;
-      if (next === undefined || (next.startsWith("--") && !outputFlags.has(next))) return undefined;
+      // A standalone `-w` stays the host workspace flag; `--field=-w` passes it literally.
+      if (next === undefined || next === "-w") return undefined;
+      if (next.startsWith("--") && !outputFlags.has(next)) return undefined;
       index++;
       return next;
     };
