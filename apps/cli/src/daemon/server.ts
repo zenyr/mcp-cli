@@ -116,7 +116,8 @@ export const startDaemon = async (directory: string, idleMs = 60_000) => {
         const lease = leases.get(socket);
         if (lease && lease.session !== session && plugin.discovery?.tools === "session")
           throw new Error("Discovery connection changed; start a new command before dispatch");
-        if (lease?.session !== session) {
+        // A socket that closed during connect never fires `close` again, so it must not take a lease.
+        if (lease?.session !== session && !socket.destroyed) {
           leases.get(socket)?.release();
           leases.set(socket, { session, release: pool.retain(key) });
         }
