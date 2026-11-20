@@ -50,7 +50,7 @@ const liveTools = async (plugin: ServicePlugin, workspace: string | undefined, c
   const { env } = caller;
   const scoped = await selectWorkspace(plugin, workspace, defaultSettings(env));
   const config = await resolveConnection(scoped, env, defaultStore(env));
-  const session = await connect(callerConnection(config, caller));
+  const session = await connect(callerConnection(config, caller, scoped));
   try {
     return await session.listTools();
   } finally {

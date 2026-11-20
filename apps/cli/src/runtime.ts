@@ -57,7 +57,7 @@ export const runtimeDependencies = (
           defaultStore(host.env),
           credential,
         );
-        return connect(callerConnection(config, host), { sessionTools });
+        return connect(callerConnection(config, host, selected), { sessionTools });
       },
       cacheScope: (credential) =>
         extensionCacheScope(selected, host.env, defaultStore(host.env), credential),

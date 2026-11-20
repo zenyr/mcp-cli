@@ -100,7 +100,7 @@ export const startDaemon = async (directory: string, idleMs = 60_000) => {
     );
     const credential =
       request.credential ?? credentialSwitches(plugin.auth).find((item) => item.base)?.flag;
-    const connection = callerConnection(config, request);
+    const connection = callerConnection(config, request, plugin);
     return pool.use(
       key,
       request.service,

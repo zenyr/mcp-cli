@@ -1,14 +1,19 @@
 import type { ServicePlugin, SettingsStore, TokenStore } from "@mcp-cli/core";
 
-export const pluginEnvironment = (
+/** Drops the plugin's credential env vars outside the legacy workspace. */
+export const workspaceEnvironment = (
   plugin: ServicePlugin,
   env: Record<string, string | undefined>,
 ) => {
-  if (plugin.credentialNamespace) return {};
   if (!plugin.workspace || plugin.workspace.legacy) return env;
   const secrets = new Set(plugin.workspaces?.credentialEnv ?? []);
   return Object.fromEntries(Object.entries(env).filter(([key]) => !secrets.has(key)));
 };
+
+export const pluginEnvironment = (
+  plugin: ServicePlugin,
+  env: Record<string, string | undefined>,
+) => (plugin.credentialNamespace ? {} : workspaceEnvironment(plugin, env));
 
 const namespace = (plugin: ServicePlugin): string | undefined =>
   [
