@@ -70,7 +70,9 @@ const apiKey = async (
   const choice = keyChoice(spec, service, credential);
   const key =
     env[choice.env] || (await store.read(credentialName(service, choice.credential)))?.accessToken;
-  const login = `mcp-cli login ${service}${credential ? ` --${credential}` : ""}`;
+  // Naming the selected workspace keeps the hint from storing the key in the default workspace.
+  const workspace = plugin.workspaces && plugin.workspace ? ` -w ${plugin.workspace.name}` : "";
+  const login = `mcp-cli login ${service}${workspace}${credential ? ` --${credential}` : ""}`;
   const hint = readsEnvironment(plugin, choice.env)
     ? `Set ${choice.env} or run ${login}`
     : `Run ${login}`;
