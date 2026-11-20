@@ -13,6 +13,9 @@ export const createDrainController = () => {
         active.delete(task);
       }
     },
+    resume: () => {
+      accepting = true;
+    },
     drain: async (cancel: () => Promise<void>) => {
       accepting = false;
       await cancel();

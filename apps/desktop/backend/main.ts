@@ -218,11 +218,15 @@ export const api = {
 export const init = async (app: DesktopApp) => {
   const storedLocale = await app.store.get("locale");
   if (typeof storedLocale === "string") locale = resolveLocale(storedLocale);
-  const ready = await registerUpdateLifecycle(app, async () => {
-    await operations.drain(() => logins.cancel());
-    const state = await runCli(app, ["daemon", "status", "--json"]).catch(() => null);
-    if (state !== null) await runCli(app, ["daemon", "stop", "--json"]);
-  });
+  const ready = await registerUpdateLifecycle(
+    app,
+    async () => {
+      await operations.drain(() => logins.cancel());
+      const state = await runCli(app, ["daemon", "status", "--json"]).catch(() => null);
+      if (state !== null) await runCli(app, ["daemon", "stop", "--json"]);
+    },
+    operations.resume,
+  );
   app.setHideOnClose(true);
   const trayIcons = await prepareTrayIcons(app);
   const refresh = async () => {

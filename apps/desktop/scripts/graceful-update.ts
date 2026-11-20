@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { cp, mkdtemp, rm } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
+import { isRequestFailure } from "../shared/update-request";
 import { replaceArtifacts, type Replacement } from "./replace-artifacts";
 import {
   daemonState,
@@ -19,6 +20,7 @@ type Daemon = { pid: number; directory?: string };
 type App = { path: string; pid: number };
 const stopApps = async (apps: App[], binary: string, daemons: Daemon[]) => {
   const registered = await instances();
+  const requests = new Map<number, string>();
   for (const app of apps) {
     const instance = registered.find(
       (item) =>
@@ -28,7 +30,7 @@ const stopApps = async (apps: App[], binary: string, daemons: Daemon[]) => {
       const current = (await processes()).find((item) => item.pid === instance.pid);
       if (current?.executable !== instance.executable)
         throw new Error("앱 프로세스가 바뀌어 교체를 중단합니다.");
-      await requestShutdown(instance);
+      requests.set(instance.pid, await requestShutdown(instance));
     } else {
       console.log(`이전 종료 프로토콜: ${app.path}`);
       await waitFor("기존 앱의 CLI 요청 종료", async () => {
@@ -51,7 +53,9 @@ const stopApps = async (apps: App[], binary: string, daemons: Daemon[]) => {
   await waitFor("실행 중인 앱 종료", async () => {
     const live = await processes();
     const failed = (await instances()).find(
-      (item) => apps.some((app) => app.pid === item.launcherPid) && item.state === "failed",
+      (item) =>
+        apps.some((app) => app.pid === item.launcherPid) &&
+        isRequestFailure(item, requests.get(item.pid)),
     );
     if (failed) throw new Error(failed.error ?? "앱 종료 실패");
     return (

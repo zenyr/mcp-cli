@@ -55,9 +55,13 @@ export const instances = async (): Promise<UpdateInstance[]> => {
 
 export const requestShutdown = async (instance: UpdateInstance) => {
   const path = join(instanceDirectory, `${instance.pid}.request`);
-  const temporary = `${path}.${crypto.randomUUID()}.tmp`;
-  await writeFile(temporary, JSON.stringify({ instanceId: instance.instanceId }), { mode: 0o600 });
+  const requestId = crypto.randomUUID();
+  const temporary = `${path}.${requestId}.tmp`;
+  await writeFile(temporary, JSON.stringify({ instanceId: instance.instanceId, requestId }), {
+    mode: 0o600,
+  });
   await rename(temporary, path);
+  return requestId;
 };
 
 export const runningApps = async () => {

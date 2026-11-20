@@ -6,6 +6,7 @@ export type UpdateInstance = {
   daemonDirectory?: string;
   state: "starting" | "ready" | "draining" | "failed";
   error?: string;
+  requestId?: string;
 };
 
 export const isUpdateInstance = (value: unknown): value is UpdateInstance => {
@@ -27,6 +28,7 @@ export const isUpdateInstance = (value: unknown): value is UpdateInstance => {
     "state" in value &&
     ["starting", "ready", "draining", "failed"].includes(String(value.state)) &&
     (!("daemonDirectory" in value) || typeof value.daemonDirectory === "string") &&
-    (!("error" in value) || typeof value.error === "string")
+    (!("error" in value) || typeof value.error === "string") &&
+    (!("requestId" in value) || typeof value.requestId === "string")
   );
 };
