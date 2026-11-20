@@ -18,27 +18,42 @@ const result = (data: Record<string, unknown>, isError = false): ToolResult => (
 const failure = (category: string, data: Record<string, unknown>): ToolResult =>
   result({ ...data, ok: false, category }, true);
 
-const download = async (
-  config: Extract<Connection, { type: "http" }>,
-  input: Record<string, unknown>,
-  timeout: number,
-  request: typeof fetch,
-  maxBytes: number,
-): Promise<ToolResult> => {
-  if (typeof input.url !== "string") throw new UsageError("Download URL is required");
-  const url = new URL(input.url);
+const parseUrl = (value: string): URL | undefined => {
+  try {
+    return new URL(value);
+  } catch {
+    return undefined;
+  }
+};
+
+const downloadTarget = (
+  hosts: readonly string[] | undefined,
+  value: unknown,
+): { url: URL } | { error: string } => {
+  if (typeof value !== "string") return { error: "Download URL is required" };
+  const url = parseUrl(value);
+  if (!url) return { error: "Download URL is invalid" };
   if (
     url.protocol !== "https:" ||
     url.username ||
     url.password ||
     url.port ||
-    !config.webApi?.downloadHosts?.some(
-      (host) => url.hostname === host || url.hostname.endsWith(`.${host}`),
-    )
+    !hosts?.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))
   )
-    throw new UsageError("Download requires an approved HTTPS host");
+    return { error: "Download requires an approved HTTPS host" };
+  return { url };
+};
+
+const download = async (
+  headers: Record<string, string>,
+  url: URL,
+  save: boolean,
+  timeout: number,
+  request: typeof fetch,
+  maxBytes: number,
+): Promise<ToolResult> => {
   const response = await request(url, {
-    headers: config.headers,
+    headers,
     redirect: "error",
     signal: AbortSignal.timeout(timeout),
   });
@@ -68,7 +83,7 @@ const download = async (
   }
   const bytes = Buffer.concat(chunks);
   const mimeType = response.headers.get("content-type") ?? "application/octet-stream";
-  if (input.save === true) {
+  if (save) {
     const directory = await mkdtemp(join(tmpdir(), "mcp-cli-attachment-"));
     await chmod(directory, 0o700);
     const path = join(directory, crypto.randomUUID());
@@ -112,6 +127,10 @@ export const connectWebApi = (
   const callTool = async (name: string, input: Record<string, unknown>): Promise<ToolResult> => {
     const tool = config.webApi?.tools.find((item) => item.name === name);
     if (!tool) return (await mcp()).callTool(name, input);
+    const target = tool.download
+      ? downloadTarget(config.webApi?.downloadHosts, input.url)
+      : undefined;
+    if (target && "error" in target) return failure("usage", { error: target.error });
     const generation = refreshGeneration;
     let headers = { ...config.headers, ...(await authorize?.({ refresh: false })) };
     const authorization =
@@ -126,10 +145,11 @@ export const connectWebApi = (
         error: tool.credentialError ?? "credential_type_required",
       });
     try {
-      if (tool.download)
+      if (target)
         return await download(
-          { ...config, headers },
-          input,
+          headers,
+          target.url,
+          input.save === true,
           timeout,
           request,
           tool.maxDownloadBytes ?? 5 * 1024 * 1024,

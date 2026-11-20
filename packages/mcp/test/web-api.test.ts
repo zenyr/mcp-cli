@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFile, rm, stat } from "node:fs/promises";
 import { dirname } from "node:path";
-import { isRecord, type Connection } from "@mcp-cli/core";
+import { AuthRequiredError, isRecord, type Connection } from "@mcp-cli/core";
 import { connectWebApi } from "../src/web-api";
 const config: Extract<Connection, { type: "http" }> = {
   type: "http",
@@ -161,6 +161,7 @@ test("network failure and server failure preserve uncertain writes without retry
 
 test("download rejects non-HTTPS and unapproved hosts before authentication", async () => {
   let calls = 0;
+  let authorizations = 0;
   const request: typeof fetch = Object.assign(
     async () => {
       calls++;
@@ -168,15 +169,54 @@ test("download rejects non-HTTPS and unapproved hosts before authentication", as
     },
     { preconnect: fetch.preconnect },
   );
-  const session = connectWebApi(config, noMcp, 100, request);
+  const session = connectWebApi(
+    {
+      ...config,
+      authorize: async () => {
+        authorizations++;
+        throw new AuthRequiredError("Login required");
+      },
+    },
+    noMcp,
+    100,
+    request,
+  );
   for (const url of [
     "http://files.slack.com/a",
     "https://evil.test/a",
     "https://files.slack.com.evil.test/a",
     "https://user:pass@files.slack.com/a",
+    "https://files.slack.com:8443/a",
   ])
-    expect((await session.callTool("download", { url })).isError).toBe(true);
+    expect((await session.callTool("download", { url })).structuredContent).toMatchObject({
+      category: "usage",
+      error: "Download requires an approved HTTPS host",
+    });
   expect(calls).toBe(0);
+  expect(authorizations).toBe(0);
+});
+
+test("download reports a malformed or missing URL as a usage failure", async () => {
+  let authorizations = 0;
+  const session = connectWebApi(
+    {
+      ...config,
+      authorize: async () => {
+        authorizations++;
+        return {};
+      },
+    },
+    noMcp,
+    100,
+  );
+  expect(
+    (await session.callTool("download", { url: "files.slack.com/x" })).structuredContent,
+  ).toMatchObject({ category: "usage", error: "Download URL is invalid" });
+  expect((await session.callTool("download", {})).structuredContent).toMatchObject({
+    category: "usage",
+    error: "Download URL is required",
+  });
+  expect(authorizations).toBe(0);
 });
 
 test("downloads enforce declared and streamed 5 MiB limits and refuse redirects", async () => {
