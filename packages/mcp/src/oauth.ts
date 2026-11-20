@@ -11,7 +11,13 @@ import {
   type TokenStore,
   type Tokens,
 } from "@mcp-cli/core";
-import { clientInformation, decodeClient, serverMetadata, toTokens } from "./oauth-client";
+import {
+  clientInformation,
+  decodeClient,
+  serverMetadata,
+  tokenRequest,
+  toTokens,
+} from "./oauth-client";
 
 export type OAuthAuthorizeOptions = {
   service: string;
@@ -52,17 +58,23 @@ export const oauthAuthorize = (options: OAuthAuthorizeOptions): Authorize => {
     const record = decodeClient(tokens.client);
     if (!record) throw loginRequired(service, `Stored ${service} credentials cannot be refreshed`);
     if (!tokens.refreshToken) throw loginRequired(service, `${service} access token expired`);
-    const refreshed = await refreshAuthorization(record.authorizationServer, {
-      metadata: serverMetadata(record),
-      clientInformation: clientInformation(record),
-      refreshToken: tokens.refreshToken,
-      resource: record.resource,
-      fetchFn: options.fetchFn,
-    }).catch((error: unknown) => {
-      if (rejectedGrant(error))
-        throw loginRequired(service, `${service} rejected the stored refresh token`);
-      throw error;
-    });
+    const refreshToken = tokens.refreshToken;
+    const refreshed = await tokenRequest(
+      `${service} token refresh failed`,
+      options.fetchFn,
+      (fetchFn) =>
+        refreshAuthorization(record.authorizationServer, {
+          metadata: serverMetadata(record),
+          clientInformation: clientInformation(record),
+          refreshToken,
+          resource: record.resource,
+          fetchFn,
+        }).catch((error: unknown) => {
+          if (rejectedGrant(error))
+            throw loginRequired(service, `${service} rejected the stored refresh token`);
+          throw error;
+        }),
+    );
     const next = {
       ...toTokens(refreshed, record, now()),
       ...(tokens.cacheIdentity ? { cacheIdentity: tokens.cacheIdentity } : {}),

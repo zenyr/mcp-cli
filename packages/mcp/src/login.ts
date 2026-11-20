@@ -12,7 +12,7 @@ import {
 } from "@modelcontextprotocol/client";
 import type { OAuthSpec, TokenStore, Tokens } from "@mcp-cli/core";
 import { startLoopback, LoginError } from "./loopback";
-import { clientRecord, toTokens } from "./oauth-client";
+import { clientRecord, tokenRequest, toTokens } from "./oauth-client";
 
 export type LoginUi = {
   open: (url: string) => void | Promise<void>;
@@ -96,16 +96,18 @@ export const login = async (options: LoginOptions): Promise<Tokens> => {
     await ui.open(authorizationUrl.href);
     const stopManual = ui.manual?.(loopback.submit);
     const { code, iss } = await loopback.response.finally(() => stopManual?.());
-    const issued = await exchangeAuthorization(server, {
-      metadata,
-      clientInformation: client,
-      authorizationCode: code,
-      iss,
-      codeVerifier,
-      redirectUri: loopback.redirectUrl,
-      resource,
-      fetchFn,
-    });
+    const issued = await tokenRequest(`${service} login failed`, fetchFn, (exchangeFetch) =>
+      exchangeAuthorization(server, {
+        metadata,
+        clientInformation: client,
+        authorizationCode: code,
+        iss,
+        codeVerifier,
+        redirectUri: loopback.redirectUrl,
+        resource,
+        fetchFn: exchangeFetch,
+      }),
+    );
     const tokens = toTokens(issued, clientRecord(url, server, metadata, client, resource), now());
     await store.withLock(service, () => {
       signal?.throwIfAborted();

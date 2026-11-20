@@ -1,7 +1,9 @@
-import type {
-  AuthorizationServerMetadata,
-  OAuthClientInformationMixed,
-  OAuthTokens,
+import {
+  OAuthError,
+  type AuthorizationServerMetadata,
+  type FetchLike,
+  type OAuthClientInformationMixed,
+  type OAuthTokens,
 } from "@modelcontextprotocol/client";
 import { isRecord, type Tokens } from "@mcp-cli/core";
 
@@ -95,3 +97,22 @@ export const toTokens = (tokens: OAuthTokens, record: ClientRecord, now: number)
   ...(tokens.scope !== undefined && { scope: tokens.scope }),
   client: { ...record },
 });
+
+/** Runs a token endpoint request and replaces SDK OAuth errors, whose messages can echo the response body, with the code and HTTP status. */
+export const tokenRequest = async <T>(
+  failure: string,
+  fetchFn: FetchLike | undefined,
+  request: (fetchFn: FetchLike) => Promise<T>,
+): Promise<T> => {
+  let status: number | undefined;
+  const recording: FetchLike = async (url, init) => {
+    const response = await (fetchFn ?? fetch)(url, init);
+    status = response.status;
+    return response;
+  };
+  return request(recording).catch((error: unknown) => {
+    if (!(error instanceof OAuthError)) throw error;
+    const detail = status === undefined ? error.code : `${error.code}, HTTP ${status}`;
+    throw new Error(`${failure} (${detail})`);
+  });
+};

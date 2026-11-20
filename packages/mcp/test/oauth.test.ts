@@ -138,6 +138,15 @@ test("aborting during the token exchange or before the write stores no tokens", 
   expect(await store.read("svc")).toBeUndefined();
 });
 
+test("a failed login token exchange reports the code and status without the response body", async () => {
+  fake.echoToken = true;
+  const error = await signIn().catch((caught: unknown) => caught);
+  if (!(error instanceof Error)) throw new Error("expected a login failure");
+  expect(error.message).toBe("svc login failed (server_error, HTTP 502)");
+  expect(error.cause).toBeUndefined();
+  expect(await store.read("svc")).toBeUndefined();
+});
+
 const authorizeFor = (now = Date.now) =>
   oauthAuthorize({ service: "svc", url: fake.resource, store, now });
 
@@ -219,6 +228,17 @@ test("missing, rejected and foreign credentials require login", async () => {
   await expect(other({ refresh: false })).rejects.toThrow(AuthRequiredError);
   await store.write("svc", { accessToken: "static", expiresAt: 1 });
   await expect(authorizeFor()({ refresh: false })).rejects.toThrow(AuthRequiredError);
+});
+
+test("a failed refresh reports the code and status without echoing secrets", async () => {
+  await signIn();
+  fake.echoToken = true;
+  const error = await authorizeFor()({ refresh: true }).catch((caught: unknown) => caught);
+  if (!(error instanceof Error)) throw new Error("expected a refresh failure");
+  expect(error.message).toBe("svc token refresh failed (server_error, HTTP 502)");
+  expect(error.message).not.toContain("refresh-1");
+  expect(error.cause).toBeUndefined();
+  expect(await store.read("svc")).toMatchObject({ refreshToken: "refresh-1" });
 });
 
 test("connect surfaces missing credentials as AuthRequiredError", async () => {

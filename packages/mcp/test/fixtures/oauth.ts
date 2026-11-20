@@ -10,6 +10,8 @@ export type FakeAuthServer = {
   /** Overrides the authorization redirect, e.g. to deny access or change `state`. */
   redirect: { error?: string; state?: string };
   refreshDelayMs: number;
+  /** Makes the token endpoint answer like a broken proxy that echoes the request body. */
+  echoToken: boolean;
   current: () => { access: string; refresh: string };
   stop: () => Promise<void>;
 };
@@ -36,9 +38,10 @@ export const startFakeAuthServer = (): FakeAuthServer => {
       refresh_token: refresh,
     });
   };
-  const state: Pick<FakeAuthServer, "redirect" | "refreshDelayMs"> = {
+  const state: Pick<FakeAuthServer, "redirect" | "refreshDelayMs" | "echoToken"> = {
     redirect: {},
     refreshDelayMs: 0,
+    echoToken: false,
   };
   const server: Bun.Server<undefined> = Bun.serve({
     hostname: "127.0.0.1",
@@ -85,6 +88,11 @@ export const startFakeAuthServer = (): FakeAuthServer => {
       if (url.pathname === "/token" && request.method === "POST") {
         const params = new URLSearchParams(await request.text());
         tokenRequests.push(params);
+        if (state.echoToken)
+          return new Response(`<html>Bad gateway: ${params}</html>`, {
+            status: 502,
+            headers: { "content-type": "text/html" },
+          });
         if (params.get("grant_type") === "authorization_code") {
           const expected = challenges.get(params.get("code") ?? "");
           if (
