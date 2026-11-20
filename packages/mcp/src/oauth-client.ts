@@ -1,5 +1,6 @@
 import {
   OAuthError,
+  OAuthErrorCode,
   type AuthorizationServerMetadata,
   type FetchLike,
   type OAuthClientInformationMixed,
@@ -98,7 +99,9 @@ export const toTokens = (tokens: OAuthTokens, record: ClientRecord, now: number)
   client: { ...record },
 });
 
-/** Runs a token endpoint request and replaces SDK OAuth errors, whose messages can echo the response body, with the code and HTTP status. */
+const knownCodes: ReadonlySet<string> = new Set(Object.values(OAuthErrorCode));
+
+/** Runs a token endpoint request and replaces OAuth and JSON parse errors, whose messages can echo the response body, with a known code and the HTTP status. */
 export const tokenRequest = async <T>(
   failure: string,
   fetchFn: FetchLike | undefined,
@@ -111,8 +114,15 @@ export const tokenRequest = async <T>(
     return response;
   };
   return request(recording).catch((error: unknown) => {
-    if (!(error instanceof OAuthError)) throw error;
-    const detail = status === undefined ? error.code : `${error.code}, HTTP ${status}`;
-    throw new Error(`${failure} (${detail})`);
+    const label =
+      error instanceof OAuthError
+        ? knownCodes.has(error.code)
+          ? error.code
+          : "unknown OAuth error"
+        : error instanceof SyntaxError
+          ? "invalid response"
+          : undefined;
+    if (label === undefined) throw error;
+    throw new Error(`${failure} (${status === undefined ? label : `${label}, HTTP ${status}`})`);
   });
 };
