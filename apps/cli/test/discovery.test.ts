@@ -264,3 +264,15 @@ test("a managed install shadows the workspace package, but codegen still targets
   expect(findCodegenPlugin(await discover(context()), "alpha").installed).toBeUndefined();
   for (const file of ["tools.json", "generated.ts"]) await rm(join(workspaceDir, "src", file));
 });
+
+test("workspace-only markers reach discovered plugins", async () => {
+  const dir = join(root, "ws", "plugins", "local");
+  await addPackage(dir, "@ws/local", { plugin: true, workspaceOnly: true }, "local");
+  try {
+    const registry = await discover(context());
+    expect(findPlugin(registry, "local").workspaceOnly).toBe(true);
+    expect(findPlugin(registry, "alpha").workspaceOnly).toBeUndefined();
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

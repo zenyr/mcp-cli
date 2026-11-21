@@ -31,6 +31,8 @@ export type DiscoveredPlugin = {
   origin: string;
   bundled?: BundledPlugin;
   installed?: Installed;
+  /** The plugin needs this checkout, so only a host that discovers the workspace can run it. */
+  workspaceOnly?: boolean;
   runtimeDirectory?: string;
 };
 export type Registry = {
@@ -173,6 +175,7 @@ export const discover = async (context: DiscoveryContext): Promise<Registry> => 
       entry: info.entry,
       source,
       origin,
+      ...(info.workspaceOnly && { workspaceOnly: true }),
     };
     if (state.installed.some((item) => item.metadata.service === service)) {
       shadowed.push(found);

@@ -20,6 +20,7 @@ export const runtimeDependencies = (
   plugin: ServicePlugin,
   host: Host,
   inherited?: string,
+  daemon = true,
 ): RuntimeDependencies => ({
   forWorkspace: async (selector) => {
     const selected = await selectWorkspace(
@@ -29,13 +30,13 @@ export const runtimeDependencies = (
     );
     const sessionTools = selected.discovery?.tools === "session";
     return {
-      ...runtimeDependencies(plugin, host, selected.workspace?.id),
+      ...runtimeDependencies(plugin, host, selected.workspace?.id, daemon),
       workspace: selected.workspace,
       workspaceId: selected.workspace?.legacy
         ? undefined
         : `${plugin.credentialNamespace ?? plugin.name}:${selected.workspace?.id}`,
       open: async (credential) => {
-        if (usesDaemon(host.env)) {
+        if (daemon && usesDaemon(host.env)) {
           try {
             return await openDaemonSession(
               plugin.name,
@@ -90,6 +91,12 @@ export const serviceCommand = (
     const plugin = yield* attempt(() => loadPlugin(found, registry.context));
     const manifest = yield* attempt(() => loadManifest(registry, found));
     return yield* attempt(() =>
-      runService(plugin, manifest, args, runtimeDependencies(plugin, host)),
+      // A daemon discovers plugins from its own install, so it cannot run workspace-only plugins.
+      runService(
+        plugin,
+        manifest,
+        args,
+        runtimeDependencies(plugin, host, undefined, !found.workspaceOnly),
+      ),
     );
   });

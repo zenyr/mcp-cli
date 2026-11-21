@@ -31,11 +31,12 @@ export const packageWorkspacePlugins = async (
   output: string,
   only?: string[],
 ): Promise<void> => {
+  const selected = selectPackages(await workspacePackages(root), only);
   // The directory belongs to this build, so stale archives from earlier selections never ship.
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
   const catalog: CatalogPlugin[] = [];
-  for (const info of selectPackages(await workspacePackages(root), only)) {
+  for (const info of selected) {
     const plugin: ServicePlugin = (await import(pathToFileURL(info.entry).href)).default;
     const generated = (await import(pathToFileURL(join(info.dir, "src/generated.ts")).href))
       .manifest;
