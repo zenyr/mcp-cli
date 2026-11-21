@@ -10,6 +10,9 @@ import { request } from "node:http";
 import { daemonDirectory, daemonSocket } from "../src/daemon/endpoint";
 import { UsageError, type ToolSession, type ToolResult } from "@mcp-cli/core";
 import { execute } from "../src/main";
+import { discover, findPlugin, loadPlugin } from "../src/discovery";
+import { defaultContext } from "../src/paths";
+import { runtimeDependencies } from "../src/runtime";
 import { memoryHost, runCli } from "./host";
 
 const session = (close: () => Promise<void>): ToolSession => ({
@@ -358,4 +361,43 @@ test("CLI does not switch to direct execution after a daemon tool request fails"
 test("the daemon directory follows the host HOME unless MCP_CLI_DAEMON_DIR is set", () => {
   expect(daemonDirectory({ HOME: "/sandbox" })).toBe(join("/sandbox", ".mcp-cli", "daemon"));
   expect(daemonDirectory({ HOME: "/sandbox", MCP_CLI_DAEMON_DIR: "/d" })).toBe("/d");
+});
+
+test("a runtime without the daemon connects directly to plugins the daemon cannot find", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "mcp-daemon-"));
+  const daemon = await startDaemon(directory);
+  const env = {
+    HOME: directory,
+    XDG_CONFIG_HOME: directory,
+    XDG_CACHE_HOME: directory,
+    XDG_STATE_HOME: directory,
+    MCP_CLI_CONFIG: "",
+    MCP_CLI_DAEMON_DIR: directory,
+    MCP_CLI_DAEMON: "",
+    MCP_CLI_INTERNAL_PLUGINS: "only",
+  };
+  const { host } = memoryHost({ env });
+  const registry = await discover(await defaultContext(env));
+  // A renamed demo plugin stands in for a workspace-only plugin that a release daemon never discovers.
+  const local = {
+    ...(await loadPlugin(findPlugin(registry, "demo"), registry.context)),
+    name: "local",
+  };
+  try {
+    const shared = await runtimeDependencies(local, host).forWorkspace?.(undefined);
+    await expect(shared?.open()).rejects.toThrow("Unknown service: local");
+    const direct = await runtimeDependencies(local, host, undefined, false).forWorkspace?.(
+      undefined,
+    );
+    const session = await direct?.open();
+    try {
+      expect((await session?.listTools())?.map((tool) => tool.name)).toContain("demo-echo");
+    } finally {
+      await session?.close();
+    }
+    expect((await daemonStatus(directory)).connections).toEqual([]);
+  } finally {
+    await daemon.stop();
+    await rm(directory, { recursive: true, force: true });
+  }
 });

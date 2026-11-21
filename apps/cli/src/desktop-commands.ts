@@ -17,8 +17,11 @@ const liveManifest = async (
   plugin: ServicePlugin,
   workspace: string | undefined,
   host: Host,
+  daemon: boolean,
 ): Promise<{ manifest: GeneratedManifest; workspace?: string }> => {
-  const selected = await runtimeDependencies(plugin, host).forWorkspace?.(workspace);
+  const selected = await runtimeDependencies(plugin, host, undefined, daemon).forWorkspace?.(
+    workspace,
+  );
   if (!selected) throw new UsageError("This runtime does not support workspace selection");
   const session = await selected.open();
   try {
@@ -51,6 +54,7 @@ export const desktopCommandCatalog = async (
       plugin,
       typeof input.workspace === "string" ? input.workspace : undefined,
       host,
+      !found.workspaceOnly,
     );
     return {
       service: plugin.name,
