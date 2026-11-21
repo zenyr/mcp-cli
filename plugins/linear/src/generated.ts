@@ -1503,20 +1503,23 @@ export const manifest = {
             "type": "number"
           },
           "orderBy": {
-            "default": "updatedAt",
-            "description": "Timestamp to sort results by: creation time or last update time",
+            "description": "Timestamp to sort results by: creation time or last update time. Defaults to relevance with a query, otherwise updatedAt",
             "enum": [
               "createdAt",
               "updatedAt"
             ],
             "type": "string"
           },
+          "private": {
+            "description": "true lists only your private documents, false leaves them out. Omit to list both",
+            "type": "boolean"
+          },
           "projectId": {
             "description": "Filter by project ID, identifier (e.g., 'P-ENG-123'), or slug",
             "type": "string"
           },
           "query": {
-            "description": "Search document titles and content. Accepts keywords or a natural-language description; results are ordered by relevance",
+            "description": "Search document titles and content. Accepts keywords or a natural-language description; results are ordered by relevance unless orderBy is set",
             "type": "string"
           },
           "teamId": {
@@ -3086,7 +3089,7 @@ export const manifest = {
         "openWorldHint": false,
         "readOnlyHint": false
       },
-      "description": "Create or update a Linear document. If `id` is provided, edits the existing document; otherwise creates a new one. When creating, `title` is required and exactly one parent (`project`, `issue`, `initiative`, `cycle`, or `team`) must be specified. On update, passing a parent reparents the document. To change parts of the content without resending all of it, pass `patch` instead of `content`.",
+      "description": "Create or update a Linear document. If `id` is provided, edits the existing document; otherwise creates a new one. When creating, `title` is required, and at most one parent (`project`, `issue`, `initiative`, `cycle`, or `team`) may be specified. Without a parent, pass `private: true` to create the document in your private space. On update, passing a parent reparents the document. To change parts of the content without resending all of it, pass `patch` instead of `content`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "additionalProperties": false,
@@ -3268,6 +3271,10 @@ export const manifest = {
             "maxItems": 50,
             "minItems": 1,
             "type": "array"
+          },
+          "private": {
+            "description": "true creates the document in your private space, where only you and the people you share it with can see it, or moves an existing document there. To move a private document out, pass a parent instead",
+            "type": "boolean"
           },
           "project": {
             "description": "Project name, ID, identifier (e.g., P-ENG-123), or slug",
@@ -5824,15 +5831,19 @@ initiativeId?: string
  */
 limit?: number
 /**
- * Timestamp to sort results by: creation time or last update time
+ * Timestamp to sort results by: creation time or last update time. Defaults to relevance with a query, otherwise updatedAt
  */
 orderBy?: ("createdAt" | "updatedAt")
+/**
+ * true lists only your private documents, false leaves them out. Omit to list both
+ */
+private?: boolean
 /**
  * Filter by project ID, identifier (e.g., 'P-ENG-123'), or slug
  */
 projectId?: string
 /**
- * Search document titles and content. Accepts keywords or a natural-language description; results are ordered by relevance
+ * Search document titles and content. Accepts keywords or a natural-language description; results are ordered by relevance unless orderBy is set
  */
 query?: string
 /**
@@ -6846,6 +6857,10 @@ op: "replace_range"
 to: string
 [k: string]: unknown
 }))[]]
+/**
+ * true creates the document in your private space, where only you and the people you share it with can see it, or moves an existing document there. To move a private document out, pass a parent instead
+ */
+private?: boolean
 /**
  * Project name, ID, identifier (e.g., P-ENG-123), or slug
  */
