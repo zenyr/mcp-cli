@@ -2591,7 +2591,8 @@ export const manifest = {
               "s1",
               "s2-pro",
               "s2.1-pro",
-              "drama-3"
+              "drama-3",
+              "s3-pro"
             ],
             "type": "string"
           },
@@ -3672,7 +3673,7 @@ chapter_order?: string[]
 /**
  * TTS model for blocks created later. s2.1-pro is the default. drama-3 takes free-text delivery directions.
  */
-default_backend?: ("speech-1.5" | "speech-1.6" | "s1" | "s2-pro" | "s2.1-pro" | "drama-3")
+default_backend?: ("speech-1.5" | "speech-1.6" | "s1" | "s2-pro" | "s2.1-pro" | "drama-3" | "s3-pro")
 default_voice_id?: string
 name?: string
 project_id: string

@@ -2357,7 +2357,7 @@
           },
           "default_backend": {
             "description": "TTS model for blocks created later. s2.1-pro is the default. drama-3 takes free-text delivery directions.",
-            "enum": ["speech-1.5", "speech-1.6", "s1", "s2-pro", "s2.1-pro", "drama-3"],
+            "enum": ["speech-1.5", "speech-1.6", "s1", "s2-pro", "s2.1-pro", "drama-3", "s3-pro"],
             "type": "string"
           },
           "default_voice_id": {
