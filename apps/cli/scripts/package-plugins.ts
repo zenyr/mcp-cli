@@ -16,10 +16,13 @@ import {
 /** Selects visible plugins for a release, or exactly the named services when `only` is given. */
 export const selectPackages = (infos: PackageInfo[], only?: string[]): PackageInfo[] => {
   const selected = infos.filter((info) =>
-    only ? only.includes(info.service ?? "") : !info.hidden,
+    only ? only.includes(info.service ?? "") : !info.hidden && !info.workspaceOnly,
   );
   if (only && selected.length !== only.length)
     throw new Error(`Unknown plugins in MCP_CLI_BUNDLE_PLUGINS: ${only.join(", ")}`);
+  const local = selected.filter((info) => info.workspaceOnly).map((info) => info.service);
+  if (local.length)
+    throw new Error(`Workspace-only plugins cannot be bundled: ${local.join(", ")}`);
   return selected;
 };
 

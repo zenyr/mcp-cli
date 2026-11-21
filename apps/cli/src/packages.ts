@@ -10,6 +10,8 @@ export type PackageInfo = {
   service?: string;
   /** Hidden plugins exist for tests and contract checks and stay out of end-user runs. */
   hidden?: boolean;
+  /** Workspace-only plugins depend on the checkout and never enter release catalogs. */
+  workspaceOnly?: boolean;
   entry: string;
 };
 
@@ -48,11 +50,14 @@ export const readPackage = async (dir: string): Promise<PackageInfo | undefined>
     throw markerError(dir, "service must be a string");
   if (marker.hidden !== undefined && typeof marker.hidden !== "boolean")
     throw markerError(dir, "hidden must be a boolean");
+  if (marker.workspaceOnly !== undefined && typeof marker.workspaceOnly !== "boolean")
+    throw markerError(dir, "workspaceOnly must be a boolean");
   return {
     ...base,
     marked: true,
     ...(marker.service !== undefined && { service: marker.service }),
     ...(marker.hidden === true && { hidden: true }),
+    ...(marker.workspaceOnly === true && { workspaceOnly: true }),
   };
 };
 
