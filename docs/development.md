@@ -43,7 +43,7 @@ The shared runtime does not import the MCP SDK directly. Connection implementati
 and results into shared types. Execution tests can inject fake connections using the same call contract.
 
 `apps/cli` and `apps/mem` have independent entry points. `apps/desktop` manages the MCP CLI connection daemon.
-`mem` is neither an MCP CLI subcommand nor a plugin.
+The standalone `mem` CLI is not an MCP CLI subcommand. The workspace-only `plugins/mem` plugin exposes its read commands.
 
 ## Worktrees
 

@@ -170,6 +170,17 @@
         "@mcp-cli/runtime": "workspace:*",
       },
     },
+    "plugins/mem": {
+      "name": "@mcp-cli/plugin-mem",
+      "version": "0.1.0",
+      "dependencies": {
+        "@mcp-cli/core": "workspace:*",
+        "@mcp-cli/mem": "workspace:*",
+      },
+      "devDependencies": {
+        "@mcp-cli/runtime": "workspace:*",
+      },
+    },
     "plugins/notion": {
       "name": "@mcp-cli/plugin-notion",
       "version": "0.1.0",
@@ -270,6 +281,8 @@
     "@mcp-cli/plugin-fish-audio": ["@mcp-cli/plugin-fish-audio@workspace:plugins/fish-audio"],
 
     "@mcp-cli/plugin-linear": ["@mcp-cli/plugin-linear@workspace:plugins/linear"],
+
+    "@mcp-cli/plugin-mem": ["@mcp-cli/plugin-mem@workspace:plugins/mem"],
 
     "@mcp-cli/plugin-notion": ["@mcp-cli/plugin-notion@workspace:plugins/notion"],
 

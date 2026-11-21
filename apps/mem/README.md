@@ -1,6 +1,7 @@
 # mem
 
-`mem` is an independent CLI developed in this repository. It is neither an `mcp-cli` subcommand nor an MCP plugin.
+`mem` is an independent CLI developed in this repository. It is not an `mcp-cli` subcommand.
+The workspace-only [`mem` plugin](../../plugins/mem/README.md) exposes `start`, `recall`, and `read` through `mcp-cli mem`.
 It uses its own configuration and SQLite storage without connecting to an MCP server.
 Run commands from the repository root. See the [development guide](../../docs/development.md) for installation and environment setup.
 

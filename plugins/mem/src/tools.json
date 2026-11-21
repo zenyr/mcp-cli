@@ -1,0 +1,111 @@
+{
+  "tools": [
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read one original record page. Pass a recordId from recall or start, then pass the returned cursor for the next page.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "description": "Cursor from the previous response.",
+            "type": "string"
+          },
+          "maxBytes": {
+            "description": "Byte limit for the whole mem JSON response. Default: 8192.",
+            "maximum": 20480,
+            "minimum": 512,
+            "type": "integer"
+          },
+          "record": {
+            "description": "Record id such as <scopeId>/0.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "Use only global records or only the current Git project. Default: both.",
+            "enum": ["global", "project"],
+            "type": "string"
+          }
+        },
+        "required": ["record"],
+        "type": "object"
+      },
+      "name": "read"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Search original records by keyword, newest first. Keep the same query and scope when you pass the returned cursor.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "description": "Cursor from the previous response.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Default: 20.",
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxBytes": {
+            "description": "Byte limit for the whole mem JSON response. Default: 8192.",
+            "maximum": 20480,
+            "minimum": 512,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Keyword to search for.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "Use only global records or only the current Git project. Default: both.",
+            "enum": ["global", "project"],
+            "type": "string"
+          }
+        },
+        "required": ["query"],
+        "type": "object"
+      },
+      "name": "recall"
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Build the startup memory packet from saved summaries without calling a model. Fails with SUMMARY_PENDING until `mem summarize` runs.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "maxBytes": {
+            "description": "Byte limit for the whole mem JSON response. Default: 8192.",
+            "maximum": 20480,
+            "minimum": 512,
+            "type": "integer"
+          },
+          "scope": {
+            "description": "Use only global records or only the current Git project. Default: both.",
+            "enum": ["global", "project"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "start"
+    }
+  ]
+}

@@ -15,6 +15,7 @@ independent releases, managed runtimes, and local development.
 - [Perplexity](perplexity/README.md) (service `pplx`): web search, cited answers, and deep research with an API key or browser OAuth
 - [Fast Semble](fast-semble/README.md): local code search through a reusable Semble MCP session
 - [Claudia](claudia/README.md): read-only gallery, character canon, and filmmaking guides without an account
+- [mem](mem/README.md): workspace-only search and reads over local `mem` records
 - `demo` and `demo-auth`: hidden plugins for tests and host contract checks. Set `MCP_CLI_INTERNAL_PLUGINS=1` to use them.
   `demo` is a local stdio MCP server. `demo-auth` covers API key alternates, `AuthSupport` and a Web API.
 
@@ -61,6 +62,7 @@ Per-tool input types, such as `DemoEchoInput`, are exported for type references.
    If `service` is omitted, the CLI reads the plugin module and uses its `name`.
    Add `"hidden": true` to keep a test plugin out of end-user discovery and release catalogs.
    `MCP_CLI_INTERNAL_PLUGINS=1` shows hidden plugins, and `only` shows nothing else.
+   Add `"workspaceOnly": true` when the plugin needs the checkout. Release builds skip it and reject it in `MCP_CLI_BUNDLE_PLUGINS`.
 3. Create the default export with `definePlugin` from `@mcp-cli/core`. Its `name` must match `service`.
 4. Run `bun run generate <service>` to generate static definitions.
 5. Run `bun run cli plugins` to check discovery and generation status.
