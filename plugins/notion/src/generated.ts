@@ -1967,7 +1967,42 @@ export const manifest = {
                       },
                       {
                         "items": {
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "properties": {
+                                "file_upload": {
+                                  "additionalProperties": {},
+                                  "description": "The uploaded file to attach to the Files property.",
+                                  "properties": {
+                                    "id": {
+                                      "description": "ID of a file upload returned by create_file_upload or create_attachment.",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": {
+                                  "description": "Always `file_upload`",
+                                  "enum": [
+                                    "file_upload"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "file_upload"
+                              ],
+                              "type": "object"
+                            }
+                          ]
                         },
                         "maxItems": 100,
                         "type": "array"
@@ -1977,7 +2012,7 @@ export const manifest = {
                       }
                     ]
                   },
-                  "description": "The properties of the new page, which is a JSON map of property names to SQLite values.\nFor pages in a database, use the SQLite schema definition shown in <database>.\nFor pages outside of a database, the only allowed property is \"title\", which is the title of the page and is automatically shown at the top of the page as a large heading.\n**IMPORTANT**: Some property types require specific formats:\n- Date properties: Split into \"date:{property}:start\", \"date:{property}:end\" (optional), and \"date:{property}:is_datetime\" (0 or 1)\n- Place properties: Split into \"place:{property}:name\", \"place:{property}:address\", \"place:{property}:latitude\", \"place:{property}:longitude\", and \"place:{property}:google_place_id\" (optional)\n- Number properties: Use JavaScript numbers (not strings)\n- Checkbox properties: Use \"__YES__\" for checked, \"__NO__\" for unchecked\n- Relation properties: Use an array of related page URLs or page IDs, e.g. [\"https://www.notion.so/26ab1f9f4c5f80b18d3bd10a6b1d2f4e\", \"26ab1f9f-4c5f-80b1-8d3b-d10a6b1d2f4e\"]\n- Person properties: Use an array of user IDs, user or agent URLs, or group references copied from fetch output (\"space_permission_group-<UUID>\"). Bare group UUIDs are also supported.\n- Files properties: Use a JSON array of file IDs, Notion Folder URLs, and/or <folder> tags copied from fetch output. Folders are stored as native Folder references, not ordinary links.\n\n\n**Special property naming**: Properties named \"id\" or \"url\" (case insensitive) must be prefixed with \"userDefined:\" (e.g., \"userDefined:URL\", \"userDefined:id\")",
+                  "description": "The properties of the new page, which is a JSON map of property names to SQLite values.\nFor pages in a database, use the SQLite schema definition shown in <database>.\nFor pages outside of a database, the only allowed property is \"title\", which is the title of the page and is automatically shown at the top of the page as a large heading.\nFor a Files property, an uploaded file can be provided as {\"type\":\"file_upload\",\"file_upload\":{\"id\":\"<file-upload-id>\"}} inside the property's array.\n**IMPORTANT**: Some property types require specific formats:\n- Date properties: Split into \"date:{property}:start\", \"date:{property}:end\" (optional), and \"date:{property}:is_datetime\" (0 or 1)\n- Place properties: Split into \"place:{property}:name\", \"place:{property}:address\", \"place:{property}:latitude\", \"place:{property}:longitude\", and \"place:{property}:google_place_id\" (optional)\n- Number properties: Use JavaScript numbers (not strings)\n- Checkbox properties: Use \"__YES__\" for checked, \"__NO__\" for unchecked\n- Relation properties: Use an array of related page URLs or page IDs, e.g. [\"https://www.notion.so/26ab1f9f4c5f80b18d3bd10a6b1d2f4e\", \"26ab1f9f-4c5f-80b1-8d3b-d10a6b1d2f4e\"]\n- Person properties: Use an array of user IDs, user or agent URLs, or group references copied from fetch output (\"space_permission_group-<UUID>\"). Bare group UUIDs are also supported.\n- Files properties: Use a JSON array of file IDs, Notion Folder URLs, and/or <folder> tags copied from fetch output. Folders are stored as native Folder references, not ordinary links.\n\n\n**Special property naming**: Properties named \"id\" or \"url\" (case insensitive) must be prefixed with \"userDefined:\" (e.g., \"userDefined:URL\", \"userDefined:id\")",
                   "propertyNames": {
                     "type": "string"
                   },
@@ -6855,7 +6890,7 @@ export const manifest = {
                 "type": "object"
               },
               "main": {
-                "description": "Main area modules in order. Include a title, an editor (unless the layout has a tab), and discussions.",
+                "description": "Main area modules in order. Include a title, an editor (unless the layout has a tab), and discussions. Discussions can go before or after the editor, but no other module can come after it.",
                 "items": {
                   "anyOf": [
                     {
@@ -6869,8 +6904,7 @@ export const manifest = {
                             "discussions",
                             "relations",
                             "backlinks",
-                            "page_sections",
-                            "bottom_controls"
+                            "page_sections"
                           ],
                           "type": "string"
                         }
@@ -6971,7 +7005,7 @@ export const manifest = {
                     "type": "string"
                   },
                   "modules": {
-                    "description": "Tab modules in order. Must include an editor. Only properties, property modules, discussions, relations, and the editor are allowed.",
+                    "description": "Tab modules in order. Must include an editor. Discussions can go before or after the editor, but no other module can come after it. Only properties, property modules, discussions, relations, and the editor are allowed.",
                     "items": {
                       "anyOf": [
                         {
@@ -9170,6 +9204,7 @@ preserve_internal_links?: boolean
  * The properties of the new page, which is a JSON map of property names to SQLite values.
  * For pages in a database, use the SQLite schema definition shown in <database>.
  * For pages outside of a database, the only allowed property is "title", which is the title of the page and is automatically shown at the top of the page as a large heading.
+ * For a Files property, an uploaded file can be provided as {"type":"file_upload","file_upload":{"id":"<file-upload-id>"}} inside the property's array.
  * **IMPORTANT**: Some property types require specific formats:
  * - Date properties: Split into "date:{property}:start", "date:{property}:end" (optional), and "date:{property}:is_datetime" (0 or 1)
  * - Place properties: Split into "place:{property}:name", "place:{property}:address", "place:{property}:latitude", "place:{property}:longitude", and "place:{property}:google_place_id" (optional)
@@ -9183,7 +9218,23 @@ preserve_internal_links?: boolean
  * **Special property naming**: Properties named "id" or "url" (case insensitive) must be prefixed with "userDefined:" (e.g., "userDefined:URL", "userDefined:id")
  */
 properties?: {
-[k: string]: (string | number | string[] | null)
+[k: string]: (string | number | (string | {
+/**
+ * The uploaded file to attach to the Files property.
+ */
+file_upload: {
+/**
+ * ID of a file upload returned by create_file_upload or create_attachment.
+ */
+id: string
+[k: string]: unknown
+}
+/**
+ * Always `file_upload`
+ */
+type: "file_upload"
+[k: string]: unknown
+})[] | null)
 }
 /**
  * The ID of a template to apply to this page. When specified, do not provide 'content' as the template will provide it. Properties can still be set alongside the template. Get template IDs from the <templates> section in the fetch tool results. Template application is asynchronous: the page starts blank and content appears shortly after.
@@ -11576,13 +11627,13 @@ pageFullWidth?: boolean
 propertyIcons?: ("show" | "hide")
 }
 /**
- * Main area modules in order. Include a title, an editor (unless the layout has a tab), and discussions.
+ * Main area modules in order. Include a title, an editor (unless the layout has a tab), and discussions. Discussions can go before or after the editor, but no other module can come after it.
  */
 main: ({
 /**
  * The module type.
  */
-type: ("cover" | "editor" | "discussions" | "relations" | "backlinks" | "page_sections" | "bottom_controls")
+type: ("cover" | "editor" | "discussions" | "relations" | "backlinks" | "page_sections")
 } | NotionUpdateDataSourceInputPageLayoutPropertiesModule | NotionUpdateDataSourceInputPageLayoutPropertiesSectionsModule | {
 /**
  * Property names to show under the title.
@@ -11619,7 +11670,7 @@ tab?: {
  */
 id?: string
 /**
- * Tab modules in order. Must include an editor. Only properties, property modules, discussions, relations, and the editor are allowed.
+ * Tab modules in order. Must include an editor. Discussions can go before or after the editor, but no other module can come after it. Only properties, property modules, discussions, relations, and the editor are allowed.
  */
 modules: ({
 /**
