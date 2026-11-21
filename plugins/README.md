@@ -35,6 +35,10 @@ bun run generate demo --snapshot plugins/demo/src/tools.json --check
 
 Generation writes the plugin's `src/tools.json` and `src/generated.ts`.
 The CLI locates the output directory from the plugin package's `package.json`.
+An installed catalog plugin owns its service at runtime and hides the workspace package of the same service.
+`mcp-cli plugins` lists the hidden package as `workspace (shadowed)`.
+`generate` still targets the workspace package, so checks in a checkout compare against repository files.
+`generate` and `--check` print the snapshot path they used.
 Generated files contain only server tool definitions and input types. The generated manifest's `version` is `2`.
 At runtime, the CLI loads the manifest through the `@mcp-cli/plugin-<service>/generated` export and validates it with `decodeManifest`.
 Then `applyCustomizations` applies the plugin's `commands`.

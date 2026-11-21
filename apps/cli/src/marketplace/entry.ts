@@ -93,7 +93,7 @@ export const pluginsCommand = (args: string[]): Effect.Effect<void, unknown, Cli
         ...registry,
         plugins: registry.plugins.filter((item) => !item.installed),
       };
-      if (development.plugins.length)
+      if (development.plugins.length || development.shadowed.length)
         yield* printLine(yield* attempt(() => listPlugins(development, [])));
       return;
     }

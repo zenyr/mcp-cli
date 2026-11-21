@@ -4,7 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NotGeneratedError, UsageError } from "@mcp-cli/core";
 import { Effect } from "effect";
-import { discover, findPlugin, loadPlugin, type Registry } from "../src/discovery";
+import {
+  discover,
+  findCodegenPlugin,
+  findPlugin,
+  loadPlugin,
+  type Registry,
+} from "../src/discovery";
 import { generate } from "../src/generate";
 import { listPlugins } from "../src/list";
 import type { DiscoveryContext } from "../src/paths";
@@ -12,6 +18,8 @@ import { configPath, defaultContext } from "../src/paths";
 import { existingFiles, loadManifest, outputFiles } from "../src/plugins";
 import { CliHost } from "../src/host";
 import { RESERVED_SERVICES } from "../src/reserved";
+import { writeState } from "../src/marketplace/storage";
+import type { Installed } from "../src/marketplace/schema";
 import { memoryHost } from "./host";
 
 let root = "";
@@ -196,4 +204,63 @@ test("hidden workspace plugins stay out of discovery unless internal plugins are
     expect(services).not.toContain("demo");
     expect(services).not.toContain("demo-auth");
   }
+});
+
+test("a managed install shadows the workspace package, but codegen still targets the workspace", async () => {
+  const home = join(root, "home-installed");
+  const shadowing = context({ env: { HOME: home, XDG_CACHE_HOME: join(root, "cache") }, home });
+  const sha256 = "a".repeat(64);
+  const metadata = {
+    id: "test.alpha",
+    service: "alpha",
+    name: "Alpha",
+    description: "installed alpha",
+    version: "1.0.0",
+    permissions: { localCode: true, network: [], filesystem: [] },
+  };
+  const artifact = {
+    url: "https://example.invalid/alpha.tgz",
+    sha256,
+    platform: "any",
+    arch: "any",
+  } as const;
+  const installed = (enabled: boolean): Installed => ({
+    key: "b".repeat(64),
+    sourceId: "builtin",
+    commit: "c",
+    metadata: { ...metadata, artifacts: [artifact] },
+    artifact,
+    manifest: {
+      schemaVersion: 1,
+      ...metadata,
+      implementation: { type: "module", entry: "plugin.mjs" },
+    },
+    enabled,
+  });
+  const snapshot = join(root, "shadow-snapshot.json");
+  await write(snapshot, { tools: [{ name: "ping", inputSchema: { type: "object" } }] });
+  const workspaceDir = join(root, "ws", "plugins", "alpha");
+  for (const enabled of [true, false]) {
+    await writeState(shadowing, { schemaVersion: 1, sources: [], installed: [installed(enabled)] });
+    const registry = await discover(shadowing);
+    expect(registry.shadowed.map((plugin) => [plugin.service, plugin.dir])).toEqual([
+      ["alpha", workspaceDir],
+    ]);
+    expect(findCodegenPlugin(registry, "alpha").dir).toBe(workspaceDir);
+    expect(await listPlugins(registry, [])).toContain("workspace (shadowed)");
+  }
+  const registry = await discover(shadowing);
+  await runGenerate(["alpha", "--snapshot", snapshot], registry);
+  expect(await Bun.file(join(workspaceDir, "src", "tools.json")).exists()).toBe(true);
+  const { host, stdout } = memoryHost();
+  await Effect.runPromise(
+    Effect.provideService(
+      generate(["alpha", "--snapshot", snapshot, "--check"], registry),
+      CliHost,
+      host,
+    ),
+  );
+  expect(stdout()).toContain(join(workspaceDir, "src", "tools.json"));
+  expect(findCodegenPlugin(await discover(context()), "alpha").installed).toBeUndefined();
+  for (const file of ["tools.json", "generated.ts"]) await rm(join(workspaceDir, "src", file));
 });

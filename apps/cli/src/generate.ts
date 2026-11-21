@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { attempt, attemptSync } from "./attempt";
 import { defaultSettings, defaultStore, resolveConnection } from "./auth";
 import { callerConnection, type Caller } from "./caller-connection";
-import { findPlugin, hostRegistry, loadPlugin, type Registry } from "./discovery";
+import { findCodegenPlugin, hostRegistry, loadPlugin, type Registry } from "./discovery";
 import { CliHost, printLine } from "./host";
 import { outputFiles } from "./plugins";
 
@@ -67,7 +67,7 @@ export const generate = (
     const host = yield* CliHost;
     const selected = yield* attemptSync(() => extractWorkspace(args));
     const config = yield* attemptSync(() => options(selected.args));
-    const discovered = yield* attemptSync(() => findPlugin(registry, config.name));
+    const discovered = yield* attemptSync(() => findCodegenPlugin(registry, config.name));
     const plugin = yield* attempt(() => loadPlugin(discovered, registry.context));
     const snapshot = config.snapshot && resolve(host.cwd, config.snapshot);
     const tools = yield* attempt(async () =>
@@ -83,8 +83,10 @@ export const generate = (
         module: await readExisting(output.module),
       }));
       if (!isCurrent(existing, built))
-        return yield* Effect.fail(new Error(`Generated files are stale: ${config.name}`));
-      return yield* printLine(`Generated files are current: ${config.name}`);
+        return yield* Effect.fail(
+          new Error(`Generated files are stale: ${config.name} (${output.snapshot})`),
+        );
+      return yield* printLine(`Generated files are current: ${config.name} (${output.snapshot})`);
     }
     yield* attempt(async () => {
       await mkdir(dirname(output.module), { recursive: true });

@@ -33,7 +33,12 @@ export type DiscoveredPlugin = {
   installed?: Installed;
   runtimeDirectory?: string;
 };
-export type Registry = { context: DiscoveryContext; plugins: DiscoveredPlugin[] };
+export type Registry = {
+  context: DiscoveryContext;
+  plugins: DiscoveredPlugin[];
+  /** Packages skipped because a managed install owns their service. */
+  shadowed: DiscoveredPlugin[];
+};
 type Candidate = { info: PackageInfo; source: PluginSource; origin: string };
 
 const isServicePlugin = (value: unknown): value is ServicePlugin =>
@@ -159,23 +164,30 @@ export const discover = async (context: DiscoveryContext): Promise<Registry> => 
         : undefined,
     });
   }
+  const shadowed: DiscoveredPlugin[] = [];
   for (const { info, source, origin, service } of resolved) {
-    if (state.installed.some((item) => item.metadata.service === service)) continue;
-    const other = plugins.find((plugin) => plugin.service === service);
-    if (other)
-      throw new Error(
-        `Duplicate service ${service}: ${other.packageName} at ${other.dir} (${other.origin}) and ${info.name} at ${info.dir} (${origin})`,
-      );
-    plugins.push({
+    const found = {
       service,
       packageName: info.name,
       dir: info.dir,
       entry: info.entry,
       source,
       origin,
-    });
+    };
+    if (state.installed.some((item) => item.metadata.service === service)) {
+      shadowed.push(found);
+      continue;
+    }
+    const other = plugins.find((plugin) => plugin.service === service);
+    if (other)
+      throw new Error(
+        `Duplicate service ${service}: ${other.packageName} at ${other.dir} (${other.origin}) and ${info.name} at ${info.dir} (${origin})`,
+      );
+    plugins.push(found);
   }
-  return { context, plugins: plugins.sort((a, b) => a.service.localeCompare(b.service)) };
+  const byService = (a: DiscoveredPlugin, b: DiscoveredPlugin) =>
+    a.service.localeCompare(b.service);
+  return { context, plugins: plugins.sort(byService), shadowed: shadowed.sort(byService) };
 };
 
 /** Discovers plugins from the host environment. */
@@ -188,6 +200,16 @@ export const findPlugin = (registry: Registry, name: string): DiscoveredPlugin =
   const found = registry.plugins.find((plugin) => plugin.service === name);
   if (!found) throw new UsageError(`Unknown service: ${name}`);
   return found;
+};
+
+/** Prefers the workspace package a managed install hides, so codegen in a checkout targets repository files. */
+export const findCodegenPlugin = (registry: Registry, name: string): DiscoveredPlugin => {
+  const found = registry.plugins.find((plugin) => plugin.service === name);
+  if (found && !found.installed) return found;
+  const hidden = registry.shadowed.find(
+    (item) => item.service === name && item.source === "workspace",
+  );
+  return hidden ?? findPlugin(registry, name);
 };
 
 export const loadPlugin = async (
