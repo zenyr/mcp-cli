@@ -23,7 +23,7 @@ export default definePlugin({
     read: {
       path: ["record", "read"],
       summary: "Read one original record page",
-      examples: ["mcp-cli mem record read --record <scopeId>/0"],
+      examples: ["mcp-cli mem record read --record global/0"],
     },
   },
   groups: {

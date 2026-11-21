@@ -74,6 +74,8 @@ test("arguments cannot inject mem options", async () => {
     ["recall", { query: "--project", scope: "global" }],
     ["read", { record: "--global" }],
     ["recall", { query: "x", extra: true }],
+    ["recall", { query: "x", constructor: "--global" }],
+    ["start", { "": true }],
     ["recall", { query: "x", scope: "everything" }],
     ["recall", { query: "x", limit: "5" }],
     ["save", { text: "x" }],
@@ -94,27 +96,38 @@ test("maxBytes caps the mem JSON response", async () => {
   expect(Buffer.byteLength(String(block?.text))).toBeLessThanOrEqual(512);
 });
 
-test("the stdio server lists the generated tools", async () => {
+test("the stdio server lists the generated tools and answers malformed requests", async () => {
   const server = Bun.spawn(["bun", join(import.meta.dir, "../src/server.ts")], {
     stdin: "pipe",
     stdout: "pipe",
     env: { ...process.env, ...context.env },
     cwd: root,
   });
-  server.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize" })}\n`);
-  server.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" })}\n`);
-  server.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 3, method: "nope" })}\n`);
+  for (const line of [
+    JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize" }),
+    JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" }),
+    JSON.stringify({ jsonrpc: "2.0", id: 3, method: "nope" }),
+    JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    JSON.stringify({ jsonrpc: "2.0", id: 4 }),
+    "{not json",
+  ])
+    server.stdin.write(`${line}\n`);
   server.stdin.end();
-  const lines = (await new Response(server.stdout).text())
+  const replies = (await new Response(server.stdout).text())
     .trim()
     .split("\n")
-    .map((line) => JSON.parse(line));
-  expect(lines.map((line) => line.id)).toEqual([1, 2, 3]);
-  expect(lines[1].result.tools.map((tool: { name: string }) => tool.name)).toEqual(
+    .map((line): unknown => JSON.parse(line))
+    .filter(isRecord);
+  expect(replies.map((reply) => reply.id)).toEqual([1, 2, 3, 4, null]);
+  const listed = replies[1]?.result;
+  const names = isRecord(listed) && Array.isArray(listed.tools) ? listed.tools : [];
+  expect(names.map((tool: unknown) => (isRecord(tool) ? tool.name : undefined))).toEqual(
     manifest.tools.map((tool) => tool.name),
   );
-  expect(lines[2].error.code).toBe(-32601);
+  const codes = replies.slice(2).map((reply) => (isRecord(reply.error) ? reply.error.code : 0));
+  expect(codes).toEqual([-32601, -32600, -32700]);
   expect(tools.map((tool) => tool.name).sort()).toEqual(["read", "recall", "start"]);
+  expect(tools.every((tool) => tool.annotations.readOnlyHint === false)).toBe(true);
 });
 
 test("command paths map to mem tools", async () => {

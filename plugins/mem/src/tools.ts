@@ -15,12 +15,13 @@ const maxBytes = {
   description: "Byte limit for the whole mem JSON response. Default: 8192.",
 };
 const cursor = { type: "string", description: "Cursor from the previous response." };
-const annotations = (readOnly: boolean) => ({
-  readOnlyHint: readOnly,
+// Every call may create the SQLite store or scope rows, so no tool is read-only.
+const annotations = {
+  readOnlyHint: false,
   idempotentHint: true,
   destructiveHint: false,
   openWorldHint: false,
-});
+};
 const schema = (properties: Record<string, unknown>, required: string[] = []) => ({
   type: "object",
   properties: { ...properties, scope, maxBytes },
@@ -33,7 +34,7 @@ export const tools = [
     name: "read",
     description:
       "Read one original record page. Pass a recordId from recall or start, then pass the returned cursor for the next page.",
-    annotations: annotations(true),
+    annotations,
     inputSchema: schema(
       {
         record: { type: "string", minLength: 1, description: "Record id such as <scopeId>/0." },
@@ -46,7 +47,7 @@ export const tools = [
     name: "recall",
     description:
       "Search original records by keyword, newest first. Keep the same query and scope when you pass the returned cursor.",
-    annotations: annotations(true),
+    annotations,
     inputSchema: schema(
       {
         query: { type: "string", minLength: 1, description: "Keyword to search for." },
@@ -60,7 +61,7 @@ export const tools = [
     name: "start",
     description:
       "Build the startup memory packet from saved summaries without calling a model. Fails with SUMMARY_PENDING until `mem summarize` runs.",
-    annotations: annotations(false),
+    annotations,
     inputSchema: schema({}),
   },
 ];
@@ -91,8 +92,11 @@ export const toArgv = (name: string, input: unknown): string[] => {
   if (!isRecord(input)) throw new InvalidInput("Arguments must be an object.");
   const tool = tools.find((item) => item.name === name);
   if (!tool) throw new InvalidInput(`Unknown tool: ${name}.`);
-  const unknown = Object.keys(input).find((key) => !(key in tool.inputSchema.properties));
-  if (unknown) throw new InvalidInput(`Unknown argument: ${unknown}.`);
+  const unknown = Object.keys(input).find(
+    (key) => !Object.hasOwn(tool.inputSchema.properties, key),
+  );
+  if (unknown !== undefined)
+    throw new InvalidInput(`Unknown argument: ${JSON.stringify(unknown)}.`);
   const selected = field(input, "scope", "string");
   if (selected !== undefined && selected !== "global" && selected !== "project")
     throw new InvalidInput("scope must be global or project.");

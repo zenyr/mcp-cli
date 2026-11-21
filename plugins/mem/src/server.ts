@@ -3,17 +3,10 @@ import { isRecord } from "@mcp-cli/core";
 import { callTool, tools, type MemContext } from "./tools";
 
 type Request = { id: string | number; method: string; params?: unknown };
-
-const isRequest = (value: unknown): value is Request =>
-  isRecord(value) &&
-  (typeof value.id === "string" || typeof value.id === "number") &&
-  typeof value.method === "string";
+type Reply = { result: unknown } | { error: { code: number; message: string } };
 
 /** Answers one JSON-RPC request, or returns an error object for unsupported methods. */
-export const handle = async (
-  request: Request,
-  context: MemContext,
-): Promise<{ result: unknown } | { error: { code: number; message: string } }> => {
+export const handle = async (request: Request, context: MemContext): Promise<Reply> => {
   if (request.method === "initialize")
     return {
       result: {
@@ -32,17 +25,30 @@ export const handle = async (
   return { error: { code: -32601, message: "Method not found" } };
 };
 
+/** Answers one input line, or returns undefined for notifications. */
+export const answer = async (
+  line: string,
+  context: MemContext,
+): Promise<(Reply & { id: string | number | null }) | undefined> => {
+  if (!line.trim()) return undefined;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(line);
+  } catch {
+    return { id: null, error: { code: -32700, message: "Parse error" } };
+  }
+  if (!isRecord(raw)) return undefined;
+  const { id, method, params } = raw;
+  if (typeof id !== "string" && typeof id !== "number") return undefined;
+  if (typeof method !== "string")
+    return { id, error: { code: -32600, message: "Invalid request" } };
+  return { id, ...(await handle({ id, method, params }, context)) };
+};
+
 if (import.meta.main) {
   // Requests run one at a time so each call opens and closes the SQLite store alone.
   for await (const line of createInterface({ input: process.stdin })) {
-    let raw: unknown;
-    try {
-      raw = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (!isRequest(raw)) continue;
-    const reply = await handle(raw, { cwd: process.cwd(), env: process.env });
-    process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", id: raw.id, ...reply })}\n`);
+    const reply = await answer(line, { cwd: process.cwd(), env: process.env });
+    if (reply) process.stdout.write(`${JSON.stringify({ jsonrpc: "2.0", ...reply })}\n`);
   }
 }

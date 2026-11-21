@@ -8,7 +8,7 @@ export const manifest = {
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false,
-        "readOnlyHint": true
+        "readOnlyHint": false
       },
       "description": "Read one original record page. Pass a recordId from recall or start, then pass the returned cursor for the next page.",
       "inputSchema": {
@@ -50,7 +50,7 @@ export const manifest = {
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false,
-        "readOnlyHint": true
+        "readOnlyHint": false
       },
       "description": "Search original records by keyword, newest first. Keep the same query and scope when you pass the returned cursor.",
       "inputSchema": {

@@ -6,7 +6,7 @@ It reads the same SQLite store and uses the caller's Git project, so it runs onl
 ```sh
 mcp-cli mem memory start
 mcp-cli mem memory recall --query "deploy target" --limit 5
-mcp-cli mem record read --record <scopeId>/0
+mcp-cli mem record read --record global/0
 ```
 
 - Tools: `start`, `recall`, and `read`. None of them calls a model.
