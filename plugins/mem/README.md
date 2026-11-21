@@ -1,7 +1,8 @@
 # mem plugin
 
 The `mem` plugin exposes the read commands of the standalone [`mem` CLI](../../apps/mem/README.md) through `mcp-cli mem`.
-It reads the same SQLite store and uses the caller's Git project, so it runs only from this repository checkout.
+It reads the same SQLite store and uses the Git project of the directory you run it from.
+Only an `mcp-cli` started from this repository checkout discovers the plugin. Release builds do not include it.
 
 ```sh
 mcp-cli mem memory start
