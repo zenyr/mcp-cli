@@ -20,7 +20,9 @@ export const handle = async (request: Request, context: MemContext): Promise<Rep
   if (request.method === "tools/call") {
     const params = isRecord(request.params) ? request.params : {};
     const name = typeof params.name === "string" ? params.name : "";
-    return { result: await callTool(name, params.arguments ?? {}, context) };
+    // Only a missing arguments field means no arguments; null and other values fail validation.
+    const input = "arguments" in params ? params.arguments : {};
+    return { result: await callTool(name, input, context) };
   }
   return { error: { code: -32601, message: "Method not found" } };
 };

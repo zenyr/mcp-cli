@@ -34,6 +34,6 @@ export default definePlugin({
     { command: "memory start", summary: "Load the startup memory packet" },
     { command: 'memory recall --query "decision"', summary: "Find records by keyword" },
   ],
-  skill: `mem plugin tools only read records. Save and summarize with the standalone mem CLI.
+  skill: `mem plugin tools search and read records. Save and summarize with the standalone mem CLI.
 Use memory recall, then record read --record with a returned recordId; pass returned cursors unchanged.`,
 });

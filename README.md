@@ -20,7 +20,8 @@ It includes the CLI host and independently installable default plugin packages, 
 
 `mem` is a separate memory management CLI developed in this repository.
 It stores original text and summary trees in local SQLite and supports project-scoped memory search and retrieval.
-It has its own configuration and storage and is neither an `mcp-cli` subcommand nor an MCP plugin.
+It has its own configuration and storage and is not an `mcp-cli` subcommand.
+In this checkout, the workspace-only `mem` plugin exposes `start`, `recall`, and `read` through `mcp-cli mem`.
 
 ## Documentation
 

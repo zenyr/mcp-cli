@@ -2,11 +2,13 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { isRecord, type ToolResult, type ToolSession } from "@mcp-cli/core";
+import { isRecord, type ToolResult } from "@mcp-cli/core";
 import { main } from "@mcp-cli/mem";
 import { runService } from "@mcp-cli/runtime";
+import { recordingPorts } from "@mcp-cli/runtime/testing";
 import plugin from "../src";
 import { manifest } from "../src/generated";
+import { handle } from "../src/server";
 import { callTool, tools, type MemContext } from "../src/tools";
 
 let root = "";
@@ -110,6 +112,12 @@ test("the stdio server lists the generated tools and answers malformed requests"
     JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
     JSON.stringify({ jsonrpc: "2.0", id: 4 }),
     "{not json",
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 5,
+      method: "tools/call",
+      params: { name: "start", arguments: null },
+    }),
   ])
     server.stdin.write(`${line}\n`);
   server.stdin.end();
@@ -118,51 +126,38 @@ test("the stdio server lists the generated tools and answers malformed requests"
     .split("\n")
     .map((line): unknown => JSON.parse(line))
     .filter(isRecord);
-  expect(replies.map((reply) => reply.id)).toEqual([1, 2, 3, 4, null]);
+  expect(replies.map((reply) => reply.id)).toEqual([1, 2, 3, 4, null, 5]);
   const listed = replies[1]?.result;
   const names = isRecord(listed) && Array.isArray(listed.tools) ? listed.tools : [];
   expect(names.map((tool: unknown) => (isRecord(tool) ? tool.name : undefined))).toEqual(
     manifest.tools.map((tool) => tool.name),
   );
-  const codes = replies.slice(2).map((reply) => (isRecord(reply.error) ? reply.error.code : 0));
+  const called = replies[5]?.result;
+  expect(isRecord(called) && called.isError).toBe(true);
+  const codes = replies.slice(2, 5).map((reply) => (isRecord(reply.error) ? reply.error.code : 0));
   expect(codes).toEqual([-32601, -32600, -32700]);
   expect(tools.map((tool) => tool.name).sort()).toEqual(["read", "recall", "start"]);
   expect(tools.every((tool) => tool.annotations.readOnlyHint === false)).toBe(true);
 });
 
 test("command paths map to mem tools", async () => {
-  const calls: Array<{ name: string; input: Record<string, unknown> }> = [];
-  const session: ToolSession = {
-    listTools: async () => [],
-    callTool: async (name, input) => {
-      calls.push({ name, input });
-      return { content: [{ type: "text", text: "{}" }] };
-    },
-    listResources: async () => [],
-    listResourceTemplates: async () => [],
-    readResource: async () => [],
-    listPrompts: async () => [],
-    getPrompt: async () => ({ messages: [] }),
-    close: async () => {},
-  };
-  const run = (args: string[]) =>
-    runService(plugin, manifest, args, {
-      open: async () => session,
-      io: {
-        write: () => {},
-        writeError: () => {},
-        readFile: async () => "",
-        readBytes: async () => new Uint8Array(),
-        readStdin: async () => "",
-      },
-      guard: { begin: async () => undefined, finish: async () => {} },
-    });
+  const f = recordingPorts();
+  const run = (args: string[]) => runService(plugin, manifest, args, f.ports);
   expect(await run(["memory", "recall", "--query", "deploy", "--limit", "5"])).toBe(0);
   expect(await run(["record", "read", "--record", "global/0"])).toBe(0);
   expect(await run(["memory", "start", "--scope", "global"])).toBe(0);
-  expect(calls).toEqual([
+  expect(f.calls).toEqual([
     { name: "recall", input: { query: "deploy", limit: 5 } },
     { name: "read", input: { record: "global/0" } },
     { name: "start", input: { scope: "global" } },
   ]);
+});
+
+test("the server treats null arguments as invalid input", async () => {
+  const reply = await handle(
+    { id: 1, method: "tools/call", params: { name: "start", arguments: null } },
+    context,
+  );
+  const result = "result" in reply && isRecord(reply.result) ? reply.result : {};
+  expect(result.isError).toBe(true);
 });

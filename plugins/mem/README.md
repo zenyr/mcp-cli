@@ -10,6 +10,7 @@ mcp-cli mem record read --record global/0
 ```
 
 - Tools: `start`, `recall`, and `read`. None of them calls a model.
+- A call can create the SQLite store, scope rows, or the project id file, as the standalone CLI does. The tools are therefore not marked read-only.
 - Save and summarize with the standalone `mem` CLI. Model calls can exceed the 30-second MCP call limit.
 - `--scope global|project` selects scopes. The default is both, as in the standalone CLI.
 - `--maxBytes` limits the mem JSON inside the tool result. `--json` prints the whole MCP result, which is larger.
