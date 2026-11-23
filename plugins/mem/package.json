@@ -23,6 +23,8 @@
   "mcp-cli": {
     "plugin": true,
     "service": "mem",
-    "workspaceOnly": true
+    "runtimeEntries": {
+      "server.mjs": "src/server.ts"
+    }
   }
 }

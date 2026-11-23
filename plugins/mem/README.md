@@ -2,7 +2,7 @@
 
 The `mem` plugin exposes the read commands of the standalone [`mem` CLI](../../apps/mem/README.md) through `mcp-cli mem`.
 It reads the same SQLite store and uses the Git project of the directory you run it from.
-Only an `mcp-cli` started from this repository checkout discovers the plugin. Release builds do not include it.
+The desktop app includes Mem in its built-in plugin catalog. Install and enable it from Plugins, then open its settings on the Settings tab.
 
 ```sh
 mcp-cli mem memory start
@@ -18,8 +18,7 @@ mcp-cli mem record read --record global/0
 - A mem failure is a tool error with exit code 1. The JSON `error.code` keeps the mem error code.
 - Option-shaped values such as `--global` are rejected for `--query` and `--record`.
 
-`"workspaceOnly": true` in `package.json` keeps the plugin out of release catalogs.
-A catalog install would start the server in an isolated plugin directory with a private `HOME`, so it could not see the caller's project or store.
+The packaged module launches its bundled server through the CLI runtime. It retains the caller's directory and environment, so installed and source versions read the same memory database and plugin settings.
 
 ## Summary settings
 

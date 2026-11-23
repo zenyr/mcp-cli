@@ -133,7 +133,9 @@ export const PluginDetailPage = () => {
         >
           <Tabs.List>
             {plugin && <Tabs.Tab value="overview">{t("개요")}</Tabs.Tab>}
-            <Tabs.Tab value="auth">{t("인증")}</Tabs.Tab>
+            <Tabs.Tab value="auth">
+              {t(details?.auth === "none" && details.authentication ? "설정" : "인증")}
+            </Tabs.Tab>
             <Tabs.Tab value="commands">{t("명령")}</Tabs.Tab>
             <Tabs.Tab value="diagram">{t("구조도")}</Tabs.Tab>
           </Tabs.List>

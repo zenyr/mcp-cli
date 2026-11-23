@@ -47,7 +47,8 @@ export const answer = async (
   return { id, ...(await handle({ id, method, params }, context)) };
 };
 
-if (import.meta.main) {
+declare const MCP_CLI_BUNDLED: boolean;
+if (import.meta.main || (typeof MCP_CLI_BUNDLED !== "undefined" && MCP_CLI_BUNDLED)) {
   // Requests run one at a time so each call opens and closes the SQLite store alone.
   for await (const line of createInterface({ input: process.stdin })) {
     const reply = await answer(line, { cwd: process.cwd(), env: process.env });

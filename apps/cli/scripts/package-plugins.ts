@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isRecord, type ServicePlugin } from "@mcp-cli/core";
 import { workspacePackages, type PackageInfo } from "../src/packages";
-import { packDirectory } from "../src/marketplace/archive";
+import { packDirectory, safePath } from "../src/marketplace/archive";
 import { digest } from "../src/marketplace/storage";
 import {
   Catalog,
@@ -24,6 +24,30 @@ export const selectPackages = (infos: PackageInfo[], only?: string[]): PackageIn
   if (local.length)
     throw new Error(`Workspace-only plugins cannot be bundled: ${local.join(", ")}`);
   return selected;
+};
+
+export const bundleRuntimeEntries = async (
+  sourceDirectory: string,
+  outputDirectory: string,
+  entries: unknown,
+): Promise<void> => {
+  if (entries === undefined) return;
+  if (!isRecord(entries)) throw new Error("runtimeEntries must map output paths to source paths.");
+  for (const [output, source] of Object.entries(entries)) {
+    if (typeof source !== "string") throw new Error("Runtime entry must be a source path.");
+    const target = safePath(output);
+    if (["plugin.mjs", "plugin.json", "manifest.json"].includes(target))
+      throw new Error("Runtime entry conflicts with a package file.");
+    const result = await Bun.build({
+      entrypoints: [join(sourceDirectory, safePath(source))],
+      outdir: outputDirectory,
+      naming: target,
+      target: "bun",
+      minify: true,
+      define: { MCP_CLI_BUNDLED: "true" },
+    });
+    if (!result.success) throw new Error(result.logs.map(String).join("\n"));
+  }
 };
 
 export const packageWorkspacePlugins = async (
@@ -76,8 +100,11 @@ export const packageWorkspacePlugins = async (
         naming: plugin.name === "demo" ? "server.mjs" : "plugin.mjs",
         target: "bun",
         minify: true,
+        define: { MCP_CLI_BUNDLED: "true" },
       });
       if (!result.success) throw new Error(result.logs.map(String).join("\n"));
+      const marker = isRecord(pkg["mcp-cli"]) ? pkg["mcp-cli"] : {};
+      await bundleRuntimeEntries(info.dir, directory, marker.runtimeEntries);
       await writeFile(join(directory, "plugin.json"), JSON.stringify(manifest));
       await writeFile(join(directory, "manifest.json"), JSON.stringify(generated));
       const archive = await packDirectory(directory);

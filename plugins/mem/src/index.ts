@@ -2,14 +2,19 @@ import { fileURLToPath } from "node:url";
 import { memAuthSupport } from "./settings";
 import { definePlugin } from "@mcp-cli/core";
 
+declare const MCP_CLI_BUNDLED: boolean;
+const packaged = typeof MCP_CLI_BUNDLED !== "undefined" && MCP_CLI_BUNDLED;
+
 export default definePlugin({
   name: "mem",
   summary: "Search and read local mem records without calling a model",
   authSupport: memAuthSupport,
   connection: () => ({
     type: "stdio",
-    command: "bun",
-    args: [fileURLToPath(new URL("./server.ts", import.meta.url))],
+    command: process.execPath,
+    args: packaged
+      ? ["--plugin-runtime", fileURLToPath(new URL("./server.mjs", import.meta.url))]
+      : [fileURLToPath(new URL("./server.ts", import.meta.url))],
   }),
   commands: {
     start: {
