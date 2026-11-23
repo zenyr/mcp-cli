@@ -20,3 +20,15 @@ mcp-cli mem record read --record global/0
 
 `"workspaceOnly": true` in `package.json` keeps the plugin out of release catalogs.
 A catalog install would start the server in an isolated plugin directory with a private `HOME`, so it could not see the caller's project or store.
+
+## Summary settings
+
+Open the Mem plugin settings in the desktop app to set the summary model, OpenAI-compatible API base URL, and reasoning mode. Model and URL start empty. The shared plugin settings store persists these values, and the standalone CLI reads the same configuration.
+
+You can also save them with the existing plugin configuration command:
+
+```sh
+printf '%s\n' '{"model":"your-model","baseUrl":"https://your-provider.example/v1","thinking":"default"}' | mcp-cli auth configure mem
+```
+
+CLI flags override environment variables, which override plugin settings, which override the legacy Mem configuration file. Set optional credentials through `MEM_API_KEY`. Unconfigured summary calls return `SUMMARY_NOT_CONFIGURED`; original records remain saved.

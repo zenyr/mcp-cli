@@ -1,9 +1,11 @@
 import { fileURLToPath } from "node:url";
+import { memAuthSupport } from "./settings";
 import { definePlugin } from "@mcp-cli/core";
 
 export default definePlugin({
   name: "mem",
   summary: "Search and read local mem records without calling a model",
+  authSupport: memAuthSupport,
   connection: () => ({
     type: "stdio",
     command: "bun",

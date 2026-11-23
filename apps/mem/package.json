@@ -9,10 +9,14 @@
   "type": "module",
   "exports": {
     ".": "./src/main.ts",
+    "./settings": "./src/settings.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test"
+  },
+  "dependencies": {
+    "@mcp-cli/auth": "workspace:*"
   }
 }

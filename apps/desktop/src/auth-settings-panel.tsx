@@ -137,7 +137,9 @@ export const AuthSettingsPanel = ({
   const [group, setGroup] = useState(authentication.fields[0]?.path[0] ?? "");
   const save = useAction(
     "authConfig",
-    t("인증 설정을 저장했습니다. 변경한 설정으로 다시 로그인해 주세요."),
+    authentication.states.length
+      ? t("인증 설정을 저장했습니다. 변경한 설정으로 다시 로그인해 주세요.")
+      : t("설정을 저장했습니다."),
   );
   const verify = useAction("authStatus");
   const login = useAction("login", t("인증을 저장했습니다."));
@@ -185,22 +187,27 @@ export const AuthSettingsPanel = ({
         <Group justify="space-between">
           <Title order={4}>
             {service}
-            {workspaceName ? ` / ${workspaceName}` : ""} {t("인증 설정")}
+            {workspaceName ? ` / ${workspaceName}` : ""}{" "}
+            {t(authentication.states.length ? "인증 설정" : "설정")}
           </Title>
-          <Button
-            variant="default"
-            loading={verify.isPending}
-            disabled={busy && !verify.isPending}
-            onClick={() => verify.mutate({ service, workspace }, { onSuccess: setChecked })}
-          >
-            {t("연결 확인")}
-          </Button>
-        </Group>
-        <Text size="sm">
-          {t(
-            "서비스 관리자 화면에서 확인한 값을 입력하세요. PKCE 활성화와 등록한 Redirect URL을 먼저 확인하세요.",
+          {authentication.states.length > 0 && (
+            <Button
+              variant="default"
+              loading={verify.isPending}
+              disabled={busy && !verify.isPending}
+              onClick={() => verify.mutate({ service, workspace }, { onSuccess: setChecked })}
+            >
+              {t("연결 확인")}
+            </Button>
           )}
-        </Text>
+        </Group>
+        {authentication.states.length > 0 && (
+          <Text size="sm">
+            {t(
+              "서비스 관리자 화면에서 확인한 값을 입력하세요. PKCE 활성화와 등록한 Redirect URL을 먼저 확인하세요.",
+            )}
+          </Text>
+        )}
         {(checked?.states ?? authentication.states).map((state) => (
           <Group key={state.target}>
             <Text size="sm" fw={500}>

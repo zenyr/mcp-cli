@@ -1,3 +1,5 @@
+import { credentialsDir, fileSettingsStore } from "@mcp-cli/auth";
+import { dirname, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import type { Env, Settings } from "./types";
 import { fail, isRecord } from "./values";
@@ -25,6 +27,18 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) return invalid();
   }
   if (!isRecord(config)) return invalid();
+  const stored = await memSettingsStore(env).read("mem");
+  const plugin = stored?.configuration;
+  if (plugin !== undefined && !isRecord(plugin)) return invalid();
+  config = { ...config, ...(isRecord(plugin) ? plugin : {}) };
+  return decodeSettings(config, env);
+};
+
+export const memSettingsStore = (env: Env) =>
+  fileSettingsStore(join(dirname(credentialsDir(env)), "settings"));
+
+export const decodeSettings = (config: unknown, env: Env = {}): Settings => {
+  if (!isRecord(config)) return invalid();
   const keys = [
     "model",
     "baseUrl",
@@ -37,8 +51,8 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
   ];
   if (Object.keys(config).some((key) => !keys.includes(key))) return invalid();
   const settings: Settings = {
-    model: config.model === undefined ? "deepseek-v4.1-flash" : string(config.model),
-    baseUrl: config.baseUrl === undefined ? "http://127.0.0.1:8317/v1" : string(config.baseUrl),
+    model: config.model === undefined || config.model === "" ? "" : string(config.model),
+    baseUrl: config.baseUrl === undefined || config.baseUrl === "" ? "" : string(config.baseUrl),
     nodeBytes: config.nodeBytes === undefined ? 512 : number(config.nodeBytes, 1_048_576),
     contextBytes:
       config.contextBytes === undefined ? 8192 : number(config.contextBytes, 16_777_216),
@@ -60,6 +74,7 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     settings.thinking = thinking;
   }
   try {
+    if (!settings.baseUrl) return settings;
     const url = new URL(settings.baseUrl);
     if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
       return invalid();

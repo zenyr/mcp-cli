@@ -142,3 +142,17 @@ test("HTTP whitelists range-only fields and retains two stateless messages on re
   };
   await createCompressor(config, {})(structuralInput);
 });
+
+test("missing model or URL fails before contacting the provider", async () => {
+  let calls = 0;
+  const config = local(() => {
+    calls += 1;
+    return Response.json(completion());
+  });
+  for (const missing of [{ model: "" }, { baseUrl: "" }]) {
+    await expect(createCompressor({ ...config, ...missing }, {})(input)).rejects.toMatchObject({
+      code: "SUMMARY_NOT_CONFIGURED",
+    });
+  }
+  expect(calls).toBe(0);
+});

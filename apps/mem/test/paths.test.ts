@@ -95,8 +95,8 @@ test("existing Git configuration identity is honored and malformed configuration
 test("settings defaults and environment overrides", async () => {
   const path = join(await temporary(), "config.json");
   expect(await loadSettings(path, {})).toEqual({
-    model: "deepseek-v4.1-flash",
-    baseUrl: "http://127.0.0.1:8317/v1",
+    model: "",
+    baseUrl: "",
     nodeBytes: 512,
     contextBytes: 8192,
     inputBytes: 131072,
@@ -127,7 +127,6 @@ test("settings reject invalid JSON, unknown keys, values, and bounds", async () 
     '{"secret":"x"}',
     '{"command":[]}',
     '{"command":[1]}',
-    '{"model":""}',
     '{"baseUrl":"file:///tmp/x"}',
     '{"nodeBytes":0}',
     '{"timeoutMs":3600001}',

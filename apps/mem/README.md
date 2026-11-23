@@ -5,7 +5,7 @@ The workspace-only [`mem` plugin](../../plugins/mem/README.md) exposes `start`, 
 It uses its own configuration and SQLite storage without connecting to an MCP server.
 Run commands from the repository root. See the [development guide](../../docs/development.md) for installation and environment setup.
 
-`mem` stores original text and summary trees in local SQLite. The default model is OpenCode GO's `deepseek-v4.1-flash` through the local CPA.
+`mem` stores original text and summary trees in local SQLite. The model and API base URL are empty by default. Configure them in the Mem plugin settings in the desktop app before summarizing.
 
 ```sh
 bun run mem start
@@ -42,14 +42,16 @@ Override connection settings with `--model` and `--base-url`. The connection use
 
 ## Configuration and storage
 
-The configuration file is `$XDG_CONFIG_HOME/mem/config.json`. If the variable is missing or relative, the base directory is `~/.config`.
+The desktop plugin stores model, base URL, and thinking settings in the shared plugin settings store. These override the legacy file settings.
+
+The legacy configuration file is `$XDG_CONFIG_HOME/mem/config.json`. If the variable is missing or relative, the base directory is `~/.config`.
 Original text and summaries are stored in `$XDG_DATA_HOME/mem/memory.sqlite`. If the variable is missing or relative, the base directory is `~/.local/share`.
 SQLite uses WAL and FULL synchronization. Project and global records share one file, separated by scope.
 
 ```json
 {
-  "baseUrl": "http://127.0.0.1:8317/v1",
-  "model": "deepseek-v4.1-flash",
+  "baseUrl": "",
+  "model": "",
   "nodeBytes": 512,
   "contextBytes": 8192,
   "inputBytes": 131072,

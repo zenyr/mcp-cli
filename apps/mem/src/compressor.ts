@@ -61,6 +61,11 @@ export const decodeCompletion = (value: unknown, model: string): SummaryResult =
 const httpCompressor =
   (settings: Settings, env: Env): Compressor =>
   async (input) => {
+    if (!settings.model || !settings.baseUrl)
+      return fail(
+        "SUMMARY_NOT_CONFIGURED",
+        "Configure the Mem model and API base URL in Settings before summarizing.",
+      );
     const body = JSON.stringify({
       model: settings.model,
       stream: false,

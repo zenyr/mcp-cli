@@ -64,6 +64,9 @@
       "bin": {
         "mem": "./src/main.ts",
       },
+      "dependencies": {
+        "@mcp-cli/auth": "workspace:*",
+      },
     },
     "packages/auth": {
       "name": "@mcp-cli/auth",
