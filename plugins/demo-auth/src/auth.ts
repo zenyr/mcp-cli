@@ -46,6 +46,18 @@ const headers = async (context: AuthSupportContext, credential?: string) => {
 
 /** A minimal AuthSupport that exercises every host contract method without a real provider. */
 export const demoAuthSupport: AuthSupport = {
+  fields: [
+    {
+      path: ["mcp", "method"],
+      label: "MCP method",
+      type: "select",
+      optionsSource: { label: "Load methods", dependencies: [["mcp", "method"]] },
+    },
+  ],
+  loadOptions: async (_context, input) => {
+    const config = decode(input.configuration);
+    return [{ value: config.mcp.method, label: config.mcp.method }];
+  },
   configuration: async (context) => ({ ...(await configuration(context)) }),
   configure: async (context, value) => {
     const decoded = decode(value);

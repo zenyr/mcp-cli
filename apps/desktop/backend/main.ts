@@ -26,7 +26,7 @@ const runCli = async (app: DesktopApp, args: string[], input?: unknown, signal?:
       ? 300_000
       : ["reset", "logout", "auth-config", "plugin-action"].includes(args[1] ?? "")
         ? 600_000
-        : args[1] === "auth-status" || args[1] === "commands"
+        : args[1] === "auth-status" || args[1] === "auth-options" || args[1] === "commands"
           ? 30000
           : 10_000;
   return runCliChild(child, {
@@ -104,6 +104,7 @@ export const api = {
     logins.start((signal) => run(app, ["desktop", "login"], params, signal)),
   logout: (params: unknown, app: DesktopApp) => run(app, ["desktop", "logout"], params),
   authConfig: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-config"], params),
+  authOptions: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-options"], params),
   authStatus: (params: unknown, app: DesktopApp) => run(app, ["desktop", "auth-status"], params),
   cancelLogin: async () => {
     await logins.cancel();

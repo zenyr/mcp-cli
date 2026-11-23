@@ -37,6 +37,26 @@ export const configureAuthentication = async (plugin: ServicePlugin, env: Env, v
   await resetDaemonIfRunning(env);
 };
 
+export const authenticationOptions = async (
+  plugin: ServicePlugin,
+  env: Env,
+  configuration: unknown,
+  path: unknown,
+) => {
+  if (!plugin.authSupport?.loadOptions)
+    throw new UsageError("This service has no dynamic settings options.");
+  if (!Array.isArray(path) || !path.length || path.some((part) => typeof part !== "string"))
+    throw new UsageError("Invalid settings field path.");
+  const field = plugin.authSupport.fields?.find(
+    (item) => item.path.length === path.length && item.path.every((part, i) => part === path[i]),
+  );
+  if (!field?.optionsSource) throw new UsageError("This field has no dynamic options.");
+  return plugin.authSupport.loadOptions(authenticationContext(env, plugin), {
+    path,
+    configuration,
+  });
+};
+
 const USAGE =
   "Usage: mcp-cli auth configure <service> < settings.json | mcp-cli auth status <service> [--check]";
 

@@ -35,6 +35,24 @@ test("CLI and desktop share auth settings and token storage without silent brows
     expect(
       services.find((item: { name: string }) => item.name === "demo-auth").authentication,
     ).toEqual(JSON.parse(cli.stdout));
+    const options = await invoke(["desktop", "auth-options"], {
+      service: "demo-auth",
+      path: ["mcp", "method"],
+      configuration: { mcp: { method: "pkce" } },
+    });
+    expect(options.code).toBe(0);
+    expect(JSON.parse(options.stdout).result).toEqual([{ value: "pkce", label: "pkce" }]);
+    const unchanged = await invoke(["auth", "status", "demo-auth", "--json"]);
+    expect(JSON.parse(unchanged.stdout).configuration).toEqual(configuration);
+    expect(
+      (
+        await invoke(["desktop", "auth-options"], {
+          service: "demo-auth",
+          path: ["unknown"],
+          configuration,
+        })
+      ).code,
+    ).toBe(2);
     const rejected = await invoke(["desktop", "login"], {
       service: "demo-auth",
       target: "web",

@@ -1,3 +1,4 @@
+import { readResponseText, requestHeaders } from "./model-api";
 import type { Compression, Compressor, Env, Settings, SummaryResult } from "./types";
 import { bytes, fail, isRecord, parseJson } from "./values";
 
@@ -7,31 +8,6 @@ Remove filler/repetition; retain each distinct fact once. Keep user decisions, r
 Distinguish plans/completed work, success/failure, user words/tool reports. Preserve newer decisions replacing older ones; never revive cancelled plans. Keep cancellations, negations, source attribution.
 Use source facts only. Leave ambiguous references unresolved; invent no details, targets, causes, dates. For merged child summaries, resolve relations only if both children ground them within source.
 On retry=true, shorten from the same original source to at most targetBytes UTF-8 bytes. targetBytes counts UTF-8 bytes, not characters or tokens.`;
-
-const boundedText = async (
-  stream: ReadableStream<Uint8Array> | null,
-  limit = 262144,
-): Promise<string> => {
-  if (!stream) return "";
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > limit) {
-        await reader.cancel();
-        return fail("MODEL_OUTPUT_OVERFLOW", "Summarizer response exceeded its read limit.");
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  return Buffer.concat(chunks).toString("utf8");
-};
 
 const tokenCount = (value: unknown): number =>
   typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -89,8 +65,7 @@ const httpCompressor =
         "SUMMARY_INPUT_OVERFLOW",
         "Summary request exceeds inputBytes; original is preserved.",
       );
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (env.MEM_API_KEY) headers.Authorization = `Bearer ${env.MEM_API_KEY}`;
+    const headers = requestHeaders(settings, env);
     let response: Response;
     try {
       response = await fetch(`${settings.baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -112,7 +87,7 @@ const httpCompressor =
         status: response.status,
       });
     }
-    return decodeCompletion(parseJson(await boundedText(response.body)), settings.model);
+    return decodeCompletion(parseJson(await readResponseText(response.body)), settings.model);
   };
 
 export const createCompressor = (settings: Settings, env: Env): Compressor => {

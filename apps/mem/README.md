@@ -42,7 +42,9 @@ Override connection settings with `--model` and `--base-url`. The connection use
 
 ## Configuration and storage
 
-The desktop plugin stores model, base URL, and thinking settings in the shared plugin settings store. These override the legacy file settings.
+The desktop plugin stores model, base URL, custom headers, and thinking settings in the shared plugin settings store. These override the legacy file settings. The optional API key uses the private credential store.
+
+Enter the API base URL, optional API key, and optional headers as a JSON object. Load models to request `GET /models` with those draft values, or enter a model ID directly. Loading the list does not save the form. Save the settings before running summaries.
 
 The legacy configuration file is `$XDG_CONFIG_HOME/mem/config.json`. If the variable is missing or relative, the base directory is `~/.config`.
 Original text and summaries are stored in `$XDG_DATA_HOME/mem/memory.sqlite`. If the variable is missing or relative, the base directory is `~/.local/share`.
@@ -65,7 +67,7 @@ SQLite uses WAL and FULL synchronization. Project and global records share one f
 `MEM_THINKING=enabled` or `disabled` explicitly sets reasoning mode for supported providers. An unset value or `default` uses the provider default.
 This option is provider-specific. Unsupported servers may reject the request.
 Changing the output limit or timeout preserves the generation, allowing interrupted work to resume.
-API keys are accepted only through `MEM_API_KEY`. The CLI excludes API keys from configuration output.
+An API key saved in plugin settings supplies Bearer authorization. `MEM_API_KEY` overrides the saved key. Custom headers apply to both model discovery and summary calls; an API key overrides a custom Authorization header. The CLI excludes API keys and custom header values from `mem config` output.
 This version does not provide a summarization adapter that runs arbitrary commands.
 
 The project ID is stored in `mem-project-id` in the Git common directory.

@@ -1,4 +1,7 @@
 export const messages = {
+  "저장됨 · 변경할 때만 입력": "Saved · enter only to replace",
+  "JSON 객체를 입력해 주세요.": "Enter a JSON object.",
+  "모델 {count}개를 불러왔습니다.": "Loaded {count} models.",
   "사이드바 너비 조절": "Resize sidebar",
   "명령 목록 너비 조절": "Resize command list",
   "사이드바 접기": "Collapse sidebar",

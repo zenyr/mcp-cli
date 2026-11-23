@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "@mcp-cli/core": "workspace:*",
-    "@mcp-cli/mem": "workspace:*"
+    "@mcp-cli/mem": "workspace:*",
+    "effect": "4.0.6"
   },
   "devDependencies": {
+    "@mcp-cli/auth": "workspace:*",
     "@mcp-cli/runtime": "workspace:*"
   },
   "mcp-cli": {

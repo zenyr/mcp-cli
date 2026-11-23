@@ -31,11 +31,17 @@ export type AuthSettingsField = {
   path: string[];
   label: string;
   description?: string;
-  type: "text" | "boolean" | "strings" | "select";
+  type: "text" | "password" | "json" | "boolean" | "strings" | "select";
+  storedPath?: string[];
+  optionsSource?: { label: string; dependencies: string[][] };
   options?: { value: string; label: string }[];
 };
 export type AuthSupport = {
   fields?: AuthSettingsField[];
+  loadOptions?(
+    context: AuthSupportContext,
+    input: { path: string[]; configuration: unknown },
+  ): Promise<{ value: string; label: string }[]>;
   configure(context: AuthSupportContext, value: unknown): Promise<void>;
   configuration(context: AuthSupportContext): Promise<Record<string, unknown>>;
   status(context: AuthSupportContext, check: boolean): Promise<AuthStatus[]>;

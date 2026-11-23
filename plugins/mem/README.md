@@ -22,7 +22,9 @@ The packaged module launches its bundled server through the CLI runtime. It reta
 
 ## Summary settings
 
-Open the Mem plugin settings in the desktop app to set the summary model, OpenAI-compatible API base URL, and reasoning mode. Model and URL start empty. The shared plugin settings store persists these values, and the standalone CLI reads the same configuration.
+Open the Mem plugin settings in the desktop app. Enter the OpenAI-compatible API base URL, optional API key, and optional JSON headers, then choose **Load models** or type a model ID directly. Loading models uses the current form without saving it. Save to apply the connection, model, and reasoning mode.
+
+Model and URL start empty. The shared plugin settings store persists the connection settings, and the private credential store holds the API key. The standalone CLI reads both stores. Leave the API key input empty to retain a saved key; use **Delete saved API key** to remove it.
 
 You can also save them with the existing plugin configuration command:
 
@@ -30,4 +32,4 @@ You can also save them with the existing plugin configuration command:
 printf '%s\n' '{"model":"your-model","baseUrl":"https://your-provider.example/v1","thinking":"default"}' | mcp-cli auth configure mem
 ```
 
-CLI flags override environment variables, which override plugin settings, which override the legacy Mem configuration file. Set optional credentials through `MEM_API_KEY`. Unconfigured summary calls return `SUMMARY_NOT_CONFIGURED`; original records remain saved.
+CLI flags override environment variables, which override plugin settings, which override the legacy Mem configuration file. `MEM_API_KEY` overrides the saved API key. Custom headers must be a JSON object with string values and apply to both `GET /models` and summary requests. An API key takes precedence over a custom Authorization header. Unconfigured summary calls return `SUMMARY_NOT_CONFIGURED`; original records remain saved.

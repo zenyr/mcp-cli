@@ -77,6 +77,15 @@ export type Api = {
     input: { service: string; workspace?: string; configuration: Record<string, unknown> };
     output: Authentication;
   };
+  authOptions: {
+    input: {
+      service: string;
+      workspace?: string;
+      path: string[];
+      configuration: Record<string, unknown>;
+    };
+    output: { value: string; label: string }[];
+  };
   authStatus: { input: { service: string; workspace?: string }; output: Authentication };
   cancelLogin: { input: undefined; output: null };
   settings: { input: undefined; output: Settings };

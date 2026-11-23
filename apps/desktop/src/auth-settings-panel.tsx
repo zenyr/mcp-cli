@@ -1,29 +1,11 @@
 import { t, useLocale } from "./i18n";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Badge,
-  Button,
-  Checkbox,
-  Group,
-  Paper,
-  Select,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-  Title,
-} from "@mantine/core";
-import { isRecord, type AuthSettingsField } from "@mcp-cli/core";
+import { Alert, Badge, Button, Group, Paper, Select, Stack, Text, Title } from "@mantine/core";
 import { useAction } from "./queries";
 import type { Authentication } from "./ipc";
-import {
-  authChanged,
-  formatStrings,
-  parseStrings,
-  stringsText,
-  syncDraft,
-} from "./auth-settings-form";
+import { SettingsField } from "./auth-settings-fields";
+import { updateAt } from "./auth-settings-form";
+import { authChanged, syncDraft } from "./auth-settings-form";
 
 const stateLabels = {
   missing: "로그인 필요",
@@ -34,89 +16,6 @@ const stateLabels = {
   reauth: "재로그인 필요",
   failed: "확인 실패",
 } as const;
-
-const valueAt = (record: Record<string, unknown>, path: string[]): unknown => {
-  let value: unknown = record;
-  for (const key of path) value = isRecord(value) ? value[key] : undefined;
-  return value;
-};
-const updateAt = (
-  record: Record<string, unknown>,
-  path: string[],
-  value: unknown,
-): Record<string, unknown> => {
-  const [key, ...rest] = path;
-  if (!key) return record;
-  const previous = record[key];
-  return {
-    ...record,
-    [key]: rest.length ? updateAt(isRecord(previous) ? previous : {}, rest, value) : value,
-  };
-};
-
-const StringsField = ({
-  common,
-  value,
-  change,
-}: {
-  common: { label: string; description?: string; disabled: boolean };
-  value: unknown;
-  change: (value: unknown) => void;
-}) => {
-  const [text, setText] = useState(() => formatStrings(value));
-  return (
-    <Textarea
-      {...common}
-      value={stringsText(text, value)}
-      onChange={(event) => {
-        setText(event.currentTarget.value);
-        change(parseStrings(event.currentTarget.value));
-      }}
-    />
-  );
-};
-
-const SettingsField = ({
-  field,
-  value,
-  disabled,
-  change,
-}: {
-  field: AuthSettingsField;
-  value: unknown;
-  disabled: boolean;
-  change: (value: unknown) => void;
-}) => {
-  const common = { label: field.label, description: field.description, disabled };
-  if (field.type === "boolean")
-    return (
-      <Checkbox
-        {...common}
-        checked={value === true}
-        onChange={(event) => change(event.currentTarget.checked)}
-      />
-    );
-  if (field.type === "select")
-    return (
-      <Select
-        {...common}
-        data={field.options ?? []}
-        value={typeof value === "string" ? value : null}
-        onChange={(next) => {
-          if (next !== null) change(next);
-        }}
-      />
-    );
-  if (field.type === "strings")
-    return <StringsField common={common} value={value} change={change} />;
-  return (
-    <TextInput
-      {...common}
-      value={typeof value === "string" ? value : ""}
-      onChange={(event) => change(event.currentTarget.value)}
-    />
-  );
-};
 
 export const AuthSettingsPanel = ({
   service,
@@ -292,7 +191,9 @@ export const AuthSettingsPanel = ({
               key={field.path.join(".")}
               field={field}
               disabled={busy}
-              value={valueAt(configuration, field.path)}
+              configuration={configuration}
+              service={service}
+              workspace={workspace}
               change={(value) =>
                 setConfiguration((current) => updateAt(current, field.path, value))
               }

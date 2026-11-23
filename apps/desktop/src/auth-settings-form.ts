@@ -1,3 +1,4 @@
+import { isRecord, type AuthSettingsField } from "@mcp-cli/core";
 import type { AuthStatus } from "@mcp-cli/core";
 
 type AuthView = { configuration: Record<string, unknown>; states: AuthStatus[] };
@@ -21,3 +22,38 @@ export const syncDraft = (
 
 export const authChanged = (previous: AuthView, next: AuthView): boolean =>
   !same([previous.configuration, previous.states], [next.configuration, next.states]);
+
+export const valueAt = (record: Record<string, unknown>, path: string[]): unknown => {
+  let value: unknown = record;
+  for (const key of path) value = isRecord(value) ? value[key] : undefined;
+  return value;
+};
+
+export const updateAt = (
+  record: Record<string, unknown>,
+  path: string[],
+  value: unknown,
+): Record<string, unknown> => {
+  const [key, ...rest] = path;
+  if (!key) return record;
+  const previous = record[key];
+  return {
+    ...record,
+    [key]: rest.length ? updateAt(isRecord(previous) ? previous : {}, rest, value) : value,
+  };
+};
+
+export const optionsKey = (
+  field: AuthSettingsField,
+  configuration: Record<string, unknown>,
+): string =>
+  JSON.stringify(field.optionsSource?.dependencies.map((path) => valueAt(configuration, path)));
+
+export const jsonObjectError = (value: string): boolean => {
+  if (!value.trim()) return false;
+  try {
+    return !isRecord(JSON.parse(value));
+  } catch {
+    return true;
+  }
+};

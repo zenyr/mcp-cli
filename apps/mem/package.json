@@ -10,13 +10,15 @@
   "exports": {
     ".": "./src/main.ts",
     "./settings": "./src/settings.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./model-api": "./src/model-api.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test"
   },
   "dependencies": {
-    "@mcp-cli/auth": "workspace:*"
+    "@mcp-cli/auth": "workspace:*",
+    "effect": "4.0.6"
   }
 }

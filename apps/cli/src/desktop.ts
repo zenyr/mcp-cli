@@ -5,7 +5,11 @@ import { attempt, attemptSync } from "./attempt";
 import { defaultSettings, defaultStore, loginCommand, logoutCommand } from "./auth";
 import { discover, findPlugin, loadPlugin, type Registry } from "./discovery";
 import { defaultContext } from "./paths";
-import { authenticationDetails, configureAuthentication } from "./auth-settings";
+import {
+  authenticationDetails,
+  authenticationOptions,
+  configureAuthentication,
+} from "./auth-settings";
 import { resetDaemonIfRunning } from "./daemon/client";
 import { marketplaceRequest, marketplaceView } from "./marketplace/entry";
 import { desktopService } from "./desktop-services";
@@ -18,13 +22,14 @@ const ACTIONS = [
   "logout",
   "auth-config",
   "auth-status",
+  "auth-options",
   "plugins",
   "plugin-action",
   "workspace-action",
   "commands",
 ];
 const USAGE =
-  "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status>";
+  "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status|auth-options>";
 
 // The desktop app may keep stdin open, so one request ends at the first line set that parses as JSON.
 const readRequest = (host: Host): Effect.Effect<unknown, unknown> =>
@@ -71,6 +76,7 @@ type AuthRequest = {
   target?: unknown;
   secret?: unknown;
   configuration?: unknown;
+  path?: unknown;
 };
 
 const decodeAuthRequest = (value: unknown): Effect.Effect<AuthRequest, UsageError> =>
@@ -97,6 +103,10 @@ const authAction = (action: string, registry: Registry, request: AuthRequest) =>
         defaultSettings(env),
       ),
     );
+    if (action === "auth-options")
+      return yield* attempt(() =>
+        authenticationOptions(plugin, env, request.configuration, request.path),
+      );
     if (action === "auth-config" || action === "auth-status") {
       if (action === "auth-config")
         yield* attempt(() => configureAuthentication(plugin, env, request.configuration));

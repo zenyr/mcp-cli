@@ -156,3 +156,19 @@ test("missing model or URL fails before contacting the provider", async () => {
   }
   expect(calls).toBe(0);
 });
+
+test("summary requests use saved API keys and the same custom headers as discovery", async () => {
+  const config = local((request) => {
+    expect(request.headers.get("authorization")).toBe("Bearer saved-key");
+    expect(request.headers.get("x-project")).toBe("project-one");
+    return Response.json(completion());
+  });
+  await createCompressor(
+    {
+      ...config,
+      apiKey: "saved-key",
+      headers: { "X-Project": "project-one" },
+    },
+    {},
+  )(input);
+});

@@ -1,4 +1,4 @@
-import { credentialsDir, fileSettingsStore } from "@mcp-cli/auth";
+import { credentialsDir, fileSettingsStore, fileTokenStore } from "@mcp-cli/auth";
 import { dirname, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import type { Env, Settings } from "./types";
@@ -31,7 +31,9 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
   const plugin = stored?.configuration;
   if (plugin !== undefined && !isRecord(plugin)) return invalid();
   config = { ...config, ...(isRecord(plugin) ? plugin : {}) };
-  return decodeSettings(config, env);
+  const settings = decodeSettings(config, env);
+  const apiKey = env.MEM_API_KEY || (await fileTokenStore({ env }).read("mem"))?.accessToken;
+  return { ...settings, ...(apiKey ? { apiKey } : {}) };
 };
 
 export const memSettingsStore = (env: Env) =>
@@ -48,6 +50,7 @@ export const decodeSettings = (config: unknown, env: Env = {}): Settings => {
     "timeoutMs",
     "maxOutputTokens",
     "thinking",
+    "headers",
   ];
   if (Object.keys(config).some((key) => !keys.includes(key))) return invalid();
   const settings: Settings = {
@@ -61,6 +64,20 @@ export const decodeSettings = (config: unknown, env: Env = {}): Settings => {
     maxOutputTokens:
       config.maxOutputTokens === undefined ? 4096 : number(config.maxOutputTokens, 32768),
   };
+  if (config.headers !== undefined) {
+    if (!isRecord(config.headers)) return invalid();
+    const headers: Record<string, string> = {};
+    for (const [name, value] of Object.entries(config.headers)) {
+      if (typeof value !== "string") return invalid();
+      headers[name] = value;
+    }
+    try {
+      new Headers(headers);
+    } catch {
+      return invalid();
+    }
+    settings.headers = headers;
+  }
   if (env.MEM_MODEL !== undefined) settings.model = string(env.MEM_MODEL);
   if (env.MEM_BASE_URL !== undefined) settings.baseUrl = string(env.MEM_BASE_URL);
   if (env.MEM_SUMMARIZER_COMMAND !== undefined) return invalid();

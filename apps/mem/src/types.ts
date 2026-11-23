@@ -37,6 +37,8 @@ export type SummaryResult = {
 };
 export type Compressor = (input: Compression) => Promise<SummaryResult>;
 export type Settings = {
+  apiKey?: string;
+  headers?: Record<string, string>;
   model: string;
   baseUrl: string;
   nodeBytes: number;
