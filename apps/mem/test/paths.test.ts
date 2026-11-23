@@ -93,8 +93,9 @@ test("existing Git configuration identity is honored and malformed configuration
 });
 
 test("settings defaults and environment overrides", async () => {
-  const path = join(await temporary(), "config.json");
-  expect(await loadSettings(path, {})).toEqual({
+  const home = await temporary();
+  const path = join(home, "config.json");
+  expect(await loadSettings(path, { HOME: home })).toEqual({
     model: "",
     baseUrl: "",
     nodeBytes: 512,
@@ -106,6 +107,7 @@ test("settings defaults and environment overrides", async () => {
   await writeFile(path, JSON.stringify({ model: "file-model", nodeBytes: 1024 }));
   expect(
     await loadSettings(path, {
+      HOME: home,
       MEM_MODEL: "env-model",
       MEM_BASE_URL: "https://example.invalid/v1",
       MEM_NODE_BYTES: "2048",
@@ -120,7 +122,8 @@ test("settings defaults and environment overrides", async () => {
 });
 
 test("settings reject invalid JSON, unknown keys, values, and bounds", async () => {
-  const path = join(await temporary(), "config.json");
+  const home = await temporary();
+  const path = join(home, "config.json");
   for (const value of [
     "{",
     "null",
@@ -133,7 +136,9 @@ test("settings reject invalid JSON, unknown keys, values, and bounds", async () 
     '{"contextBytes":1.5}',
   ]) {
     await writeFile(path, value);
-    await expect(loadSettings(path, {})).rejects.toMatchObject({ code: "INVALID_CONFIG" });
+    await expect(loadSettings(path, { HOME: home })).rejects.toMatchObject({
+      code: "INVALID_CONFIG",
+    });
   }
   await writeFile(path, "{}");
   for (const env of [
@@ -141,6 +146,8 @@ test("settings reject invalid JSON, unknown keys, values, and bounds", async () 
     { MEM_NODE_BYTES: "NaN" },
     { MEM_BASE_URL: "invalid" },
   ]) {
-    await expect(loadSettings(path, env)).rejects.toMatchObject({ code: "INVALID_CONFIG" });
+    await expect(loadSettings(path, { ...env, HOME: home })).rejects.toMatchObject({
+      code: "INVALID_CONFIG",
+    });
   }
 });
