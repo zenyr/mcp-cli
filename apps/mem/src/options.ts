@@ -3,6 +3,7 @@ import { fail, positive } from "./values";
 
 export type Options = {
   command: string;
+  json: boolean;
   text: string[];
   selection?: "global" | "project";
   maxBytes: number;
@@ -54,6 +55,7 @@ export const parse = (argv: string[]): Options => {
   const command = argv[0] ?? "--help";
   const result: Options = {
     command,
+    json: false,
     text: [],
     maxBytes: 8192,
     limit: 20,
@@ -73,12 +75,26 @@ export const parse = (argv: string[]): Options => {
     }
     if (seen.has(arg)) fail("INVALID_OPTION", `Repeated option: ${arg}`);
     seen.add(arg);
-    if (!["--global", "--project", "--max-bytes", "--model", "--base-url", ...flags].includes(arg))
+    if (
+      ![
+        "--json",
+        "--global",
+        "--project",
+        "--max-bytes",
+        "--model",
+        "--base-url",
+        ...flags,
+      ].includes(arg)
+    )
       fail("INVALID_OPTION", `Unknown option: ${arg}`);
     if (arg === "--global" || arg === "--project") {
       if (result.selection)
         fail("INVALID_OPTION", "--global and --project are mutually exclusive.");
       result.selection = arg === "--global" ? "global" : "project";
+      continue;
+    }
+    if (arg === "--json") {
+      result.json = true;
       continue;
     }
     if (arg === "--stdin") {

@@ -1,3 +1,5 @@
+import { stringify } from "yaml";
+
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -29,8 +31,13 @@ export const positive = (value: string | number, name: string, maximum = 1_048_5
   return number;
 };
 
-export const output = (value: unknown, limit: number): string => {
-  const text = `${JSON.stringify(value)}\n`;
+export const serialize = (value: unknown, json = true): string =>
+  json
+    ? `${JSON.stringify(value)}\n`
+    : stringify(value, { lineWidth: 0, defaultStringType: "PLAIN", blockQuote: "literal" });
+
+export const output = (value: unknown, limit: number, json = true): string => {
+  const text = serialize(value, json);
   if (bytes(text) > limit)
     return fail("OUTPUT_OVERFLOW", "Response exceeds --max-bytes.", { limit });
   return text;

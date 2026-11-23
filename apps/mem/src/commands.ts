@@ -1,6 +1,6 @@
 import type { Entry, Kind, Scope, Store } from "./types";
 import type { Options } from "./options";
-import { fail, isRecord, output } from "./values";
+import { fail, isRecord, output, serialize } from "./values";
 export { parse } from "./options";
 export type { Options } from "./options";
 
@@ -17,8 +17,8 @@ const excerpt = (text: string, query: string): string[] => {
   }
   return scalars.slice(Math.max(0, index - 60), index + 180);
 };
-const fits = (value: unknown, limit: number): boolean =>
-  Buffer.byteLength(`${JSON.stringify(value)}\n`) <= limit;
+const fits = (value: unknown, limit: number, json: boolean): boolean =>
+  Buffer.byteLength(serialize(value, json)) <= limit;
 export const readRecord = (store: Store, scopes: Scope[], options: Options): unknown => {
   const recordId = options.text[0] ?? "";
   const slash = recordId.lastIndexOf("/");
@@ -48,12 +48,12 @@ export const readRecord = (store: Store, scopes: Scope[], options: Options): unk
   let high = scalars.length;
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
-    if (fits(page(middle), options.maxBytes)) low = middle;
+    if (fits(page(middle), options.maxBytes, options.json)) low = middle;
     else high = middle - 1;
   }
   if (low === offset && offset < scalars.length)
     fail("OUTPUT_OVERFLOW", "Record metadata exceeds --max-bytes.");
-  output(page(low), options.maxBytes);
+  output(page(low), options.maxBytes, options.json);
   return page(low);
 };
 type Boundary = { scope: string; high: number };
@@ -135,12 +135,12 @@ export const recall = (store: Store, scopes: Scope[], options: Options): unknown
       kind: entry.kind,
       snippet: scalars.slice(0, length).join(""),
     });
-    while (!fits(page(), options.maxBytes) && length > 0) {
+    while (!fits(page(), options.maxBytes, options.json) && length > 0) {
       length = Math.floor(length / 2);
       const last = results.at(-1);
       if (last) last.snippet = scalars.slice(0, length).join("");
     }
-    if (!fits(page(), options.maxBytes)) {
+    if (!fits(page(), options.maxBytes, options.json)) {
       results.pop();
       break;
     }

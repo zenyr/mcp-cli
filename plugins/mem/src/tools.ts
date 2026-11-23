@@ -145,7 +145,7 @@ export const callTool = async (
     throw error;
   }
   let text = "";
-  const code = await main(argv, {
+  const code = await main([...argv, "--json"], {
     cwd: context.cwd,
     env: context.env,
     io: {

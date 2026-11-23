@@ -34,11 +34,24 @@ To run the CLI directly, pass the same arguments after `bun apps/mem/src/main.ts
 - `recall` searches with NFC normalization and lowercase conversion. Results are ordered newest first.
 - Use a `recall` cursor with the same query and scope. Newly saved records do not enter existing pagination.
 - A `read` cursor is a Unicode scalar position in the original text. Pass the response cursor to read the next page.
-- `--max-bytes` includes the entire JSON response and its final newline. The default is 8192 bytes.
-- Successes and errors each print one JSON object to stdout. Help uses plain text.
+- `--max-bytes` includes the entire response in the selected output format and its final newline. The default is 8192 bytes.
+- Successes and errors print multiline YAML to stdout by default. Add `--json` for compact JSON. Help uses plain text.
 - Exit codes are 0 for success, 1 for execution failure, and 2 for option errors.
 
 Override connection settings with `--model` and `--base-url`. The connection uses an HTTP server that provides `/chat/completions`. If set, `MEM_API_KEY` is sent in the Authorization header.
+
+## Basic preference priming
+
+`mem start` returns global preferences and memory for the current Git project in one startup packet.
+Use `--global` or `--project` only when you want to restrict that selection.
+It does not infer preferences or create a default profile when no records exist.
+Save explicitly supplied preferences with `mem save '<preference>' --global --kind user`.
+Pin selected source ranges when they must appear verbatim in every startup packet.
+The host must insert the command output into its context; `mem` does not install startup hooks.
+
+Both standalone CLI output and `mcp-cli mem` default to multiline YAML.
+MCP tool responses retain JSON for protocol consumers; `mcp-cli` formats that JSON for display.
+Use `mem start --json` when a script needs JSON.
 
 ## Configuration and storage
 

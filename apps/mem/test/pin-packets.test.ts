@@ -34,7 +34,7 @@ test("CLI zoom and pin changes reuse originals without invoking the model", asyn
   let calls = 0;
   const run = async (args: string[]) => {
     stdout = "";
-    const code = await main(args, {
+    const code = await main([...args, "--json"], {
       cwd: directory,
       env: { HOME: directory },
       compress: async () => {
@@ -195,7 +195,7 @@ test("maximum project and key identifiers fit 512-byte mutation acknowledgements
   let stdout = "";
   const run = async (args: string[]) => {
     stdout = "";
-    const code = await main(args, {
+    const code = await main([...args, "--json"], {
       cwd: directory,
       env: { HOME: directory },
       io: {
@@ -243,7 +243,7 @@ test("oversized pins remain discoverable and releasable through small metadata r
   let stdout = "";
   const run = async (args: string[]) => {
     stdout = "";
-    const code = await main(args, {
+    const code = await main([...args, "--json"], {
       cwd: directory,
       env: { HOME: directory },
       compress: async () => ({

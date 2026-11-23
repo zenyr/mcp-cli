@@ -67,6 +67,7 @@
       "dependencies": {
         "@mcp-cli/auth": "workspace:*",
         "effect": "4.0.6",
+        "yaml": "^2.9.1",
       },
     },
     "packages/auth": {

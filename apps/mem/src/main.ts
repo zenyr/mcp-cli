@@ -31,6 +31,7 @@ const help = `Usage: mem <start|save|summarize|recall|read|zoom|pin|unpin|pins|s
   pin <scopeId/index> --key <name> --from <scalar> --to <scalar> --expected-revision <n> --receipt <UUID>
   unpin <key> --expected-revision <n> --receipt <UUID>
   pins [--key <name>]
+  --json                Output JSON instead of multiline YAML
   --global | --project   Select scopes
   --model <name> --base-url <url> --max-bytes <512..20480>
 `;
@@ -52,6 +53,7 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
     readStdin: () => Bun.stdin.text(),
   };
   let maxBytes = 8192;
+  const json = argv.includes("--json");
   let store: Store | undefined;
   try {
     const options = parse(argv);
@@ -85,6 +87,7 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
             },
           },
           maxBytes,
+          json,
         ),
       );
       return 0;
@@ -139,7 +142,7 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
           recoveryCommand: "mem summarize",
           scopes: pending.map((scope) => scope.id),
         });
-      result = startPacket(store, scopes, generation, maxBytes);
+      result = startPacket(store, scopes, generation, maxBytes, json);
     } else if (options.command === "read") result = readRecord(store, scopes, options);
     else if (options.command === "zoom")
       result = zoom(store, scopes, {
@@ -147,6 +150,7 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
         count: options.count ?? 0,
         generation: options.generation ?? "",
         maxBytes,
+        json,
         cursor: options.cursor,
       });
     else if (["pin", "unpin", "pins"].includes(options.command))
@@ -159,13 +163,13 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
         scopes: store.status(scopes, generation),
         usage: store.usage(),
       };
-    io.write(output(result, maxBytes));
+    io.write(output(result, maxBytes, json));
     return 0;
   } catch (error) {
     const info = errorInfo(error);
     let response = { ok: false, error: info };
     try {
-      io.write(output(response, maxBytes));
+      io.write(output(response, maxBytes, json));
     } catch {
       response = {
         ok: false,
@@ -180,7 +184,7 @@ export const main = async (argv: string[], dependencies: Dependencies = {}): Pro
           },
         },
       };
-      io.write(output(response, maxBytes));
+      io.write(output(response, maxBytes, json));
     }
     return info.code === "INVALID_OPTION" ? 2 : 1;
   } finally {

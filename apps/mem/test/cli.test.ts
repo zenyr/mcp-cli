@@ -30,7 +30,7 @@ describe("mem CLI pages", () => {
         const page = readRecord(
           store,
           [scope],
-          parse(["read", "global/0", "--max-bytes", "512", "--cursor", cursor]),
+          parse(["read", "global/0", "--max-bytes", "512", "--cursor", cursor, "--json"]),
         );
         expect(Buffer.byteLength(`${JSON.stringify(page)}\n`)).toBeLessThanOrEqual(512);
         if (typeof page !== "object" || page === null || !("text" in page) || !("cursor" in page))
@@ -58,7 +58,7 @@ describe("mem CLI pages", () => {
       do {
         const args = ["recall", "café", "--max-bytes", "512"];
         if (cursor) args.push("--cursor", cursor);
-        const page = recall(store, [scope], parse(args));
+        const page = recall(store, [scope], parse([...args, "--json"]));
         expect(Buffer.byteLength(`${JSON.stringify(page)}\n`)).toBeLessThanOrEqual(512);
         if (
           typeof page !== "object" ||
@@ -110,7 +110,7 @@ test("CLI saves raw text, reports recovery, retries and reads global records", a
   };
   const run = async (args: string[]) => {
     stdout = "";
-    const code = await main(args, dependencies);
+    const code = await main([...args, "--json"], dependencies);
     const value: unknown = JSON.parse(stdout);
     return { code, value, stdout };
   };
@@ -206,20 +206,23 @@ test("small error packets retain saved identity and receipt after summary failur
     await git(["config", "mem.project-id", "x".repeat(128)]);
     let stdout = "";
     const receipt = "550e8400-e29b-41d4-a716-446655440000";
-    const code = await main(["save", "long record", "--receipt", receipt, "--max-bytes", "512"], {
-      cwd: directory,
-      env: { HOME: directory, MEM_NODE_BYTES: "1" },
-      compress: async () => {
-        throw Object.assign(new Error("fixture"), { code: "MODEL_OUTPUT_INCOMPLETE" });
-      },
-      io: {
-        write: (text) => {
-          stdout += text;
+    const code = await main(
+      ["save", "long record", "--receipt", receipt, "--max-bytes", "512", "--json"],
+      {
+        cwd: directory,
+        env: { HOME: directory, MEM_NODE_BYTES: "1" },
+        compress: async () => {
+          throw Object.assign(new Error("fixture"), { code: "MODEL_OUTPUT_INCOMPLETE" });
         },
-        readFile: async () => "",
-        readStdin: async () => "",
+        io: {
+          write: (text) => {
+            stdout += text;
+          },
+          readFile: async () => "",
+          readStdin: async () => "",
+        },
       },
-    });
+    );
     expect(code).toBe(1);
     expect(Buffer.byteLength(stdout)).toBeLessThanOrEqual(512);
     expect(stdout).toContain(receipt);

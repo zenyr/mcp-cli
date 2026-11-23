@@ -1,7 +1,7 @@
 import { readRecord } from "./commands";
 import { excerptParent } from "./tree";
 import type { Node, Scope, Store } from "./types";
-import { bytes, fail, output, positive } from "./values";
+import { bytes, fail, output, positive, serialize } from "./values";
 
 export type ZoomRequest = {
   recordId: string;
@@ -9,10 +9,11 @@ export type ZoomRequest = {
   generation: string;
   maxBytes: number;
   cursor?: string;
+  json?: boolean;
 };
 
 export const zoom = (store: Store, scopes: Scope[], request: ZoomRequest): unknown => {
-  const { recordId, count, generation, maxBytes, cursor } = request;
+  const { recordId, count, generation, maxBytes, cursor, json = true } = request;
   positive(maxBytes, "maxBytes", 20480);
   if (!/^[a-zA-Z0-9._-]{1,128}$/.test(generation)) fail("INVALID_OPTION", "Invalid generation.");
   if (!Number.isSafeInteger(count) || count < 1 || (BigInt(count) & (BigInt(count) - 1n)) !== 0n)
@@ -31,9 +32,12 @@ export const zoom = (store: Store, scopes: Scope[], request: ZoomRequest): unkno
   if (index + count > store.entries(scope).length)
     fail("RECORD_UNAVAILABLE", "Range exceeds selected scope history.");
   if (count === 1) {
-    const reserved = bytes(JSON.stringify({ generation })) - 1;
+    const reserved = json
+      ? bytes(JSON.stringify({ generation })) - 1
+      : bytes(serialize({ generation }, false));
     const page = readRecord(store, scopes, {
       command: "read",
+      json,
       text: [recordId],
       maxBytes: maxBytes - reserved,
       limit: 1,
@@ -42,7 +46,7 @@ export const zoom = (store: Store, scopes: Scope[], request: ZoomRequest): unkno
       ...(cursor === undefined ? {} : { cursor }),
     });
     const result = Object.assign({}, page, { generation });
-    output(result, maxBytes);
+    output(result, maxBytes, json);
     return result;
   }
   const nodeAt = (l: number, i: number): Node | undefined => {
@@ -65,6 +69,6 @@ export const zoom = (store: Store, scopes: Scope[], request: ZoomRequest): unkno
     return { recordId: `${scope}/${start}`, count: width, summary: node.text };
   });
   const result = { ok: true, generation, children };
-  output(result, maxBytes);
+  output(result, maxBytes, json);
   return result;
 };

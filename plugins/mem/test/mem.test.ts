@@ -36,7 +36,7 @@ beforeAll(async () => {
   context = { cwd: root, env };
   let saved = "";
   // A failing compressor guarantees no model call, and a short record needs no summary.
-  await main(["save", "Deploy target is blue", "--global"], {
+  await main(["save", "Deploy target is blue", "--global", "--json"], {
     env,
     cwd: root,
     compress: async () => {
