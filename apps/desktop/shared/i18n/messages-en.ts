@@ -1,4 +1,17 @@
 export const messages = {
+  "출력 토큰": "Output tokens",
+  "입력 토큰": "Input tokens",
+  추론: "Reasoning",
+  모델: "Model",
+  테스트: "Test",
+  "테스트 호출 성공": "Test call succeeded",
+  "현재 입력값으로 샘플 요약을 호출합니다. 설정은 저장하지 않습니다. API 사용 요금이 발생할 수 있습니다.":
+    "Calls a sample summary with the current inputs without saving settings. API charges may apply.",
+  "전송한 시스템 프롬프트": "System prompt sent",
+  "서버의 Reasoning 옵션 적용 여부는 응답만으로 확인할 수 없습니다.":
+    "The response alone cannot confirm whether the server applied the Reasoning option.",
+  "요청에 실패했습니다. 주소와 설정을 확인한 뒤 다시 시도해 주세요.":
+    "Request failed. Check the address and settings, then try again.",
   "저장됨 · 변경할 때만 입력": "Saved · enter only to replace",
   "JSON 객체를 입력해 주세요.": "Enter a JSON object.",
   "모델 {count}개를 불러왔습니다.": "Loaded {count} models.",

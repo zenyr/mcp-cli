@@ -35,7 +35,7 @@ export const decodeCompletion = (value: unknown, model: string): SummaryResult =
 };
 
 const httpCompressor =
-  (settings: Settings, env: Env): Compressor =>
+  (settings: Settings, env: Env, signal?: AbortSignal): Compressor =>
   async (input) => {
     if (!settings.model || !settings.baseUrl)
       return fail(
@@ -72,13 +72,15 @@ const httpCompressor =
         method: "POST",
         headers,
         body,
-        signal: AbortSignal.timeout(settings.timeoutMs),
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(settings.timeoutMs)])
+          : AbortSignal.timeout(settings.timeoutMs),
         redirect: "error",
       });
     } catch {
       return fail(
         "MODEL_UNAVAILABLE",
-        "Cannot reach summarizer; check MEM_BASE_URL, model, and timeout.",
+        "Cannot reach summarizer; check the API base URL, model, and timeout.",
       );
     }
     if (!response.ok) {
@@ -90,7 +92,11 @@ const httpCompressor =
     return decodeCompletion(parseJson(await readResponseText(response.body)), settings.model);
   };
 
-export const createCompressor = (settings: Settings, env: Env): Compressor => {
-  const compressor = httpCompressor(settings, env);
+export const createCompressor = (
+  settings: Settings,
+  env: Env,
+  signal?: AbortSignal,
+): Compressor => {
+  const compressor = httpCompressor(settings, env, signal);
   return (input: Compression) => compressor(input);
 };

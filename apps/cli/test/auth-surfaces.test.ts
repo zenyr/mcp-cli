@@ -42,6 +42,25 @@ test("CLI and desktop share auth settings and token storage without silent brows
     });
     expect(options.code).toBe(0);
     expect(JSON.parse(options.stdout).result).toEqual([{ value: "pkce", label: "pkce" }]);
+    const tested = await invoke(["desktop", "auth-test"], {
+      service: "demo-auth",
+      configuration: { mcp: { method: "pkce" } },
+    });
+    expect(tested.code).toBe(0);
+    expect(JSON.parse(tested.stdout).result.message).toBe("pkce");
+    expect(JSON.parse(cli.stdout).supportsTest).toBe(true);
+    const invalidTest = await invoke(["desktop", "auth-test"], {
+      service: "demo-auth",
+      configuration: { mcp: { method: "invalid" } },
+    });
+    expect(invalidTest.code).toBe(2);
+    expect(invalidTest.stderr).toContain("Each target needs method");
+    const unsupportedTest = await invoke(["desktop", "auth-test"], {
+      service: "demo",
+      configuration: {},
+    });
+    expect(unsupportedTest.code).toBe(2);
+    expect(unsupportedTest.stderr).toContain("no configuration test");
     const unchanged = await invoke(["auth", "status", "demo-auth", "--json"]);
     expect(JSON.parse(unchanged.stdout).configuration).toEqual(configuration);
     expect(

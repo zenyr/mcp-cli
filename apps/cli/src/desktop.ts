@@ -8,6 +8,7 @@ import { defaultContext } from "./paths";
 import {
   authenticationDetails,
   authenticationOptions,
+  testAuthentication,
   configureAuthentication,
 } from "./auth-settings";
 import { resetDaemonIfRunning } from "./daemon/client";
@@ -23,13 +24,14 @@ const ACTIONS = [
   "auth-config",
   "auth-status",
   "auth-options",
+  "auth-test",
   "plugins",
   "plugin-action",
   "workspace-action",
   "commands",
 ];
 const USAGE =
-  "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status|auth-options>";
+  "Usage: mcp-cli desktop <services|commands|plugins|plugin-action|workspace-action|login|logout|auth-config|auth-status|auth-options|auth-test>";
 
 // The desktop app may keep stdin open, so one request ends at the first line set that parses as JSON.
 const readRequest = (host: Host): Effect.Effect<unknown, unknown> =>
@@ -103,6 +105,8 @@ const authAction = (action: string, registry: Registry, request: AuthRequest) =>
         defaultSettings(env),
       ),
     );
+    if (action === "auth-test")
+      return yield* attempt(() => testAuthentication(plugin, env, request.configuration));
     if (action === "auth-options")
       return yield* attempt(() =>
         authenticationOptions(plugin, env, request.configuration, request.path),

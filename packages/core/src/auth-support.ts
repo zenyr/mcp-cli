@@ -36,6 +36,13 @@ export type AuthSettingsField = {
   optionsSource?: { label: string; dependencies: string[][] };
   options?: { value: string; label: string }[];
 };
+/** Secret-free diagnostic from one request made with unsaved settings. */
+export type AuthConfigurationTestResult = {
+  message: string;
+  durationMs: number;
+  details?: { label: string; value: string; code?: boolean }[];
+  notice?: string;
+};
 export type AuthSupport = {
   fields?: AuthSettingsField[];
   loadOptions?(
@@ -43,6 +50,11 @@ export type AuthSupport = {
     input: { path: string[]; configuration: unknown },
   ): Promise<{ value: string; label: string }[]>;
   configure(context: AuthSupportContext, value: unknown): Promise<void>;
+  /** Tests draft settings without persisting them; rejects with a safe, nonempty message. */
+  testConfiguration?(
+    context: AuthSupportContext,
+    configuration: unknown,
+  ): Promise<AuthConfigurationTestResult>;
   configuration(context: AuthSupportContext): Promise<Record<string, unknown>>;
   status(context: AuthSupportContext, check: boolean): Promise<AuthStatus[]>;
   login(context: AuthSupportContext, options: AuthLoginOptions): Promise<void>;

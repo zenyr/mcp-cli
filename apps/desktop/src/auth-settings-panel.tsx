@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Alert, Badge, Button, Group, Paper, Select, Stack, Text, Title } from "@mantine/core";
 import { useAction } from "./queries";
 import type { Authentication } from "./ipc";
+import { ConfigurationTest } from "./auth-settings-test";
 import { SettingsField } from "./auth-settings-fields";
 import { updateAt } from "./auth-settings-form";
 import { authChanged, syncDraft } from "./auth-settings-form";
@@ -199,6 +200,14 @@ export const AuthSettingsPanel = ({
               }
             />
           ))}
+        {authentication.supportsTest && (
+          <ConfigurationTest
+            service={service}
+            workspace={workspace}
+            configuration={configuration}
+            disabled={busy}
+          />
+        )}
         {save.error && <Alert color="red">{save.error.message}</Alert>}
         {login.error && <Alert color="red">{login.error.message}</Alert>}
         <Group>

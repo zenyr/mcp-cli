@@ -11,7 +11,8 @@
     ".": "./src/main.ts",
     "./settings": "./src/settings.ts",
     "./package.json": "./package.json",
-    "./model-api": "./src/model-api.ts"
+    "./model-api": "./src/model-api.ts",
+    "./configuration-test": "./src/configuration-test.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

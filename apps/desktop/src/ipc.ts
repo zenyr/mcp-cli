@@ -1,3 +1,4 @@
+import { requestErrorMessage } from "./request-error";
 import { t } from "./i18n";
 import type { SoundKind } from "../shared/ui-sounds";
 import type {
@@ -5,6 +6,7 @@ import type {
   WorkspaceAction,
   WorkspaceRegistry,
   AuthStatus,
+  AuthConfigurationTestResult,
   AuthSettingsField,
   MarketplaceAction,
   MarketplaceView,
@@ -15,6 +17,7 @@ export type Authentication = {
   configuration: Record<string, unknown>;
   fields: AuthSettingsField[];
   states: AuthStatus[];
+  supportsTest?: boolean;
 };
 
 export type Connection = {
@@ -77,6 +80,10 @@ export type Api = {
     input: { service: string; workspace?: string; configuration: Record<string, unknown> };
     output: Authentication;
   };
+  authTest: {
+    input: { service: string; workspace?: string; configuration: Record<string, unknown> };
+    output: AuthConfigurationTestResult;
+  };
   authOptions: {
     input: {
       service: string;
@@ -93,12 +100,21 @@ export type Api = {
   sound: { input: { kind: SoundKind }; output: boolean };
   setSoundsEnabled: { input: { enabled: boolean }; output: null };
 };
-export const call = <K extends keyof Api>(
+export const call = async <K extends keyof Api>(
   method: K,
   input?: Api[K]["input"],
 ): Promise<Api[K]["output"]> => {
   if (!window.tiny) return Promise.reject(new Error(t("tinyjs에서 앱을 실행해 주세요.")));
-  return window.tiny.api.call(method, input) as Promise<Api[K]["output"]>;
+  try {
+    return (await window.tiny.api.call(method, input)) as Api[K]["output"];
+  } catch (error) {
+    throw new Error(
+      requestErrorMessage(
+        error,
+        t("요청에 실패했습니다. 주소와 설정을 확인한 뒤 다시 시도해 주세요."),
+      ),
+    );
+  }
 };
 
 export const workspaceRows = (services: Service[] | undefined): Service[] =>

@@ -58,6 +58,10 @@ export const demoAuthSupport: AuthSupport = {
     const config = decode(input.configuration);
     return [{ value: config.mcp.method, label: config.mcp.method }];
   },
+  testConfiguration: async (_context, value) => {
+    const config = decode(value);
+    return { message: config.mcp.method, durationMs: 0 };
+  },
   configuration: async (context) => ({ ...(await configuration(context)) }),
   configure: async (context, value) => {
     const decoded = decode(value);

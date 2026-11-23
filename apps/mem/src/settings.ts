@@ -2,6 +2,7 @@ import { credentialsDir, fileSettingsStore, fileTokenStore } from "@mcp-cli/auth
 import { dirname, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import type { Env, Settings } from "./types";
+import { resolvePaths } from "./paths";
 import { fail, isRecord } from "./values";
 
 const invalid = (): never => fail("INVALID_CONFIG", "Invalid mem configuration.");
@@ -19,7 +20,7 @@ const number = (value: unknown, maximum: number): number =>
     ? value
     : invalid();
 
-export const loadSettings = async (path: string, env: Env): Promise<Settings> => {
+const readConfiguration = async (path: string): Promise<Record<string, unknown>> => {
   let config: unknown = {};
   try {
     config = parse(await readFile(path, "utf8"));
@@ -27,11 +28,21 @@ export const loadSettings = async (path: string, env: Env): Promise<Settings> =>
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) return invalid();
   }
   if (!isRecord(config)) return invalid();
+  return config;
+};
+
+export const loadDraftSettings = async (configuration: unknown, env: Env): Promise<Settings> => {
+  if (!isRecord(configuration)) return invalid();
+  const file = await readConfiguration(resolvePaths(env).configFile);
+  return decodeSettings({ ...file, ...configuration }, env);
+};
+
+export const loadSettings = async (path: string, env: Env): Promise<Settings> => {
+  const config = await readConfiguration(path);
   const stored = await memSettingsStore(env).read("mem");
   const plugin = stored?.configuration;
   if (plugin !== undefined && !isRecord(plugin)) return invalid();
-  config = { ...config, ...(isRecord(plugin) ? plugin : {}) };
-  const settings = decodeSettings(config, env);
+  const settings = decodeSettings({ ...config, ...(isRecord(plugin) ? plugin : {}) }, env);
   const apiKey = env.MEM_API_KEY || (await fileTokenStore({ env }).read("mem"))?.accessToken;
   return { ...settings, ...(apiKey ? { apiKey } : {}) };
 };

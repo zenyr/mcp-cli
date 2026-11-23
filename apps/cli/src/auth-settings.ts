@@ -29,6 +29,7 @@ export const authenticationDetails = async (plugin: ServicePlugin, env: Env, che
     fields: plugin.authSupport.fields ?? [],
     configuration: await plugin.authSupport.configuration(context),
     states: await plugin.authSupport.status(context, check),
+    supportsTest: Boolean(plugin.authSupport.testConfiguration),
   };
 };
 export const configureAuthentication = async (plugin: ServicePlugin, env: Env, value: unknown) => {
@@ -55,6 +56,16 @@ export const authenticationOptions = async (
     path,
     configuration,
   });
+};
+
+export const testAuthentication = async (
+  plugin: ServicePlugin,
+  env: Env,
+  configuration: unknown,
+) => {
+  if (!plugin.authSupport?.testConfiguration)
+    throw new UsageError("This service has no configuration test.");
+  return plugin.authSupport.testConfiguration(authenticationContext(env, plugin), configuration);
 };
 
 const USAGE =
